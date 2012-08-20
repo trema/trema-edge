@@ -30,7 +30,7 @@ typedef struct {
     uint8_t mac[ OFP_ETH_ALEN ];
     uint64_t datapath_id;
   } key;
-  uint16_t port_no;
+  uint32_t port_no;
   time_t last_update;
 } forwarding_entry;
 
@@ -75,7 +75,7 @@ update_forwarding_db( void *forwarding_db ) {
 
 
 static void
-learn( hash_table *forwarding_db, struct key new_key, uint16_t port_no ) {
+learn( hash_table *forwarding_db, struct key new_key, uint32_t port_no ) {
   forwarding_entry *entry = lookup_hash_entry( forwarding_db, &new_key );
 
   if ( entry == NULL ) {
@@ -90,7 +90,7 @@ learn( hash_table *forwarding_db, struct key new_key, uint16_t port_no ) {
 
 
 static void
-do_flooding( packet_in packet_in ) {
+do_flooding( packet_in packet_in, uint32_t in_port ) {
   openflow_actions *actions = create_actions();
   append_action_output( actions, OFPP_FLOOD, UINT16_MAX );
 
@@ -101,7 +101,7 @@ do_flooding( packet_in packet_in ) {
     packet_out = create_packet_out(
       get_transaction_id(),
       packet_in.buffer_id,
-      packet_in.in_port,
+      in_port,
       actions,
       frame
     );
@@ -111,7 +111,7 @@ do_flooding( packet_in packet_in ) {
     packet_out = create_packet_out(
       get_transaction_id(),
       packet_in.buffer_id,
-      packet_in.in_port,
+      in_port,
       actions,
       NULL
     );
@@ -123,28 +123,36 @@ do_flooding( packet_in packet_in ) {
 
 
 static void
-send_packet( uint16_t destination_port, packet_in packet_in ) {
+send_packet( uint32_t destination_port, packet_in packet_in, uint32_t in_port ) {
   openflow_actions *actions = create_actions();
   append_action_output( actions, destination_port, UINT16_MAX );
 
-  struct ofp_match match;
-  set_match_from_packet( &match, packet_in.in_port, 0, packet_in.data );
+  openflow_instructions *insts = create_instructions();
+  append_instructions_write_actions( insts, actions );
+
+  oxm_matches *match = create_oxm_matches();
+  set_match_from_packet( match, in_port, NULL, packet_in.data );
 
   buffer *flow_mod = create_flow_mod(
     get_transaction_id(),
-    match,
     get_cookie(),
+    0,
+    0,
     OFPFC_ADD,
     60,
     0,
     UINT16_MAX,
     packet_in.buffer_id,
-    OFPP_NONE,
+    0,
+    0,
     OFPFF_SEND_FLOW_REM,
-    actions
+    match,
+    insts
   );
   send_openflow_message( packet_in.datapath_id, flow_mod );
   free_buffer( flow_mod );
+  delete_oxm_matches( match );
+  delete_instructions( insts );
 
   if ( packet_in.buffer_id == UINT32_MAX ) {
     buffer *frame = duplicate_buffer( packet_in.data );
@@ -152,7 +160,7 @@ send_packet( uint16_t destination_port, packet_in packet_in ) {
     buffer *packet_out = create_packet_out(
       get_transaction_id(),
       packet_in.buffer_id,
-      packet_in.in_port,
+      in_port,
       actions,
       frame
     );
@@ -171,12 +179,31 @@ handle_packet_in( uint64_t datapath_id, packet_in message ) {
     return;
   }
 
+  // get in_port
+  uint32_t in_port = OFPP_MAX;
+  {
+    oxm_match_header *oxm;
+    uint32_t *value;
+    for ( list_element *list = message.match->list; list != NULL; list = list->next ) {
+      oxm = list->data;
+      if ( *oxm == OXM_OF_IN_PORT ) {
+        value = ( uint32_t * ) ( ( char * ) oxm + sizeof( oxm_match_header ) );
+        in_port = *value;
+        break;
+      }
+    }
+    if ( in_port == OFPP_MAX ) {
+      debug( "in_port not found" );
+      return;
+    }
+  }
+
   struct key new_key;
   packet_info packet_info = get_packet_info( message.data );
   memcpy( new_key.mac, packet_info.eth_macsa, OFP_ETH_ALEN );
   new_key.datapath_id = datapath_id;
   hash_table *forwarding_db = message.user_data;
-  learn( forwarding_db, new_key, message.in_port );
+  learn( forwarding_db, new_key, in_port );
 
   struct key search_key;
   memcpy( search_key.mac, packet_info.eth_macda, OFP_ETH_ALEN );
@@ -184,10 +211,10 @@ handle_packet_in( uint64_t datapath_id, packet_in message ) {
   forwarding_entry *destination = lookup_hash_entry( forwarding_db, &search_key );
 
   if ( destination == NULL ) {
-    do_flooding( message );
+    do_flooding( message, in_port );
   }
   else {
-    send_packet( destination->port_no, message );
+    send_packet( destination->port_no, message, in_port );
   }
 }
 
@@ -214,6 +241,38 @@ compare_forwarding_entry( const void *x, const void *y ) {
 }
 
 
+static void
+handle_switch_ready( uint64_t datapath_id, void *user_data ) {
+  UNUSED( user_data );
+
+  openflow_actions *actions = create_actions();
+  append_action_output( actions, OFPP_CONTROLLER, UINT16_MAX );
+
+  openflow_instructions *insts = create_instructions();
+  append_instructions_write_actions( insts, actions );
+
+  buffer *flow_mod = create_flow_mod(
+    get_transaction_id(),
+    get_cookie(),
+    0,
+    0,
+    OFPFC_ADD,
+    0,
+    0,
+    UINT16_MAX,
+    UINT32_MAX,
+    0,
+    0,
+    OFPFF_SEND_FLOW_REM,
+    NULL,
+    insts
+  );
+  send_openflow_message( datapath_id, flow_mod );
+  free_buffer( flow_mod );
+  delete_instructions( insts );
+}
+
+
 int
 main( int argc, char *argv[] ) {
   init_trema( &argc, &argv );
@@ -221,6 +280,8 @@ main( int argc, char *argv[] ) {
   hash_table *forwarding_db = create_hash( compare_forwarding_entry, hash_forwarding_entry );
   add_periodic_event_callback( AGING_INTERVAL, update_forwarding_db, forwarding_db );
   set_packet_in_handler( handle_packet_in, forwarding_db );
+
+  set_switch_ready_handler( handle_switch_ready, NULL );
 
   start_trema();
 

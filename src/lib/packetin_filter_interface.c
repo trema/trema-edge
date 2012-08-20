@@ -30,6 +30,8 @@
 #include "packetin_filter_interface.h"
 #include "trema_wrapper.h"
 #include "wrapper.h"
+#include "oxm_match.h"
+#include "oxm_byteorder.h"
 
 
 typedef struct {
@@ -87,9 +89,11 @@ deletion_completed( int status, int n_deleted, handler_data *data ) {
 
 static void
 ntoh_packetin_filter_entry( packetin_filter_entry *dst, packetin_filter_entry *src ) {
-  ntoh_match( &dst->match, &src->match );
+  dst->length = ntohs( src->length );
   dst->priority = ntohs( src->priority );
+  memset( dst->pad, 0, sizeof( dst->pad ) );
   memcpy( dst->service_name, src->service_name, sizeof( dst->service_name ) );
+  ntoh_match( &dst->match, &src->match );
 }
 
 
@@ -104,7 +108,7 @@ dump_completed( int status, int n_entries, packetin_filter_entry *entries, handl
 
 
 bool
-add_packetin_filter( struct ofp_match match, uint16_t priority, char *service_name,
+add_packetin_filter( oxm_matches *match, uint16_t priority, char *service_name,
                      add_packetin_filter_handler callback, void *user_data ) {
   if ( service_name == NULL || ( service_name != NULL && strlen( service_name ) == 0 ) ) {
     error( "Service name must be specified." );
@@ -117,23 +121,33 @@ add_packetin_filter( struct ofp_match match, uint16_t priority, char *service_na
   data->callback = callback;
   data->user_data = user_data;
 
-  add_packetin_filter_request request;
-  memset( &request, 0, sizeof( add_packetin_filter_request ) );
-  hton_match( &request.entry.match, &match );
-  request.entry.priority = htons( priority );
-  memcpy( request.entry.service_name, service_name, sizeof( request.entry.service_name ) );
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( match ) );
+  match_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t length = ( uint16_t ) ( offsetof( add_packetin_filter_request, entry )
+                                  + offsetof( packetin_filter_entry, match ) + match_len );
+
+  add_packetin_filter_request *request = ( add_packetin_filter_request * ) xcalloc( 1, length );
+  request->length = htons( length );
+  request->entry.length = htons( ( uint16_t ) ( length - offsetof( add_packetin_filter_request, entry ) ) );
+  request->entry.priority = htons( priority );
+  if ( service_name != NULL ) {
+    strncpy( request->entry.service_name, service_name, sizeof( request->entry.service_name ) );
+    request->entry.service_name[ sizeof( request->entry.service_name ) - 1 ] = '\0';
+  }
+  construct_ofp_match( &request->entry.match, match );
 
   bool ret = send_request_message( PACKETIN_FILTER_MANAGEMENT_SERVICE,
                                    get_client_service_name(),
                                    MESSENGER_ADD_PACKETIN_FILTER_REQUEST,
-                                   &request, sizeof( add_packetin_filter_request ), data );
+                                   request, length, data );
+  xfree( request );
 
   return ret;
 }
 
 
 bool
-delete_packetin_filter( struct ofp_match match, uint16_t priority, char *service_name, bool strict,
+delete_packetin_filter( oxm_matches *match, uint16_t priority, char *service_name, bool strict,
                         delete_packetin_filter_handler callback, void *user_data ) {
   maybe_init_packetin_filter_interface();
 
@@ -141,32 +155,39 @@ delete_packetin_filter( struct ofp_match match, uint16_t priority, char *service
   data->callback = callback;
   data->user_data = user_data;
 
-  delete_packetin_filter_request request;
-  memset( &request, 0, sizeof( delete_packetin_filter_request ) );
-  hton_match( &request.criteria.match, &match );
-  request.criteria.priority = htons( priority );
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( match ) );
+  match_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t length = ( uint16_t ) ( offsetof( delete_packetin_filter_request, criteria )
+                                  + offsetof( packetin_filter_entry, match ) + match_len );
+
+  delete_packetin_filter_request *request = ( delete_packetin_filter_request * ) xcalloc( 1, length );
+  request->length = htons( length );
+  request->criteria.length = htons( ( uint16_t ) ( length - offsetof( delete_packetin_filter_request, criteria ) ) );
+  request->criteria.priority = htons( priority );
   if ( service_name != NULL ) {
-    strncpy( request.criteria.service_name, service_name, sizeof( request.criteria.service_name ) );
-    request.criteria.service_name[ sizeof( request.criteria.service_name ) - 1 ] = '\0';
+    strncpy( request->criteria.service_name, service_name, sizeof( request->criteria.service_name ) );
+    request->criteria.service_name[ sizeof( request->criteria.service_name ) - 1 ] = '\0';
   }
   if ( strict ) {
-    request.flags = PACKETIN_FILTER_FLAG_MATCH_STRICT;
+    request->flags = PACKETIN_FILTER_FLAG_MATCH_STRICT;
   }
   else {
-    request.flags = PACKETIN_FILTER_FLAG_MATCH_LOOSE;
+    request->flags = PACKETIN_FILTER_FLAG_MATCH_LOOSE;
   }
+  construct_ofp_match( &request->criteria.match, match );
 
   bool ret = send_request_message( PACKETIN_FILTER_MANAGEMENT_SERVICE,
                                    get_client_service_name(),
                                    MESSENGER_DELETE_PACKETIN_FILTER_REQUEST,
-                                   &request, sizeof( delete_packetin_filter_request ), data );
+                                   request, length, data );
+  xfree( request );
 
   return ret;
 }
 
 
 bool
-dump_packetin_filter( struct ofp_match match, uint16_t priority, char *service_name, bool strict,
+dump_packetin_filter( oxm_matches *match, uint16_t priority, char *service_name, bool strict,
                       dump_packetin_filter_handler callback, void *user_data ) {
   maybe_init_packetin_filter_interface();
 
@@ -174,25 +195,32 @@ dump_packetin_filter( struct ofp_match match, uint16_t priority, char *service_n
   data->callback = callback;
   data->user_data = user_data;
 
-  dump_packetin_filter_request request;
-  memset( &request, 0, sizeof( dump_packetin_filter_request ) );
-  hton_match( &request.criteria.match, &match );
-  request.criteria.priority = htons( priority );
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( match ) );
+  match_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t length = ( uint16_t ) ( offsetof( dump_packetin_filter_request, criteria )
+                                  + offsetof( packetin_filter_entry, match ) + match_len );
+
+  dump_packetin_filter_request *request = ( dump_packetin_filter_request * ) xcalloc( 1, length );
+  request->length = htons( length );
+  request->criteria.length = htons( ( uint16_t ) ( length - offsetof( dump_packetin_filter_request, criteria ) ) );
+  request->criteria.priority = htons( priority );
   if ( service_name != NULL ) {
-    strncpy( request.criteria.service_name, service_name, sizeof( request.criteria.service_name ) );
-    request.criteria.service_name[ sizeof( request.criteria.service_name ) - 1 ] = '\0';
+    strncpy( request->criteria.service_name, service_name, sizeof( request->criteria.service_name ) );
+    request->criteria.service_name[ sizeof( request->criteria.service_name ) - 1 ] = '\0';
   }
   if ( strict ) {
-    request.flags = PACKETIN_FILTER_FLAG_MATCH_STRICT;
+    request->flags = PACKETIN_FILTER_FLAG_MATCH_STRICT;
   }
   else {
-    request.flags = PACKETIN_FILTER_FLAG_MATCH_LOOSE;
+    request->flags = PACKETIN_FILTER_FLAG_MATCH_LOOSE;
   }
+  construct_ofp_match( &request->criteria.match, match );
 
   bool ret = send_request_message( PACKETIN_FILTER_MANAGEMENT_SERVICE,
                                    get_client_service_name(),
                                    MESSENGER_DUMP_PACKETIN_FILTER_REQUEST,
-                                   &request, sizeof( dump_packetin_filter_request ), data );
+                                   request, length, data );
+  xfree( request );
 
   return ret;
 }
@@ -228,18 +256,33 @@ handle_reply( uint16_t tag, void *data, size_t length, void *user_data ) {
         return;
       }
       dump_packetin_filter_reply *reply = data;
-      size_t expected_length = offsetof( dump_packetin_filter_reply, entries ) + sizeof( packetin_filter_entry ) * ntohl( reply->n_entries );
-      if ( length != expected_length ) {
-        error( "Invalid dump packetin filter reply ( length = %u ).", length );
-        return;
-      }
       packetin_filter_entry *entries = NULL;
       int n_entries = ( int ) ntohl( reply->n_entries );
-      if ( n_entries > 0 && reply->entries != NULL ) {
-        entries = xmalloc( sizeof( packetin_filter_entry ) * ( size_t ) n_entries );
-        for ( int i = 0; i < n_entries; i++ ) {
-          ntoh_packetin_filter_entry( &entries[ i ], &reply->entries[ i ] );
+      uint16_t entries_length = 0;
+      if ( n_entries > 0 && reply->entries != NULL && length >= offsetof( dump_packetin_filter_reply, entries ) ) {
+        entries_length = ( uint16_t ) ( length - offsetof( dump_packetin_filter_reply, entries ) );
+        entries = xcalloc( 1, entries_length );
+        packetin_filter_entry *dst, *src;
+        uint16_t pfe_len;
+        dst = entries;
+        src = ( packetin_filter_entry * ) reply->entries;
+        while ( entries_length > 0 ) {
+          pfe_len = ntohs( src->length );
+          if ( entries_length < pfe_len ) {
+            break;
+          }
+          ntoh_packetin_filter_entry( dst, src );
+          entries_length = ( uint16_t ) ( entries_length - pfe_len );
+          src = ( packetin_filter_entry * ) ( ( char * ) src + pfe_len );
+          dst = ( packetin_filter_entry * ) ( ( char * ) dst + pfe_len );
         }
+      }
+      if ( entries_length != 0 ) {
+        error( "Invalid dump packetin filter reply ( length = %u ).", length );
+        if ( entries != NULL ) {
+          xfree( entries );
+        }
+        return;
       }
       dump_completed( reply->status, n_entries, entries, user_data );
       if ( entries != NULL ) {

@@ -88,8 +88,8 @@ mock_error( const char *format, ... ) {
 
 
 void
-mock_set_match_from_packet( struct ofp_match *match, const uint16_t in_port,
-  const uint32_t wildcards, /* const */ buffer *packet ) {
+mock_set_match_from_packet( struct ofp_match *match, const uint32_t in_port,
+  const mask_fields *mask, /* const */ buffer *packet ) {
   uint32_t in_port32 = in_port;
 
   check_expected( match );

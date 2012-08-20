@@ -26,9 +26,7 @@
 
 static void
 delete_filter( void ) {
-  struct ofp_match match;
-  memset( &match, 0, sizeof( struct ofp_match ) );
-  match.wildcards = OFPFW_ALL;
+  oxm_matches *match = create_oxm_matches();
 
   static handler_data data;
   data.match = match;

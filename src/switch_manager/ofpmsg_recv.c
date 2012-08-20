@@ -34,15 +34,17 @@ static int ofpmsg_recv_hello( struct switch_info *sw_info, buffer *buf );
 static int ofpmsg_recv_error( struct switch_info *sw_info, buffer *buf );
 static int ofpmsg_recv_echorequest( struct switch_info *sw_info, buffer *buf );
 static int ofpmsg_recv_echoreply( struct switch_info *sw_info, buffer *buf );
-static int ofpmsg_recv_vendor( struct switch_info *sw_info, buffer *buf );
+static int ofpmsg_recv_experimenter( struct switch_info *sw_info, buffer *buf );
 static int ofpmsg_recv_featuresreply( struct switch_info *sw_info, buffer *buf );
 static int ofpmsg_recv_getconfigreply( struct switch_info *sw_info, buffer *buf );
 static int ofpmsg_recv_packetin( struct switch_info *sw_info, buffer *buf );
 static int ofpmsg_recv_flowremoved( struct switch_info *sw_info, buffer *buf );
 static int ofpmsg_recv_portstatus( struct switch_info *sw_info, buffer *buf );
-static int ofpmsg_recv_statsreply( struct switch_info *sw_info, buffer *buf );
+static int ofpmsg_recv_multipartreply( struct switch_info *sw_info, buffer *buf );
 static int ofpmsg_recv_barrierreply( struct switch_info *sw_info, buffer *buf );
 static int ofpmsg_recv_queue_getconfigreply( struct switch_info *sw_info, buffer *buf );
+static int ofpmsg_recv_rolereply( struct switch_info *sw_info, buffer *buf );
+static int ofpmsg_recv_asyncreply( struct switch_info *sw_info, buffer *buf );
 
 
 #define ofpmsg_debug( format, args... )                      \
@@ -134,7 +136,7 @@ ofpmsg_recv_error( struct switch_info *sw_info, buffer *buf ) {
         cookie_entry_t *entry = lookup_cookie_entry_by_cookie( &cookie );
         if ( entry != NULL ) {
           flow_mod->cookie = htonll( entry->application.cookie );
-          if ( length >= offsetof( struct ofp_flow_mod, actions ) ) {
+          if ( length >= offsetof( struct ofp_flow_mod, pad ) ) {
             flow_mod->flags = htons( entry->application.flags );
           }
         }
@@ -205,8 +207,8 @@ ofpmsg_recv_echoreply( struct switch_info *sw_info,  buffer *buf ) {
 
 
 int
-ofpmsg_recv_vendor( struct switch_info *sw_info, buffer *buf ) {
-  ofpmsg_debug( "Receive 'vendor' from a switch." );
+ofpmsg_recv_experimenter( struct switch_info *sw_info, buffer *buf ) {
+  ofpmsg_debug( "Receive 'experimenter' from a switch." );
 
   service_send_to_application( sw_info->vendor_service_name_list,
                                MESSENGER_OPENFLOW_MESSAGE,
@@ -327,14 +329,14 @@ ofpmsg_recv_portstatus( struct switch_info *sw_info, buffer *buf ) {
 
 
 int
-ofpmsg_recv_statsreply( struct switch_info *sw_info, buffer *buf ) {
-  struct ofp_stats_reply *stats_reply = buf->data;
+ofpmsg_recv_multipartreply( struct switch_info *sw_info, buffer *buf ) {
+  struct ofp_multipart_reply *stats_reply = buf->data;
   uint16_t type = ntohs( stats_reply->type );
 
   ofpmsg_debug( "Receive 'statistics reply' from a switch." );
 
-  if ( type == OFPST_FLOW && sw_info->cookie_translation ) {
-    size_t body_offset = offsetof( struct ofp_stats_reply, body );
+  if ( type == OFPMP_FLOW && sw_info->cookie_translation ) {
+    size_t body_offset = offsetof( struct ofp_multipart_reply, body );
     int body_length = ntohs( stats_reply->header.length ) - ( int ) body_offset;
     struct ofp_flow_stats *flow_stats = ( void * ) ( ( char * ) stats_reply + body_offset );
     while ( body_length > 0 ) {
@@ -366,7 +368,7 @@ ofpmsg_recv_statsreply( struct switch_info *sw_info, buffer *buf ) {
   service_send_to_reply( xid_entry->service_name, MESSENGER_OPENFLOW_MESSAGE,
                          &sw_info->datapath_id, buf );
 
-  if ( ( ntohs( stats_reply->flags ) & OFPSF_REPLY_MORE ) == 0 ) {
+  if ( ( ntohs( stats_reply->flags ) & OFPMPF_REPLY_MORE ) == 0 ) {
     delete_xid_entry( xid_entry );
   }
   free_buffer( buf );
@@ -388,6 +390,26 @@ ofpmsg_recv_barrierreply( struct switch_info *sw_info, buffer *buf ) {
 int
 ofpmsg_recv_queue_getconfigreply( struct switch_info *sw_info, buffer *buf ) {
   ofpmsg_debug( "Receive 'queue get config reply' from a switch." );
+
+  send_transaction_reply( sw_info, buf );
+
+  return 0;
+}
+
+
+int
+ofpmsg_recv_rolereply( struct switch_info *sw_info, buffer *buf ) {
+  ofpmsg_debug( "Receive 'role reply' from a switch." );
+
+  send_transaction_reply( sw_info, buf );
+
+  return 0;
+}
+
+
+int
+ofpmsg_recv_asyncreply( struct switch_info *sw_info, buffer *buf ) {
+  ofpmsg_debug( "Receive 'async reply' from a switch." );
 
   send_transaction_reply( sw_info, buf );
 
@@ -438,8 +460,8 @@ ofpmsg_recv( struct switch_info *sw_info, buffer *buf ) {
     ret = ofpmsg_recv_echoreply( sw_info, buf );
     break;
 
-  case OFPT_VENDOR:
-    ret = ofpmsg_recv_vendor( sw_info, buf );
+  case OFPT_EXPERIMENTER:
+    ret = ofpmsg_recv_experimenter( sw_info, buf );
     break;
 
   // Switch configuration messages.
@@ -465,8 +487,8 @@ ofpmsg_recv( struct switch_info *sw_info, buffer *buf ) {
     break;
 
   // Statistics messages.
-  case OFPT_STATS_REPLY:
-    ret = ofpmsg_recv_statsreply( sw_info, buf );
+  case OFPT_MULTIPART_REPLY:
+    ret = ofpmsg_recv_multipartreply( sw_info, buf );
     break;
 
   // Barrier messages.
@@ -477,6 +499,14 @@ ofpmsg_recv( struct switch_info *sw_info, buffer *buf ) {
   // Queue Configuration messages.
   case OFPT_QUEUE_GET_CONFIG_REPLY:
     ret = ofpmsg_recv_queue_getconfigreply( sw_info, buf );
+    break;
+
+  case OFPT_ROLE_REPLY:
+    ret = ofpmsg_recv_rolereply( sw_info, buf );
+    break;
+
+  case OFPT_GET_ASYNC_REPLY:
+    ret = ofpmsg_recv_asyncreply( sw_info, buf );
     break;
 
   default:

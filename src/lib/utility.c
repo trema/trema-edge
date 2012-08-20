@@ -28,6 +28,8 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <inttypes.h>
+#include <stddef.h>
 #include "bool.h"
 #include "checks.h"
 #include "log.h"
@@ -144,86 +146,983 @@ string_to_datapath_id( const char *str, uint64_t *datapath_id ) {
 
 
 static bool
-append_string( char *buf, size_t length, const char *string ) {
-  assert( buf != NULL );
+oxm_match_8_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
   assert( length > 0 );
-  assert( string != NULL );
+  assert( key != NULL );
 
-  size_t current_length = strlen( buf );
-  size_t length_to_append = strlen( string );
-  if ( ( current_length + length_to_append + 1 ) > length ) {
+  const uint8_t *value = ( const uint8_t * ) header + sizeof( oxm_match_header );
+  int ret = snprintf( str, length, "%s = 0x%02x", key, *value );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
     return false;
   }
-  strncpy( buf + current_length, string, length_to_append + 1 );
 
   return true;
 }
 
 
-bool
-wildcards_to_string( uint32_t wildcards, char *str, size_t size ) {
+static bool
+oxm_match_16_to_dec_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
   assert( str != NULL );
-  assert( size > 0 );
+  assert( length > 0 );
+  assert( key != NULL );
 
-  memset( str, '\0', size );
+  const uint16_t *value = ( const uint16_t * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  int ret = snprintf( str, length, "%s = %u", key, *value );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_16_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint16_t *value = ( const uint16_t * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  int ret = snprintf( str, length, "%s = 0x%04x", key, *value );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_16w_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint16_t *value = ( const uint16_t * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  const uint16_t *mask = ( const uint16_t * ) ( ( const char * ) value + sizeof( uint16_t ) );
+  int ret = snprintf( str, length, "%s = 0x%04x/0x%04x", key, *value, *mask );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_32_to_dec_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint32_t *value = ( const uint32_t * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  int ret = snprintf( str, length, "%s = %u", key, *value );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_32_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint32_t *value = ( const uint32_t * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  int ret = snprintf( str, length, "%s = 0x%08x", key, *value );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_32w_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint32_t *value = ( const uint32_t * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  const uint32_t *mask = ( const uint32_t * ) ( ( const char * ) value + sizeof( uint32_t ) );
+  int ret = snprintf( str, length, "%s = 0x%08x/0x%08x", key, *value, *mask );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_64_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint64_t *value = ( const uint64_t * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  int ret = snprintf( str, length, "%s = 0x%016" PRIx64, key, *value );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_64w_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint64_t *value = ( const uint64_t * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  const uint64_t *mask = ( const uint64_t * ) ( ( const char * ) value + sizeof( uint64_t ) );
+  int ret = snprintf( str, length, "%s = 0x%016" PRIx64 "/0x%016" PRIx64, key, *value, *mask );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_eth_addr_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint8_t *addr = ( const uint8_t * ) header + sizeof( oxm_match_header );
+  int ret = snprintf( str, length, "%s = %02x:%02x:%02x:%02x:%02x:%02x",
+                      key, addr[ 0 ], addr[ 1 ], addr[ 2 ], addr[ 3 ], addr[ 4 ], addr[ 5 ] );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_eth_addr_w_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint8_t *addr = ( const uint8_t * ) header + sizeof( oxm_match_header );
+  const uint8_t *mask = addr + ( sizeof( uint8_t ) * OFP_ETH_ALEN );
+  int ret = snprintf( str, length, "%s = %02x:%02x:%02x:%02x:%02x:%02x/%02x:%02x:%02x:%02x:%02x:%02x",
+                      key, addr[ 0 ], addr[ 1 ], addr[ 2 ], addr[ 3 ], addr[ 4 ], addr[ 5 ],
+                      mask[ 0 ], mask[ 1 ], mask[ 2 ], mask[ 3 ], mask[ 4 ], mask[ 5 ] );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_ip_addr_to_dec_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint32_t *addr = ( const uint32_t * ) ( ( const uint8_t * ) header + sizeof( oxm_match_header ) );
+  int ret = snprintf( str, length, "%s = %u.%u.%u.%u",
+                      key, ( *addr >> 24 ) & 0xff, ( *addr >> 16 ) & 0xff, ( *addr >> 8 ) & 0xff, *addr & 0xff );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_ip_addr_w_to_dec_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint32_t *addr = ( const uint32_t * ) ( ( const uint8_t * ) header + sizeof( oxm_match_header ) );
+  const uint32_t *mask = ( const uint32_t * ) ( ( const uint8_t * ) addr + sizeof( uint32_t ) );
+
+  int ret = snprintf( str, length, "%s = %u.%u.%u.%u/%u.%u.%u.%u",
+                      key,
+                      ( *addr >> 24 ) & 0xff, ( *addr >> 16 ) & 0xff, ( *addr >> 8 ) & 0xff, *addr & 0xff,
+                      ( *mask >> 24 ) & 0xff, ( *mask >> 16 ) & 0xff, ( *mask >> 8 ) & 0xff, *mask & 0xff );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_ipv6_addr_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const struct in6_addr *addr = ( const struct in6_addr * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  char addr_str[ INET6_ADDRSTRLEN ];
+  inet_ntop( AF_INET6, addr, addr_str, sizeof( addr_str ) );
+
+  int ret = snprintf( str, length, "%s = %s", key, addr_str );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_ipv6_addr_w_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const struct in6_addr *addr = ( const struct in6_addr * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  const struct in6_addr *mask = ( const struct in6_addr * ) ( ( const char * ) addr + sizeof( struct in6_addr ) );
+  char addr_str[ INET6_ADDRSTRLEN ];
+  inet_ntop( AF_INET6, addr, addr_str, sizeof( addr_str ) );
+  char mask_str[ INET6_ADDRSTRLEN ];
+  inet_ntop( AF_INET6, mask, mask_str, sizeof( mask_str ) );
+
+  int ret = snprintf( str, length, "%s = %s/%s", key, addr_str, mask_str );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+oxm_match_in_port_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_IN_PORT );
+
+  return oxm_match_32_to_dec_string( header, str, length, "in_port" );
+}
+
+
+static bool
+oxm_match_in_phy_port_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_IN_PHY_PORT );
+
+  return oxm_match_32_to_dec_string( header, str, length, "in_phy_port" );
+}
+
+
+static bool
+oxm_match_metadata_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_METADATA:
+      return oxm_match_64_to_hex_string( header, str, length, "metadata" );
+
+    case OXM_OF_METADATA_W:
+      return oxm_match_64w_to_hex_string( header, str, length, "metadata" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_eth_addr_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_ETH_DST:
+      return oxm_match_eth_addr_to_hex_string( header, str, length, "eth_dst" );
+
+    case OXM_OF_ETH_DST_W:
+      return oxm_match_eth_addr_w_to_hex_string( header, str, length, "eth_dst" );
+
+    case OXM_OF_ETH_SRC:
+      return oxm_match_eth_addr_to_hex_string( header, str, length, "eth_src" );
+
+    case OXM_OF_ETH_SRC_W:
+      return oxm_match_eth_addr_w_to_hex_string( header, str, length, "eth_src" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_eth_type_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_ETH_TYPE );
+
+  return oxm_match_16_to_hex_string( header, str, length, "eth_type" );
+}
+
+
+static bool
+oxm_match_vlan_vid_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_VLAN_VID:
+      return oxm_match_16_to_hex_string( header, str, length, "vlan_vid" );
+
+    case OXM_OF_VLAN_VID_W:
+      return oxm_match_16w_to_hex_string( header, str, length, "vlan_vid" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_vlan_pcp_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_VLAN_PCP );
+
+  return oxm_match_8_to_hex_string( header, str, length, "vlan_pcp" );
+}
+
+
+static bool
+oxm_match_ip_dscp_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_IP_DSCP );
+
+  return oxm_match_8_to_hex_string( header, str, length, "ip_dscp" );
+}
+
+
+static bool
+oxm_match_ip_ecn_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_IP_ECN );
+
+  return oxm_match_8_to_hex_string( header, str, length, "ip_ecn" );
+}
+
+
+static bool
+oxm_match_ip_proto_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_IP_PROTO );
+
+  return oxm_match_8_to_hex_string( header, str, length, "ip_proto" );
+}
+
+
+static bool
+oxm_match_ip_addr_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_IPV4_SRC:
+      return oxm_match_ip_addr_to_dec_string( header, str, length, "ipv4_src" );
+
+    case OXM_OF_IPV4_SRC_W:
+      return oxm_match_ip_addr_w_to_dec_string( header, str, length, "ipv4_src" );
+
+    case OXM_OF_IPV4_DST:
+      return oxm_match_ip_addr_to_dec_string( header, str, length, "ipv4_dst" );
+
+    case OXM_OF_IPV4_DST_W:
+      return oxm_match_ip_addr_w_to_dec_string( header, str, length, "ipv4_dst" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_tcp_port_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_TCP_SRC:
+      return oxm_match_16_to_dec_string( header, str, length, "tcp_src" );
+
+    case OXM_OF_TCP_DST:
+      return oxm_match_16_to_dec_string( header, str, length, "tcp_dst" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_udp_port_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_UDP_SRC:
+      return oxm_match_16_to_dec_string( header, str, length, "udp_src" );
+
+    case OXM_OF_UDP_DST:
+      return oxm_match_16_to_dec_string( header, str, length, "udp_dst" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_sctp_port_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_SCTP_SRC:
+      return oxm_match_16_to_dec_string( header, str, length, "sctp_src" );
+
+    case OXM_OF_SCTP_DST:
+      return oxm_match_16_to_dec_string( header, str, length, "sctp_dst" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_icmpv4_type_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_ICMPV4_TYPE );
+
+  return oxm_match_8_to_hex_string( header, str, length, "icmpv4_type" );
+}
+
+
+static bool
+oxm_match_icmpv4_code_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_ICMPV4_CODE );
+
+  return oxm_match_8_to_hex_string( header, str, length, "icmpv4_code" );
+}
+
+
+static bool
+oxm_match_arp_op_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_ARP_OP );
+
+  return oxm_match_16_to_hex_string( header, str, length, "arp_op" );
+}
+
+
+static bool
+oxm_match_arp_pa_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_ARP_SPA:
+      return oxm_match_ip_addr_to_dec_string( header, str, length, "arp_spa" );
+
+    case OXM_OF_ARP_SPA_W:
+      return oxm_match_ip_addr_w_to_dec_string( header, str, length, "arp_spa" );
+
+    case OXM_OF_ARP_TPA:
+      return oxm_match_ip_addr_to_dec_string( header, str, length, "arp_tpa" );
+
+    case OXM_OF_ARP_TPA_W:
+      return oxm_match_ip_addr_w_to_dec_string( header, str, length, "arp_tpa" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_arp_ha_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_ARP_SHA:
+      return oxm_match_eth_addr_to_hex_string( header, str, length, "arp_sha" );
+
+    case OXM_OF_ARP_SHA_W:
+      return oxm_match_eth_addr_w_to_hex_string( header, str, length, "arp_sha" );
+
+    case OXM_OF_ARP_THA:
+      return oxm_match_eth_addr_to_hex_string( header, str, length, "arp_tha" );
+
+    case OXM_OF_ARP_THA_W:
+      return oxm_match_eth_addr_w_to_hex_string( header, str, length, "arp_tha" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_ipv6_addr_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_IPV6_SRC:
+      return oxm_match_ipv6_addr_to_hex_string( header, str, length, "ipv6_src" );
+
+    case OXM_OF_IPV6_SRC_W:
+      return oxm_match_ipv6_addr_w_to_hex_string( header, str, length, "ipv6_src" );
+
+    case OXM_OF_IPV6_DST:
+      return oxm_match_ipv6_addr_to_hex_string( header, str, length, "ipv6_dst" );
+
+    case OXM_OF_IPV6_DST_W:
+      return oxm_match_ipv6_addr_w_to_hex_string( header, str, length, "ipv6_dst" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_ipv6_flabel_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_IPV6_FLABEL:
+      return oxm_match_32_to_hex_string( header, str, length, "ipv6_flabel" );
+
+    case OXM_OF_IPV6_FLABEL_W:
+      return oxm_match_32w_to_hex_string( header, str, length, "ipv6_flabel" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_icmpv6_type_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_ICMPV6_TYPE );
+
+  return oxm_match_8_to_hex_string( header, str, length, "icmpv6_type" );
+}
+
+
+static bool
+oxm_match_icmpv6_code_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_ICMPV6_CODE );
+
+  return oxm_match_8_to_hex_string( header, str, length, "icmpv6_code" );
+}
+
+
+static bool
+oxm_match_ipv6_nd_target_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_IPV6_ND_TARGET );
+
+  return oxm_match_ipv6_addr_to_hex_string( header, str, length, "ipv6_nd_target" );
+}
+
+
+static bool
+oxm_match_ipv6_nd_ll_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_IPV6_ND_SLL:
+      return oxm_match_eth_addr_to_hex_string( header, str, length, "ipv6_nd_sll" );
+
+    case OXM_OF_IPV6_ND_TLL:
+      return oxm_match_eth_addr_to_hex_string( header, str, length, "ipv6_nd_tll" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_mpls_label_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_MPLS_LABEL );
+
+  return oxm_match_32_to_hex_string( header, str, length, "mpls_label" );
+}
+
+
+static bool
+oxm_match_mpls_tc_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_MPLS_TC );
+
+  return oxm_match_8_to_hex_string( header, str, length, "mpls_tc" );
+}
+
+
+static bool
+oxm_match_mpls_bos_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( *header == OXM_OF_MPLS_BOS );
+
+  return oxm_match_8_to_hex_string( header, str, length, "mpls_bos" );
+}
+
+
+static bool
+oxm_match_pbb_isid_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_PBB_ISID:
+      return oxm_match_32_to_hex_string( header, str, length, "pbb_isid" );
+
+    case OXM_OF_PBB_ISID_W:
+      return oxm_match_32w_to_hex_string( header, str, length, "pbb_isid" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_tunnel_id_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_TUNNEL_ID:
+      return oxm_match_64_to_hex_string( header, str, length, "tunnel_id" );
+
+    case OXM_OF_TUNNEL_ID_W:
+      return oxm_match_64w_to_hex_string( header, str, length, "tunnel_id" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_ipv6_exthdr_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+
+  switch ( *header ) {
+    case OXM_OF_IPV6_EXTHDR:
+      return oxm_match_16_to_hex_string( header, str, length, "ipv6_exthdr" );
+
+    case OXM_OF_IPV6_EXTHDR_W:
+      return oxm_match_16w_to_hex_string( header, str, length, "ipv6_exthdr" );
+
+    default:
+      assert( 0 );
+      break;
+  }
+
+  return false;
+}
+
+
+static bool
+oxm_match_to_string( const oxm_match_header *header, char *str, size_t length ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
 
   bool ret = true;
-  if ( ( wildcards & OFPFW_ALL ) == 0 ) {
-    ret &= append_string( str, size, "none" );
-    return ret;
-  }
 
-  uint32_t nw_src_mask = ( wildcards & OFPFW_NW_SRC_MASK ) >> OFPFW_NW_SRC_SHIFT;
-  uint32_t nw_dst_mask = ( wildcards & OFPFW_NW_DST_MASK ) >> OFPFW_NW_DST_SHIFT;
-  uint32_t mask = OFPFW_ALL & ~OFPFW_NW_SRC_MASK & ~OFPFW_NW_DST_MASK;
-  if ( ( wildcards & mask ) == mask && nw_src_mask >=32 && nw_dst_mask >= 32 ) {
-    ret &= append_string( str, size, "all" );
-    return ret;
-  }
+  switch ( *header ) {
+    case OXM_OF_IN_PORT:
+      ret = oxm_match_in_port_to_string( header, str, length );
+      break;
 
-  if ( wildcards & OFPFW_IN_PORT ) {
-    ret &= append_string( str, size, "in_port|" );
-  }
-  if ( wildcards & OFPFW_DL_SRC ) {
-    ret &= append_string( str, size, "dl_src|" );
-  }
-  if ( wildcards & OFPFW_DL_DST ) {
-    ret &= append_string( str, size, "dl_dst|" );
-  }
-  if ( wildcards & OFPFW_DL_TYPE ) {
-    ret &= append_string( str, size, "dl_type|" );
-  }
-  if ( wildcards & OFPFW_DL_VLAN ) {
-    ret &= append_string( str, size, "dl_vlan|" );
-  } 
-  if ( wildcards & OFPFW_DL_VLAN_PCP ) {
-    ret &= append_string( str, size, "dl_vlan_pcp|" );
-  }
-  if ( wildcards & OFPFW_NW_PROTO ) {
-    ret &= append_string( str, size, "nw_proto|" );
-  }
-  if ( wildcards & OFPFW_NW_TOS ) {
-    ret &= append_string( str, size, "nw_tos|" );
-  }
+    case OXM_OF_IN_PHY_PORT:
+      ret = oxm_match_in_phy_port_to_string( header, str, length );
+      break;
 
-  char mask_str[ 16 ];
-  if ( nw_src_mask > 0 ) {
-    snprintf( mask_str, sizeof( mask_str ), "nw_src(%u)|", nw_src_mask );
-    ret &= append_string( str, size, mask_str );
-  }
-  if ( nw_dst_mask > 0 ) {
-    snprintf( mask_str, sizeof( mask_str ), "nw_dst(%u)|", nw_dst_mask );
-    ret &= append_string( str, size, mask_str );
-  }
-  if ( wildcards & OFPFW_TP_SRC ) {
-    ret &= append_string( str, size, "tp_src|" );
-  }
-  if ( wildcards & OFPFW_TP_DST ) {
-    ret &= append_string( str, size, "tp_dst|" );
-  }
+    case OXM_OF_METADATA:
+    case OXM_OF_METADATA_W:
+      ret = oxm_match_metadata_to_string( header, str, length );
+      break;
 
-  if ( strlen( str ) > 0 ) {
-    str[ strlen( str ) - 1 ] = '\0';
+    case OXM_OF_ETH_DST:
+    case OXM_OF_ETH_DST_W:
+    case OXM_OF_ETH_SRC:
+    case OXM_OF_ETH_SRC_W:
+      ret = oxm_match_eth_addr_to_string( header, str, length );
+      break;
+
+    case OXM_OF_ETH_TYPE:
+      ret = oxm_match_eth_type_to_string( header, str, length );
+      break;
+
+    case OXM_OF_VLAN_VID:
+    case OXM_OF_VLAN_VID_W:
+      ret = oxm_match_vlan_vid_to_string( header, str, length );
+      break;
+
+    case OXM_OF_VLAN_PCP:
+      ret = oxm_match_vlan_pcp_to_string( header, str, length );
+      break;
+
+    case OXM_OF_IP_DSCP:
+      ret = oxm_match_ip_dscp_to_string( header, str, length );
+      break;
+
+    case OXM_OF_IP_ECN:
+      ret = oxm_match_ip_ecn_to_string( header, str, length );
+      break;
+
+    case OXM_OF_IP_PROTO:
+      ret = oxm_match_ip_proto_to_string( header, str, length );
+      break;
+
+    case OXM_OF_IPV4_SRC:
+    case OXM_OF_IPV4_SRC_W:
+    case OXM_OF_IPV4_DST:
+    case OXM_OF_IPV4_DST_W:
+      ret = oxm_match_ip_addr_to_string( header, str, length );
+      break;
+
+    case OXM_OF_TCP_SRC:
+    case OXM_OF_TCP_DST:
+      ret = oxm_match_tcp_port_to_string( header, str, length );
+      break;
+
+    case OXM_OF_UDP_SRC:
+    case OXM_OF_UDP_DST:
+      ret = oxm_match_udp_port_to_string( header, str, length );
+      break;
+
+    case OXM_OF_SCTP_SRC:
+    case OXM_OF_SCTP_DST:
+      ret = oxm_match_sctp_port_to_string( header, str, length );
+      break;
+
+    case OXM_OF_ICMPV4_TYPE:
+      ret = oxm_match_icmpv4_type_to_string( header, str, length );
+      break;
+
+    case OXM_OF_ICMPV4_CODE:
+      ret = oxm_match_icmpv4_code_to_string( header, str, length );
+      break;
+
+    case OXM_OF_ARP_OP:
+      ret = oxm_match_arp_op_to_string( header, str, length );
+      break;
+
+    case OXM_OF_ARP_SPA:
+    case OXM_OF_ARP_SPA_W:
+    case OXM_OF_ARP_TPA:
+    case OXM_OF_ARP_TPA_W:
+      ret = oxm_match_arp_pa_to_string( header, str, length );
+      break;
+
+    case OXM_OF_ARP_SHA:
+    case OXM_OF_ARP_SHA_W:
+    case OXM_OF_ARP_THA:
+    case OXM_OF_ARP_THA_W:
+      ret = oxm_match_arp_ha_to_string( header, str, length );
+      break;
+
+    case OXM_OF_IPV6_SRC:
+    case OXM_OF_IPV6_SRC_W:
+    case OXM_OF_IPV6_DST:
+    case OXM_OF_IPV6_DST_W:
+      ret = oxm_match_ipv6_addr_to_string( header, str, length );
+      break;
+
+    case OXM_OF_IPV6_FLABEL:
+    case OXM_OF_IPV6_FLABEL_W:
+      ret = oxm_match_ipv6_flabel_to_string( header, str, length );
+      break;
+
+    case OXM_OF_ICMPV6_TYPE:
+      ret = oxm_match_icmpv6_type_to_string( header, str, length );
+      break;
+
+    case OXM_OF_ICMPV6_CODE:
+      ret = oxm_match_icmpv6_code_to_string( header, str, length );
+      break;
+
+    case OXM_OF_IPV6_ND_TARGET:
+      ret = oxm_match_ipv6_nd_target_to_string( header, str, length );
+      break;
+
+    case OXM_OF_IPV6_ND_SLL:
+    case OXM_OF_IPV6_ND_TLL:
+      ret = oxm_match_ipv6_nd_ll_to_string( header, str, length );
+      break;
+
+    case OXM_OF_MPLS_LABEL:
+      ret = oxm_match_mpls_label_to_string( header, str, length );
+      break;
+
+    case OXM_OF_MPLS_TC:
+      ret = oxm_match_mpls_tc_to_string( header, str, length );
+      break;
+
+    case OXM_OF_MPLS_BOS:
+      ret = oxm_match_mpls_bos_to_string( header, str, length );
+      break;
+
+    case OXM_OF_PBB_ISID:
+    case OXM_OF_PBB_ISID_W:
+      ret = oxm_match_pbb_isid_to_string( header, str, length );
+      break;
+
+    case OXM_OF_TUNNEL_ID:
+    case OXM_OF_TUNNEL_ID_W:
+      ret = oxm_match_tunnel_id_to_string( header, str, length );
+      break;
+
+    case OXM_OF_IPV6_EXTHDR:
+    case OXM_OF_IPV6_EXTHDR_W:
+      ret = oxm_match_ipv6_exthdr_to_string( header, str, length );
+      break;
+
+    default:
+    {
+      ret = false;
+      error( "Undefined match type ( header = %#x, type = %#x, hash_mask = %u, length = %u ).",
+             *header, OXM_TYPE( *header ), OXM_HASMASK( *header ), OXM_LENGTH( *header ) );
+    }
+    break;
   }
 
   return ret;
@@ -231,61 +1130,45 @@ wildcards_to_string( uint32_t wildcards, char *str, size_t size ) {
 
 
 bool
-match_to_string( const struct ofp_match *match, char *str, size_t size ) {
-  assert( match != NULL );
+match_to_string( const oxm_matches *matches, char *str, size_t length ) {
   assert( str != NULL );
+  assert( length > 0 );
 
-  char wildcards_str[ 256 ];
-  char nw_src[ 16 ];
-  char nw_dst[ 16 ];
-  struct in_addr addr;
-  unsigned int masklen;
-  unsigned int nw_src_prefixlen;
-  unsigned int nw_dst_prefixlen;
+  memset( str, '\0', length );
 
-  wildcards_to_string( match->wildcards, wildcards_str, sizeof( wildcards_str ) );
-  addr.s_addr = htonl( match->nw_src );
-  memset( nw_src, '\0', sizeof( nw_src ) );
-  inet_ntop( AF_INET, &addr, nw_src, sizeof( nw_src ) );
-  addr.s_addr = htonl( match->nw_dst );
-  memset( nw_dst, '\0', sizeof( nw_dst ) );
-  inet_ntop( AF_INET, &addr, nw_dst, sizeof( nw_dst ) );
-  masklen = ( match->wildcards & OFPFW_NW_SRC_MASK ) >> OFPFW_NW_SRC_SHIFT;
-  nw_src_prefixlen = ( masklen >= 32 ? 0 : 32 - masklen );
-  masklen = ( match->wildcards & OFPFW_NW_DST_MASK ) >> OFPFW_NW_DST_SHIFT;
-  nw_dst_prefixlen = ( masklen >= 32 ? 0 : 32 - masklen );
-
-  memset( str, '\0', size );
-
-  int ret = snprintf(
-              str,
-              size,
-              "wildcards = %#x(%s), in_port = %u, "
-              "dl_src = %02x:%02x:%02x:%02x:%02x:%02x, "
-              "dl_dst = %02x:%02x:%02x:%02x:%02x:%02x, "
-              "dl_vlan = %u, dl_vlan_pcp = %u, dl_type = %#x, "
-              "nw_tos = %u, nw_proto = %u, nw_src = %s/%u, nw_dst = %s/%u, "
-              "tp_src = %u, tp_dst = %u",
-              match->wildcards, wildcards_str, match->in_port,
-              match->dl_src[ 0 ], match->dl_src[ 1 ], match->dl_src[ 2 ],
-              match->dl_src[ 3 ], match->dl_src[ 4 ], match->dl_src[ 5 ],
-              match->dl_dst[ 0 ], match->dl_dst[ 1 ], match->dl_dst[ 2 ],
-              match->dl_dst[ 3 ], match->dl_dst[ 4 ], match->dl_dst[ 5 ],
-              match->dl_vlan, match->dl_vlan_pcp, match->dl_type,
-              match->nw_tos, match->nw_proto, nw_src, nw_src_prefixlen,
-              nw_dst, nw_dst_prefixlen, match->tp_src, match->tp_dst
-            );
-
-  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
-    return false;
+  bool ret = true;
+  if ( ( matches != NULL ) && ( matches->n_matches > 0 ) ) {
+    for ( list_element *e = matches->list; e != NULL; e = e->next ) {
+      size_t current_length = strlen( str );
+      size_t remaining_length = length - current_length;
+      if ( current_length > 0 && remaining_length > 2 ) {
+        snprintf( str + current_length, remaining_length, ", " );
+        remaining_length -= 2;
+        current_length += 2;
+      }
+      char *p = str + current_length;
+      const oxm_match_header *header = e->data;
+      ret = oxm_match_to_string( header, p, remaining_length );
+      if ( !ret ) {
+        break;
+      }
+    }
+  }
+  else {
+    int ret_val = snprintf( str, length, "all" );
+    if ( ( ret_val >= ( int ) length ) || ( ret_val < 0 ) ) {
+      ret = false;
+    }
   }
 
-  return true;
+  str[ length - 1 ] = '\0';
+
+  return ret;
 }
 
 
 bool
-phy_port_to_string( const struct ofp_phy_port *phy_port, char *str, size_t size ) {
+port_to_string( const struct ofp_port *phy_port, char *str, size_t size ) {
   assert( phy_port != NULL );
   assert( str != NULL );
 
@@ -296,12 +1179,14 @@ phy_port_to_string( const struct ofp_phy_port *phy_port, char *str, size_t size 
               size,
               "port_no = %u, hw_addr = %02x:%02x:%02x:%02x:%02x:%02x, "
               "name = %s, config = %#x, state = %#x, "
-              "curr = %#x, advertised = %#x, supported = %#x, peer = %#x",
+              "curr = %#x, advertised = %#x, supported = %#x, peer = %#x, "
+              "curr_speed = %#x, max_speed = %#x",
               phy_port->port_no,
               phy_port->hw_addr[ 0 ], phy_port->hw_addr[ 1 ], phy_port->hw_addr[ 2 ],
               phy_port->hw_addr[ 3 ], phy_port->hw_addr[ 4 ], phy_port->hw_addr[ 5 ],
               phy_port->name, phy_port->config, phy_port->state,
-              phy_port->curr, phy_port->advertised, phy_port->supported, phy_port->peer
+              phy_port->curr, phy_port->advertised, phy_port->supported, phy_port->peer,
+              phy_port->curr_speed, phy_port->max_speed
             );
 
   if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
@@ -327,11 +1212,18 @@ action_output_to_string( const struct ofp_action_output *action, char *str, size
 
 
 static bool
-action_set_vlan_vid_to_string( const struct ofp_action_vlan_vid *action, char *str, size_t size ) {
+action_set_field_to_string( const struct ofp_action_set_field *action, char *str, size_t size ) {
   assert( action != NULL );
   assert( str != NULL );
 
-  int ret = snprintf( str, size, "set_vlan_vid: vlan_vid=%#x", action->vlan_vid );
+  char oxm_str[ 128 ];
+
+  memset( oxm_str, '\0', sizeof( oxm_str ) );
+
+  uint16_t offset = offsetof( struct ofp_action_set_field, field );
+  const oxm_match_header *header = ( const oxm_match_header * ) ( ( const char * ) action + offset );
+  oxm_match_to_string( header, oxm_str, sizeof( oxm_str ) );
+  int ret = snprintf( str, size, "set_field: field=[%s]", oxm_str );
   if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
     return false;
   }
@@ -341,11 +1233,11 @@ action_set_vlan_vid_to_string( const struct ofp_action_vlan_vid *action, char *s
 
 
 static bool
-action_set_vlan_pcp_to_string( const struct ofp_action_vlan_pcp *action, char *str, size_t size ) {
+action_set_queue_to_string( const struct ofp_action_set_queue *action, char *str, size_t size ) {
   assert( action != NULL );
   assert( str != NULL );
 
-  int ret = snprintf( str, size, "set_vlan_pcp: vlan_pcp=%#x", action->vlan_pcp );
+  int ret = snprintf( str, size, "set_queue: queue_id=%u", action->queue_id );
   if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
     return false;
   }
@@ -355,12 +1247,11 @@ action_set_vlan_pcp_to_string( const struct ofp_action_vlan_pcp *action, char *s
 
 
 static bool
-action_strip_vlan_to_string( const struct ofp_action_header *action, char *str, size_t size ) {
-  UNUSED( action );
+action_experimenter_to_string( const struct ofp_action_experimenter_header *action, char *str, size_t size ) {
   assert( action != NULL );
   assert( str != NULL );
 
-  int ret = snprintf( str, size, "strip_vlan" );
+  int ret = snprintf( str, size, "experimenter: experimenter=%#x", action->experimenter );
   if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
     return false;
   }
@@ -370,14 +1261,11 @@ action_strip_vlan_to_string( const struct ofp_action_header *action, char *str, 
 
 
 static bool
-action_dl_addr_to_string( const struct ofp_action_dl_addr *action, char *str, size_t size, uint16_t type ) {
+action_copy_ttl_out_to_string( const struct ofp_action_header *action, char *str, size_t size ) {
   assert( action != NULL );
   assert( str != NULL );
 
-  int ret = snprintf( str, size, "set_dl_%s: dl_addr=%02x:%02x:%02x:%02x:%02x:%02x",
-                      type == OFPAT_SET_DL_SRC ? "src" : "dst",
-                      action->dl_addr[ 0 ], action->dl_addr[ 1 ], action->dl_addr[ 2 ],
-                      action->dl_addr[ 3 ], action->dl_addr[ 4 ], action->dl_addr[ 5 ] );
+  int ret = snprintf( str, size, "copy_ttl_out" );
   if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
     return false;
   }
@@ -387,29 +1275,11 @@ action_dl_addr_to_string( const struct ofp_action_dl_addr *action, char *str, si
 
 
 static bool
-action_set_dl_src_to_string( const struct ofp_action_dl_addr *action, char *str, size_t size ) {
-  return action_dl_addr_to_string( action, str, size, OFPAT_SET_DL_SRC );
-}
-
-
-static bool
-action_set_dl_dst_to_string( const struct ofp_action_dl_addr *action, char *str, size_t size ) {
-  return action_dl_addr_to_string( action, str, size, OFPAT_SET_DL_DST );
-}
-
-
-static bool
-action_nw_addr_to_string( const struct ofp_action_nw_addr *action, char *str, size_t size, uint16_t type ) {
+action_copy_ttl_in_to_string( const struct ofp_action_header *action, char *str, size_t size ) {
   assert( action != NULL );
   assert( str != NULL );
 
-  struct in_addr addr;
-  addr.s_addr = htonl( action->nw_addr );
-  char nw_addr[ 16 ];
-  memset( nw_addr, '\0', sizeof( nw_addr ) );
-  inet_ntop( AF_INET, &addr, nw_addr, sizeof( nw_addr ) );
-  int ret = snprintf( str, size, "set_nw_%s: nw_addr=%s",
-                      type == OFPAT_SET_NW_SRC ? "src" : "dst", nw_addr );
+  int ret = snprintf( str, size, "copy_ttl_in" );
   if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
     return false;
   }
@@ -419,23 +1289,11 @@ action_nw_addr_to_string( const struct ofp_action_nw_addr *action, char *str, si
 
 
 static bool
-action_set_nw_src_to_string( const struct ofp_action_nw_addr *action, char *str, size_t size ) {
-  return action_nw_addr_to_string( action, str, size, OFPAT_SET_NW_SRC );
-}
-
-
-static bool
-action_set_nw_dst_to_string( const struct ofp_action_nw_addr *action, char *str, size_t size ) {
-  return action_nw_addr_to_string( action, str, size, OFPAT_SET_NW_DST );
-}
-
-
-static bool
-action_set_nw_tos_to_string( const struct ofp_action_nw_tos *action, char *str, size_t size ) {
+action_set_mpls_ttl_to_string( const struct ofp_action_mpls_ttl *action, char *str, size_t size ) {
   assert( action != NULL );
   assert( str != NULL );
 
-  int ret = snprintf( str, size, "set_nw_tos: nw_tos=%#x", action->nw_tos );
+  int ret = snprintf( str, size, "set_mpls_ttl: mpls_ttl=%u", action->mpls_ttl );
   if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
     return false;
   }
@@ -445,12 +1303,11 @@ action_set_nw_tos_to_string( const struct ofp_action_nw_tos *action, char *str, 
 
 
 static bool
-action_tp_port_to_string( const struct ofp_action_tp_port *action, char *str, size_t size, uint16_t type ) {
+action_dec_mpls_ttl_to_string( const struct ofp_action_header *action, char *str, size_t size ) {
   assert( action != NULL );
   assert( str != NULL );
 
-  int ret = snprintf( str, size, "set_tp_%s: tp_port=%u",
-                      type == OFPAT_SET_TP_SRC ? "src" : "dst", action->tp_port );
+  int ret = snprintf( str, size, "dec_mpls_ttl" );
   if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
     return false;
   }
@@ -460,23 +1317,11 @@ action_tp_port_to_string( const struct ofp_action_tp_port *action, char *str, si
 
 
 static bool
-action_set_tp_src_to_string( const struct ofp_action_tp_port *action, char *str, size_t size ) {
-  return action_tp_port_to_string( action, str, size, OFPAT_SET_TP_SRC );
-}
-
-
-static bool
-action_set_tp_dst_to_string( const struct ofp_action_tp_port *action, char *str, size_t size ) {
-  return action_tp_port_to_string( action, str, size, OFPAT_SET_TP_DST );
-}
-
-
-static bool
-action_enqueue_to_string( const struct ofp_action_enqueue *action, char *str, size_t size ) {
+action_push_vlan_to_string( const struct ofp_action_push *action, char *str, size_t size ) {
   assert( action != NULL );
   assert( str != NULL );
 
-  int ret = snprintf( str, size, "enqueue: port=%u queue_id=%u", action->port, action->queue_id );
+  int ret = snprintf( str, size, "push_vlan: ethertype=%#x", action->ethertype );
   if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
     return false;
   }
@@ -486,11 +1331,109 @@ action_enqueue_to_string( const struct ofp_action_enqueue *action, char *str, si
 
 
 static bool
-action_vendor_to_string( const struct ofp_action_vendor_header *action, char *str, size_t size ) {
+action_pop_vlan_to_string( const struct ofp_action_header *action, char *str, size_t size ) {
   assert( action != NULL );
   assert( str != NULL );
 
-  int ret = snprintf( str, size, "vendor: vendor=%#x", action->vendor );
+  int ret = snprintf( str, size, "pop_vlan" );
+  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+action_push_mpls_to_string( const struct ofp_action_push *action, char *str, size_t size ) {
+  assert( action != NULL );
+  assert( str != NULL );
+
+  int ret = snprintf( str, size, "push_mpls: ethertype=%#x", action->ethertype );
+  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+action_pop_mpls_to_string( const struct ofp_action_pop_mpls *action, char *str, size_t size ) {
+  assert( action != NULL );
+  assert( str != NULL );
+
+  int ret = snprintf( str, size, "pop_mpls: ethertype=%#x", action->ethertype );
+  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+action_group_to_string( const struct ofp_action_group *action, char *str, size_t size ) {
+  assert( action != NULL );
+  assert( str != NULL );
+
+  int ret = snprintf( str, size, "group: group_id=%#x", action->group_id );
+  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+action_set_nw_ttl_to_string( const struct ofp_action_nw_ttl *action, char *str, size_t size ) {
+  assert( action != NULL );
+  assert( str != NULL );
+
+  int ret = snprintf( str, size, "set_nw_ttl: nw_ttl=%u", action->nw_ttl );
+  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+action_dec_nw_ttl_to_string( const struct ofp_action_header *action, char *str, size_t size ) {
+  assert( action != NULL );
+  assert( str != NULL );
+
+  int ret = snprintf( str, size, "dec_nw_ttl" );
+  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+action_push_pbb_to_string( const struct ofp_action_push *action, char *str, size_t size ) {
+  assert( action != NULL );
+  assert( str != NULL );
+
+  int ret = snprintf( str, size, "push_pbb: ethertype=%#x", action->ethertype );
+  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+action_pop_pbb_to_string( const struct ofp_action_header *action, char *str, size_t size ) {
+  assert( action != NULL );
+  assert( str != NULL );
+
+  int ret = snprintf( str, size, "pop_pbb" );
   if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
     return false;
   }
@@ -524,50 +1467,258 @@ actions_to_string( const struct ofp_action_header *actions, uint16_t actions_len
       case OFPAT_OUTPUT:
         ret = action_output_to_string( ( const struct ofp_action_output * ) header, p, remaining_str_length );
         break;
-      case OFPAT_SET_VLAN_VID:
-        ret = action_set_vlan_vid_to_string( ( const struct ofp_action_vlan_vid * ) header, p, remaining_str_length );
+      case OFPAT_COPY_TTL_OUT:
+        ret = action_copy_ttl_out_to_string( ( const struct ofp_action_header * ) header, p, remaining_str_length );
         break;
-      case OFPAT_SET_VLAN_PCP:
-        ret = action_set_vlan_pcp_to_string( ( const struct ofp_action_vlan_pcp * ) header, p, remaining_str_length );
+      case OFPAT_COPY_TTL_IN:
+        ret = action_copy_ttl_in_to_string( ( const struct ofp_action_header * ) header, p, remaining_str_length );
         break;
-      case OFPAT_STRIP_VLAN:
-        ret = action_strip_vlan_to_string( ( const struct ofp_action_header * ) header, p, remaining_str_length );
+      case OFPAT_SET_MPLS_TTL:
+        ret = action_set_mpls_ttl_to_string( ( const struct ofp_action_mpls_ttl * ) header, p, remaining_str_length );
         break;
-      case OFPAT_SET_DL_SRC:
-        ret = action_set_dl_src_to_string( ( const struct ofp_action_dl_addr * ) header, p, remaining_str_length );
+      case OFPAT_DEC_MPLS_TTL:
+        ret = action_dec_mpls_ttl_to_string( ( const struct ofp_action_header * ) header, p, remaining_str_length );
         break;
-      case OFPAT_SET_DL_DST:
-        ret = action_set_dl_dst_to_string( ( const struct ofp_action_dl_addr * ) header, p, remaining_str_length );
+      case OFPAT_PUSH_VLAN:
+        ret = action_push_vlan_to_string( ( const struct ofp_action_push * ) header, p, remaining_str_length );
         break;
-      case OFPAT_SET_NW_SRC:
-        ret = action_set_nw_src_to_string( ( const struct ofp_action_nw_addr * ) header, p, remaining_str_length );
+      case OFPAT_POP_VLAN:
+        ret = action_pop_vlan_to_string( ( const struct ofp_action_header * ) header, p, remaining_str_length );
         break;
-      case OFPAT_SET_NW_DST:
-        ret = action_set_nw_dst_to_string( ( const struct ofp_action_nw_addr * ) header, p, remaining_str_length );
+      case OFPAT_PUSH_MPLS:
+        ret = action_push_mpls_to_string( ( const struct ofp_action_push * ) header, p, remaining_str_length );
         break;
-      case OFPAT_SET_NW_TOS:
-        ret = action_set_nw_tos_to_string( ( const struct ofp_action_nw_tos * ) header, p, remaining_str_length );
+      case OFPAT_POP_MPLS:
+        ret = action_pop_mpls_to_string( ( const struct ofp_action_pop_mpls * ) header, p, remaining_str_length );
         break;
-      case OFPAT_SET_TP_SRC:
-        ret = action_set_tp_src_to_string( ( const struct ofp_action_tp_port * ) header, p, remaining_str_length );
+      case OFPAT_SET_QUEUE:
+        ret = action_set_queue_to_string( ( const struct ofp_action_set_queue * ) header, p, remaining_str_length );
         break;
-      case OFPAT_SET_TP_DST:
-        ret = action_set_tp_dst_to_string( ( const struct ofp_action_tp_port * ) header, p, remaining_str_length );
+      case OFPAT_GROUP:
+        ret = action_group_to_string( ( const struct ofp_action_group * ) header, p, remaining_str_length );
         break;
-      case OFPAT_ENQUEUE:
-        ret = action_enqueue_to_string( ( const struct ofp_action_enqueue * ) header, p, remaining_str_length );
+      case OFPAT_SET_NW_TTL:
+        ret = action_set_nw_ttl_to_string( ( const struct ofp_action_nw_ttl * ) header, p, remaining_str_length );
         break;
-      case OFPAT_VENDOR:
-        ret = action_vendor_to_string( ( const struct ofp_action_vendor_header * ) header, p, remaining_str_length );
+      case OFPAT_DEC_NW_TTL:
+        ret = action_dec_nw_ttl_to_string( ( const struct ofp_action_header * ) header, p, remaining_str_length );
+        break;
+      case OFPAT_SET_FIELD:
+        ret = action_set_field_to_string( ( const struct ofp_action_set_field * ) header, p, remaining_str_length );
+        break;
+      case OFPAT_PUSH_PBB:
+        ret = action_push_pbb_to_string( ( const struct ofp_action_push * ) header, p, remaining_str_length );
+        break;
+      case OFPAT_POP_PBB:
+        ret = action_pop_pbb_to_string( ( const struct ofp_action_header * ) header, p, remaining_str_length );
+        break;
+      case OFPAT_EXPERIMENTER:
+        ret = action_experimenter_to_string( ( const struct ofp_action_experimenter_header * ) header, p, remaining_str_length );
         break;
       default:
-        snprintf( p, remaining_str_length, "undefined: type=%#x", header->type );
+        {
+          int ret_val = snprintf( p, remaining_str_length, "undefined: type=%#x", header->type );
+          if ( ( ret_val >= ( int ) remaining_str_length ) || ( ret_val < 0 ) ) {
+            ret = false;
+          }
+        }
         break;
     }
 
     if ( ret == false ) {
       break;
     } 
+    offset += header->len;
+  }
+
+  str[ str_length - 1 ] = '\0';
+
+  return ret;
+}
+
+
+static bool
+instruction_goto_table_to_string( const struct ofp_instruction_goto_table *instruction, char *str, size_t size ) {
+  assert( instruction != NULL );
+  assert( str != NULL );
+
+  int ret = snprintf( str, size, "goto_table: table_id=%#x", instruction->table_id );
+  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+instruction_write_metadata_to_string( const struct ofp_instruction_write_metadata *instruction, char *str, size_t size ) {
+  assert( instruction != NULL );
+  assert( str != NULL );
+
+  int ret = snprintf( str, size, "write_metadata: metadata=%#" PRIx64 " metadata_mask=%#" PRIx64, instruction->metadata, instruction->metadata_mask );
+  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+instruction_write_actions_to_string( const struct ofp_instruction_actions *instruction, char *str, size_t size ) {
+  assert( instruction != NULL );
+  assert( str != NULL );
+
+  char act_str[ 1024 ];
+
+  memset( act_str, '\0', sizeof( act_str ) );
+
+  uint16_t offset = offsetof( struct ofp_instruction_actions, actions );
+  const struct ofp_action_header *actions = ( const struct ofp_action_header * ) ( ( const char * ) instruction + offset );
+  uint16_t actions_len = ( uint16_t ) ( instruction->len - offset );
+  if ( actions_len > 0 ) {
+    actions_to_string( actions, actions_len, act_str, sizeof( act_str ) );
+    int ret = snprintf( str, size, "write_actions: actions=[%s]", act_str );
+    if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+      return false;
+    }
+  } else {
+    int ret = snprintf( str, size, "write_actions: actions=[no action]" );
+    if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+static bool
+instruction_apply_actions_to_string( const struct ofp_instruction_actions *instruction, char *str, size_t size ) {
+  assert( instruction != NULL );
+  assert( str != NULL );
+
+  char act_str[ 1024 ];
+
+  uint16_t offset = offsetof( struct ofp_instruction_actions, actions );
+  const struct ofp_action_header *actions = ( const struct ofp_action_header * ) ( ( const char * ) instruction + offset );
+  uint16_t actions_len = ( uint16_t ) ( instruction->len - offset );
+  if ( actions_len > 0 ) {
+    actions_to_string( actions, actions_len, act_str, sizeof( act_str ) );
+    int ret = snprintf( str, size, "apply_actions: actions=[%s]", act_str );
+    if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+      return false;
+    }
+  } else {
+    int ret = snprintf( str, size, "apply_actions: actions=[no action]" );
+    if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+static bool
+instruction_clear_actions_to_string( const struct ofp_instruction_actions *instruction, char *str, size_t size ) {
+  assert( instruction != NULL );
+  assert( str != NULL );
+
+  int ret = snprintf( str, size, "clear_actions" );
+  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+instruction_meter_to_string( const struct ofp_instruction_meter *instruction, char *str, size_t size ) {
+  assert( instruction != NULL );
+  assert( str != NULL );
+
+  int ret = snprintf( str, size, "meter: meter_id=%#x", instruction->meter_id );
+  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool
+instruction_experimenter_to_string( const struct ofp_instruction_experimenter *instruction, char *str, size_t size ) {
+  assert( instruction != NULL );
+  assert( str != NULL );
+
+  int ret = snprintf( str, size, "experimenter: experimenter=%#x", instruction->experimenter );
+  if ( ( ret >= ( int ) size ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+bool
+instructions_to_string( const struct ofp_instruction *instructions, uint16_t instructions_length, char *str, size_t str_length ) {
+  assert( instructions != NULL );
+  assert( str != NULL );
+  assert( instructions_length > 0 );
+  assert( str_length > 0 );
+
+  memset( str, '\0', str_length );
+
+  bool ret = true;
+  size_t offset = 0;
+  while ( ( instructions_length - offset ) >= sizeof( struct ofp_instruction ) ) {
+    size_t current_str_length = strlen( str );
+    size_t remaining_str_length = str_length - current_str_length;
+    if ( current_str_length > 0 && remaining_str_length > 2 ) {
+      snprintf( str + current_str_length, remaining_str_length, ", " );
+      remaining_str_length -= 2;
+      current_str_length += 2;
+    }
+    char *p = str + current_str_length;
+    const struct ofp_instruction *header = ( const struct ofp_instruction * ) ( ( const char * ) instructions + offset );
+    switch( header->type ) {
+      case OFPIT_GOTO_TABLE:
+        ret = instruction_goto_table_to_string( ( const struct ofp_instruction_goto_table * ) header, p, remaining_str_length );
+        break;
+      case OFPIT_WRITE_METADATA:
+        ret = instruction_write_metadata_to_string( ( const struct ofp_instruction_write_metadata * ) header, p, remaining_str_length );
+        break;
+      case OFPIT_WRITE_ACTIONS:
+        ret = instruction_write_actions_to_string( ( const struct ofp_instruction_actions * ) header, p, remaining_str_length );
+        break;
+      case OFPIT_APPLY_ACTIONS:
+        ret = instruction_apply_actions_to_string( ( const struct ofp_instruction_actions * ) header, p, remaining_str_length );
+        break;
+      case OFPIT_CLEAR_ACTIONS:
+        ret = instruction_clear_actions_to_string( ( const struct ofp_instruction_actions * ) header, p, remaining_str_length );
+        break;
+      case OFPIT_METER:
+        ret = instruction_meter_to_string( ( const struct ofp_instruction_meter * ) header, p, remaining_str_length );
+        break;
+      case OFPIT_EXPERIMENTER:
+        ret = instruction_experimenter_to_string( ( const struct ofp_instruction_experimenter * ) header, p, remaining_str_length );
+        break;
+      default:
+        {
+          int ret_val = snprintf( p, remaining_str_length, "undefined: type=%#x", header->type );
+          if ( ( ret_val >= ( int ) remaining_str_length ) || ( ret_val < 0 ) ) {
+            ret = false;
+          }
+        }
+        break;
+    }
+
+    if ( ret == false ) {
+      break;
+    }
     offset += header->len;
   }
 

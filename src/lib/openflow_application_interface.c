@@ -145,6 +145,7 @@ extern void mock_critical( const char *format, ... );
 
 #endif // UNIT_TESTING
 
+
 static bool openflow_application_interface_initialized = false;
 static openflow_event_handlers_t event_handlers;
 static char service_name[ MESSENGER_SERVICE_NAME_LENGTH ];
@@ -300,6 +301,26 @@ set_error_handler( error_handler callback, void *user_data ) {
 
 
 bool
+set_experimenter_error_handler( experimenter_error_handler callback, void *user_data ) {
+  if ( callback == NULL ) {
+    die( "Callback function ( experimenter_error_handler ) must not be NULL." );
+  }
+  assert( callback != NULL );
+
+  maybe_init_openflow_application_interface();
+  assert( openflow_application_interface_initialized );
+
+  debug( "Setting an experimenter error handler ( callback = %p, user_data = %p ).",
+         callback, user_data );
+
+  event_handlers.experimenter_error_callback = callback;
+  event_handlers.experimenter_error_user_data = user_data;
+
+  return true;
+}
+
+
+bool
 set_echo_reply_handler( echo_reply_handler callback, void *user_data ) {
   if ( callback == NULL ) {
     die( "Callback function ( echo_reply_handler ) must not be NULL." );
@@ -320,20 +341,20 @@ set_echo_reply_handler( echo_reply_handler callback, void *user_data ) {
 
 
 bool
-set_vendor_handler( vendor_handler callback, void *user_data ) {
+set_experimenter_handler( experimenter_handler callback, void *user_data ) {
   if ( callback == NULL ) {
-    die( "Callback function ( vendor_handler ) must not be NULL." );
+    die( "Callback function ( experimenter_handler ) must not be NULL." );
   }
   assert( callback != NULL );
 
   maybe_init_openflow_application_interface();
   assert( openflow_application_interface_initialized );
 
-  debug( "Setting a vendor handler ( callback = %p, user_data = %p ).",
+  debug( "Setting a experimenter handler ( callback = %p, user_data = %p ).",
          callback, user_data );
 
-  event_handlers.vendor_callback = callback;
-  event_handlers.vendor_user_data = user_data;
+  event_handlers.experimenter_callback = callback;
+  event_handlers.experimenter_user_data = user_data;
 
   return true;
 }
@@ -382,7 +403,7 @@ set_get_config_reply_handler( get_config_reply_handler callback, void *user_data
 bool
 _set_packet_in_handler( bool simple_callback, void *callback, void *user_data ) {
   if ( callback == NULL ) {
-    die( "Callback function (packet_in_handler) must not be NULL." );
+    die( "Callback function ( packet_in_handler ) must not be NULL." );
   }
   assert( callback != NULL );
 
@@ -402,7 +423,7 @@ _set_packet_in_handler( bool simple_callback, void *callback, void *user_data ) 
 bool
 _set_flow_removed_handler( bool simple_callback, void *callback, void *user_data ) {
   if ( callback == NULL ) {
-    die( "Callback function (flow_removed_handler) must not be NULL." );
+    die( "Callback function ( flow_removed_handler ) must not be NULL." );
   }
   assert( callback != NULL );
 
@@ -440,20 +461,20 @@ set_port_status_handler( port_status_handler callback, void *user_data ) {
 
 
 bool
-set_stats_reply_handler( stats_reply_handler callback, void *user_data ) {
+set_multipart_reply_handler( multipart_reply_handler callback, void *user_data ) {
   if ( callback == NULL ) {
-    die( "Callback function ( stats_reply_handler ) must not be NULL." );
+    die( "Callback function ( multipart_reply_handler ) must not be NULL." );
   }
   assert( callback != NULL );
 
   maybe_init_openflow_application_interface();
   assert( openflow_application_interface_initialized );
 
-  debug( "Setting a stats reply handler ( callback = %p, user_data = %p ).",
+  debug( "Setting a multipart reply handler ( callback = %p, user_data = %p ).",
          callback, user_data );
 
-  event_handlers.stats_reply_callback = callback;
-  event_handlers.stats_reply_user_data = user_data;
+  event_handlers.multipart_reply_callback = callback;
+  event_handlers.multipart_reply_user_data = user_data;
 
   return true;
 }
@@ -500,6 +521,46 @@ set_queue_get_config_reply_handler( queue_get_config_reply_handler callback, voi
 
 
 bool
+set_role_reply_handler( role_reply_handler callback, void *user_data ) {
+  if ( callback == NULL ) {
+    die( "Callback function ( role_reply_handler ) must not be NULL." );
+  }
+  assert( callback != NULL );
+
+  maybe_init_openflow_application_interface();
+  assert( openflow_application_interface_initialized );
+
+  debug( "Setting a role reply handler ( callback = %p, user_data = %p ).",
+         callback, user_data );
+
+  event_handlers.role_reply_callback = callback;
+  event_handlers.role_reply_user_data = user_data;
+
+  return true;
+}
+
+
+bool
+set_get_async_reply_handler( get_async_reply_handler callback, void *user_data ) {
+  if ( callback == NULL ) {
+    die( "Callback function ( get_async_reply_handler ) must not be NULL." );
+  }
+  assert( callback != NULL );
+
+  maybe_init_openflow_application_interface();
+  assert( openflow_application_interface_initialized );
+
+  debug( "Setting a get async reply handler ( callback = %p, user_data = %p ).",
+         callback, user_data );
+
+  event_handlers.get_async_reply_callback = callback;
+  event_handlers.get_async_reply_user_data = user_data;
+
+  return true;
+}
+
+
+bool
 set_list_switches_reply_handler( list_switches_reply_handler callback ) {
   if ( callback == NULL ) {
     die( "Callback function ( list_switches_reply_handler ) must not be NULL." );
@@ -518,6 +579,10 @@ set_list_switches_reply_handler( list_switches_reply_handler callback ) {
 
 
 static void
+handle_experimenter_error( const uint64_t datapath_id, buffer *data );
+
+
+static void
 handle_error( const uint64_t datapath_id, buffer *data ) {
   uint16_t type, code;
   uint32_t transaction_id;
@@ -533,13 +598,19 @@ handle_error( const uint64_t datapath_id, buffer *data ) {
 
   transaction_id = ntohl( error_msg->header.xid );
   type = ntohs( error_msg->type );
+
+  if ( type == OFPET_EXPERIMENTER ) {
+    handle_experimenter_error( datapath_id, data );
+    return;
+  }
+
   code = ntohs( error_msg->code );
 
   body = duplicate_buffer( data );
   remove_front_buffer( body, offsetof( struct ofp_error_msg, data ) );
 
-  debug( "An error message is received from %#lx "
-         "( transaction_id = %#x, type = %u, code = %u, data length = %u ).",
+  debug( "An experimenter error message is received from %#lx "
+         "( transaction_id = %#x, type = %#x, code = %#x, data length = %u ).",
          datapath_id, transaction_id, type, code, body->length );
 
   if ( event_handlers.error_callback == NULL ) {
@@ -557,6 +628,54 @@ handle_error( const uint64_t datapath_id, buffer *data ) {
                                  code,
                                  body,
                                  event_handlers.error_user_data );
+
+  free_buffer( body );
+}
+
+
+static void
+handle_experimenter_error( const uint64_t datapath_id, buffer *data ) {
+  uint16_t type, exp_type;
+  uint32_t experimenter;
+  uint32_t transaction_id;
+  buffer *body;
+  struct ofp_error_experimenter_msg *error_experimenter_msg;
+
+  if ( ( data == NULL ) || ( ( data != NULL ) && ( data->length == 0 ) ) ) {
+    critical( "An OpenFlow message must be filled before calling handle_experimenter_error()." );
+    assert( 0 );
+  }
+
+  error_experimenter_msg = ( struct ofp_error_experimenter_msg * ) data->data;
+
+  transaction_id = ntohl( error_experimenter_msg->header.xid );
+  type = ntohs( error_experimenter_msg->type );
+  exp_type = ntohs( error_experimenter_msg->exp_type );
+  experimenter = ntohl( error_experimenter_msg->experimenter );
+
+  body = duplicate_buffer( data );
+  remove_front_buffer( body, offsetof( struct ofp_error_experimenter_msg, data ) );
+
+  debug( "An error message is received from %#lx "
+         "( transaction_id = %#x, type = %#x, exp_type = %#x, experimenter = %#x, data length = %u ).",
+         datapath_id, transaction_id, type, exp_type, experimenter, body->length );
+
+  if ( event_handlers.experimenter_error_callback == NULL ) {
+    debug( "Callback function for error events is not set." );
+    free_buffer( body );
+    return;
+  }
+
+  debug( "Calling experimenter error handler ( callback = %p, user_data = %p ).",
+         event_handlers.experimenter_error_callback, event_handlers.experimenter_error_user_data );
+
+  event_handlers.experimenter_error_callback( datapath_id,
+                                 transaction_id,
+                                 type,
+                                 exp_type,
+                                 experimenter,
+                                 body,
+                                 event_handlers.experimenter_error_user_data );
 
   free_buffer( body );
 }
@@ -612,52 +731,53 @@ handle_echo_reply( const uint64_t datapath_id, buffer *data ) {
 }
 
 
-
 static void
-handle_vendor( const uint64_t datapath_id, buffer *data ) {
+handle_experimenter( const uint64_t datapath_id, buffer *data ) {
   uint16_t body_length;
-  uint32_t vendor, transaction_id;
+  uint32_t experimenter, exp_type, transaction_id;
   buffer *body;
-  struct ofp_vendor_header *vendor_header;
+  struct ofp_experimenter_header *experimenter_header;
 
   if ( ( data == NULL ) || ( ( data != NULL ) && ( data->length == 0 ) ) ) {
-    critical( "An OpenFlow message must be filled before calling handle_vendor()." );
+    critical( "An OpenFlow message must be filled before calling handle_experimenter()." );
     assert( 0 );
   }
 
-  vendor_header = ( struct ofp_vendor_header * ) data->data;
+  experimenter_header = ( struct ofp_experimenter_header * ) data->data;
 
-  transaction_id = ntohl( vendor_header->header.xid );
-  vendor = ntohl( vendor_header->vendor );
+  transaction_id = ntohl( experimenter_header->header.xid );
+  experimenter = ntohl( experimenter_header->experimenter );
+  exp_type = ntohl( experimenter_header->exp_type );
 
-  body_length = ( uint16_t ) ( ntohs( vendor_header->header.length )
-                               - sizeof( struct ofp_vendor_header ) );
+  body_length = ( uint16_t ) ( ntohs( experimenter_header->header.length )
+                               - sizeof( struct ofp_experimenter_header ) );
 
-  debug( "A vendor message is received from %#" PRIx64
-         " ( transaction_id = %#x, vendor = %#x, body length = %u ).",
-         datapath_id, transaction_id, vendor, body_length );
+  debug( "An experimenter message is received from %#" PRIx64
+         " ( transaction_id = %#x, experimenter = %#x, exp_type = %#x, body length = %u ).",
+         datapath_id, transaction_id, experimenter, exp_type, body_length );
 
-  if ( event_handlers.vendor_callback == NULL ) {
-    debug( "Callback function for vendor events is not set." );
+  if ( event_handlers.experimenter_callback == NULL ) {
+    debug( "Callback function for experimenter events is not set." );
     return;
   }
 
   if ( body_length > 0 ) {
     body = duplicate_buffer( data );
-    remove_front_buffer( body, sizeof( struct ofp_vendor_header ) );
+    remove_front_buffer( body, sizeof( struct ofp_experimenter_header ) );
   }
   else {
     body = NULL;
   }
 
-  debug( "Calling vendor handler ( callback = %p, user_data = %p ).",
-         event_handlers.vendor_callback, event_handlers.vendor_user_data );
+  debug( "Calling experimenter handler ( callback = %p, user_data = %p ).",
+         event_handlers.experimenter_callback, event_handlers.experimenter_user_data );
 
-  event_handlers.vendor_callback( datapath_id,
+  event_handlers.experimenter_callback( datapath_id,
                                   transaction_id,
-                                  vendor,
+                                  experimenter,
+                                  exp_type,
                                   body,
-                                  event_handlers.vendor_user_data );
+                                  event_handlers.experimenter_user_data );
 
   if ( body != NULL ) {
     free_buffer( body );
@@ -667,13 +787,9 @@ handle_vendor( const uint64_t datapath_id, buffer *data ) {
 
 static void
 handle_features_reply( const uint64_t datapath_id, buffer *data ) {
-  char description[ 1024 ];
-  int i, n_phy_ports;
   uint8_t n_tables;
-  uint16_t phy_ports_length;
-  uint32_t transaction_id, n_buffers, capabilities, actions;
-  list_element *element, *phy_ports_head;
-  struct ofp_phy_port *p, *phy_port;
+  uint8_t auxiliary_id;
+  uint32_t transaction_id, n_buffers, capabilities, reserved;
   struct ofp_switch_features *switch_features;
 
   if ( ( data == NULL ) || ( ( data != NULL ) && ( data->length == 0 ) ) ) {
@@ -686,46 +802,18 @@ handle_features_reply( const uint64_t datapath_id, buffer *data ) {
   transaction_id = ntohl( switch_features->header.xid );
   n_buffers = ntohl( switch_features->n_buffers );
   n_tables = switch_features->n_tables;
+  auxiliary_id = switch_features->auxiliary_id;
   capabilities = ntohl( switch_features->capabilities );
-  actions = ntohl( switch_features->actions );
-
-  phy_ports_length = ( uint16_t ) ( ntohs( switch_features->header.length )
-                                    - offsetof( struct ofp_switch_features, ports ) );
-
-  n_phy_ports = phy_ports_length / sizeof( struct ofp_phy_port );
+  reserved = ntohl( switch_features->reserved );
 
   debug( "A features reply message is received from %#" PRIx64
-         " ( transaction_id = %#x, n_buffers = %u, n_tables = %u, "
-         "capabilities = %#x, actions = %#x, # of phy ports = %u ).",
+         " ( transaction_id = %#x, n_buffers = %#x, n_tables = %#x, "
+         "auxiliary_id = %#x, capabilities = %#x ).",
          datapath_id, transaction_id, n_buffers, n_tables,
-         capabilities, actions, n_phy_ports );
-
-  if ( n_phy_ports > 0 ) {
-    create_list( &phy_ports_head );
-    phy_port = ( struct ofp_phy_port * ) switch_features->ports;
-    for ( i = 0; i < n_phy_ports; i++ ) {
-      p = ( struct ofp_phy_port * ) xcalloc( 1, sizeof( struct ofp_phy_port ) );
-      ntoh_phy_port( p, phy_port );
-      append_to_tail( &phy_ports_head, ( void * ) p );
-      phy_port_to_string( p, description, sizeof( description ) );
-      debug( "[%p] %s", phy_port, description );
-      phy_port++;
-    }
-  }
-  else {
-    phy_ports_head = NULL;
-  }
+         auxiliary_id, capabilities );
 
   if ( event_handlers.features_reply_callback == NULL ) {
     debug( "Callback function for features reply events is not set." );
-    if( phy_ports_head != NULL ) {
-      element = phy_ports_head;
-      while ( element != NULL ) {
-        xfree( element->data );
-        element = element->next;
-      }
-      delete_list( phy_ports_head );
-    }
     return;
   }
 
@@ -736,19 +824,10 @@ handle_features_reply( const uint64_t datapath_id, buffer *data ) {
                                           transaction_id,
                                           n_buffers,
                                           n_tables,
+                                          auxiliary_id,
                                           capabilities,
-                                          actions,
-                                          phy_ports_head,
+                                          reserved,
                                           event_handlers.features_reply_user_data );
-
-  if ( phy_ports_head != NULL ) {
-    element = phy_ports_head;
-    while ( element != NULL ) {
-      xfree( element->data );
-      element = element->next;
-    }
-    delete_list( phy_ports_head );
-  }
 }
 
 
@@ -770,7 +849,7 @@ handle_get_config_reply( const uint64_t datapath_id, buffer *data ) {
   miss_send_len = ntohs( switch_config->miss_send_len );
 
   debug( "A get config reply message is received from %#" PRIx64
-         " ( transaction_id = %#x, flags = %#x, miss_send_len = %u ).",
+         " ( transaction_id = %#x, flags = %#x, miss_send_len = %#x ).",
          datapath_id, transaction_id, flags, miss_send_len );
 
   if ( event_handlers.get_config_reply_callback == NULL ) {
@@ -805,37 +884,47 @@ handle_packet_in( const uint64_t datapath_id, buffer *data ) {
   uint32_t transaction_id = ntohl( _packet_in->header.xid );
   uint32_t buffer_id = ntohl( _packet_in->buffer_id );
   uint16_t total_len = ntohs( _packet_in->total_len );
-  uint16_t in_port = ntohs( _packet_in->in_port );
   uint8_t reason = _packet_in->reason;
-  uint16_t body_length = ( uint16_t ) ( ntohs( _packet_in->header.length ) - offsetof( struct ofp_packet_in, data ) );
+  uint8_t table_id = _packet_in->table_id;
+  uint64_t cookie = ntohll( _packet_in->cookie );
+  oxm_matches *match = parse_ofp_match( &_packet_in->match );
+  uint16_t match_len = ntohs( _packet_in->match.length );
+  match_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  buffer *body = NULL;
+
+  uint16_t body_length = ( uint16_t ) ( ntohs( _packet_in->header.length ) - offsetof( struct ofp_packet_in, match ) - match_len );
+
+  char match_string[ MATCH_STRING_LENGTH ];
+  match_to_string( match, match_string, sizeof( match_string ) );
 
   debug(
     "A packet_in message is received from %#" PRIx64
-    " (transaction_id = %#x, buffer_id = %#x, total_len = %u, in_port = %u, reason = %#x, body length = %u).",
+    " (transaction_id = %#x, buffer_id = %#x, total_len = %#x, reason = %#x, table_id = %#x, "
+    "cookie = %#" PRIx64 ", match = [%s], body length = %u).",
     datapath_id,
     transaction_id,
     buffer_id,
     total_len,
-    in_port,
     reason,
+    table_id,
+    cookie,
+    match_string,
     body_length
   );
 
   if ( event_handlers.packet_in_callback == NULL ) {
     debug( "Callback function for packet_in events is not set." );
-    return;
+    goto END;
   }
 
-  buffer *body = NULL;
   if ( body_length > 0 ) {
     body = duplicate_buffer( data );
-    remove_front_buffer( body, offsetof( struct ofp_packet_in, data ) );
+    remove_front_buffer( body, offsetof( struct ofp_packet_in, match ) + match_len );
     bool parse_ok = parse_packet( body );
     if ( !parse_ok ) {
       error( "Failed to parse a packet." );
       // ???: Is it OK to drop malformed packets?
-      free_buffer( body );
-      return;
+      goto END;
     }
   }
   else {
@@ -853,8 +942,10 @@ handle_packet_in( const uint64_t datapath_id, buffer *data ) {
       transaction_id,
       buffer_id,
       total_len,
-      in_port,
       reason,
+      table_id,
+      cookie,
+      match,
       body,
       event_handlers.packet_in_user_data
     };
@@ -866,13 +957,19 @@ handle_packet_in( const uint64_t datapath_id, buffer *data ) {
       transaction_id,
       buffer_id,
       total_len,
-      in_port,
       reason,
+      table_id,
+      cookie,
+      match,
       body,
       event_handlers.packet_in_user_data
     );
   }
 
+END:
+  if ( match != NULL ) {
+    delete_oxm_matches( match );
+  }
   if ( body != NULL ) {
     free_buffer( body );
   }
@@ -888,41 +985,44 @@ handle_flow_removed( const uint64_t datapath_id, buffer *data ) {
 
   struct ofp_flow_removed *_flow_removed = ( struct ofp_flow_removed * ) data->data;
   uint32_t transaction_id = ntohl( _flow_removed->header.xid );
-  struct ofp_match match;
-  ntoh_match( &match, &_flow_removed->match );
   uint64_t cookie = ntohll( _flow_removed->cookie );
   uint16_t priority = ntohs( _flow_removed->priority );
   uint8_t reason = _flow_removed->reason;
+  uint8_t table_id = _flow_removed->table_id;
   uint32_t duration_sec = ntohl( _flow_removed->duration_sec );
   uint32_t duration_nsec = ntohl( _flow_removed->duration_nsec );
   uint16_t idle_timeout = ntohs( _flow_removed->idle_timeout );
+  uint16_t hard_timeout = ntohs( _flow_removed->hard_timeout );
   uint64_t packet_count = ntohll( _flow_removed->packet_count );
   uint64_t byte_count = ntohll( _flow_removed->byte_count );
+  oxm_matches *match = parse_ofp_match( &_flow_removed->match );
 
-  char match_string[ 1024 ];
-  match_to_string( &match, match_string, sizeof( match_string ) );
+  char match_string[ MATCH_STRING_LENGTH ];
+  match_to_string( match, match_string, sizeof( match_string ) );
 
   debug(
     "A flow removed message is received from %#" PRIx64
-    " ( transaction_id = %#x, match = [%s], cookie = %#" PRIx64 ", "
-    "priority = %u, reason = %#x, duration_sec = %u, duration_nsec = %u, "
-    "idle_timeout = %u, packet_count = %" PRIu64 ", byte_count = %" PRIu64 " ).",
+    " ( transaction_id = %#x, cookie = %#" PRIx64 ", "
+    "priority = %#x, reason = %#x, table_id = %#x, duration_sec = %#x, duration_nsec = %#x, "
+    "idle_timeout = %#x, hard_timeout =%#x, packet_count = %" PRIu64 ", byte_count = %" PRIu64 ", match = [%s] ).",
     datapath_id,
     transaction_id,
-    match_string,
     cookie,
     priority,
     reason,
+    table_id,
     duration_sec,
     duration_nsec,
     idle_timeout,
+    hard_timeout,
     packet_count,
-    byte_count
+    byte_count,
+    match_string
   );
 
   if ( event_handlers.flow_removed_callback == NULL ) {
     debug( "Callback function for flow removed events is not set." );
-    return;
+    goto END;
   }
 
   debug(
@@ -934,15 +1034,17 @@ handle_flow_removed( const uint64_t datapath_id, buffer *data ) {
     flow_removed message = {
       datapath_id,
       transaction_id,
-      match,
       cookie,
       priority,
       reason,
+      table_id,
       duration_sec,
       duration_nsec,
       idle_timeout,
+      hard_timeout,
       packet_count,
       byte_count,
+      match,
       event_handlers.flow_removed_user_data
     };
     ( ( simple_flow_removed_handler * ) event_handlers.flow_removed_callback )( datapath_id, message );
@@ -951,17 +1053,24 @@ handle_flow_removed( const uint64_t datapath_id, buffer *data ) {
     ( ( flow_removed_handler * ) event_handlers.flow_removed_callback )(
       datapath_id,
       transaction_id,
-      match,
       cookie,
       priority,
       reason,
+      table_id,
       duration_sec,
       duration_nsec,
       idle_timeout,
+      hard_timeout,
       packet_count,
       byte_count,
+      match,
       event_handlers.flow_removed_user_data
     );
+  }
+
+END:
+  if ( match != NULL ) {
+    delete_oxm_matches( match );
   }
 }
 
@@ -971,7 +1080,7 @@ handle_port_status( const uint64_t datapath_id, buffer *data ) {
   char description[ 1024 ];
   uint8_t reason;
   uint32_t transaction_id;
-  struct ofp_phy_port phy_port;
+  struct ofp_port phy_port;
   struct ofp_port_status *port_status;
 
   if ( ( data == NULL ) || ( ( data != NULL ) && ( data->length == 0 ) ) ) {
@@ -983,9 +1092,9 @@ handle_port_status( const uint64_t datapath_id, buffer *data ) {
 
   transaction_id = ntohl( port_status->header.xid );
   reason = port_status->reason;
-  ntoh_phy_port( &phy_port, &port_status->desc );
+  ntoh_port( &phy_port, &port_status->desc );
 
-  phy_port_to_string( &phy_port, description, sizeof( description ) );
+  port_to_string( &phy_port, description, sizeof( description ) );
 
   debug( "A port status message is received from %#" PRIx64
          " ( transaction_id = %#x, reason = %#x, desc = [%s] ).",
@@ -1008,50 +1117,50 @@ handle_port_status( const uint64_t datapath_id, buffer *data ) {
 
 
 static void
-handle_stats_reply( const uint64_t datapath_id, buffer *data ) {
+handle_multipart_reply( const uint64_t datapath_id, buffer *data ) {
   uint16_t type, flags, body_length;
   uint32_t transaction_id;
   buffer *body = NULL;
   buffer *body_h = NULL;
-  struct ofp_stats_reply *stats_reply;
+  struct ofp_multipart_reply *multipart_reply;
 
   if ( ( data == NULL ) || ( ( data != NULL ) && ( data->length == 0 ) ) ) {
-    critical( "An OpenFlow message must be filled before calling handle_stats_reply()." );
+    critical( "An OpenFlow message must be filled before calling handle_multipart_reply()." );
     assert( 0 );
   }
 
-  stats_reply = ( struct ofp_stats_reply * ) data->data;
+  multipart_reply = ( struct ofp_multipart_reply * ) data->data;
 
-  transaction_id = ntohl( stats_reply->header.xid );
-  type = ntohs( stats_reply->type );
-  flags = ntohs( stats_reply->flags );
+  transaction_id = ntohl( multipart_reply->header.xid );
+  type = ntohs( multipart_reply->type );
+  flags = ntohs( multipart_reply->flags );
 
-  body_length = ( uint16_t ) ( ntohs( stats_reply->header.length )
-                               - offsetof( struct ofp_stats_reply, body ) );
+  body_length = ( uint16_t ) ( ntohs( multipart_reply->header.length )
+                               - offsetof( struct ofp_multipart_reply, body ) );
 
-  debug( "A stats reply message is received from %#" PRIx64
+  debug( "A multipart reply message is received from %#" PRIx64
          " ( transaction_id = %#x, type = %#x, flags = %#x, body length = %u ).",
          datapath_id, transaction_id, type, flags, body_length );
 
-  if ( event_handlers.stats_reply_callback == NULL ) {
-    debug( "Callback function for stats reply events is not set." );
+  if ( event_handlers.multipart_reply_callback == NULL ) {
+    debug( "Callback function for multipart reply events is not set." );
     return;
   }
 
   if ( body_length > 0 ) {
     body = duplicate_buffer( data );
-    remove_front_buffer( body, offsetof( struct ofp_stats_reply, body ) );
+    remove_front_buffer( body, offsetof( struct ofp_multipart_reply, body ) );
   }
 
   if ( body != NULL ) {
     switch ( type ) {
-    case OFPST_DESC:
+    case OFPMP_DESC:
       {
         body_h = body;
         body = NULL;
       }
       break;
-    case OFPST_FLOW:
+    case OFPMP_FLOW:
       {
         struct ofp_flow_stats *src, *dst;
 
@@ -1071,7 +1180,7 @@ handle_stats_reply( const uint64_t datapath_id, buffer *data ) {
         }
       }
       break;
-    case OFPST_AGGREGATE:
+    case OFPMP_AGGREGATE:
       {
         struct ofp_aggregate_stats_reply *src, *dst;
 
@@ -1084,7 +1193,7 @@ handle_stats_reply( const uint64_t datapath_id, buffer *data ) {
         ntoh_aggregate_stats( dst, src );
       }
       break;
-    case OFPST_TABLE:
+    case OFPMP_TABLE:
       {
         struct ofp_table_stats *src, *dst;
 
@@ -1104,7 +1213,7 @@ handle_stats_reply( const uint64_t datapath_id, buffer *data ) {
         }
       }
       break;
-    case OFPST_PORT:
+    case OFPMP_PORT_STATS:
       {
         struct ofp_port_stats *src, *dst;
 
@@ -1124,7 +1233,7 @@ handle_stats_reply( const uint64_t datapath_id, buffer *data ) {
         }
       }
       break;
-    case OFPST_QUEUE:
+    case OFPMP_QUEUE:
       {
         struct ofp_queue_stats *src, *dst;
 
@@ -1144,18 +1253,165 @@ handle_stats_reply( const uint64_t datapath_id, buffer *data ) {
         }
       }
       break;
-    case OFPST_VENDOR:
+    case OFPMP_GROUP:
       {
-        uint32_t *src, *dst;
+        struct ofp_group_stats *src, *dst;
+
+        body_h = alloc_buffer_with_length( body_length );
+        append_back_buffer( body_h, body_length );
+
+        src = ( struct ofp_group_stats * ) body->data;
+        dst = ( struct ofp_group_stats * ) body_h->data;
+
+        while ( body_length > 0 ) {
+          ntoh_group_stats( dst, src );
+
+          body_length = ( uint16_t ) ( body_length - dst->length );
+
+          src = ( struct ofp_group_stats * ) ( ( char * ) src + dst->length );
+          dst = ( struct ofp_group_stats * ) ( ( char * ) dst + dst->length );
+        }
+      }
+      break;
+    case OFPMP_GROUP_DESC:
+      {
+        struct ofp_group_desc_stats *src, *dst;
+
+        body_h = alloc_buffer_with_length( body_length );
+        append_back_buffer( body_h, body_length );
+
+        src = ( struct ofp_group_desc_stats * ) body->data;
+        dst = ( struct ofp_group_desc_stats * ) body_h->data;
+
+        while ( body_length > 0 ) {
+          ntoh_group_desc_stats( dst, src );
+
+          body_length = ( uint16_t ) ( body_length - dst->length );
+
+          src = ( struct ofp_group_desc_stats * ) ( ( char * ) src + dst->length );
+          dst = ( struct ofp_group_desc_stats * ) ( ( char * ) dst + dst->length );
+        }
+      }
+      break;
+    case OFPMP_GROUP_FEATURES:
+      {
+        struct ofp_group_features *src, *dst;
+
+        body_h = alloc_buffer_with_length( body_length );
+        append_back_buffer( body_h, body_length );
+
+        src = ( struct ofp_group_features * ) body->data;
+        dst = ( struct ofp_group_features * ) body_h->data;
+
+        ntoh_group_features_stats( dst, src );
+      }
+      break;
+    case OFPMP_METER:
+      {
+        struct ofp_meter_stats *src, *dst;
+
+        body_h = alloc_buffer_with_length( body_length );
+        append_back_buffer( body_h, body_length );
+
+        src = ( struct ofp_meter_stats * ) body->data;
+        dst = ( struct ofp_meter_stats * ) body_h->data;
+
+        while ( body_length > 0 ) {
+          ntoh_meter_stats( dst, src );
+
+          body_length = ( uint16_t ) ( body_length - dst->len );
+
+          src = ( struct ofp_meter_stats * ) ( ( char * ) src + dst->len );
+          dst = ( struct ofp_meter_stats * ) ( ( char * ) dst + dst->len );
+        }
+      }
+      break;
+    case OFPMP_METER_CONFIG:
+      {
+        struct ofp_meter_config *src, *dst;
+
+        body_h = alloc_buffer_with_length( body_length );
+        append_back_buffer( body_h, body_length );
+
+        src = ( struct ofp_meter_config * ) body->data;
+        dst = ( struct ofp_meter_config * ) body_h->data;
+
+        while ( body_length > 0 ) {
+          ntoh_meter_config( dst, src );
+
+          body_length = ( uint16_t ) ( body_length - dst->length );
+
+          src = ( struct ofp_meter_config * ) ( ( char * ) src + dst->length );
+          dst = ( struct ofp_meter_config * ) ( ( char * ) dst + dst->length );
+        }
+      }
+      break;
+    case OFPMP_METER_FEATURES:
+      {
+        struct ofp_meter_features *src, *dst;
+
+        body_h = alloc_buffer_with_length( body_length );
+        append_back_buffer( body_h, body_length );
+
+        src = ( struct ofp_meter_features * ) body->data;
+        dst = ( struct ofp_meter_features * ) body_h->data;
+
+        ntoh_meter_features( dst, src );
+      }
+      break;
+    case OFPMP_TABLE_FEATURES:
+      {
+        struct ofp_table_features *src, *dst;
+
+        body_h = alloc_buffer_with_length( body_length );
+        append_back_buffer( body_h, body_length );
+
+        src = ( struct ofp_table_features * ) body->data;
+        dst = ( struct ofp_table_features * ) body_h->data;
+
+        while ( body_length > 0 ) {
+          ntoh_table_features( dst, src );
+
+          body_length = ( uint16_t ) ( body_length - dst->length );
+
+          src = ( struct ofp_table_features * ) ( ( char * ) src + dst->length );
+          dst = ( struct ofp_table_features * ) ( ( char * ) dst + dst->length );
+        }
+      }
+      break;
+    case OFPMP_PORT_DESC:
+      {
+        struct ofp_port *src, *dst;
+
+        body_h = alloc_buffer_with_length( body_length );
+        append_back_buffer( body_h, body_length );
+
+        src = ( struct ofp_port * ) body->data;
+        dst = ( struct ofp_port * ) body_h->data;
+
+        while ( body_length > 0 ) {
+          ntoh_port( dst, src );
+
+          body_length = ( uint16_t ) ( body_length - sizeof( struct ofp_port ) );
+
+          src++;
+          dst++;
+        }
+      }
+      break;
+    case OFPMP_EXPERIMENTER:
+      {
+        struct ofp_experimenter_multipart_header *src, *dst;
         body_h = alloc_buffer_with_length( body_length );
         append_back_buffer( body_h, body_length );
 
         memcpy( body_h->data, body->data, body_length );
 
-        src = ( uint32_t * ) body->data;
-        dst = ( uint32_t * ) body_h->data;
+        src = ( struct ofp_experimenter_multipart_header * ) body->data;
+        dst = ( struct ofp_experimenter_multipart_header * ) body_h->data;
 
-        *dst = ntohl( *src ); // vendor id
+        dst->experimenter = ntohl( src->experimenter );
+        dst->exp_type = ntohl( src->exp_type );
       }
       break;
     default:
@@ -1168,15 +1424,15 @@ handle_stats_reply( const uint64_t datapath_id, buffer *data ) {
     }
   }
 
-  debug( "Calling stats reply handler ( callback = %p, user_data = %p ).",
-         event_handlers.stats_reply_callback, event_handlers.stats_reply_user_data );
+  debug( "Calling multipart reply handler ( callback = %p, user_data = %p ).",
+         event_handlers.multipart_reply_callback, event_handlers.multipart_reply_user_data );
 
-  event_handlers.stats_reply_callback( datapath_id,
-                                       transaction_id,
-                                       type,
-                                       flags,
-                                       body_h,
-                                       event_handlers.stats_reply_user_data );
+  event_handlers.multipart_reply_callback( datapath_id,
+                                           transaction_id,
+                                           type,
+                                           flags,
+                                           body_h,
+                                           event_handlers.multipart_reply_user_data );
 
   if ( body != NULL ) {
     free_buffer( body );
@@ -1220,8 +1476,8 @@ handle_barrier_reply( const uint64_t datapath_id, buffer *data ) {
 
 static void
 handle_queue_get_config_reply( const uint64_t datapath_id, buffer *data ) {
-  uint16_t port, queues_length;
-  uint32_t transaction_id;
+  uint16_t queues_length;
+  uint32_t transaction_id, port;
   list_element *queues_head = NULL;
   list_element *element = NULL;
   struct ofp_packet_queue *pq, *packet_queue;
@@ -1235,13 +1491,13 @@ handle_queue_get_config_reply( const uint64_t datapath_id, buffer *data ) {
   queue_get_config_reply = ( struct ofp_queue_get_config_reply * ) data->data;
 
   transaction_id = ntohl( queue_get_config_reply->header.xid );
-  port = ntohs( queue_get_config_reply->port );
+  port = ntohl( queue_get_config_reply->port );
 
   queues_length = ( uint16_t ) ( ntohs( queue_get_config_reply->header.length )
                   - offsetof( struct ofp_queue_get_config_reply, queues ) );
 
   debug( "A queue get config reply message is received from %#" PRIx64
-         " ( transaction_id = %#x, port = %u, queues length = %u ).",
+         " ( transaction_id = %#x, port = %#x, queues length = %u ).",
          datapath_id, transaction_id, port, queues_length );
 
   if ( event_handlers.queue_get_config_reply_callback == NULL ) {
@@ -1287,6 +1543,86 @@ handle_queue_get_config_reply( const uint64_t datapath_id, buffer *data ) {
     }
     delete_list( queues_head );
   }
+}
+
+
+static void handle_role_reply( const uint64_t datapath_id, buffer *data ) {
+  uint32_t transaction_id, role;
+  uint64_t generation_id;
+  struct ofp_role_request *role_reply;
+
+  if ( ( data == NULL ) || ( ( data != NULL ) && ( data->length == 0 ) ) ) {
+    critical( "An OpenFlow message must be filled before calling handle_role_reply()." );
+    assert( 0 );
+  }
+
+  role_reply = ( struct ofp_role_request * ) data->data;
+
+  transaction_id = ntohl( role_reply->header.xid );
+  role = ntohl( role_reply->role );
+  generation_id = ntohll( role_reply->generation_id );
+
+  debug( "A role reply message is received from %#" PRIx64 " ( transaction_id = %#x, "
+         "role = %#x, generation_id = %#" PRIx64 " ).",
+         datapath_id, transaction_id, role, generation_id );
+
+  if ( event_handlers.role_reply_callback == NULL ) {
+    debug( "Callback function for role reply events is not set." );
+    return;
+  }
+
+  debug( "Calling role reply handler ( callback = %p, user_data = %p ).",
+         event_handlers.role_reply_callback, event_handlers.role_reply_user_data );
+
+  event_handlers.role_reply_callback( datapath_id,
+                                      transaction_id,
+                                      role,
+                                      generation_id,
+                                      event_handlers.role_reply_user_data );
+}
+
+
+static void handle_get_async_reply( const uint64_t datapath_id, buffer *data ) {
+  uint32_t transaction_id, packet_in_mask[ 2 ], port_status_mask[ 2 ], flow_removed_mask[ 2 ];
+  struct ofp_async_config *get_async_reply;
+
+  if ( ( data == NULL ) || ( ( data != NULL ) && ( data->length == 0 ) ) ) {
+    critical( "An OpenFlow message must be filled before calling handle_get_async_reply()." );
+    assert( 0 );
+  }
+
+  get_async_reply = ( struct ofp_async_config * ) data->data;
+
+  transaction_id = ntohl( get_async_reply->header.xid );
+  packet_in_mask[ 0 ] = ntohl( get_async_reply->packet_in_mask[ 0 ] );
+  packet_in_mask[ 1 ] = ntohl( get_async_reply->packet_in_mask[ 1 ] );
+  port_status_mask[ 0 ] = ntohl( get_async_reply->port_status_mask[ 0 ] );
+  port_status_mask[ 1 ] = ntohl( get_async_reply->port_status_mask[ 1 ] );
+  flow_removed_mask[ 0 ] = ntohl( get_async_reply->flow_removed_mask[ 0 ] );
+  flow_removed_mask[ 1 ] = ntohl( get_async_reply->flow_removed_mask[ 1 ] );
+
+  debug( "A get async reply message is received from %#" PRIx64 " ( transaction_id = %#x, "
+         "packet_in_mask[0] = %#x, packet_in_mask[1] = %#x, "
+         "port_status_mask[0] = %#x, port_status_mask[1] = %#x, "
+         "flow_removed_mask[0] = %#x, flow_removed_mask[1] = %#x ).",
+         datapath_id, transaction_id, packet_in_mask[ 0 ], packet_in_mask[ 1 ],
+         port_status_mask[ 0 ], port_status_mask[ 1 ],
+         flow_removed_mask[ 0 ], flow_removed_mask[ 1 ] );
+
+  if ( event_handlers.get_async_reply_callback == NULL ) {
+    debug( "Callback function for get async reply events is not set." );
+    return;
+  }
+
+  debug( "Calling get async reply handler ( callback = %p, user_data = %p ).",
+         event_handlers.get_async_reply_callback, event_handlers.get_async_reply_user_data );
+
+  event_handlers.get_async_reply_callback( datapath_id,
+                                           transaction_id,
+                                           packet_in_mask,
+                                           port_status_mask,
+                                           flow_removed_mask,
+                                           event_handlers.get_async_reply_user_data );
 }
 
 
@@ -1451,8 +1787,8 @@ update_openflow_stats( uint8_t type, int send_receive, bool result ) {
   case OFPT_ECHO_REPLY:
     snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "echo_reply", direction, suffix );
     break;
-  case OFPT_VENDOR:
-    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "vendor", direction, suffix );
+  case OFPT_EXPERIMENTER:
+    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "experimenter", direction, suffix );
     break;
   case OFPT_FEATURES_REQUEST:
     snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "features_request", direction, suffix );
@@ -1484,14 +1820,20 @@ update_openflow_stats( uint8_t type, int send_receive, bool result ) {
   case OFPT_FLOW_MOD:
     snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "flow_mod", direction, suffix );
     break;
+  case OFPT_GROUP_MOD:
+    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "group_mod", direction, suffix );
+    break;
   case OFPT_PORT_MOD:
     snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "port_mod", direction, suffix );
     break;
-  case OFPT_STATS_REQUEST:
-    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "stats_request", direction, suffix );
+  case OFPT_TABLE_MOD:
+    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "table_mod", direction, suffix );
     break;
-  case OFPT_STATS_REPLY:
-    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "stats_reply", direction, suffix );
+  case OFPT_MULTIPART_REQUEST:
+    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "multipart_request", direction, suffix );
+    break;
+  case OFPT_MULTIPART_REPLY:
+    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "multipart_reply", direction, suffix );
     break;
   case OFPT_BARRIER_REQUEST:
     snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "barrier_request", direction, suffix );
@@ -1504,6 +1846,24 @@ update_openflow_stats( uint8_t type, int send_receive, bool result ) {
     break;
   case OFPT_QUEUE_GET_CONFIG_REPLY:
     snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "queue_get_config_reply", direction, suffix );
+    break;
+  case OFPT_ROLE_REQUEST:
+    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "role_request", direction, suffix );
+    break;
+  case OFPT_ROLE_REPLY:
+    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "role_reply", direction, suffix );
+    break;
+  case OFPT_GET_ASYNC_REQUEST:
+    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "get_async_request", direction, suffix );
+    break;
+  case OFPT_GET_ASYNC_REPLY:
+    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "get_async_reply", direction, suffix );
+    break;
+  case OFPT_SET_ASYNC:
+    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "set_async", direction, suffix );
+    break;
+  case OFPT_METER_MOD:
+    snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "meter_mod", direction, suffix );
     break;
   default:
     snprintf( key, STAT_KEY_LENGTH, "%s%s%s%s", prefix, "undefined_message_type", direction, suffix );
@@ -1558,8 +1918,8 @@ handle_openflow_message( void *data, size_t length ) {
   case OFPT_ECHO_REPLY:
     handle_echo_reply( datapath_id, buffer );
     break;
-  case OFPT_VENDOR:
-    handle_vendor( datapath_id, buffer );
+  case OFPT_EXPERIMENTER:
+    handle_experimenter( datapath_id, buffer );
     break;
   case OFPT_FEATURES_REPLY:
     handle_features_reply( datapath_id, buffer );
@@ -1576,14 +1936,20 @@ handle_openflow_message( void *data, size_t length ) {
   case OFPT_PORT_STATUS:
     handle_port_status( datapath_id, buffer );
     break;
-  case OFPT_STATS_REPLY:
-    handle_stats_reply( datapath_id, buffer );
+  case OFPT_MULTIPART_REPLY:
+    handle_multipart_reply( datapath_id, buffer );
     break;
   case OFPT_BARRIER_REPLY:
     handle_barrier_reply( datapath_id, buffer );
     break;
   case OFPT_QUEUE_GET_CONFIG_REPLY:
     handle_queue_get_config_reply( datapath_id, buffer );
+    break;
+  case OFPT_ROLE_REPLY:
+    handle_role_reply( datapath_id, buffer );
+    break;
+  case OFPT_GET_ASYNC_REPLY:
+    handle_get_async_reply( datapath_id, buffer );
     break;
   default:
     error( "Unhandled OpenFlow message ( type = %u ).", header->type );

@@ -26,19 +26,17 @@
 
 static void
 add_filter( void ) {
-  struct ofp_match match;
-  memset( &match, 0, sizeof( struct ofp_match ) );
-  match.wildcards = OFPFW_DL_SRC | OFPFW_DL_DST;
-  match.in_port = 1;
-  match.dl_type = 0x0800;
-  match.dl_vlan = 0xffff;
-  match.dl_vlan_pcp = 0;
-  match.nw_src = 0x0a000001;
-  match.nw_dst = 0x0a000002;
-  match.nw_tos = 0;
-  match.nw_proto = 0x0a;
-  match.tp_src = 1024;
-  match.tp_dst = 2048;
+  oxm_matches *match = create_oxm_matches();
+  append_oxm_match_in_port( match, 1 );
+  append_oxm_match_eth_type( match, 0x0800 );
+  append_oxm_match_vlan_vid( match, 0, 0 );
+  append_oxm_match_ipv4_src( match, 0x0a000001, 0 );
+  append_oxm_match_ipv4_dst( match, 0x0a000002, 0 );
+  append_oxm_match_ip_dscp( match, 0 );
+  append_oxm_match_ip_ecn( match, 0 );
+  append_oxm_match_ip_proto( match, 0x6 );
+  append_oxm_match_tcp_src( match, 1024 );
+  append_oxm_match_tcp_dst( match, 2048 );
 
   static handler_data data;
   data.match = match;

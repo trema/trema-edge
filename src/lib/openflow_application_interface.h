@@ -29,6 +29,7 @@
 #include "linked_list.h"
 #include "openflow.h"
 #include "openflow_service_interface.h"
+#include "oxm_match.h"
 
 
 /********************************************************************************
@@ -72,6 +73,15 @@ typedef void ( *error_handler )(
   void *user_data
 );
 
+typedef void ( *experimenter_error_handler )(
+  uint64_t datapath_id,
+  uint32_t transaction_id,
+  uint16_t type,
+  uint16_t exp_type,
+  uint32_t experimenter,
+  const buffer *data,
+  void *user_data
+);
 
 typedef void ( *echo_reply_handler )(
   uint64_t datapath_id,
@@ -81,10 +91,11 @@ typedef void ( *echo_reply_handler )(
 );
 
 
-typedef void ( *vendor_handler )(
+typedef void ( *experimenter_handler )(
   uint64_t datapath_id,
   uint32_t transaction_id,
-  uint32_t vendor,
+  uint32_t experimenter,
+  uint32_t exp_type,
   const buffer *data,
   void *user_data
 );
@@ -95,9 +106,9 @@ typedef void ( *features_reply_handler )(
   uint32_t transaction_id,
   uint32_t n_buffers,
   uint8_t n_tables,
+  uint8_t auxiliary_id,
   uint32_t capabilities,
-  uint32_t actions,
-  const list_element *phy_ports,
+  uint32_t reserved,
   void *user_data
 );
 
@@ -116,8 +127,10 @@ typedef struct {
   uint32_t transaction_id;
   uint32_t buffer_id;
   uint16_t total_len;
-  uint16_t in_port;
   uint8_t reason;
+  uint8_t table_id;
+  uint64_t cookie;
+  const oxm_matches *match;
   const buffer *data;
   void *user_data;
 } packet_in;
@@ -128,8 +141,10 @@ typedef void ( packet_in_handler )(
   uint32_t transaction_id,
   uint32_t buffer_id,
   uint16_t total_len,
-  uint16_t in_port,
   uint8_t reason,
+  uint8_t table_id,
+  uint64_t cookie,
+  const oxm_matches *match,
   const buffer *data,
   void *user_data
 );
@@ -138,15 +153,17 @@ typedef void ( packet_in_handler )(
 typedef struct {
   uint64_t datapath_id;
   uint32_t transaction_id;
-  struct ofp_match match;
   uint64_t cookie;
   uint16_t priority;
   uint8_t reason;
+  uint8_t table_id;
   uint32_t duration_sec;
   uint32_t duration_nsec;
   uint16_t idle_timeout;
+  uint16_t hard_timeout;
   uint64_t packet_count;
   uint64_t byte_count;
+  const oxm_matches *match;
   void *user_data;
 } flow_removed;
 
@@ -154,15 +171,17 @@ typedef void ( simple_flow_removed_handler )( uint64_t datapath_id, flow_removed
 typedef void ( flow_removed_handler )(
   uint64_t datapath_id,
   uint32_t transaction_id,
-  struct ofp_match match,
   uint64_t cookie,
   uint16_t priority,
   uint8_t reason,
+  uint8_t table_id,
   uint32_t duration_sec,
   uint32_t duration_nsec,
   uint16_t idle_timeout,
+  uint16_t hard_timeout,
   uint64_t packet_count,
   uint64_t byte_count,
+  const oxm_matches *match,
   void *user_data
 );
 
@@ -171,12 +190,12 @@ typedef void ( *port_status_handler )(
   uint64_t datapath_id,
   uint32_t transaction_id,
   uint8_t reason,
-  struct ofp_phy_port phy_port,
+  struct ofp_port desc,
   void *user_data
 );
 
 
-typedef void ( *stats_reply_handler )(
+typedef void ( *multipart_reply_handler )(
   uint64_t datapath_id,
   uint32_t transaction_id,
   uint16_t type,
@@ -196,8 +215,27 @@ typedef void ( *barrier_reply_handler )(
 typedef void ( *queue_get_config_reply_handler )(
   uint64_t datapath_id,
   uint32_t transaction_id,
-  uint16_t port,
+  uint32_t port,
   const list_element *queues,
+  void *user_data
+);
+
+
+typedef void ( *role_reply_handler )(
+  uint64_t datapath_id,
+  uint32_t transaction_id,
+  uint32_t role,
+  uint64_t generation_id,
+  void *user_data
+);
+
+
+typedef void ( *get_async_reply_handler )(
+  uint64_t datapath_id,
+  uint32_t transaction_id,
+  uint32_t packet_in_mask[2],
+  uint32_t port_status_mask[2],
+  uint32_t flow_removed_mask[2],
   void *user_data
 );
 
@@ -219,11 +257,14 @@ typedef struct openflow_event_handlers {
   error_handler error_callback;
   void *error_user_data;
 
+  experimenter_error_handler experimenter_error_callback;
+  void *experimenter_error_user_data;
+
   echo_reply_handler echo_reply_callback;
   void *echo_reply_user_data;
 
-  vendor_handler vendor_callback;
-  void *vendor_user_data;
+  experimenter_handler experimenter_callback;
+  void *experimenter_user_data;
 
   features_reply_handler features_reply_callback;
   void *features_reply_user_data;
@@ -242,14 +283,20 @@ typedef struct openflow_event_handlers {
   port_status_handler port_status_callback;
   void *port_status_user_data;
 
-  stats_reply_handler stats_reply_callback;
-  void *stats_reply_user_data;
+  multipart_reply_handler multipart_reply_callback;
+  void *multipart_reply_user_data;
 
   barrier_reply_handler barrier_reply_callback;
   void *barrier_reply_user_data;
 
   queue_get_config_reply_handler queue_get_config_reply_callback;
   void *queue_get_config_reply_user_data;
+
+  role_reply_handler role_reply_callback;
+  void *role_reply_user_data;
+
+  get_async_reply_handler get_async_reply_callback;
+  void *get_async_reply_user_data;
 
   list_switches_reply_handler list_switches_reply_callback;
 } openflow_event_handlers_t;
@@ -278,8 +325,9 @@ bool _set_switch_ready_handler( bool simple_callback, void *callback, void *user
 
 bool set_switch_disconnected_handler( switch_disconnected_handler callback, void *user_data );
 bool set_error_handler( error_handler callback, void *user_data );
+bool set_experimenter_error_handler( experimenter_error_handler callback, void *user_data );
 bool set_echo_reply_handler( echo_reply_handler callback, void *user_data );
-bool set_vendor_handler( vendor_handler callback, void *user_data );
+bool set_experimenter_handler( experimenter_handler callback, void *user_data );
 bool set_features_reply_handler( features_reply_handler callback, void *user_data );
 bool set_get_config_reply_handler( get_config_reply_handler callback, void *user_data );
 
@@ -315,9 +363,11 @@ bool _set_flow_removed_handler( bool simple_callback, void *callback, void *user
 
 
 bool set_port_status_handler( port_status_handler callback, void *user_data );
-bool set_stats_reply_handler( stats_reply_handler callback, void *user_data );
+bool set_multipart_reply_handler( multipart_reply_handler callback, void *user_data );
 bool set_barrier_reply_handler( barrier_reply_handler callback, void *user_data );
 bool set_queue_get_config_reply_handler( queue_get_config_reply_handler callback, void *user_data );
+bool set_role_reply_handler( role_reply_handler callback, void *user_data );
+bool set_get_async_reply_handler( get_async_reply_handler callback, void *user_data );
 
 bool set_list_switches_reply_handler( list_switches_reply_handler callback );
 

@@ -34,12 +34,13 @@
 #include "hash_table.h"
 #include "linked_list.h"
 #include "log.h"
-#include "match.h"
 #include "match_table.h"
 #include "message_queue.h"
 #include "messenger.h"
 #include "openflow_application_interface.h"
 #include "openflow_message.h"
+#include "oxm_match.h"
+#include "oxm_byteorder.h"
 #include "packet_info.h"
 #include "packetin_filter_interface.h"
 #include "persistent_storage.h"
@@ -47,7 +48,6 @@
 #include "timer.h"
 #include "utility.h"
 #include "wrapper.h"
-
 
 static const char DEFAULT_DUMP_SERVICE_NAME[] = "dump_service";
 

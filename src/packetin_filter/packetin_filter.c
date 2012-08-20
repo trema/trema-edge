@@ -51,29 +51,30 @@ void mock_error( const char *format, ... );
 #undef set_match_from_packet
 #endif
 #define set_match_from_packet mock_set_match_from_packet
-void mock_set_match_from_packet( struct ofp_match *match, const uint16_t in_port,
-                                 const uint32_t wildcards, const buffer *packet );
+void mock_set_match_from_packet( oxm_matches *match, const uint32_t in_port,
+                                 const mask_fields *mask, /* const */ buffer *packet );
 
 #ifdef create_packet_in
 #undef create_packet_in
 #endif
 #define create_packet_in mock_create_packet_in
 buffer *mock_create_packet_in( const uint32_t transaction_id, const uint32_t buffer_id,
-                               const uint16_t total_len, uint16_t in_port,
-                               const uint8_t reason, const buffer *data );
+                               const uint16_t total_len, const uint8_t reason,
+                               const uint8_t table_id, const uint64_t cookie,
+                               const oxm_matches *match, const buffer *data );
 
 #ifdef insert_match_entry
 #undef insert_match_entry
 #endif
 #define insert_match_entry mock_insert_match_entry
-void mock_insert_match_entry( struct ofp_match *ofp_match, uint16_t priority,
+void mock_insert_match_entry( oxm_matches *ofp_match, uint16_t priority,
                               const char *service_name );
 
 #ifdef lookup_match_entry
 #undef lookup_match_entry
 #endif
 #define lookup_match_entry mock_lookup_match_entry
-match_entry *mock_lookup_match_entry( struct ofp_match *match );
+match_entry *mock_lookup_match_entry( oxm_matches *match );
 
 #ifdef send_message
 #undef send_message
@@ -168,12 +169,32 @@ parse_etherip( const buffer *data ) {
 static void
 handle_packet_in( uint64_t datapath_id, uint32_t transaction_id,
                   uint32_t buffer_id, uint16_t total_len,
-                  uint16_t in_port, uint8_t reason, const buffer *data,
+                  uint8_t reason, uint8_t table_id, uint64_t cookie,
+                  const oxm_matches *match, const buffer *data,
                   void *user_data ) {
   UNUSED( user_data );
 
-  char match_str[ 1024 ];
-  struct ofp_match ofp_match;   // host order
+  char match_str[ MATCH_STRING_LENGTH ];
+  oxm_matches *matches = create_oxm_matches();
+
+  // get in_port
+  uint32_t in_port = OFPP_MAX;
+  {
+    oxm_match_header *oxm;
+    uint32_t *value;
+    for ( list_element *list = match->list; list != NULL; list = list->next ) {
+      oxm = list->data;
+      if ( *oxm == OXM_OF_IN_PORT ) {
+        value = ( uint32_t * ) ( ( char * ) oxm + sizeof( oxm_match_header ) );
+        in_port = *value;
+        break;
+      }
+    }
+    if ( in_port == OFPP_MAX ) {
+      debug( "in_port not found" );
+      return;
+    }
+  }
 
   buffer *copy = NULL;
   packet_info *packet_info = data->user_data;
@@ -181,21 +202,23 @@ handle_packet_in( uint64_t datapath_id, uint32_t transaction_id,
   if ( packet_type_ipv4_etherip( data ) ) {
     copy = parse_etherip( data );
   }
-  set_match_from_packet( &ofp_match, in_port, 0, copy != NULL ? copy : data );
+  set_match_from_packet( matches, in_port, NULL, copy != NULL ? copy : data );
   if ( copy != NULL ) {
     free_buffer( copy );
     copy = NULL;
   }
-  match_to_string( &ofp_match, match_str, sizeof( match_str ) );
+  match_to_string( matches, match_str, sizeof( match_str ) );
 
-  list_element *services = lookup_match_entry( ofp_match );
+  list_element *services = lookup_match_entry( matches );
   if ( services == NULL ) {
     debug( "match entry not found" );
+    delete_oxm_matches( matches );
     return;
   }
 
-  buffer *buf = create_packet_in( transaction_id, buffer_id, total_len, in_port,
-                                  reason, data );
+  buffer *buf = create_packet_in( transaction_id, buffer_id, total_len, reason,
+                                  table_id, cookie, matches, data );
+  delete_oxm_matches( matches );
 
   openflow_service_header_t *message;
   message = append_front_buffer( buf, sizeof( openflow_service_header_t ) );
@@ -225,7 +248,7 @@ init_packetin_match_table( void ) {
 
 
 static void
-free_user_data_entry( struct ofp_match match, uint16_t priority, void *services, void *user_data ) {
+free_user_data_entry( oxm_matches *match, uint16_t priority, void *services, void *user_data ) {
   UNUSED( match );
   UNUSED( priority );
   UNUSED( user_data );
@@ -247,8 +270,8 @@ finalize_packetin_match_table( void ) {
 
 
 static bool
-add_packetin_match_entry( struct ofp_match match, uint16_t priority, const char *service_name ) {
-  bool ( *insert_or_update_match_entry ) ( struct ofp_match, uint16_t, void * ) = update_match_entry;
+add_packetin_match_entry( oxm_matches *match, uint16_t priority, const char *service_name ) {
+  bool ( *insert_or_update_match_entry ) ( oxm_matches *, uint16_t, void * ) = update_match_entry;
   list_element *services = lookup_match_strict_entry( match, priority );
   if ( services == NULL ) {
     insert_or_update_match_entry = insert_match_entry;
@@ -258,8 +281,8 @@ add_packetin_match_entry( struct ofp_match match, uint16_t priority, const char 
     list_element *element;
     for ( element = services; element != NULL; element = element->next ) {
       if ( strcmp( element->data, service_name ) == 0 ) {
-        char match_string[ 256 ];
-        match_to_string( &match, match_string, sizeof( match_string ) );
+        char match_string[ MATCH_STRING_LENGTH ];
+        match_to_string( match, match_string, sizeof( match_string ) );
         warn( "match entry already exists ( match = [%s], service_name = [%s] )", match_string, service_name );
         return false;
       }
@@ -273,7 +296,7 @@ add_packetin_match_entry( struct ofp_match match, uint16_t priority, const char 
 
 
 static int
-delete_packetin_match_entry( struct ofp_match match, uint16_t priority, const char *service_name ) {
+delete_packetin_match_entry( oxm_matches *match, uint16_t priority, const char *service_name ) {
   list_element *head = delete_match_strict_entry( match, priority );
   if ( head == NULL ) {
     return 0;
@@ -310,22 +333,20 @@ delete_packetin_match_entry( struct ofp_match match, uint16_t priority, const ch
 
 static void
 register_dl_type_filter( uint16_t dl_type, uint16_t priority, const char *service_name ) {
-  struct ofp_match match;
-  memset( &match, 0, sizeof( struct ofp_match ) );
-  match.wildcards = OFPFW_ALL & ~OFPFW_DL_TYPE;
-  match.dl_type = dl_type;
+  oxm_matches *match = create_oxm_matches();
+  append_oxm_match_eth_type( match, dl_type );
 
   add_packetin_match_entry( match, priority, service_name );
+  delete_oxm_matches( match );
 }
 
 
 static void
 register_any_filter( uint16_t priority, const char *service_name ) {
-  struct ofp_match match;
-  memset( &match, 0, sizeof( struct ofp_match ) );
-  match.wildcards = OFPFW_ALL;
+  oxm_matches *match = create_oxm_matches();
 
   add_packetin_match_entry( match, priority, service_name );
+  delete_oxm_matches( match );
 }
 
 
@@ -374,9 +395,10 @@ handle_add_filter_request( const messenger_context_handle *handle, add_packetin_
     error( "Service name must be specified." );
     return;
   }
-  struct ofp_match match;
-  ntoh_match( &match, &request->entry.match );
+
+  oxm_matches *match = parse_ofp_match( &request->entry.match );
   bool ret = add_packetin_match_entry( match, ntohs( request->entry.priority ), request->entry.service_name );
+  delete_oxm_matches( match );
 
   add_packetin_filter_reply reply;
   memset( &reply, 0, sizeof( add_packetin_filter_reply ) );
@@ -390,7 +412,7 @@ handle_add_filter_request( const messenger_context_handle *handle, add_packetin_
 
 
 static void
-delete_filter_walker( struct ofp_match match, uint16_t priority, void *data, void *user_data ) {
+delete_filter_walker( oxm_matches *match, uint16_t priority, void *data, void *user_data ) {
   UNUSED( data );
   buffer *reply_buffer = user_data; 
   assert( reply_buffer != NULL );
@@ -417,8 +439,7 @@ handle_delete_filter_request( const messenger_context_handle *handle, delete_pac
   reply->status = PACKETIN_FILTER_OPERATION_SUCCEEDED;
   reply->n_deleted = 0;
 
-  struct ofp_match match;
-  ntoh_match( &match, &request->criteria.match );
+  oxm_matches *match = parse_ofp_match( &request->criteria.match );
   uint16_t priority = ntohs( request->criteria.priority );
   if ( request->flags & PACKETIN_FILTER_FLAG_MATCH_STRICT ) {
     int n_deleted = delete_packetin_match_entry( match, priority, request->criteria.service_name );
@@ -428,6 +449,7 @@ handle_delete_filter_request( const messenger_context_handle *handle, delete_pac
     map_match_table( match, delete_filter_walker, buf );
   }
   reply->n_deleted = htonl( reply->n_deleted );
+  delete_oxm_matches( match );
 
   bool ret = send_reply_message( handle, MESSENGER_DELETE_PACKETIN_FILTER_REPLY, buf->data, buf->length );
   free_buffer( buf );
@@ -438,19 +460,23 @@ handle_delete_filter_request( const messenger_context_handle *handle, delete_pac
 
 
 static void
-dump_filter_walker( struct ofp_match match, uint16_t priority, void *data, void *user_data ) {
+dump_filter_walker( oxm_matches *match, uint16_t priority, void *data, void *user_data ) {
   buffer *reply_buffer = user_data;
   assert( reply_buffer != NULL );
+
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( match ) );
+  match_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
 
   dump_packetin_filter_reply *reply = reply_buffer->data;
   list_element *services = data;
   while ( services != NULL ) {
     reply->n_entries++;
-    packetin_filter_entry *entry = append_back_buffer( reply_buffer, sizeof( packetin_filter_entry ) );
-    hton_match( &entry->match, &match );
+    packetin_filter_entry *entry = append_back_buffer( reply_buffer, offsetof( packetin_filter_entry, match ) + match_len );
+    entry->length = htons( ( uint16_t ) ( offsetof( packetin_filter_entry, match ) + match_len ) );
     entry->priority = htons( priority );
     strncpy( entry->service_name, services->data, sizeof( entry->service_name ) );
     entry->service_name[ sizeof( entry->service_name ) - 1 ] = '\0';
+    construct_ofp_match( &entry->match, match );
     services = services->next;
   }
 }
@@ -466,19 +492,22 @@ handle_dump_filter_request( const messenger_context_handle *handle, dump_packeti
   reply->status = PACKETIN_FILTER_OPERATION_SUCCEEDED;
   reply->n_entries = 0;
 
-  struct ofp_match match;
-  ntoh_match( &match, &request->criteria.match );
+  oxm_matches *match = parse_ofp_match( &request->criteria.match );
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( match ) );
+  match_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+
   uint16_t priority = ntohs( request->criteria.priority );
   if ( request->flags & PACKETIN_FILTER_FLAG_MATCH_STRICT ) {
     list_element *services = lookup_match_strict_entry( match, priority );
     while ( services != NULL ) {
       if ( strcmp( services->data, request->criteria.service_name ) == 0 ) {
-        packetin_filter_entry *entry = append_back_buffer( buf, sizeof( packetin_filter_entry ) );
+        packetin_filter_entry *entry = append_back_buffer( buf, offsetof( packetin_filter_entry, match ) + match_len );
         reply->n_entries++;
-        entry->match = request->criteria.match;
+        entry->length = htons( ( uint16_t ) ( offsetof( packetin_filter_entry, match ) + match_len ) );
         entry->priority = request->criteria.priority;
         strncpy( entry->service_name, services->data, sizeof( entry->service_name ) );
         entry->service_name[ sizeof( entry->service_name ) - 1 ] = '\0';
+        construct_ofp_match( &entry->match, match );
       }
       services = services->next;
     }
@@ -486,7 +515,9 @@ handle_dump_filter_request( const messenger_context_handle *handle, dump_packeti
   else {
     map_match_table( match, dump_filter_walker, buf );
   }
+  reply->length = htons( ( uint16_t ) buf->length );
   reply->n_entries = htonl( reply->n_entries );
+  delete_oxm_matches( match );
 
   bool ret = send_reply_message( handle, MESSENGER_DUMP_PACKETIN_FILTER_REPLY, buf->data, buf->length );
   free_buffer( buf );
@@ -506,7 +537,7 @@ handle_request( const messenger_context_handle *handle, uint16_t tag, void *data
   switch ( tag ) {
     case MESSENGER_ADD_PACKETIN_FILTER_REQUEST:
     {
-      if ( length != sizeof( add_packetin_filter_request ) ) {
+      if ( length < sizeof( add_packetin_filter_request ) ) {
         error( "Invalid add packetin filter request ( length = %u ).", length );
         return;
       }
@@ -516,7 +547,7 @@ handle_request( const messenger_context_handle *handle, uint16_t tag, void *data
     break;
     case MESSENGER_DELETE_PACKETIN_FILTER_REQUEST:
     {
-      if ( length != sizeof( delete_packetin_filter_request ) ) {
+      if ( length < sizeof( delete_packetin_filter_request ) ) {
         error( "Invalid delete packetin filter request ( length = %u ).", length );
         return;
       }
@@ -526,7 +557,7 @@ handle_request( const messenger_context_handle *handle, uint16_t tag, void *data
     break;
     case MESSENGER_DUMP_PACKETIN_FILTER_REQUEST:
     {
-      if ( length != sizeof( dump_packetin_filter_request ) ) {
+      if ( length < sizeof( dump_packetin_filter_request ) ) {
         error( "Invalid dump packetin filter request ( length = %u ).", length );
         return;
       }

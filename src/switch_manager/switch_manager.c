@@ -70,7 +70,7 @@ pid_t mock_wait3( int *status, int options, struct rusage *rusage );
 #undef secure_channel_accept
 #endif
 #define secure_channel_accept mock_secure_channel_accept
-void mock_secure_channel_accept( struct listener_info *listener_info );
+void mock_secure_channel_accept( int fd, void *data );
 
 #ifdef access
 #undef access
@@ -101,12 +101,6 @@ void mock_set_fd_set_callback( void ( *callback )( fd_set *read_set, fd_set *wri
 #endif
 #define set_check_fd_isset_callback mock_set_check_fd_isset_callback
 void mock_set_check_fd_isset_callback( void ( *callback )( fd_set *read_set, fd_set *write_set ) );
-
-#ifdef secure_channel_accept
-#undef secure_channel_accept
-#endif
-#define secure_channel_accept mock_secure_channel_accept
-void mock_secure_channel_accept( struct listener_info *listener_info );
 
 #ifdef secure_channel_listen_start
 #undef secure_channel_listen_start

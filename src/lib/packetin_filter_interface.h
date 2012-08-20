@@ -26,6 +26,7 @@
 #include <openflow.h>
 #include "bool.h"
 #include "messenger.h"
+#include "oxm_match.h"
 
 
 #define PACKETIN_FILTER_MANAGEMENT_SERVICE "packetin_filter_management"
@@ -52,12 +53,16 @@ enum {
 
 
 typedef struct {
-  struct ofp_match match;
+  uint16_t length;
   uint16_t priority;
+  uint8_t pad[ 4 ];
   char service_name[ MESSENGER_SERVICE_NAME_LENGTH ];
+  struct ofp_match match;
 } __attribute__( ( packed ) ) packetin_filter_entry;
 
 typedef struct {
+  uint16_t length;
+  uint8_t pad[ 6 ];
   packetin_filter_entry entry;
 } __attribute__( ( packed ) ) add_packetin_filter_request;
 
@@ -66,8 +71,10 @@ typedef struct {
 } __attribute__( ( packed ) ) add_packetin_filter_reply;
 
 typedef struct {
-  packetin_filter_entry criteria;
+  uint16_t length;
   uint8_t flags;
+  uint8_t pad[ 5 ];
+  packetin_filter_entry criteria;
 } __attribute__( ( packed ) ) delete_packetin_filter_request;
 
 typedef struct {
@@ -76,11 +83,15 @@ typedef struct {
 } __attribute__( ( packed ) ) delete_packetin_filter_reply;
 
 typedef struct {
-  packetin_filter_entry criteria;
+  uint16_t length;
   uint8_t flags;
+  uint8_t pad[ 5 ];
+  packetin_filter_entry criteria;
 } __attribute__( ( packed ) ) dump_packetin_filter_request;
 
 typedef struct {
+  uint16_t length;
+  uint8_t pad;
   uint8_t status;
   uint32_t n_entries;
   packetin_filter_entry entries[ 0 ];
@@ -106,11 +117,11 @@ typedef void ( *dump_packetin_filter_handler )(
 );
 
 
-bool add_packetin_filter( struct ofp_match match, uint16_t priority, char *service_name,
+bool add_packetin_filter( oxm_matches *match, uint16_t priority, char *service_name,
                           add_packetin_filter_handler callback, void *user_data );
-bool delete_packetin_filter( struct ofp_match match, uint16_t priority, char *service_name, bool strict,
+bool delete_packetin_filter( oxm_matches *match, uint16_t priority, char *service_name, bool strict,
                              delete_packetin_filter_handler callback, void *user_data );
-bool dump_packetin_filter( struct ofp_match match, uint16_t priority, char *service_name, bool strict,
+bool dump_packetin_filter( oxm_matches *match, uint16_t priority, char *service_name, bool strict,
                            dump_packetin_filter_handler callback, void *user_data );
 bool init_packetin_filter_interface( void );
 bool finalize_packetin_filter_interface( void );

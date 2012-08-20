@@ -34,36 +34,68 @@ import "directedrule"
 # Main tasks
 ################################################################################
 
+# BEFORE t-saito MOD
+#desc "Build trema."
+#task :default => [
+#  :libtrema,
+#  :rubylib,
+#  :switch_manager,
+#  :switch,
+#  :packetin_filter,
+#  :tremashark,
+#  :packet_capture,
+#  :syslog_relay,
+#  :stdin_relay,
+#  :vendor,
+#  :examples
+#]
+# AFTER t-saito MOD
 desc "Build trema."
 task :default => [
   :libtrema,
-  :rubylib,
+#  :rubylib,
   :switch_manager,
   :switch,
   :packetin_filter,
-  :tremashark,
-  :packet_capture,
-  :syslog_relay,
-  :stdin_relay,
-  :vendor,
+#  :tremashark,
+#  :packet_capture,
+#  :syslog_relay,
+#  :stdin_relay,
+#  :vendor,
   :examples
 ]
 
-
+# BEFORE t-saito MOD
+#task :examples => [
+#  "examples:cbench_switch",
+#  "examples:dumper",
+#  "examples:hello_trema",
+#  "examples:learning_switch",
+#  "examples:list_switches",
+#  "examples:multi_learning_switch",
+#  "examples:openflow_message",
+#  "examples:packet_in",
+#  "examples:repeater_hub",
+#  "examples:packetin_filter_config",
+#  "examples:switch_info",
+#  "examples:switch_monitor",
+#  "examples:traffic_monitor",
+#]
+# AFTER t-saito MOD
 task :examples => [
-  "examples:cbench_switch",
+#  "examples:cbench_switch",
   "examples:dumper",
-  "examples:hello_trema",
+#  "examples:hello_trema",
   "examples:learning_switch",
-  "examples:list_switches",
-  "examples:multi_learning_switch",
-  "examples:openflow_message",
-  "examples:packet_in",
-  "examples:repeater_hub",
+#  "examples:list_switches",
+#  "examples:multi_learning_switch",
+#  "examples:openflow_message",
+#  "examples:packet_in",
+#  "examples:repeater_hub",
   "examples:packetin_filter_config",
-  "examples:switch_info",
-  "examples:switch_monitor",
-  "examples:traffic_monitor",
+#  "examples:switch_info",
+#  "examples:switch_monitor",
+#  "examples:traffic_monitor",
 ]
 
 
@@ -382,10 +414,16 @@ libtrema = File.join( Trema.lib, "libtrema.a" )
 libtrema_gcov = File.join( "#{ Trema.home }/objects/unittests", "libtrema.a" )
 
 libtrema_o = gen DirectedRule, Trema.lib => [ Trema.include ], :o => :c do | t |
-  sys "gcc -I#{ objects "openflow" } #{ var :CFLAGS } -fPIC -c -o #{ t.name } #{ t.source }"
+# BEFORE t-saito MOD
+#  sys "gcc -I#{ objects "openflow" } #{ var :CFLAGS } -fPIC -c -o #{ t.name } #{ t.source }"
+# AFTER t-saito MOD
+  sys "gcc -I#{ Trema.home }/src/lib #{ var :CFLAGS } -fPIC -c -o #{ t.name } #{ t.source }"
 end
 libtrema_gcov_o = gen DirectedRule, "#{ Trema.home }/objects/unittests" => [ Trema.include ], :o => :c do | t |
-  sys "gcc --coverage -I#{ objects "openflow" } #{ var :CFLAGS } -fPIC -c -o #{ t.name } #{ t.source }"
+# BEFORE t-saito MOD
+#  sys "gcc --coverage -I#{ objects "openflow" } #{ var :CFLAGS } -fPIC -c -o #{ t.name } #{ t.source }"
+# AFTER t-saito MOD
+  sys "gcc --coverage -I#{ Trema.home }/src/lib #{ var :CFLAGS } -fPIC -c -o #{ t.name } #{ t.source }"
 end
 
 desc "Build trema library."
@@ -405,8 +443,8 @@ end
 # Build trema.so (ruby library)
 ################################################################################
 
-task :clean => "rubylib:clean"
-task :distclean => "rubylib:distclean"
+#task :clean => "rubylib:clean"
+#task :distclean => "rubylib:distclean"
 
 
 desc "Build ruby library."
@@ -721,12 +759,16 @@ end
 
 def libtrema_unit_tests
   {
-    :byteorder_test => [ :log, :utility, :wrapper, :trema_wrapper ],
+# t-saito fix
+    :oxm_match_test => [ :cmockery_trema, :log, :linked_list, :oxm_byteorder, :utility, :wrapper, :trema_wrapper ],
+    :oxm_byteorder_test => [ :cmockery_trema, :log, :utility, :wrapper, :trema_wrapper ],
+    :byteorder_test => [ :cmockery_trema, :buffer, :log, :utility, :wrapper, :trema_wrapper, :linked_list, :openflow_message, :packet_info, :oxm_match, :oxm_byteorder ],
     :daemon_test => [],
     :ether_test => [ :buffer, :log, :utility, :wrapper, :trema_wrapper ],
     :messenger_test => [ :doubly_linked_list, :hash_table, :event_handler, :linked_list, :utility, :wrapper, :timer, :log, :trema_wrapper ],
-    :openflow_application_interface_test => [ :buffer, :byteorder, :hash_table, :doubly_linked_list, :linked_list, :log, :openflow_message, :packet_info, :stat, :trema_wrapper, :utility, :wrapper ],
-    :openflow_message_test => [ :buffer, :byteorder, :linked_list, :log, :packet_info, :utility, :wrapper, :trema_wrapper ],
+    :openflow_application_interface_test => [ :cmockery_trema, :buffer, :byteorder, :hash_table, :doubly_linked_list, :linked_list, :log, :openflow_message, :packet_info, :stat, :trema_wrapper, :utility, :wrapper, :oxm_match, :oxm_byteorder ],
+    :openflow_message_test => [ :cmockery_trema, :buffer, :byteorder, :linked_list, :log, :packet_info, :utility, :wrapper, :trema_wrapper, :oxm_match, :oxm_byteorder ],
+    :openflow_switch_interface_test => [ :cmockery_trema, :buffer, :byteorder, :hash_table, :doubly_linked_list, :linked_list, :log, :openflow_message, :trema_wrapper, :utility, :wrapper, :packet_info, :oxm_match, :oxm_byteorder ],
     :packet_info_test => [ :buffer, :log, :utility, :wrapper, :trema_wrapper ],
     :stat_test => [ :hash_table, :doubly_linked_list, :log, :utility, :wrapper, :trema_wrapper ],
     :timer_test => [ :log, :utility, :wrapper, :doubly_linked_list, :trema_wrapper ],
@@ -778,6 +820,7 @@ end
 
 # new unittest
 tests = [
+# t-saito fix
   "objects/unittests/buffer_test",
   "objects/unittests/doubly_linked_list_test",
   "objects/unittests/ether_test",

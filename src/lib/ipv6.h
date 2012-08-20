@@ -24,8 +24,15 @@
 
 #define IPV6_ADDRLEN 16
 
+#define IPV6_NEXTHDR_HOPOPT 0x00
+#define IPV6_NEXTHDR_ROUTE  0x2B
+#define IPV6_NEXTHDR_FLAG   0x2C
+#define IPV6_NEXTHDR_ESP    0x32
+#define IPV6_NEXTHDR_AH     0x33
+#define IPV6_NEXTHDR_NONXT  0x3B
+#define IPV6_NEXTHDR_OPTS   0x3C
 
-typedef struct  {
+typedef struct {
   uint32_t hdrctl;
   uint16_t plen;
   uint8_t nexthdr;
@@ -33,6 +40,12 @@ typedef struct  {
   uint8_t saddr[ IPV6_ADDRLEN ];
   uint8_t daddr[ IPV6_ADDRLEN ];
 } ipv6_header_t;
+
+
+typedef struct {
+  uint8_t nexthdr;
+  uint8_t exthdrlen;
+} ipv6_ext_t;
 
 
 #endif // IPV6_H

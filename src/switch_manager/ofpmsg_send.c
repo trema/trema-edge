@@ -226,14 +226,15 @@ ofpmsg_send( struct switch_info *sw_info, buffer *buf, char *service_name ) {
 int
 ofpmsg_send_delete_all_flows( struct switch_info *sw_info ) {
   int ret;
-  struct ofp_match match;
+  oxm_matches *match;
   buffer *buf;
 
-  memset( &match, 0, sizeof( match ) );
-  match.wildcards = OFPFW_ALL;
+  match = create_oxm_matches();
 
-  buf = create_flow_mod( generate_xid(), match, RESERVED_COOKIE,
-                         OFPFC_DELETE, 0, 0, 0, UINT32_MAX, OFPP_NONE, 0, NULL );
+  buf = create_flow_mod( generate_xid(), RESERVED_COOKIE, 0, OFPTT_ALL, OFPFC_DELETE,
+                         0, 0, 0, UINT32_MAX, OFPP_ANY, OFPG_ANY, 0, match, NULL );
+
+  delete_oxm_matches( match );
 
   ret = send_to_secure_channel( sw_info, buf );
   if ( ret == 0 ) {
@@ -247,15 +248,16 @@ ofpmsg_send_delete_all_flows( struct switch_info *sw_info ) {
 int
 ofpmsg_send_deny_all( struct switch_info *sw_info ) {
   int ret;
-  struct ofp_match match;
+  oxm_matches *match;
   buffer *buf;
 
-  memset( &match, 0, sizeof( match ) );
-  match.wildcards = OFPFW_ALL;
+  match = create_oxm_matches();
   const uint16_t timeout = 10;
 
-  buf = create_flow_mod( generate_xid(), match, RESERVED_COOKIE,
-                         OFPFC_ADD, 0, timeout, UINT16_MAX, UINT32_MAX, OFPP_NONE, 0, NULL );
+  buf = create_flow_mod( generate_xid(), RESERVED_COOKIE, 0, 0, OFPFC_ADD,
+                         0, timeout, UINT16_MAX, UINT32_MAX, 0, 0, 0, match, NULL );
+
+  delete_oxm_matches( match );
 
   ret = send_to_secure_channel( sw_info, buf );
   if ( ret == 0 ) {

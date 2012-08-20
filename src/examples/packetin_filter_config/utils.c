@@ -26,12 +26,13 @@
 void
 timeout( void *user_data ) {
   handler_data *data = user_data;
-  char match_string[ 512 ];
-  match_to_string( &data->match, match_string, sizeof( match_string ) );
+  char match_string[ MATCH_STRING_LENGTH ];
+  match_to_string( data->match, match_string, sizeof( match_string ) );
 
   error( "Timeout ( match = [%s], service_name = %s, strict = %s ).",
          match_string, data->service_name, data->strict ? "true" : "false" );
 
+  delete_oxm_matches( data->match );
   stop_trema();
 }
 
@@ -39,8 +40,8 @@ timeout( void *user_data ) {
 void
 add_filter_completed( int status, void *user_data ) {
   handler_data *data = user_data;
-  char match_string[ 512 ];
-  match_to_string( &data->match, match_string, sizeof( match_string ) );
+  char match_string[ MATCH_STRING_LENGTH ];
+  match_to_string( data->match, match_string, sizeof( match_string ) );
 
   if ( status != PACKETIN_FILTER_OPERATION_SUCCEEDED ) {
     error( "Failed to add a packetin filter ( match = [%s], service_name = %s ).",
@@ -49,6 +50,7 @@ add_filter_completed( int status, void *user_data ) {
   info( "A packetin filter was added ( match = [%s], service_name = %s ).",
         match_string, data->service_name );
 
+  delete_oxm_matches( data->match );
   stop_trema();
 }
 
@@ -56,8 +58,8 @@ add_filter_completed( int status, void *user_data ) {
 void
 delete_filter_completed( int status, int n_deleted, void *user_data ) {
   handler_data *data = user_data;
-  char match_string[ 512 ];
-  match_to_string( &data->match, match_string, sizeof( match_string ) );
+  char match_string[ MATCH_STRING_LENGTH ];
+  match_to_string( data->match, match_string, sizeof( match_string ) );
 
   if ( status != PACKETIN_FILTER_OPERATION_SUCCEEDED ) {
     error( "Failed to delete packetin filters ( match = [%s], service_name = %s, strict = %s ).",
@@ -67,6 +69,7 @@ delete_filter_completed( int status, int n_deleted, void *user_data ) {
         n_deleted, n_deleted > 1 ? "s were" : " was", match_string,
         data->service_name, data->strict ? "true" : "false" );
 
+  delete_oxm_matches( data->match );
   stop_trema();
 }
 
@@ -74,8 +77,8 @@ delete_filter_completed( int status, int n_deleted, void *user_data ) {
 void
 dump_filters( int status, int n_entries, packetin_filter_entry *entries, void *user_data ) {
   handler_data *data = user_data;
-  char match_string[ 512 ];
-  match_to_string( &data->match, match_string, sizeof( match_string ) );
+  char match_string[ MATCH_STRING_LENGTH ];
+  match_to_string( data->match, match_string, sizeof( match_string ) );
 
   if ( status != PACKETIN_FILTER_OPERATION_SUCCEEDED ) {
     error( "Failed to dump packetin filters ( match = [%s], service_name = %s, strict = %s ).",
@@ -84,12 +87,23 @@ dump_filters( int status, int n_entries, packetin_filter_entry *entries, void *u
   info( "%d packetin filter%s found ( match = [%s], service_name = %s, strict = %s ).",
         n_entries, n_entries > 1 ? "s" : "", match_string, data->service_name,
         data->strict ? "true" : "false" );
+
+  packetin_filter_entry *entry = entries;
+  oxm_matches *match;
   for ( int i = 0; i < n_entries; i++ ) {
-    match_to_string( &entries[ i ].match, match_string, sizeof( match_string ) );
+    uint16_t match_len = ( uint16_t ) ( entry->match.length + PADLEN_TO_64( entry->match.length ) );
+    struct ofp_match *tmp_match = xcalloc( 1, match_len );
+    hton_match( tmp_match, &entry->match );
+    match = parse_ofp_match( tmp_match );
+    match_to_string( match, match_string, sizeof( match_string ) );
     info( "[#%d] match = [%s], priority = %u, service_name = %s.",
-          i, match_string, entries[ i ].priority, entries[ i ].service_name );
+          i, match_string, entry->priority, entry->service_name );
+    entry = ( packetin_filter_entry * ) ( ( char * ) entry + entry->length );
+    xfree( tmp_match );
+    delete_oxm_matches( match );
   }
 
+  delete_oxm_matches( data->match );
   stop_trema();
 }
 

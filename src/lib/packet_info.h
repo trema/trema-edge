@@ -22,6 +22,7 @@
 #define PACKET_INFO_H
 
 
+#include <arpa/inet.h>
 #include "arp.h"
 #include "checks.h"
 #include "bool.h"
@@ -33,6 +34,9 @@
 #include "tcp.h"
 #include "udp.h"
 #include "etherip.h"
+#include "sctp.h"
+#include "mpls.h"
+#include "icmpv6.h"
 
 
 enum {
@@ -41,6 +45,7 @@ enum {
   ETH_8023_LLC = 0x00000004,
   ETH_8023_SNAP = 0x00000008,
   ETH_8021Q = 0x00000010,
+  MPLS = 0x00000020,
   NW_IPV4 = 0x00000100,
   NW_ICMPV4 = 0x00000200,
   NW_IPV6 = 0x00000400,
@@ -51,6 +56,7 @@ enum {
   TP_TCP = 0x00010000,
   TP_UDP = 0x00020000,
   TP_ETHERIP = 0x00040000,
+  TP_SCTP = 0x00080000,
 
   ETH_VTAG_DIX = ETH_8021Q | ETH_DIX,
   ETH_VTAG_RAW = ETH_8021Q | ETH_8023_RAW,
@@ -133,8 +139,9 @@ typedef struct {
   uint16_t ipv6_plen;
   uint16_t ipv6_nexthdr;
   uint16_t ipv6_hoplimit;
-  uint8_t ipv6_saddr[ IPV6_ADDRLEN ];
-  uint8_t ipv6_daddr[ IPV6_ADDRLEN ];
+  struct in6_addr ipv6_saddr;
+  struct in6_addr ipv6_daddr;
+  uint8_t ipv6_protocol;
 
   uint8_t icmpv4_type;
   uint8_t icmpv4_code;
@@ -165,6 +172,21 @@ typedef struct {
 
   uint16_t etherip_version;
   uint16_t etherip_offset;
+
+  uint16_t sctp_src_port;
+  uint16_t sctp_dst_port;
+
+  uint8_t icmpv6_type;
+  uint8_t icmpv6_code;
+  struct in6_addr icmpv6_nd_target;
+  uint8_t icmpv6_nd_ll_type;
+  uint8_t icmpv6_nd_ll_length;
+  uint8_t icmpv6_nd_sll[ ETH_ADDRLEN ];
+  uint8_t icmpv6_nd_tll[ ETH_ADDRLEN ];
+
+  uint32_t mpls_label;
+
+  uint16_t ipv6_exthdr;
 
   void *l2_header;
   void *l2_payload;

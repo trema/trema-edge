@@ -28,7 +28,10 @@
 #include <stdio.h>
 #include "bool.h"
 #include "openflow.h"
+#include "openflow_local.h"
+#include "oxm_match.h"
 
+#define MATCH_STRING_LENGTH 2048
 
 extern void ( *die )( const char *format, ... );
 
@@ -49,10 +52,11 @@ unsigned int hash_datapath_id( const void *key );
 
 bool string_to_datapath_id( const char *str, uint64_t *datapath_id );
 
-bool match_to_string( const struct ofp_match *match, char *str, size_t size );
-bool wildcards_to_string( uint32_t wildcards, char *str, size_t size );
-bool phy_port_to_string( const struct ofp_phy_port *phy_port, char *str, size_t size );
+bool match_to_string( const oxm_matches *match, char *str, size_t size );
+
+bool port_to_string( const struct ofp_port *phy_port, char *str, size_t size );
 bool actions_to_string( const struct ofp_action_header *actions, uint16_t actions_length, char *str, size_t str_length );
+bool instructions_to_string( const struct ofp_instruction *instructions, uint16_t instructions_length, char *str, size_t str_length );
 
 uint16_t get_checksum( uint16_t *pos, uint32_t size );
 

@@ -56,11 +56,7 @@ static void ( *handle_reply ) ( uint16_t tag, void *data, size_t length, void *u
 
 static void *HANDLER = ( void * ) 0x12345678;
 static void *USER_DATA = ( void * ) 0x87654321;
-static struct ofp_match MATCH = { OFPFW_ALL, 1,
-                                  { 0x01, 0x02, 0x03, 0x04, 0x05, 0x07 },
-                                  { 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d },
-                                  1, 1, { 0 }, 0x800, 0xfc, 0x6, { 0, 0 },
-                                  0x0a090807, 0x0a090807, 1024, 2048 };
+static oxm_matches *MATCH = NULL;
 static uint16_t PRIORITY = UINT16_MAX / 2;
 static char SERVICE_NAME[] = "send_message_to_here";
 static char CLIENT_SERVICE_NAME[] = "packetin_filter.1234";
@@ -132,6 +128,10 @@ mock_send_request_message( const char *to_service_name, const char *from_service
   check_expected( hd->callback );
   check_expected( hd->user_data );
 
+  if ( hd != NULL ) {
+    xfree( hd );
+  }
+
   return ( bool ) mock();
 }
 
@@ -165,6 +165,33 @@ mock_dump_packetin_filter_handler( int status, int n_entries, packetin_filter_en
  ********************************************************************************/
 
 static void
+alloc_MATCH() {
+  uint8_t dst_mac[6] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 };
+  uint8_t src_mac[6] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 };
+  uint8_t nomask[6] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+  MATCH = create_oxm_matches();
+  append_oxm_match_in_port( MATCH, 1 );
+  append_oxm_match_eth_dst( MATCH, dst_mac, nomask );
+  append_oxm_match_eth_src( MATCH, src_mac, nomask );
+  append_oxm_match_vlan_vid( MATCH, 1, 0 );
+  append_oxm_match_vlan_pcp( MATCH, 1 );
+  append_oxm_match_eth_type( MATCH, 0x0800 );
+  append_oxm_match_ip_proto( MATCH, 0x6 );
+  append_oxm_match_ipv4_src( MATCH, 0x0a090807, 0x00000000 );
+  append_oxm_match_ipv4_dst( MATCH, 0x0a090807, 0x00000000 );
+  append_oxm_match_tcp_src( MATCH, 1024 );
+  append_oxm_match_tcp_dst( MATCH, 2048 );
+}
+
+
+static void
+free_MATCH() {
+  delete_oxm_matches( MATCH );
+}
+
+
+static void
 setup() {
   original_getpid = trema_getpid;
   trema_getpid = mock_getpid;
@@ -178,6 +205,7 @@ setup() {
   delete_message_replied_callback = mock_delete_message_replied_callback;
   original_send_request_message = send_request_message;
   send_request_message = mock_send_request_message;
+  alloc_MATCH();
 }
 
 
@@ -192,6 +220,7 @@ setup_and_init() {
 
 static void
 teardown() {
+  free_MATCH();
   trema_getpid = original_getpid;
   error = original_error;
   warn = original_warn;
@@ -262,45 +291,61 @@ test_finalize_packetin_filter_interface_fails_if_not_initialized() {
 
 static void
 test_add_packetin_filter_succeeds() {
-  add_packetin_filter_request expected_data;
-  memset( &expected_data, 0, sizeof( add_packetin_filter_request ) );
-  hton_match( &expected_data.entry.match, &MATCH );
-  expected_data.entry.priority = htons( PRIORITY );
-  memcpy( expected_data.entry.service_name, SERVICE_NAME, sizeof( expected_data.entry.service_name ) );
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( MATCH ) );
+  uint16_t match_pad_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t entry_len = ( uint16_t ) ( offsetof( packetin_filter_entry, match ) + match_pad_len );
+  uint16_t req_len = ( uint16_t ) ( offsetof( add_packetin_filter_request, entry ) + entry_len );
+  add_packetin_filter_request *expected_data = xcalloc( 1, req_len );
+  memset( expected_data, 0, req_len );
+  expected_data->length = htons( req_len );
+  expected_data->entry.length = htons( entry_len );
+  expected_data->entry.priority = htons( PRIORITY );
+  strncpy( expected_data->entry.service_name, SERVICE_NAME, sizeof( expected_data->entry.service_name ) );
+  construct_ofp_match( &expected_data->entry.match, MATCH );
 
   expect_string( mock_send_request_message, to_service_name, PACKETIN_FILTER_MANAGEMENT_SERVICE );
   expect_string( mock_send_request_message, from_service_name, CLIENT_SERVICE_NAME );
   expect_value( mock_send_request_message, tag32, MESSENGER_ADD_PACKETIN_FILTER_REQUEST );
-  expect_memory( mock_send_request_message, data, &expected_data, sizeof( add_packetin_filter_request ) );
-  expect_value( mock_send_request_message, len, sizeof( add_packetin_filter_request ) );
+  expect_memory( mock_send_request_message, data, expected_data, req_len );
+  expect_value( mock_send_request_message, len, req_len );
   expect_value( mock_send_request_message, hd->callback, HANDLER );
   expect_value( mock_send_request_message, hd->user_data, USER_DATA );
   will_return( mock_send_request_message, true );
 
   assert_true( add_packetin_filter( MATCH, PRIORITY, SERVICE_NAME, HANDLER, USER_DATA ) );
+
+  xfree( expected_data );
 }
 
 
 static void
 test_add_packetin_filter_succeeds_if_not_initialized() {
-  add_packetin_filter_request expected_data;
-  memset( &expected_data, 0, sizeof( add_packetin_filter_request ) );
-  hton_match( &expected_data.entry.match, &MATCH );
-  expected_data.entry.priority = htons( PRIORITY );
-  memcpy( expected_data.entry.service_name, SERVICE_NAME, sizeof( expected_data.entry.service_name ) );
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( MATCH ) );
+  uint16_t match_pad_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t entry_len = ( uint16_t ) ( offsetof( packetin_filter_entry, match ) + match_pad_len );
+  uint16_t req_len = ( uint16_t ) ( offsetof( add_packetin_filter_request, entry ) + entry_len );
+  add_packetin_filter_request *expected_data = xcalloc( 1, req_len );
+  memset( expected_data, 0, req_len );
+  expected_data->length = htons( req_len );
+  expected_data->entry.length = htons( entry_len );
+  expected_data->entry.priority = htons( PRIORITY );
+  strncpy( expected_data->entry.service_name, SERVICE_NAME, sizeof( expected_data->entry.service_name ) );
+  construct_ofp_match( &expected_data->entry.match, MATCH );
 
   expect_string( mock_add_message_replied_callback, service_name, CLIENT_SERVICE_NAME );
   will_return( mock_add_message_replied_callback, true );
   expect_string( mock_send_request_message, to_service_name, PACKETIN_FILTER_MANAGEMENT_SERVICE );
   expect_string( mock_send_request_message, from_service_name, CLIENT_SERVICE_NAME );
   expect_value( mock_send_request_message, tag32, MESSENGER_ADD_PACKETIN_FILTER_REQUEST );
-  expect_memory( mock_send_request_message, data, &expected_data, sizeof( add_packetin_filter_request ) );
-  expect_value( mock_send_request_message, len, sizeof( add_packetin_filter_request ) );
+  expect_memory( mock_send_request_message, data, expected_data, req_len );
+  expect_value( mock_send_request_message, len, req_len );
   expect_value( mock_send_request_message, hd->callback, HANDLER );
   expect_value( mock_send_request_message, hd->user_data, USER_DATA );
   will_return( mock_send_request_message, true );
 
   assert_true( add_packetin_filter( MATCH, PRIORITY, SERVICE_NAME, HANDLER, USER_DATA ) );
+
+  xfree( expected_data );
 }
 
 
@@ -330,23 +375,31 @@ static void
 test_delete_packetin_filter_succeeds_with_PACKETIN_FILTER_FLAG_MATCH_STRICT() {
   uint8_t flags = PACKETIN_FILTER_FLAG_MATCH_STRICT;
 
-  delete_packetin_filter_request expected_data;
-  memset( &expected_data, 0, sizeof( delete_packetin_filter_request ) );
-  hton_match( &expected_data.criteria.match, &MATCH );
-  expected_data.criteria.priority = htons( PRIORITY );
-  strcpy( expected_data.criteria.service_name, SERVICE_NAME );
-  expected_data.flags = flags;
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( MATCH ) );
+  uint16_t match_pad_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t entry_len = ( uint16_t ) ( offsetof( packetin_filter_entry, match ) + match_pad_len );
+  uint16_t req_len = ( uint16_t ) ( offsetof( delete_packetin_filter_request, criteria ) + entry_len );
+  delete_packetin_filter_request *expected_data = xcalloc( 1, req_len );
+  memset( expected_data, 0, req_len );
+  expected_data->length = htons( req_len );
+  expected_data->flags = flags;
+  expected_data->criteria.length = htons( entry_len );
+  expected_data->criteria.priority = htons( PRIORITY );
+  strncpy( expected_data->criteria.service_name, SERVICE_NAME, sizeof( expected_data->criteria.service_name ) );
+  construct_ofp_match( &expected_data->criteria.match, MATCH );
 
   expect_string( mock_send_request_message, to_service_name, PACKETIN_FILTER_MANAGEMENT_SERVICE );
   expect_string( mock_send_request_message, from_service_name, CLIENT_SERVICE_NAME );
   expect_value( mock_send_request_message, tag32, MESSENGER_DELETE_PACKETIN_FILTER_REQUEST );
-  expect_memory( mock_send_request_message, data, &expected_data, sizeof( delete_packetin_filter_request ) );
-  expect_value( mock_send_request_message, len, sizeof( delete_packetin_filter_request ) );
+  expect_memory( mock_send_request_message, data, expected_data, req_len );
+  expect_value( mock_send_request_message, len, req_len );
   expect_value( mock_send_request_message, hd->callback, HANDLER );
   expect_value( mock_send_request_message, hd->user_data, USER_DATA );
   will_return( mock_send_request_message, true );
 
   assert_true( delete_packetin_filter( MATCH, PRIORITY, SERVICE_NAME, flags, HANDLER, USER_DATA ) );
+
+  xfree( expected_data );
 }
 
 
@@ -354,23 +407,31 @@ static void
 test_delete_packetin_filter_succeeds_with_PACKETIN_FILTER_FLAG_MATCH_LOOSE() {
   uint8_t flags = PACKETIN_FILTER_FLAG_MATCH_LOOSE;
 
-  delete_packetin_filter_request expected_data;
-  memset( &expected_data, 0, sizeof( delete_packetin_filter_request ) );
-  hton_match( &expected_data.criteria.match, &MATCH );
-  expected_data.criteria.priority = htons( PRIORITY );
-  strcpy( expected_data.criteria.service_name, SERVICE_NAME );
-  expected_data.flags = flags;
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( MATCH ) );
+  uint16_t match_pad_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t entry_len = ( uint16_t ) ( offsetof( packetin_filter_entry, match ) + match_pad_len );
+  uint16_t req_len = ( uint16_t ) ( offsetof( delete_packetin_filter_request, criteria ) + entry_len );
+  delete_packetin_filter_request *expected_data = xcalloc( 1, req_len );
+  memset( expected_data, 0, req_len );
+  expected_data->length = htons( req_len );
+  expected_data->flags = flags;
+  expected_data->criteria.length = htons( entry_len );
+  expected_data->criteria.priority = htons( PRIORITY );
+  strncpy( expected_data->criteria.service_name, SERVICE_NAME, sizeof( expected_data->criteria.service_name ) );
+  construct_ofp_match( &expected_data->criteria.match, MATCH );
 
   expect_string( mock_send_request_message, to_service_name, PACKETIN_FILTER_MANAGEMENT_SERVICE );
   expect_string( mock_send_request_message, from_service_name, CLIENT_SERVICE_NAME );
   expect_value( mock_send_request_message, tag32, MESSENGER_DELETE_PACKETIN_FILTER_REQUEST );
-  expect_memory( mock_send_request_message, data, &expected_data, sizeof( delete_packetin_filter_request ) );
-  expect_value( mock_send_request_message, len, sizeof( delete_packetin_filter_request ) );
+  expect_memory( mock_send_request_message, data, expected_data, req_len );
+  expect_value( mock_send_request_message, len, req_len );
   expect_value( mock_send_request_message, hd->callback, HANDLER );
   expect_value( mock_send_request_message, hd->user_data, USER_DATA );
   will_return( mock_send_request_message, true );
 
   assert_true( delete_packetin_filter( MATCH, PRIORITY, SERVICE_NAME, flags, HANDLER, USER_DATA ) );
+
+  xfree( expected_data );
 }
 
 
@@ -378,25 +439,33 @@ static void
 test_delete_packetin_filter_succeeds_if_not_initialized() {
   uint8_t flags = PACKETIN_FILTER_FLAG_MATCH_STRICT;
 
-  delete_packetin_filter_request expected_data;
-  memset( &expected_data, 0, sizeof( delete_packetin_filter_request ) );
-  hton_match( &expected_data.criteria.match, &MATCH );
-  expected_data.criteria.priority = htons( PRIORITY );
-  strcpy( expected_data.criteria.service_name, SERVICE_NAME );
-  expected_data.flags = flags;
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( MATCH ) );
+  uint16_t match_pad_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t entry_len = ( uint16_t ) ( offsetof( packetin_filter_entry, match ) + match_pad_len );
+  uint16_t req_len = ( uint16_t ) ( offsetof( delete_packetin_filter_request, criteria ) + entry_len );
+  delete_packetin_filter_request *expected_data = xcalloc( 1, req_len );
+  memset( expected_data, 0, req_len );
+  expected_data->length = htons( req_len );
+  expected_data->flags = flags;
+  expected_data->criteria.length = htons( entry_len );
+  expected_data->criteria.priority = htons( PRIORITY );
+  strncpy( expected_data->criteria.service_name, SERVICE_NAME, sizeof( expected_data->criteria.service_name ) );
+  construct_ofp_match( &expected_data->criteria.match, MATCH );
 
   expect_string( mock_add_message_replied_callback, service_name, CLIENT_SERVICE_NAME );
   will_return( mock_add_message_replied_callback, true );
   expect_string( mock_send_request_message, to_service_name, PACKETIN_FILTER_MANAGEMENT_SERVICE );
   expect_string( mock_send_request_message, from_service_name, CLIENT_SERVICE_NAME );
   expect_value( mock_send_request_message, tag32, MESSENGER_DELETE_PACKETIN_FILTER_REQUEST );
-  expect_memory( mock_send_request_message, data, &expected_data, sizeof( delete_packetin_filter_request ) );
-  expect_value( mock_send_request_message, len, sizeof( delete_packetin_filter_request ) );
+  expect_memory( mock_send_request_message, data, expected_data, req_len );
+  expect_value( mock_send_request_message, len, req_len );
   expect_value( mock_send_request_message, hd->callback, HANDLER );
   expect_value( mock_send_request_message, hd->user_data, USER_DATA );
   will_return( mock_send_request_message, true );
 
   assert_true( delete_packetin_filter( MATCH, PRIORITY, SERVICE_NAME, flags, HANDLER, USER_DATA ) );
+
+  xfree( expected_data );
 }
 
 
@@ -408,23 +477,30 @@ static void
 test_dump_packetin_filter_succeeds_with_PACKETIN_FILTER_FLAG_MATCH_STRICT() {
   uint8_t flags = PACKETIN_FILTER_FLAG_MATCH_STRICT;
 
-  dump_packetin_filter_request expected_data;
-  memset( &expected_data, 0, sizeof( dump_packetin_filter_request ) );
-  hton_match( &expected_data.criteria.match, &MATCH );
-  expected_data.criteria.priority = htons( PRIORITY );
-  strcpy( expected_data.criteria.service_name, SERVICE_NAME );
-  expected_data.flags = flags;
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( MATCH ) );
+  uint16_t match_pad_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t entry_len = ( uint16_t ) ( offsetof( packetin_filter_entry, match ) + match_pad_len );
+  uint16_t req_len = ( uint16_t ) ( offsetof( delete_packetin_filter_request, criteria ) + entry_len );
+  dump_packetin_filter_request *expected_data = xcalloc( 1, req_len );
+  expected_data->length = htons( req_len );
+  expected_data->flags = flags;
+  expected_data->criteria.length = htons( entry_len );
+  expected_data->criteria.priority = htons( PRIORITY );
+  strcpy( expected_data->criteria.service_name, SERVICE_NAME );
+  construct_ofp_match( &expected_data->criteria.match, MATCH );
 
   expect_string( mock_send_request_message, to_service_name, PACKETIN_FILTER_MANAGEMENT_SERVICE );
   expect_string( mock_send_request_message, from_service_name, CLIENT_SERVICE_NAME );
   expect_value( mock_send_request_message, tag32, MESSENGER_DUMP_PACKETIN_FILTER_REQUEST );
-  expect_memory( mock_send_request_message, data, &expected_data, sizeof( dump_packetin_filter_request ) );
-  expect_value( mock_send_request_message, len, sizeof( dump_packetin_filter_request ) );
+  expect_memory( mock_send_request_message, data, expected_data, req_len );
+  expect_value( mock_send_request_message, len, req_len );
   expect_value( mock_send_request_message, hd->callback, HANDLER );
   expect_value( mock_send_request_message, hd->user_data, USER_DATA );
   will_return( mock_send_request_message, true );
 
   assert_true( dump_packetin_filter( MATCH, PRIORITY, SERVICE_NAME, flags, HANDLER, USER_DATA ) );
+
+  xfree( expected_data );
 }
 
 
@@ -432,23 +508,30 @@ static void
 test_dump_packetin_filter_succeeds_with_PACKETIN_FILTER_FLAG_MATCH_LOOSE() {
   uint8_t flags = PACKETIN_FILTER_FLAG_MATCH_LOOSE;
 
-  dump_packetin_filter_request expected_data;
-  memset( &expected_data, 0, sizeof( dump_packetin_filter_request ) );
-  hton_match( &expected_data.criteria.match, &MATCH );
-  expected_data.criteria.priority = htons( PRIORITY );
-  strcpy( expected_data.criteria.service_name, SERVICE_NAME );
-  expected_data.flags = flags;
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( MATCH ) );
+  uint16_t match_pad_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t entry_len = ( uint16_t ) ( offsetof( packetin_filter_entry, match ) + match_pad_len );
+  uint16_t req_len = ( uint16_t ) ( offsetof( delete_packetin_filter_request, criteria ) + entry_len );
+  dump_packetin_filter_request *expected_data = xcalloc( 1, req_len );
+  expected_data->length = htons( req_len );
+  expected_data->flags = flags;
+  expected_data->criteria.length = htons( entry_len );
+  expected_data->criteria.priority = htons( PRIORITY );
+  strcpy( expected_data->criteria.service_name, SERVICE_NAME );
+  construct_ofp_match( &expected_data->criteria.match, MATCH );
 
   expect_string( mock_send_request_message, to_service_name, PACKETIN_FILTER_MANAGEMENT_SERVICE );
   expect_string( mock_send_request_message, from_service_name, CLIENT_SERVICE_NAME );
   expect_value( mock_send_request_message, tag32, MESSENGER_DUMP_PACKETIN_FILTER_REQUEST );
-  expect_memory( mock_send_request_message, data, &expected_data, sizeof( dump_packetin_filter_request ) );
-  expect_value( mock_send_request_message, len, sizeof( dump_packetin_filter_request ) );
+  expect_memory( mock_send_request_message, data, expected_data, req_len );
+  expect_value( mock_send_request_message, len, req_len );
   expect_value( mock_send_request_message, hd->callback, HANDLER );
   expect_value( mock_send_request_message, hd->user_data, USER_DATA );
   will_return( mock_send_request_message, true );
 
   assert_true( dump_packetin_filter( MATCH, PRIORITY, SERVICE_NAME, flags, HANDLER, USER_DATA ) );
+
+  xfree( expected_data );
 }
 
 
@@ -456,25 +539,32 @@ static void
 test_dump_packetin_filter_succeeds_if_not_initialized() {
   uint8_t flags = PACKETIN_FILTER_FLAG_MATCH_STRICT;
 
-  dump_packetin_filter_request expected_data;
-  memset( &expected_data, 0, sizeof( dump_packetin_filter_request ) );
-  hton_match( &expected_data.criteria.match, &MATCH );
-  expected_data.criteria.priority = htons( PRIORITY );
-  strcpy( expected_data.criteria.service_name, SERVICE_NAME );
-  expected_data.flags = flags;
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( MATCH ) );
+  uint16_t match_pad_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t entry_len = ( uint16_t ) ( offsetof( packetin_filter_entry, match ) + match_pad_len );
+  uint16_t req_len = ( uint16_t ) ( offsetof( delete_packetin_filter_request, criteria ) + entry_len );
+  dump_packetin_filter_request *expected_data = xcalloc( 1, req_len );
+  expected_data->length = htons( req_len );
+  expected_data->flags = flags;
+  expected_data->criteria.length = htons( entry_len );
+  expected_data->criteria.priority = htons( PRIORITY );
+  strcpy( expected_data->criteria.service_name, SERVICE_NAME );
+  construct_ofp_match( &expected_data->criteria.match, MATCH );
 
   expect_string( mock_add_message_replied_callback, service_name, CLIENT_SERVICE_NAME );
   will_return( mock_add_message_replied_callback, true );
   expect_string( mock_send_request_message, to_service_name, PACKETIN_FILTER_MANAGEMENT_SERVICE );
   expect_string( mock_send_request_message, from_service_name, CLIENT_SERVICE_NAME );
   expect_value( mock_send_request_message, tag32, MESSENGER_DUMP_PACKETIN_FILTER_REQUEST );
-  expect_memory( mock_send_request_message, data, &expected_data, sizeof( dump_packetin_filter_request ) );
-  expect_value( mock_send_request_message, len, sizeof( dump_packetin_filter_request ) );
+  expect_memory( mock_send_request_message, data, expected_data, req_len );
+  expect_value( mock_send_request_message, len, req_len );
   expect_value( mock_send_request_message, hd->callback, HANDLER );
   expect_value( mock_send_request_message, hd->user_data, USER_DATA );
   will_return( mock_send_request_message, true );
 
   assert_true( dump_packetin_filter( MATCH, PRIORITY, SERVICE_NAME, flags, HANDLER, USER_DATA ) );
+
+  xfree( expected_data );
 }
 
 
@@ -586,22 +676,31 @@ test_handle_reply_fails_with_too_long_delete_packetin_filter_reply() {
 static void
 test_handle_reply_succeeds_with_dump_packetin_filter_reply() {
   int n_entries = 16;
-  size_t entries_length = sizeof( packetin_filter_entry ) * ( size_t ) n_entries;
+
+  uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( MATCH ) );
+  uint16_t match_pad_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t entry_len = ( uint16_t ) ( offsetof( packetin_filter_entry, match ) + match_pad_len );
+  size_t entries_length = entry_len * ( size_t ) n_entries;
   size_t reply_length = offsetof( dump_packetin_filter_reply, entries ) + entries_length;
   dump_packetin_filter_reply *reply = xmalloc( reply_length );
   memset( reply, 0, reply_length );
+  reply->length = ( uint16_t ) reply_length;
   reply->status = PACKETIN_FILTER_OPERATION_SUCCEEDED;
   reply->n_entries = htonl( ( uint32_t ) n_entries );
   packetin_filter_entry *expected_entries = xmalloc( entries_length );
   for ( int i = 0; i < n_entries; i++ ) {
-    packetin_filter_entry *entry = &reply->entries[ i ];
-    hton_match( &entry->match, &MATCH );
+    packetin_filter_entry *entry = ( packetin_filter_entry * ) ( ( char * ) reply->entries + entry_len * i );
+    entry->length = htons( entry_len );
+    construct_ofp_match( &entry->match, MATCH );
     entry->priority = htons( PRIORITY );
     memcpy( entry->service_name, SERVICE_NAME, sizeof( entry->service_name ) );
-    packetin_filter_entry *expected_entry = &expected_entries[ i ];
-    expected_entry->match = MATCH;
+    packetin_filter_entry *expected_entry = ( packetin_filter_entry * ) ( ( char * ) expected_entries + entry_len * i );
+    expected_entry->length = entry_len;
     expected_entry->priority = PRIORITY;
+    memset( expected_entry->pad, 0, sizeof( expected_entry->pad ) );
     memcpy( expected_entry->service_name, SERVICE_NAME, sizeof( expected_entry->service_name ) );
+    construct_ofp_match( &expected_entry->match, MATCH );
+    ntoh_match( &expected_entry->match, &expected_entry->match );
   }
   handler_data *user_data = xmalloc( sizeof( handler_data ) );
   user_data->callback = mock_dump_packetin_filter_handler;
@@ -630,7 +729,7 @@ test_handle_reply_fails_with_too_short_dump_packetin_filter_reply() {
   user_data.user_data = USER_DATA;
   size_t reply_length = offsetof( dump_packetin_filter_reply, entries ) - 1;
 
-  expect_string( mock_error, message, "Invalid dump packetin filter reply ( length = 4 )." );
+  expect_string( mock_error, message, "Invalid dump packetin filter reply ( length = 7 )." );
 
   handle_reply( MESSENGER_DUMP_PACKETIN_FILTER_REPLY, &reply, reply_length, &user_data );
 }
@@ -647,7 +746,7 @@ test_handle_reply_fails_with_invalid_dump_packetin_filter_reply() {
   user_data.user_data = USER_DATA;
   size_t reply_length = offsetof( dump_packetin_filter_reply, entries ) + 1;
 
-  expect_string( mock_error, message, "Invalid dump packetin filter reply ( length = 6 )." );
+  expect_string( mock_error, message, "Invalid dump packetin filter reply ( length = 9 )." );
 
   handle_reply( MESSENGER_DUMP_PACKETIN_FILTER_REPLY, &reply, reply_length, &user_data );
 }
@@ -711,6 +810,7 @@ main() {
     unit_test_setup_teardown( test_handle_reply_fails_with_invalid_dump_packetin_filter_reply, setup_and_init, finalize_and_teardown ),
     unit_test_setup_teardown( test_handle_reply_fails_with_undefined_reply_type, setup_and_init, finalize_and_teardown ),
   };
+  setup_leak_detector();
   return run_tests( tests );
 }
 

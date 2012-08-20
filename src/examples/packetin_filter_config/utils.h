@@ -22,7 +22,7 @@
 
 
 typedef struct {
-  struct ofp_match match;
+  oxm_matches *match;
   char service_name[ MESSENGER_SERVICE_NAME_LENGTH ];
   bool strict;
 } handler_data;

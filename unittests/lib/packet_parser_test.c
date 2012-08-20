@@ -149,7 +149,7 @@ test_parse_packet_arp_request_succeeds() {
 
 
 static void
-test_parse_packet_ipv6_succeeds() {
+test_parse_packet_icmpv6_succeeds() {
   const char filename[] = "./unittests/lib/test_packets/icmp6_echo_req.cap";
   buffer *buffer = store_packet_to_buffer( filename );
 
@@ -168,8 +168,15 @@ test_parse_packet_ipv6_succeeds() {
                      0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x16, 0x22, 0x09 };
   u_char daddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                      0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x15, 0x84, 0xcb };
-  assert_memory_equal( packet_info->ipv6_saddr, saddr, IPV6_ADDRLEN );
-  assert_memory_equal( packet_info->ipv6_daddr, daddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_saddr.s6_addr, saddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_daddr.s6_addr, daddr, IPV6_ADDRLEN );
+
+  uint16_t ipv6_exthdr = 0;
+  assert_int_equal( packet_info->ipv6_exthdr, ipv6_exthdr );
+
+  assert_int_equal( packet_info->ipv6_protocol, IPPROTO_ICMPV6 );
+  assert_int_equal( packet_info->icmpv6_type, 128 );
+  assert_int_equal( packet_info->icmpv6_code, 0 );
 
   free_buffer( buffer );
 }
@@ -704,6 +711,563 @@ test_parse_packet_lldp_over_ip_succeeds() {
   free_buffer( buffer );
 }
 
+static void
+test_parse_packet_ipv6_with_exthdr_succeeds_nonext() {
+  const char filename[] = "./unittests/lib/test_packets/ipv6_exthdr_nonext.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ( int ) ( ETH_DIX | NW_IPV6 ) );
+
+  u_char macda[] = { 0x8c, 0x89, 0xa5, 0x16, 0x22, 0x09 };
+  u_char macsa[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_IPV6 );
+
+  assert_int_equal( packet_info->ipv6_version, 6 );
+  assert_int_equal( packet_info->ipv6_tc, 0 );
+  assert_int_equal( packet_info->ipv6_flowlabel, 0 );
+  assert_int_equal( packet_info->ipv6_plen, 0x70 );
+  assert_int_equal( packet_info->ipv6_nexthdr, 0x3b );
+  assert_int_equal( packet_info->ipv6_hoplimit, 0x80 );
+
+  u_char saddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x15, 0x84, 0xcb };
+  u_char daddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x16, 0x22, 0x09 };
+  assert_memory_equal( packet_info->ipv6_saddr.s6_addr, saddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_daddr.s6_addr, daddr, IPV6_ADDRLEN );
+
+  uint16_t ipv6_exthdr = OFPIEH_NONEXT;
+  assert_int_equal( packet_info->ipv6_exthdr, ipv6_exthdr );
+
+  free_buffer( buffer );
+}
+
+static void
+test_parse_packet_ipv6_with_exthdr_succeeds_esp() {
+  const char filename[] = "./unittests/lib/test_packets/ipv6_exthdr_esp.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ( int ) ( ETH_DIX | NW_IPV6 ) );
+
+  u_char macda[] = { 0x8c, 0x89, 0xa5, 0x16, 0x22, 0x09 };
+  u_char macsa[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_IPV6 );
+
+  assert_int_equal( packet_info->ipv6_version, 6 );
+  assert_int_equal( packet_info->ipv6_tc, 0 );
+  assert_int_equal( packet_info->ipv6_flowlabel, 0 );
+  assert_int_equal( packet_info->ipv6_plen, 0xa4 );
+  assert_int_equal( packet_info->ipv6_nexthdr, 0x32 );
+  assert_int_equal( packet_info->ipv6_hoplimit, 0x80 );
+
+  u_char saddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x15, 0x84, 0xcb };
+  u_char daddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x16, 0x22, 0x09 };
+  assert_memory_equal( packet_info->ipv6_saddr.s6_addr, saddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_daddr.s6_addr, daddr, IPV6_ADDRLEN );
+
+  uint16_t ipv6_exthdr = OFPIEH_ESP;
+  assert_int_equal( packet_info->ipv6_exthdr, ipv6_exthdr );
+
+  free_buffer( buffer );
+}
+
+static void
+test_parse_packet_ipv6_with_exthdr_succeeds_auth() {
+  const char filename[] = "./unittests/lib/test_packets/ipv6_exthdr_ah.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ( int ) ( ETH_DIX | NW_IPV6 | NW_ICMPV6 ) );
+
+  u_char macda[] = { 0x8c, 0x89, 0xa5, 0x16, 0x22, 0x09 };
+  u_char macsa[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_IPV6 );
+
+  assert_int_equal( packet_info->ipv6_version, 6 );
+  assert_int_equal( packet_info->ipv6_tc, 0 );
+  assert_int_equal( packet_info->ipv6_flowlabel, 0 );
+  assert_int_equal( packet_info->ipv6_plen, 0x80 );
+  assert_int_equal( packet_info->ipv6_nexthdr, 0x33 );
+  assert_int_equal( packet_info->ipv6_hoplimit, 0x80 );
+
+  u_char saddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x15, 0x84, 0xcb };
+  u_char daddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x16, 0x22, 0x09 };
+  assert_memory_equal( packet_info->ipv6_saddr.s6_addr, saddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_daddr.s6_addr, daddr, IPV6_ADDRLEN );
+
+  uint16_t ipv6_exthdr = OFPIEH_AUTH;
+  assert_int_equal( packet_info->ipv6_exthdr, ipv6_exthdr );
+
+  assert_int_equal( packet_info->ipv6_protocol, IPPROTO_ICMPV6 );
+  assert_int_equal( packet_info->icmpv6_type, 128 );
+  assert_int_equal( packet_info->icmpv6_code, 0 );
+
+  free_buffer( buffer );
+}
+
+static void
+test_parse_packet_ipv6_with_exthdr_succeeds_dest() {
+  const char filename[] = "./unittests/lib/test_packets/ipv6_exthdr_dest.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ( int ) ( ETH_DIX | NW_IPV6 | NW_ICMPV6 ) );
+
+  u_char macda[] = { 0x8c, 0x89, 0xa5, 0x16, 0x22, 0x09 };
+  u_char macsa[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_IPV6 );
+
+  assert_int_equal( packet_info->ipv6_version, 6 );
+  assert_int_equal( packet_info->ipv6_tc, 0 );
+  assert_int_equal( packet_info->ipv6_flowlabel, 0 );
+  assert_int_equal( packet_info->ipv6_plen, 0x70 );
+  assert_int_equal( packet_info->ipv6_nexthdr, 0x3c );
+  assert_int_equal( packet_info->ipv6_hoplimit, 0x80 );
+
+  u_char saddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x15, 0x84, 0xcb };
+  u_char daddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x16, 0x22, 0x09 };
+  assert_memory_equal( packet_info->ipv6_saddr.s6_addr, saddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_daddr.s6_addr, daddr, IPV6_ADDRLEN );
+
+  uint16_t ipv6_exthdr = OFPIEH_DEST;
+  assert_int_equal( packet_info->ipv6_exthdr, ipv6_exthdr );
+
+  assert_int_equal( packet_info->ipv6_protocol, IPPROTO_ICMPV6 );
+  assert_int_equal( packet_info->icmpv6_type, 128 );
+  assert_int_equal( packet_info->icmpv6_code, 0 );
+
+  free_buffer( buffer );
+}
+
+static void
+test_parse_packet_ipv6_with_exthdr_succeeds_frag() {
+  const char filename[] = "./unittests/lib/test_packets/ipv6_exthdr_frag.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ( int ) ( ETH_DIX | NW_IPV6 | NW_ICMPV6 ) );
+
+  u_char macda[] = { 0x8c, 0x89, 0xa5, 0x16, 0x22, 0x09 };
+  u_char macsa[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_IPV6 );
+
+  assert_int_equal( packet_info->ipv6_version, 6 );
+  assert_int_equal( packet_info->ipv6_tc, 0 );
+  assert_int_equal( packet_info->ipv6_flowlabel, 0 );
+  assert_int_equal( packet_info->ipv6_plen, 0x70 );
+  assert_int_equal( packet_info->ipv6_nexthdr, 0x2c );
+  assert_int_equal( packet_info->ipv6_hoplimit, 0x80 );
+
+  u_char saddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x15, 0x84, 0xcb };
+  u_char daddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x16, 0x22, 0x09 };
+  assert_memory_equal( packet_info->ipv6_saddr.s6_addr, saddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_daddr.s6_addr, daddr, IPV6_ADDRLEN );
+
+  uint16_t ipv6_exthdr = OFPIEH_FRAG;
+  assert_int_equal( packet_info->ipv6_exthdr, ipv6_exthdr );
+
+  assert_int_equal( packet_info->ipv6_protocol, IPPROTO_ICMPV6 );
+  assert_int_equal( packet_info->icmpv6_type, 128 );
+  assert_int_equal( packet_info->icmpv6_code, 0 );
+
+  free_buffer( buffer );
+}
+
+static void
+test_parse_packet_ipv6_with_exthdr_succeeds_router() {
+  const char filename[] = "./unittests/lib/test_packets/ipv6_exthdr_router.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ( int ) ( ETH_DIX | NW_IPV6 | NW_ICMPV6 ) );
+
+  u_char macda[] = { 0x8c, 0x89, 0xa5, 0x16, 0x22, 0x09 };
+  u_char macsa[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_IPV6 );
+
+  assert_int_equal( packet_info->ipv6_version, 6 );
+  assert_int_equal( packet_info->ipv6_tc, 0 );
+  assert_int_equal( packet_info->ipv6_flowlabel, 0 );
+  assert_int_equal( packet_info->ipv6_plen, 0x80 );
+  assert_int_equal( packet_info->ipv6_nexthdr, 0x2b );
+  assert_int_equal( packet_info->ipv6_hoplimit, 0x80 );
+
+  u_char saddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x15, 0x84, 0xcb };
+  u_char daddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x16, 0x22, 0x09 };
+  assert_memory_equal( packet_info->ipv6_saddr.s6_addr, saddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_daddr.s6_addr, daddr, IPV6_ADDRLEN );
+
+  uint16_t ipv6_exthdr = OFPIEH_ROUTER;
+  assert_int_equal( packet_info->ipv6_exthdr, ipv6_exthdr );
+
+  assert_int_equal( packet_info->ipv6_protocol, IPPROTO_ICMPV6 );
+  assert_int_equal( packet_info->icmpv6_type, 128 );
+  assert_int_equal( packet_info->icmpv6_code, 0 );
+
+  free_buffer( buffer );
+}
+
+static void
+test_parse_packet_ipv6_with_exthdr_succeeds_hop() {
+  const char filename[] = "./unittests/lib/test_packets/ipv6_exthdr_hop.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ( int ) ( ETH_DIX | NW_IPV6 | NW_ICMPV6 ) );
+
+  u_char macda[] = { 0x8c, 0x89, 0xa5, 0x16, 0x22, 0x09 };
+  u_char macsa[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_IPV6 );
+
+  assert_int_equal( packet_info->ipv6_version, 6 );
+  assert_int_equal( packet_info->ipv6_tc, 0 );
+  assert_int_equal( packet_info->ipv6_flowlabel, 0 );
+  assert_int_equal( packet_info->ipv6_plen, 0x70 );
+  assert_int_equal( packet_info->ipv6_nexthdr, 0 );
+  assert_int_equal( packet_info->ipv6_hoplimit, 0x80 );
+
+  u_char saddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x15, 0x84, 0xcb };
+  u_char daddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x16, 0x22, 0x09 };
+  assert_memory_equal( packet_info->ipv6_saddr.s6_addr, saddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_daddr.s6_addr, daddr, IPV6_ADDRLEN );
+
+  uint16_t ipv6_exthdr = OFPIEH_HOP;
+  assert_int_equal( packet_info->ipv6_exthdr, ipv6_exthdr );
+
+  assert_int_equal( packet_info->ipv6_protocol, IPPROTO_ICMPV6 );
+  assert_int_equal( packet_info->icmpv6_type, 128 );
+  assert_int_equal( packet_info->icmpv6_code, 0 );
+
+  free_buffer( buffer );
+}
+
+static void
+test_parse_packet_ipv6_with_exthdr_succeeds_ndns_mac() {
+  const char filename[] = "./unittests/lib/test_packets/ipv6_exthdr_hop_ndns_mac.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ( int ) ( ETH_DIX | NW_IPV6 | NW_ICMPV6 ) );
+
+  u_char macda[] = { 0x8c, 0x89, 0xa5, 0x16, 0x22, 0x09 };
+  u_char macsa[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_IPV6 );
+
+  assert_int_equal( packet_info->ipv6_version, 6 );
+  assert_int_equal( packet_info->ipv6_tc, 0 );
+  assert_int_equal( packet_info->ipv6_flowlabel, 0 );
+  assert_int_equal( packet_info->ipv6_plen, 0x50 );
+  assert_int_equal( packet_info->ipv6_nexthdr, 0 );
+  assert_int_equal( packet_info->ipv6_hoplimit, 0x80 );
+
+  u_char saddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x15, 0x84, 0xcb };
+  u_char daddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x16, 0x22, 0x09 };
+  assert_memory_equal( packet_info->ipv6_saddr.s6_addr, saddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_daddr.s6_addr, daddr, IPV6_ADDRLEN );
+
+  uint16_t ipv6_exthdr = OFPIEH_HOP;
+  assert_int_equal( packet_info->ipv6_exthdr, ipv6_exthdr );
+
+  assert_int_equal( packet_info->ipv6_protocol, IPPROTO_ICMPV6 );
+  assert_int_equal( packet_info->icmpv6_type, 135 );
+  assert_int_equal( packet_info->icmpv6_code, 0 );
+
+  u_char icmpv6_nd_sll[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->icmpv6_nd_sll, icmpv6_nd_sll, ETH_ADDRLEN );
+
+  free_buffer( buffer );
+}
+
+static void
+test_parse_packet_ipv6_with_exthdr_succeeds_ndns_nomac() {
+  const char filename[] = "./unittests/lib/test_packets/ipv6_exthdr_hop_ndns_nomac.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ( int ) ( ETH_DIX | NW_IPV6 | NW_ICMPV6 ) );
+
+  u_char macda[] = { 0x8c, 0x89, 0xa5, 0x16, 0x22, 0x09 };
+  u_char macsa[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_IPV6 );
+
+  assert_int_equal( packet_info->ipv6_version, 6 );
+  assert_int_equal( packet_info->ipv6_tc, 0 );
+  assert_int_equal( packet_info->ipv6_flowlabel, 0 );
+  assert_int_equal( packet_info->ipv6_plen, 0x48 );
+  assert_int_equal( packet_info->ipv6_nexthdr, 0 );
+  assert_int_equal( packet_info->ipv6_hoplimit, 0x80 );
+
+  u_char saddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x15, 0x84, 0xcb };
+  u_char daddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x16, 0x22, 0x09 };
+  assert_memory_equal( packet_info->ipv6_saddr.s6_addr, saddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_daddr.s6_addr, daddr, IPV6_ADDRLEN );
+
+  uint16_t ipv6_exthdr = OFPIEH_HOP;
+  assert_int_equal( packet_info->ipv6_exthdr, ipv6_exthdr );
+
+  assert_int_equal( packet_info->ipv6_protocol, IPPROTO_ICMPV6 );
+  assert_int_equal( packet_info->icmpv6_type, 135 );
+  assert_int_equal( packet_info->icmpv6_code, 0 );
+
+  free_buffer( buffer );
+}
+
+static void
+test_parse_packet_ipv6_with_exthdr_succeeds_ndna_mac() {
+  const char filename[] = "./unittests/lib/test_packets/ipv6_exthdr_hop_ndna_mac.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ( int ) ( ETH_DIX | NW_IPV6 | NW_ICMPV6 ) );
+
+  u_char macda[] = { 0x8c, 0x89, 0xa5, 0x16, 0x22, 0x09 };
+  u_char macsa[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_IPV6 );
+
+  assert_int_equal( packet_info->ipv6_version, 6 );
+  assert_int_equal( packet_info->ipv6_tc, 0 );
+  assert_int_equal( packet_info->ipv6_flowlabel, 0 );
+  assert_int_equal( packet_info->ipv6_plen, 0x50 );
+  assert_int_equal( packet_info->ipv6_nexthdr, 0 );
+  assert_int_equal( packet_info->ipv6_hoplimit, 0x80 );
+
+  u_char saddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x15, 0x84, 0xcb };
+  u_char daddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x16, 0x22, 0x09 };
+  assert_memory_equal( packet_info->ipv6_saddr.s6_addr, saddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_daddr.s6_addr, daddr, IPV6_ADDRLEN );
+
+  uint16_t ipv6_exthdr = OFPIEH_HOP;
+  assert_int_equal( packet_info->ipv6_exthdr, ipv6_exthdr );
+
+  assert_int_equal( packet_info->ipv6_protocol, IPPROTO_ICMPV6 );
+  assert_int_equal( packet_info->icmpv6_type, 136 );
+  assert_int_equal( packet_info->icmpv6_code, 0 );
+
+  u_char icmpv6_nd_tll[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->icmpv6_nd_tll, icmpv6_nd_tll, ETH_ADDRLEN );
+
+  free_buffer( buffer );
+}
+
+static void
+test_parse_packet_ipv6_with_exthdr_succeeds_ndna_nomac() {
+  const char filename[] = "./unittests/lib/test_packets/ipv6_exthdr_hop_ndna_nomac.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ( int ) ( ETH_DIX | NW_IPV6 | NW_ICMPV6 ) );
+
+  u_char macda[] = { 0x8c, 0x89, 0xa5, 0x16, 0x22, 0x09 };
+  u_char macsa[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_IPV6 );
+
+  assert_int_equal( packet_info->ipv6_version, 6 );
+  assert_int_equal( packet_info->ipv6_tc, 0 );
+  assert_int_equal( packet_info->ipv6_flowlabel, 0 );
+  assert_int_equal( packet_info->ipv6_plen, 0x48 );
+  assert_int_equal( packet_info->ipv6_nexthdr, 0 );
+  assert_int_equal( packet_info->ipv6_hoplimit, 0x80 );
+
+  u_char saddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x15, 0x84, 0xcb };
+  u_char daddr[] = { 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x8e, 0x89, 0xa5, 0xff, 0xfe, 0x16, 0x22, 0x09 };
+  assert_memory_equal( packet_info->ipv6_saddr.s6_addr, saddr, IPV6_ADDRLEN );
+  assert_memory_equal( packet_info->ipv6_daddr.s6_addr, daddr, IPV6_ADDRLEN );
+
+  uint16_t ipv6_exthdr = OFPIEH_HOP;
+  assert_int_equal( packet_info->ipv6_exthdr, ipv6_exthdr );
+
+  assert_int_equal( packet_info->ipv6_protocol, IPPROTO_ICMPV6 );
+  assert_int_equal( packet_info->icmpv6_type, 136 );
+  assert_int_equal( packet_info->icmpv6_code, 0 );
+
+  free_buffer( buffer );
+}
+
+static void
+test_parse_packet_sctp_succeeds() {
+  const char filename[] = "./unittests/lib/test_packets/sctp.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ETH_IPV4 | TP_SCTP );
+
+  u_char macda[] = { 0x8c, 0x89, 0xa5, 0x16, 0x22, 0x09 };
+  u_char macsa[] = { 0x8c, 0x89, 0xa5, 0x15, 0x84, 0xcb };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_IPV4 );
+
+  assert_int_equal( packet_info->l2_payload_length, 68 );
+
+  assert_int_equal( packet_info->ipv4_version, 4 );
+  assert_int_equal( packet_info->ipv4_ihl, 5 );
+  assert_int_equal( packet_info->ipv4_tos, 0 );
+  assert_int_equal( packet_info->ipv4_tot_len, 0x44 );
+  assert_int_equal( packet_info->ipv4_id, 0 );
+  assert_int_equal( packet_info->ipv4_frag_off, 0 );
+  assert_int_equal( packet_info->ipv4_ttl, 0x40 );
+  assert_int_equal( packet_info->ipv4_protocol, IPPROTO_SCTP );
+  assert_int_equal( packet_info->ipv4_checksum, 0x308e );
+  assert_int_equal( packet_info->ipv4_saddr, 0xc0a8642b );
+  assert_int_equal( packet_info->ipv4_daddr, 0xc0a8642c );
+
+  assert_int_equal( packet_info->l3_payload_length, 0x30 );
+  assert_int_equal( packet_info->sctp_src_port, 44646 );
+  assert_int_equal( packet_info->sctp_dst_port, 3456 );
+
+  free_buffer( buffer );
+}
+
+static void
+test_parse_packet_mpls_succeeds_unicast() {
+  const char filename[] = "./unittests/lib/test_packets/mpls_uni.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ETH_DIX | MPLS );
+
+  u_char macda[] = { 0x00, 0x99, 0x88, 0x77, 0x66, 0x55 };
+  u_char macsa[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55 };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_MPLS_UNI );
+
+  uint32_t mpls_label = ( uint32_t ) ( packet_info->mpls_label >> 12 & 0xfffff );
+  uint8_t mpls_tc = ( uint8_t ) ( packet_info->mpls_label >> 9 & 0x7 );
+  uint8_t mpls_bos = ( uint8_t ) ( packet_info->mpls_label >> 8 & 0x1 );
+  assert_int_equal( mpls_label, 0x1234 );
+  assert_int_equal( mpls_tc, 0x5 );
+  assert_int_equal( mpls_bos, 0x1 );
+
+  assert_int_equal( packet_info->l3_payload_length, 44 );
+
+  free_buffer( buffer );
+}
+
+
+static void
+test_parse_packet_mpls_succeeds_multicast() {
+  const char filename[] = "./unittests/lib/test_packets/mpls_multi.cap";
+  buffer *buffer = store_packet_to_buffer( filename );
+
+  assert_true( parse_packet( buffer ) );
+
+  packet_info *packet_info = buffer->user_data;
+
+  assert_int_equal( packet_info->format, ETH_DIX | MPLS );
+
+  u_char macda[] = { 0x00, 0x99, 0x88, 0x77, 0x66, 0x55 };
+  u_char macsa[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55 };
+  assert_memory_equal( packet_info->eth_macda, macda, ETH_ADDRLEN );
+  assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
+  assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_MPLS_MLT );
+
+  uint32_t mpls_label = ( uint32_t ) ( packet_info->mpls_label >> 12 & 0xfffff );
+  uint8_t mpls_tc = ( uint8_t ) ( packet_info->mpls_label >> 9 & 0x7 );
+  uint8_t mpls_bos = ( uint8_t ) ( packet_info->mpls_label >> 8 & 0x1 );
+  assert_int_equal( mpls_label, 0x1234 );
+  assert_int_equal( mpls_tc, 0x5 );
+  assert_int_equal( mpls_bos, 0x1 );
+
+  assert_int_equal( packet_info->l3_payload_length, 44 );
+
+  free_buffer( buffer );
+}
+
 /******************************************************************************
  * Run tests.
  ******************************************************************************/
@@ -715,7 +1279,7 @@ main() {
 
     unit_test( test_parse_packet_arp_request_succeeds ),
 
-    unit_test( test_parse_packet_ipv6_succeeds ),
+    unit_test( test_parse_packet_icmpv6_succeeds ),
 
     unit_test( test_parse_packet_udp_succeeds ),
     unit_test( test_parse_packet_udp_fragmented_head_succeeds ),
@@ -734,6 +1298,22 @@ main() {
     unit_test( test_parse_packet_lldp_succeeds ),
 
     unit_test( test_parse_packet_lldp_over_ip_succeeds ),
+
+    unit_test( test_parse_packet_ipv6_with_exthdr_succeeds_nonext ),
+    unit_test( test_parse_packet_ipv6_with_exthdr_succeeds_esp ),
+    unit_test( test_parse_packet_ipv6_with_exthdr_succeeds_auth ),
+    unit_test( test_parse_packet_ipv6_with_exthdr_succeeds_dest ),
+    unit_test( test_parse_packet_ipv6_with_exthdr_succeeds_frag ),
+    unit_test( test_parse_packet_ipv6_with_exthdr_succeeds_router ),
+    unit_test( test_parse_packet_ipv6_with_exthdr_succeeds_hop ),
+    unit_test( test_parse_packet_ipv6_with_exthdr_succeeds_ndns_mac ),
+    unit_test( test_parse_packet_ipv6_with_exthdr_succeeds_ndns_nomac ),
+    unit_test( test_parse_packet_ipv6_with_exthdr_succeeds_ndna_mac ),
+    unit_test( test_parse_packet_ipv6_with_exthdr_succeeds_ndna_nomac ),
+    unit_test( test_parse_packet_sctp_succeeds ),
+    unit_test( test_parse_packet_icmpv6_succeeds ),
+    unit_test( test_parse_packet_mpls_succeeds_unicast ),
+    unit_test( test_parse_packet_mpls_succeeds_multicast ),
   };
   stub_logger();
   return run_tests( tests );

@@ -224,8 +224,71 @@ parse_ipv6( buffer *buf ) {
   packet_info->ipv6_plen = ntohs( ipv6_header->plen );
   packet_info->ipv6_nexthdr = ipv6_header->nexthdr;
   packet_info->ipv6_hoplimit = ipv6_header->hoplimit;
-  memcpy( packet_info->ipv6_saddr, ipv6_header->saddr, IPV6_ADDRLEN );
-  memcpy( packet_info->ipv6_daddr, ipv6_header->daddr, IPV6_ADDRLEN );
+  memcpy( packet_info->ipv6_saddr.s6_addr, ipv6_header->saddr, IPV6_ADDRLEN );
+  memcpy( packet_info->ipv6_daddr.s6_addr, ipv6_header->daddr, IPV6_ADDRLEN );
+
+  uint8_t nexthdr = ipv6_header->nexthdr;
+  packet_info->ipv6_protocol = nexthdr;
+  ptr = ( void * ) ( ipv6_header + 1 );
+  ipv6_ext_t *ipv6_ext = ptr;
+  size_t payload_length = 0;
+
+  while ( 1 ) {
+    switch ( nexthdr ) {
+    case IPV6_NEXTHDR_HOPOPT:
+      packet_info->ipv6_exthdr |= OFPIEH_HOP;
+      break;
+
+    case IPV6_NEXTHDR_OPTS:
+      packet_info->ipv6_exthdr |= OFPIEH_DEST;
+      break;
+
+    case IPV6_NEXTHDR_ROUTE:
+      packet_info->ipv6_exthdr |= OFPIEH_ROUTER;
+      break;
+
+    case IPV6_NEXTHDR_FLAG:
+      packet_info->ipv6_exthdr |= OFPIEH_FRAG;
+      break;
+
+    case IPV6_NEXTHDR_AH:
+      packet_info->ipv6_exthdr |= OFPIEH_AUTH;
+      break;
+
+    case IPV6_NEXTHDR_ESP:
+      packet_info->ipv6_exthdr |= OFPIEH_ESP;
+      packet_info->ipv6_protocol = nexthdr;
+      goto END;
+
+    case IPV6_NEXTHDR_NONXT:
+      packet_info->ipv6_exthdr |= OFPIEH_NONEXT;
+      packet_info->ipv6_protocol = nexthdr;
+      goto END;
+
+    default:
+      packet_info->ipv6_protocol = nexthdr;
+      goto END;
+    }
+
+    uint16_t nextlen;
+    if ( nexthdr == IPV6_NEXTHDR_FLAG ) {
+      nextlen = 8;
+    } else if ( nexthdr == IPV6_NEXTHDR_AH ) {
+      nextlen = ( uint16_t ) ( ( ipv6_ext->exthdrlen + 2 ) * 4 );
+    } else {
+      nextlen = ( uint16_t ) ( ( ipv6_ext->exthdrlen + 1 ) * 8 );
+    }
+    nexthdr = ipv6_ext->nexthdr;
+    ptr = ( void * ) ( ( char * ) ptr + nextlen );
+    ipv6_ext = ptr;
+  }
+
+END:
+  payload_length = REMAINED_BUFFER_LENGTH( buf, ptr );
+  if ( payload_length > 0 ) {
+    packet_info->l3_payload = ptr;
+    packet_info->l3_payload_length = payload_length;
+  }
 
   packet_info->format |= NW_IPV6;
 
@@ -248,6 +311,36 @@ parse_lldp( buffer *buf ) {
   }
 
   packet_info->format |= NW_LLDP;
+
+  return;
+}
+
+
+static void
+parse_mpls( buffer *buf ) {
+  assert( buf != NULL );
+
+  packet_info *packet_info = buf->user_data;
+  void *ptr = packet_info->l3_header;
+  assert( ptr != NULL );
+
+  // Check the length of remained buffer
+  size_t length = REMAINED_BUFFER_LENGTH( buf, ptr );
+  if ( length < sizeof( mpls_header_t ) ) {
+    return;
+  }
+
+  mpls_header_t *mpls_header = ptr;
+  packet_info->mpls_label = ntohl( mpls_header->label );
+
+  ptr = ( void * ) ( mpls_header + 1 );
+  size_t payload_length = REMAINED_BUFFER_LENGTH( buf, ptr );
+  if ( payload_length > 0 ) {
+    packet_info->l3_payload = ptr;
+    packet_info->l3_payload_length = payload_length;
+  }
+
+  packet_info->format |= MPLS;
 
   return;
 }
@@ -296,6 +389,69 @@ parse_icmp( buffer *buf ) {
   }
 
   packet_info->format |= NW_ICMPV4;
+
+  return;
+};
+
+
+static void
+parse_icmpv6( buffer *buf ) {
+  assert( buf != NULL );
+
+  packet_info *packet_info = buf->user_data;
+  void *ptr = packet_info->l4_header;
+  assert( ptr != NULL );
+
+  // Check the length of remained buffer
+  size_t length = REMAINED_BUFFER_LENGTH( buf, ptr );
+  if ( length < sizeof( icmpv6_header_t ) ) {
+    return;
+  }
+
+  // ICMPv6 header
+  icmpv6_header_t *icmpv6_header = ptr;
+  packet_info->icmpv6_type = icmpv6_header->type;
+  packet_info->icmpv6_code = icmpv6_header->code;
+
+  icmpv6data_ndp_t *icmpv6data_ndp = NULL;
+  switch ( packet_info->icmpv6_type ) {
+  case ICMPV6_TYPE_NEIGHBOR_SOL:
+    icmpv6data_ndp = ( icmpv6data_ndp_t * ) icmpv6_header->data;
+    memcpy( packet_info->icmpv6_nd_target.s6_addr, icmpv6data_ndp->nd_target, IPV6_ADDRLEN );
+    if ( length >= ( size_t ) ( sizeof( icmpv6_header_t ) + sizeof( icmpv6data_ndp_t ) ) ) {
+      // ICMPv6 option(Source link-layer address)
+      if ( ( icmpv6data_ndp->ll_type == 1 ) && ( icmpv6data_ndp->length == 1 ) ) {
+        packet_info->icmpv6_nd_ll_type = 1;
+        packet_info->icmpv6_nd_ll_length = 1;
+        memcpy( packet_info->icmpv6_nd_sll, icmpv6data_ndp->ll_addr, ETH_ADDRLEN );
+      } else {
+        packet_info->icmpv6_nd_ll_type = 0;
+        packet_info->icmpv6_nd_ll_length = 0;
+      }
+    }
+    break;
+
+  case ICMPV6_TYPE_NEIGHBOR_ADV:
+    icmpv6data_ndp = ( icmpv6data_ndp_t * ) icmpv6_header->data;
+    memcpy( packet_info->icmpv6_nd_target.s6_addr, icmpv6data_ndp->nd_target, IPV6_ADDRLEN );
+    if ( length >= ( size_t ) ( sizeof( icmpv6_header_t ) + sizeof( icmpv6data_ndp_t ) ) ) {
+      // ICMPv6 option(Target link-layer address)
+      if ( ( icmpv6data_ndp->ll_type == 2 ) && ( icmpv6data_ndp->length == 1 ) ) {
+        packet_info->icmpv6_nd_ll_type = 2;
+        packet_info->icmpv6_nd_ll_length = 1;
+        memcpy( packet_info->icmpv6_nd_tll, icmpv6data_ndp->ll_addr, ETH_ADDRLEN );
+      } else {
+        packet_info->icmpv6_nd_ll_type = 0;
+        packet_info->icmpv6_nd_ll_length = 0;
+      }
+    }
+    break;
+
+  default:
+    break;
+  }
+
+  packet_info->format |= NW_ICMPV6;
 
   return;
 };
@@ -410,6 +566,38 @@ parse_igmp( buffer *buf ) {
 
 
 static void
+parse_sctp( buffer *buf ) {
+  assert( buf != NULL );
+
+  packet_info *packet_info = buf->user_data;
+  void *ptr = packet_info->l4_header;
+  assert( ptr != NULL );
+
+  // Check the length of remained buffer
+  size_t length = REMAINED_BUFFER_LENGTH( buf, ptr );
+  if ( length < sizeof( sctp_header_t ) ) {
+    return;
+  }
+
+  // SCTP header
+  sctp_header_t *sctp_header = ptr;
+  packet_info->sctp_src_port = ntohs( sctp_header->src_port );
+  packet_info->sctp_dst_port = ntohs( sctp_header->dst_port );
+
+  ptr = ( void * ) ( sctp_header + 1 );
+  size_t payload_length = REMAINED_BUFFER_LENGTH( buf, ptr );
+  if ( payload_length > 0 ) {
+    packet_info->l4_payload = ptr;
+    packet_info->l4_payload_length = payload_length;
+  }
+
+  packet_info->format |= TP_SCTP;
+
+  return;
+};
+
+
+static void
 parse_etherip( buffer *buf ) {
   assert( buf != NULL );
 
@@ -480,24 +668,44 @@ parse_packet( buffer *buf ) {
     parse_lldp( buf );
     break;
 
+  case ETH_ETHTYPE_MPLS_UNI:
+  case ETH_ETHTYPE_MPLS_MLT:
+    packet_info->l3_header = packet_info->l2_payload;
+    parse_mpls( buf );
+    break;
+
   default:
     // Unknown L3 type
     return true;
   }
 
-  if ( !( packet_info->format & NW_IPV4 ) ) {
-    return true;
+  // Get L4 protocol num.
+  uint8_t ip_proto = 0;
+  if ( packet_info->format & NW_IPV4 ) {
+    if ( packet_info->ipv4_frag_off & IP_OFFMASK ) {
+      // The ipv4 packet is fragmented.
+      return true;
+    }
+    ip_proto = packet_info->ipv4_protocol;
   }
-  else if ( ( packet_info->ipv4_frag_off & IP_OFFMASK ) != 0 ) {
-    // The ipv4 packet is fragmented.
+  else if ( packet_info->format & NW_IPV6 ) {
+    ip_proto = packet_info->ipv6_protocol;
+  }
+  else {
+    // Not IPv4/v6 type
     return true;
   }
 
   // Parse the L4 header.
-  switch ( packet_info->ipv4_protocol ) {
+  switch ( ip_proto ) {
   case IPPROTO_ICMP:
     packet_info->l4_header = packet_info->l3_payload;
     parse_icmp( buf );
+    break;
+
+  case IPPROTO_ICMPV6:
+    packet_info->l4_header = packet_info->l3_payload;
+    parse_icmpv6( buf );
     break;
 
   case IPPROTO_TCP:
@@ -513,6 +721,11 @@ parse_packet( buffer *buf ) {
   case IPPROTO_IGMP:
     packet_info->l4_header = packet_info->l3_payload;
     parse_igmp( buf );
+    break;
+
+  case IPPROTO_SCTP:
+    packet_info->l4_header = packet_info->l3_payload;
+    parse_sctp( buf );
     break;
 
   case IPPROTO_ETHERIP:
