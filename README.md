@@ -9,17 +9,17 @@ merge this repository into the current trema repository.
 We have already developed source that implements the OpenFlow 1.3.0
 specification and we also planning to include the newer OpenFlow
 version 1.3.1.
-In the current implementation is C only.
+The current implementation is C only.
 Trema for OpenFlow 1.3 does not support OpenFlow version 1.0.
 
 Status of implementation:
 
 * `trema command`: will not work
-* `libtrema`: work
-* `switch_manager, switch daemon`: work
+* `libtrema`: works
+* `switch_manager, switch daemon`: works
 * `tremashark`: not yet implemented
-* `src/examples/dumper`: work (C only)
-* `src/examples/learning_switch`: work (C only)
+* `src/examples/dumper`: works (C only)
+* `src/examples/learning_switch`: works (C only)
 
 ## Build and run
 
