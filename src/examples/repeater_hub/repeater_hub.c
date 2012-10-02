@@ -25,6 +25,10 @@
 
 static void
 handle_packet_in( uint64_t datapath_id, packet_in message ) {
+  if ( message.data == NULL ) {
+    error( "data must not be NULL" );
+    return;
+  }
   uint32_t in_port = get_in_port_from_oxm_matches( message.match );
   if ( in_port == 0 ) {
     return;

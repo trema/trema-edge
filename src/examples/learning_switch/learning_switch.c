@@ -175,6 +175,10 @@ send_packet( uint32_t destination_port, packet_in packet_in, uint32_t in_port ) 
 
 static void
 handle_packet_in( uint64_t datapath_id, packet_in message ) {
+  if ( message.data == NULL ) {
+    error( "data must not be NULL" );
+    return;
+  }
   if ( !packet_type_ether( message.data ) ) {
     return;
   }

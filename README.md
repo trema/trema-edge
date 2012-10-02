@@ -21,9 +21,28 @@ Status of implementation:
 * `src/examples/dumper`: works (C only)
 * `src/examples/learning_switch`: works (C only)
 
-## Build and run
+## Tested platforms
+
+* Ubuntu 12.04 (amd64)
+
+It may also run on other GNU/Linux distributions but is not tested.
+
+## Required Packages
 
 To be written later on.
+
+## Build trema
+
+    $ git clone git://github.com/trema/trema-edge.git
+    $ cd trema-edge
+    $ ./build.rb
+
+## Run learning switch
+
+    $ ./learning_switch.sh start
+
+    Stop learning switch
+    $ ./learning_switch.sh stop
 
 License
 -------
