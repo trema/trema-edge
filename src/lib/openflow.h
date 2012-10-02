@@ -1220,7 +1220,7 @@ OFP_ASSERT(sizeof(struct ofp_packet_queue) == 16);
 struct ofp_queue_get_config_request {
     struct ofp_header header;
     uint32_t port;          /* Port to be queried. Should refer
-                               to a valid physical port (i.e. < OFPP_MAX),
+                               to a valid physical port (i.e. <= OFPP_MAX),
                                or OFPP_ANY to request all configured
                                queues. */
     uint8_t pad[4];

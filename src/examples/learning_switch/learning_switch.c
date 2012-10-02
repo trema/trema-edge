@@ -179,23 +179,9 @@ handle_packet_in( uint64_t datapath_id, packet_in message ) {
     return;
   }
 
-  // get in_port
-  uint32_t in_port = OFPP_MAX;
-  {
-    oxm_match_header *oxm;
-    uint32_t *value;
-    for ( list_element *list = message.match->list; list != NULL; list = list->next ) {
-      oxm = list->data;
-      if ( *oxm == OXM_OF_IN_PORT ) {
-        value = ( uint32_t * ) ( ( char * ) oxm + sizeof( oxm_match_header ) );
-        in_port = *value;
-        break;
-      }
-    }
-    if ( in_port == OFPP_MAX ) {
-      debug( "in_port not found" );
-      return;
-    }
+  uint32_t in_port = get_in_port_from_oxm_matches( message.match );
+  if ( in_port == 0 ) {
+    return;
   }
 
   struct key new_key;

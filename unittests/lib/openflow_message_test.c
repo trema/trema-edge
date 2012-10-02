@@ -967,11 +967,10 @@ test_create_features_reply() {
   uint32_t capabilities = ( OFPC_FLOW_STATS | OFPC_TABLE_STATS | OFPC_PORT_STATS |
                             OFPC_GROUP_STATS | OFPC_IP_REASM | OFPC_QUEUE_STATS |
                             OFPC_PORT_BLOCKED );
-  uint32_t reserved = 0x11223344;
   uint64_t tmp;
 
   buffer *buffer = create_features_reply( MY_TRANSACTION_ID, datapath_id, n_buffers,
-                                          n_tables, auxiliary_id, capabilities, reserved );
+                                          n_tables, auxiliary_id, capabilities );
   assert_true( buffer != NULL );
 
   struct ofp_switch_features *features_reply = ( struct ofp_switch_features * ) buffer->data;
@@ -995,7 +994,7 @@ test_create_features_reply() {
   }
 
   assert_int_equal( ntohl( features_reply->capabilities ), capabilities );
-  assert_int_equal( ntohl( features_reply->reserved ), reserved );
+  assert_int_equal( ntohl( features_reply->reserved ), 0 );
 
   free_buffer( buffer );
 }
@@ -6995,7 +6994,6 @@ test_validate_features_reply() {
   uint8_t n_tables = 1;
   uint8_t auxiliary_id = 0x89;
   uint32_t capabilities;
-  uint32_t reserved = 0x11223344;
   buffer *expected_message = NULL;
   int ret_val;
 
@@ -7003,7 +7001,7 @@ test_validate_features_reply() {
 
   capabilities = ( OFPC_FLOW_STATS | OFPC_TABLE_STATS | OFPC_PORT_STATS | OFPC_GROUP_STATS | OFPC_IP_REASM | OFPC_QUEUE_STATS | OFPC_PORT_BLOCKED );
 
-  expected_message = create_features_reply( MY_TRANSACTION_ID, datapath_id, n_buffers, n_tables, auxiliary_id, capabilities, reserved );
+  expected_message = create_features_reply( MY_TRANSACTION_ID, datapath_id, n_buffers, n_tables, auxiliary_id, capabilities );
 
   ret_val = validate_features_reply( expected_message );
   assert_int_equal( ret_val, 0 );
@@ -11901,12 +11899,11 @@ test_validate_openflow_message_succeeds_with_valid_OFPT_FEATURES_REPLY_message()
   uint8_t n_tables = 1;
   uint8_t auxiliary_id = 0x89;
   uint32_t capabilities;
-  uint32_t reserved = 0x11223344;
   buffer *expected_message = NULL;
 
   capabilities = ( OFPC_FLOW_STATS | OFPC_TABLE_STATS | OFPC_PORT_STATS | OFPC_GROUP_STATS | OFPC_IP_REASM | OFPC_QUEUE_STATS | OFPC_PORT_BLOCKED );
 
-  expected_message = create_features_reply( MY_TRANSACTION_ID, datapath_id, n_buffers, n_tables, auxiliary_id, capabilities, reserved );
+  expected_message = create_features_reply( MY_TRANSACTION_ID, datapath_id, n_buffers, n_tables, auxiliary_id, capabilities );
 
   assert_int_equal( validate_openflow_message( expected_message ), 0 );
 

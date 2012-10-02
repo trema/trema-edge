@@ -303,14 +303,13 @@ create_features_request( const uint32_t transaction_id ) {
 buffer *
 create_features_reply( const uint32_t transaction_id, const uint64_t datapath_id,
                        const uint32_t n_buffers, const uint8_t n_tables,
-                       const uint8_t auxiliary_id, const uint32_t capabilities,
-                       const uint32_t reserved ) {
+                       const uint8_t auxiliary_id, const uint32_t capabilities ) {
   buffer *buffer;
   struct ofp_switch_features *switch_features;
 
   debug( "Creating a features reply "
-         "( xid = %#x, datapath_id = %#" PRIx64 ", n_buffers = %#x, n_tables = %#x, auxiliary_id = %#x, capabilities = %#x, reserved = %#x ).",
-         transaction_id, datapath_id, n_buffers, n_tables, auxiliary_id, capabilities, reserved );
+         "( xid = %#x, datapath_id = %#" PRIx64 ", n_buffers = %#x, n_tables = %#x, auxiliary_id = %#x, capabilities = %#x ).",
+         transaction_id, datapath_id, n_buffers, n_tables, auxiliary_id, capabilities );
 
   buffer = create_header( transaction_id, OFPT_FEATURES_REPLY, sizeof( struct ofp_switch_features ) );
   assert( buffer != NULL );
@@ -321,7 +320,7 @@ create_features_reply( const uint32_t transaction_id, const uint64_t datapath_id
   switch_features->n_tables = n_tables;
   switch_features->auxiliary_id = auxiliary_id;
   switch_features->capabilities = htonl( capabilities );
-  switch_features->reserved = htonl( reserved );
+  switch_features->reserved = 0;
 
   return buffer;
 }

@@ -342,7 +342,6 @@ handle_features_reply(
   uint8_t n_tables,
   uint8_t auxiliary_id,
   uint32_t capabilities,
-  uint32_t reserved,
   void *user_data ) {
   UNUSED( user_data );
 
@@ -353,7 +352,6 @@ handle_features_reply(
   dump( " n_tables: %#x", n_tables );
   dump( " auxiliary_id: %#x", auxiliary_id );
   dump( " capabilities: %#x", capabilities );
-  dump( " reserved: %#x", reserved );
 }
 
 

@@ -108,7 +108,6 @@ typedef void ( *features_reply_handler )(
   uint8_t n_tables,
   uint8_t auxiliary_id,
   uint32_t capabilities,
-  uint32_t reserved,
   void *user_data
 );
 

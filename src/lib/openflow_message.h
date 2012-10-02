@@ -83,8 +83,7 @@ buffer *create_experimenter( const uint32_t transaction_id, const uint32_t exper
 buffer *create_features_request( const uint32_t transaction_id );
 buffer *create_features_reply( const uint32_t transaction_id, const uint64_t datapath_id,
                                const uint32_t n_buffers, const uint8_t n_tables,
-                               const uint8_t auxiliary_id, const uint32_t capabilities,
-                               const uint32_t reserved );
+                               const uint8_t auxiliary_id, const uint32_t capabilities );
 buffer *create_get_config_request( const uint32_t transaction_id );
 buffer *create_get_config_reply( const uint32_t transaction_id, const uint16_t flags,
                                  const uint16_t miss_send_len );

@@ -1747,6 +1747,34 @@ get_checksum( uint16_t *pos, uint32_t size ) {
 }
 
 
+uint32_t
+get_in_port_from_oxm_matches( const oxm_matches *match ) {
+  assert( match != NULL );
+
+  uint32_t in_port = 0;
+
+  for ( list_element *list = match->list; list != NULL; list = list->next ) {
+    oxm_match_header *oxm = list->data;
+    if ( *oxm == OXM_OF_IN_PORT ) {
+      uint32_t *value = ( uint32_t * ) ( ( char * ) oxm + sizeof( oxm_match_header ) );
+      in_port = *value;
+      break;
+    }
+  }
+  if ( in_port == 0 ) {
+    debug( "in_port not found ( in_port = %u )", in_port );
+  }
+  if ( in_port > OFPP_MAX ) {
+    if ( in_port != OFPP_CONTROLLER && in_port != OFPP_LOCAL ) {
+      warn( "invalid in_port ( in_port = %u )", in_port );
+      in_port = 0;
+    }
+  }
+
+  return in_port;
+}
+
+
 /*
  * Local variables:
  * c-basic-offset: 2

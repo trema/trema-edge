@@ -360,8 +360,7 @@ mock_experimenter_handler( uint64_t datapath_id, uint32_t transaction_id, uint32
 static void
 mock_features_reply_handler( uint64_t datapath_id, uint32_t transaction_id,
                              uint32_t n_buffers, uint8_t n_tables, uint8_t auxiliary_id,
-                             uint32_t capabilities, uint32_t reserved,
-                             void *user_data ) {
+                             uint32_t capabilities, void *user_data ) {
   uint32_t n_tables32 = n_tables;
   uint32_t auxiliary_id32 = auxiliary_id;
 
@@ -371,7 +370,6 @@ mock_features_reply_handler( uint64_t datapath_id, uint32_t transaction_id,
   check_expected( n_tables32 );
   check_expected( auxiliary_id32 );
   check_expected( capabilities );
-  check_expected( reserved );
   check_expected( user_data );
 }
 
@@ -1882,14 +1880,13 @@ test_handle_features_reply() {
   uint8_t n_tables = 2;
   uint8_t auxiliary_id = 0x11;
   uint32_t capabilities;
-  uint32_t reserved = 0xAABB;
   buffer *buffer;
 
   capabilities = ( OFPC_FLOW_STATS | OFPC_TABLE_STATS | OFPC_PORT_STATS |
                    OFPC_GROUP_STATS | OFPC_IP_REASM | OFPC_QUEUE_STATS | OFPC_PORT_BLOCKED );
 
   buffer = create_features_reply( TRANSACTION_ID, DATAPATH_ID, n_buffers, n_tables,
-                                  auxiliary_id, capabilities, reserved );
+                                  auxiliary_id, capabilities );
 
   expect_memory( mock_features_reply_handler, &datapath_id, &DATAPATH_ID, sizeof( uint64_t ) );
   expect_value( mock_features_reply_handler, transaction_id, TRANSACTION_ID );
@@ -1897,7 +1894,6 @@ test_handle_features_reply() {
   expect_value( mock_features_reply_handler, n_tables32, ( uint32_t ) n_tables );
   expect_value( mock_features_reply_handler, auxiliary_id32, ( uint32_t ) auxiliary_id );
   expect_value( mock_features_reply_handler, capabilities, capabilities );
-  expect_value( mock_features_reply_handler, reserved, reserved );
   expect_memory( mock_features_reply_handler, user_data, USER_DATA, USER_DATA_LEN );
 
   set_features_reply_handler( mock_features_reply_handler, USER_DATA );
@@ -1913,14 +1909,13 @@ test_handle_features_reply_if_handler_is_not_registered() {
   uint8_t n_tables = 2;
   uint8_t auxiliary_id = 0x11;
   uint32_t capabilities;
-  uint32_t reserved = 0xAABB;
   buffer *buffer;
 
   capabilities = ( OFPC_FLOW_STATS | OFPC_TABLE_STATS | OFPC_PORT_STATS |
                    OFPC_GROUP_STATS | OFPC_IP_REASM | OFPC_QUEUE_STATS | OFPC_PORT_BLOCKED );
 
   buffer = create_features_reply( TRANSACTION_ID, DATAPATH_ID, n_buffers, n_tables,
-                                  auxiliary_id, capabilities, reserved );
+                                  auxiliary_id, capabilities );
 
   // FIXME
 
@@ -4261,14 +4256,13 @@ test_handle_openflow_message() {
     uint8_t n_tables = 2;
     uint8_t auxiliary_id = 0x11;
     uint32_t capabilities;
-    uint32_t reserved = 0xAABB;
     buffer *buffer;
 
     capabilities = ( OFPC_FLOW_STATS | OFPC_TABLE_STATS | OFPC_PORT_STATS |
                      OFPC_GROUP_STATS | OFPC_IP_REASM | OFPC_QUEUE_STATS | OFPC_PORT_BLOCKED );
 
     buffer = create_features_reply( TRANSACTION_ID, DATAPATH_ID, n_buffers, n_tables,
-                                    auxiliary_id, capabilities, reserved );
+                                    auxiliary_id, capabilities );
     append_front_buffer( buffer, sizeof( openflow_service_header_t ) );
     memcpy( buffer->data, &messenger_header, sizeof( openflow_service_header_t ) );
     expect_memory( mock_features_reply_handler, &datapath_id, &DATAPATH_ID, sizeof( uint64_t ) );
@@ -4277,7 +4271,6 @@ test_handle_openflow_message() {
     expect_value( mock_features_reply_handler, n_tables32, ( uint32_t ) n_tables );
     expect_value( mock_features_reply_handler, auxiliary_id32, ( uint32_t ) auxiliary_id );
     expect_value( mock_features_reply_handler, capabilities, capabilities );
-    expect_value( mock_features_reply_handler, reserved, reserved );
     expect_memory( mock_features_reply_handler, user_data, USER_DATA, USER_DATA_LEN );
 
     set_features_reply_handler( mock_features_reply_handler, USER_DATA );

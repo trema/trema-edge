@@ -789,7 +789,7 @@ static void
 handle_features_reply( const uint64_t datapath_id, buffer *data ) {
   uint8_t n_tables;
   uint8_t auxiliary_id;
-  uint32_t transaction_id, n_buffers, capabilities, reserved;
+  uint32_t transaction_id, n_buffers, capabilities;
   struct ofp_switch_features *switch_features;
 
   if ( ( data == NULL ) || ( ( data != NULL ) && ( data->length == 0 ) ) ) {
@@ -804,7 +804,6 @@ handle_features_reply( const uint64_t datapath_id, buffer *data ) {
   n_tables = switch_features->n_tables;
   auxiliary_id = switch_features->auxiliary_id;
   capabilities = ntohl( switch_features->capabilities );
-  reserved = ntohl( switch_features->reserved );
 
   debug( "A features reply message is received from %#" PRIx64
          " ( transaction_id = %#x, n_buffers = %#x, n_tables = %#x, "
@@ -826,7 +825,6 @@ handle_features_reply( const uint64_t datapath_id, buffer *data ) {
                                           n_tables,
                                           auxiliary_id,
                                           capabilities,
-                                          reserved,
                                           event_handlers.features_reply_user_data );
 }
 

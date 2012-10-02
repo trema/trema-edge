@@ -60,6 +60,8 @@ bool instructions_to_string( const struct ofp_instruction *instructions, uint16_
 
 uint16_t get_checksum( uint16_t *pos, uint32_t size );
 
+uint32_t get_in_port_from_oxm_matches( const oxm_matches *match );
+
 
 #endif // UTILITY_H
 

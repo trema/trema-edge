@@ -40,20 +40,17 @@ handle_features_reply (
   uint32_t transaction_id,
   uint32_t n_buffers,
   uint8_t n_tables,
+  uint8_t auxiliary_id,
   uint32_t capabilities,
-  uint32_t actions,
-  const list_element *phy_ports,
-  void *user_data
-) {
+  void *user_data ) {
   UNUSED( user_data );
 
   info( "datapath_id: %#" PRIx64, datapath_id );
   info( "transaction_id: %#lx", transaction_id );
   info( "n_buffers: %lu", n_buffers );
   info( "n_tables: %u", n_tables );
+  info( "auxiliary_id: %u", auxiliary_id );
   info( "capabilities: %lu", capabilities );
-  info( "actions: %lu", actions );
-  info( "#ports: %d", list_length_of( phy_ports ) );
 
   stop_trema();
 }
