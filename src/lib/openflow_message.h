@@ -46,6 +46,12 @@ typedef struct openflow_instructions {
   list_element *list;
 } openflow_instructions;
 
+// A structure for storing OpenFlow buckets
+typedef struct openflow_buckets {
+  int n_buckets;
+  list_element *list;
+} openflow_buckets;
+
 // A structure for storing wildcards and masks
 typedef struct {
   uint64_t wildcards;
@@ -111,7 +117,7 @@ buffer *create_flow_mod( const uint32_t transaction_id, const uint64_t cookie, c
                          const uint16_t flags, const oxm_matches *match,
                          const openflow_instructions *instructions );
 buffer *create_group_mod( const uint32_t transaction_id, const uint16_t command,
-                          const uint8_t type, const uint32_t group_id, const list_element *buckets );
+                          const uint8_t type, const uint32_t group_id, const openflow_buckets *buckets );
 buffer *create_port_mod( const uint32_t transaction_id, const uint32_t port_no,
                          const uint8_t hw_addr[ OFP_ETH_ALEN ], const uint32_t config,
                          const uint32_t mask, const uint32_t advertise );
@@ -275,6 +281,10 @@ bool append_instructions_clear_actions( openflow_instructions *instructions );
 bool append_instructions_meter( openflow_instructions *instructions, uint32_t meter_id );
 bool append_instructions_experimenter( openflow_instructions *instructions, uint32_t experimenter, const buffer *data );
 
+openflow_buckets *create_buckets( void );
+bool delete_buckets( openflow_buckets *buckets );
+uint16_t get_buckets_length( const openflow_buckets *buckets );
+bool append_bucket( openflow_buckets *buckets, uint16_t weight, uint32_t watch_port, uint32_t watch_group, openflow_actions *actions );
 
 // Return code definitions indicating the result of OpenFlow message validation.
 enum {

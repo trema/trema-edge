@@ -1379,7 +1379,8 @@ test_create_group_mod() {
   uint8_t type = OFPGT_SELECT;
   uint32_t group_id = 0x10023004;
   buffer *buffer;
-  list_element *expected_list, *list;
+  list_element *list;
+  openflow_buckets *expected_list;
   struct ofp_bucket *bkt1, *bkt2;
   struct ofp_group_mod *group_mod;
   uint16_t expected_msglen;
@@ -1391,9 +1392,10 @@ test_create_group_mod() {
   bkt2 = xcalloc( 1, bucket_testdata_len[1] );
   memcpy( bkt2, bucket_testdata[1], bucket_testdata_len[1] );
 
-  create_list( &expected_list );
-  append_to_tail( &expected_list, bkt1 );
-  append_to_tail( &expected_list, bkt2 );
+  expected_list = create_buckets();
+  append_to_tail( &expected_list->list, bkt1 );
+  append_to_tail( &expected_list->list, bkt2 );
+  expected_list->n_buckets = 2;
 
   expected_msglen = ( uint16_t ) ( offsetof( struct ofp_group_mod, buckets )
                                   + bucket_testdata_len[0]
@@ -1418,7 +1420,7 @@ test_create_group_mod() {
   struct ofp_bucket *buckets = group_mod->buckets;
   struct ofp_bucket *next;
 
-  list = expected_list;
+  list = expected_list->list;
   while ( list != NULL ) {
     struct ofp_bucket *expected_bucket = ( struct ofp_bucket * ) list->data;
 
@@ -1432,9 +1434,7 @@ test_create_group_mod() {
   }
 
   delete_bucket_testdata();
-  delete_list( expected_list );
-  xfree( bkt1 );
-  xfree( bkt2 );
+  delete_buckets( expected_list );
   free_buffer( buffer );
 }
 
@@ -7376,7 +7376,7 @@ test_validate_group_mod() {
   uint16_t command = OFPGC_ADD;
   uint8_t type = OFPGT_SELECT;
   uint32_t group_id = 0x10023004;
-  list_element *list;
+  openflow_buckets *buckets;
   struct ofp_bucket *bkt1, *bkt2;
 
   create_bucket_testdata();
@@ -7386,18 +7386,17 @@ test_validate_group_mod() {
   bkt2 = xcalloc( 1, bucket_testdata_len[1] );
   memcpy( bkt2, bucket_testdata[1], bucket_testdata_len[1] );
 
-  create_list( &list );
-  append_to_tail( &list, bkt1 );
-  append_to_tail( &list, bkt2 );
+  buckets = create_buckets();
+  append_to_tail( &buckets->list, bkt1 );
+  append_to_tail( &buckets->list, bkt2 );
+  buckets->n_buckets = 2;
 
-  buffer *group_mod = create_group_mod( MY_TRANSACTION_ID, command, type, group_id, list );
+  buffer *group_mod = create_group_mod( MY_TRANSACTION_ID, command, type, group_id, buckets );
 
   assert_int_equal( validate_group_mod( group_mod ), 0 );
 
   free_buffer( group_mod );
-  delete_list( list );
-  xfree( bkt1 );
-  xfree( bkt2 );
+  delete_buckets( buckets );
   delete_bucket_testdata();
 }
 
@@ -12128,7 +12127,7 @@ test_validate_openflow_message_succeeds_with_valid_OFPT_GROUP_MOD_message() {
   uint16_t command = OFPGC_ADD;
   uint8_t type = OFPGT_SELECT;
   uint32_t group_id = 0x10023004;
-  list_element *list;
+  openflow_buckets *buckets;
   struct ofp_bucket *bkt1, *bkt2;
 
   create_bucket_testdata();
@@ -12138,18 +12137,17 @@ test_validate_openflow_message_succeeds_with_valid_OFPT_GROUP_MOD_message() {
   bkt2 = xcalloc( 1, bucket_testdata_len[1] );
   memcpy( bkt2, bucket_testdata[1], bucket_testdata_len[1] );
 
-  create_list( &list );
-  append_to_tail( &list, bkt1 );
-  append_to_tail( &list, bkt2 );
+  buckets = create_buckets();
+  append_to_tail( &buckets->list, bkt1 );
+  append_to_tail( &buckets->list, bkt2 );
+  buckets->n_buckets = 2;
 
-  buffer *group_mod = create_group_mod( MY_TRANSACTION_ID, command, type, group_id, list );
+  buffer *group_mod = create_group_mod( MY_TRANSACTION_ID, command, type, group_id, buckets );
 
   assert_int_equal( validate_openflow_message( group_mod ), 0 );
 
   free_buffer( group_mod );
-  delete_list( list );
-  xfree( bkt1 );
-  xfree( bkt2 );
+  delete_buckets( buckets );
   delete_bucket_testdata();
 }
 

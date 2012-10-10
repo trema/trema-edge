@@ -753,35 +753,25 @@ create_flow_mod( const uint32_t transaction_id, const uint64_t cookie, const uin
 
 buffer *
 create_group_mod( const uint32_t transaction_id, const uint16_t command,
-                  const uint8_t type, const uint32_t group_id, const list_element *buckets ) {
-  int n_buckets = 0;
+                  const uint8_t type, const uint32_t group_id, const openflow_buckets *buckets ) {
   uint16_t length = 0;
+  uint16_t bucket_length = 0;
+  uint16_t buckets_length = 0;
   buffer *buffer;
-  list_element *b = NULL;
-  list_element *buckets_element = NULL;
   struct ofp_group_mod *group_mod;
-  struct ofp_bucket *bkt, *bucket;
+  struct ofp_bucket *bucket_src, *bucket_dst;
+  list_element *bucket_element;
 
   debug( "Creating a group modification "
          "( xid = %#x, command = %#x, type = %#x, group_id = %#x ).",
          transaction_id, command, type, group_id );
 
   if ( buckets != NULL ) {
-    b = ( list_element * ) xmalloc( sizeof( list_element ) );
-    memcpy( b, buckets, sizeof( list_element ) );
+    debug( "# of buckets = %u.", buckets->n_buckets );
+    buckets_length = get_buckets_length( buckets );
   }
 
-  buckets_element = b;
-  while ( buckets_element != NULL ) {
-    bucket = ( struct ofp_bucket * ) buckets_element->data;
-    length = ( uint16_t ) ( length + bucket->len );
-    n_buckets++;
-    buckets_element = buckets_element->next;
-  }
-
-  debug( "# of buckets = %u.", n_buckets );
-
-  length = ( uint16_t ) ( offsetof( struct ofp_group_mod, buckets ) + length );
+  length = ( uint16_t ) ( offsetof( struct ofp_group_mod, buckets ) + buckets_length );
 
   buffer = create_header( transaction_id, OFPT_GROUP_MOD, length );
   assert( buffer != NULL );
@@ -792,17 +782,16 @@ create_group_mod( const uint32_t transaction_id, const uint16_t command,
   memset( &group_mod->pad, 0, sizeof( group_mod->pad ) );
   group_mod->group_id = htonl( group_id );
 
-  bkt = group_mod->buckets;
-  buckets_element = b;
-  while ( buckets_element != NULL ) {
-    bucket = ( struct ofp_bucket * ) buckets_element->data;
-    hton_bucket( bkt, bucket );
-    bkt = ( struct ofp_bucket * ) ( ( char * ) bkt + bucket->len );
-    buckets_element = buckets_element->next;
-  }
-
-  if ( b != NULL ) {
-    xfree( b );
+  if ( buckets_length > 0 ) {
+    bucket_dst = ( struct ofp_bucket * ) ( ( char * ) buffer->data + offsetof( struct ofp_group_mod, buckets ) );
+    bucket_element = buckets->list;
+    while ( bucket_element != NULL ) {
+      bucket_src = ( struct ofp_bucket * ) bucket_element->data;
+      bucket_length = bucket_src->len;
+      hton_bucket( bucket_dst, bucket_src );
+      bucket_dst = ( struct ofp_bucket * ) ( ( char * ) bucket_dst + bucket_length );
+      bucket_element = bucket_element->next;
+    }
   }
 
   return buffer;
@@ -3527,6 +3516,121 @@ append_instructions_experimenter( openflow_instructions *instructions, uint32_t 
   ret = append_to_tail( &instructions->list, ( void * ) instruction_experimenter );
   if ( ret ) {
     instructions->n_instructions++;
+  }
+
+  return ret;
+}
+
+
+openflow_buckets *
+create_buckets( void ) {
+  openflow_buckets *buckets;
+
+  debug( "Creating an empty buckets list." );
+
+  buckets = ( openflow_buckets * ) xmalloc( sizeof( openflow_buckets ) );
+
+  if ( create_list( &buckets->list ) == false ) {
+    assert( 0 );
+  }
+
+  buckets->n_buckets = 0;
+
+  return buckets;
+}
+
+
+bool
+delete_buckets( openflow_buckets *buckets ) {
+  list_element *element;
+
+  debug( "Deleting an buckets list." );
+
+  assert( buckets != NULL );
+
+  debug( "# of buckets = %d.", buckets->n_buckets );
+
+  element = buckets->list;
+  while ( element != NULL ) {
+    xfree( element->data );
+    element = element->next;
+  }
+
+  delete_list( buckets->list );
+  xfree( buckets );
+
+  return true;
+}
+
+
+uint16_t
+get_buckets_length( const openflow_buckets *buckets ) {
+  int buckets_length = 0;
+  struct ofp_bucket *bucket;
+
+  debug( "Calculating the total length of buckets." );
+
+  assert( buckets != NULL );
+
+  list_element *e = buckets->list;
+  while ( e != NULL ) {
+    bucket = ( struct ofp_bucket * ) e->data;
+    buckets_length += bucket->len;
+    e = e->next;
+  }
+
+  debug( "Total length of buckets = %u.", buckets_length );
+
+  if ( buckets_length > UINT16_MAX ) {
+    critical( "Too many buckets ( # of buckets = %d, buckets length = %u ).",
+              buckets->n_buckets, buckets_length );
+    assert( 0 );
+  }
+
+  return ( uint16_t ) buckets_length;
+}
+
+
+bool
+append_bucket( openflow_buckets *buckets, uint16_t weight, uint32_t watch_port, uint32_t watch_group, openflow_actions *actions ) {
+  bool ret;
+  void *a;
+  uint16_t action_length = 0;
+  uint16_t actions_length = 0;
+  struct ofp_bucket *bucket;
+  struct ofp_action_header *action_header;
+  list_element *action;
+
+  debug( "Appending an bucket ( weight = %#x, watch_port = %#x, watch_group = %#x ).", weight, watch_port, watch_group );
+  if ( actions != NULL ) {
+    debug( "# of actions = %d.", actions->n_actions );
+    actions_length = get_actions_length( actions );
+  }
+
+  assert( buckets != NULL );
+
+  bucket = ( struct ofp_bucket * ) xcalloc( 1, sizeof( struct ofp_bucket ) + actions_length );
+  bucket->len = ( uint16_t ) ( sizeof( struct ofp_bucket ) + actions_length );
+  bucket->weight = weight;
+  bucket->watch_port = watch_port;
+  bucket->watch_group = watch_group;
+  memset( bucket->pad, 0, sizeof( bucket->pad ) );
+  if ( actions_length > 0 ) {
+    a = ( void * ) ( ( char * ) bucket + offsetof( struct ofp_bucket, actions ) );
+
+    action = actions->list;
+    while ( action != NULL ) {
+      action_header = ( struct ofp_action_header * ) action->data;
+      action_length = action_header->len;
+      memcpy( a, action_header, action_length );
+      a = ( void * ) ( ( char * ) a + action_length );
+      action = action->next;
+    }
+  }
+
+  ret = append_to_tail( &buckets->list, ( void * ) bucket );
+  if ( ret ) {
+    buckets->n_buckets++;
   }
 
   return ret;

@@ -1233,7 +1233,7 @@ test_handle_group_mod() {
   uint16_t command = 0x1122;
   uint8_t type = 0x33;
   uint32_t group_id = 0x44556677;
-  list_element *buckets;
+  openflow_buckets *buckets;
   uint16_t bucket_len;
   struct ofp_bucket *bucket[ 2 ];
   buffer *buffer;
@@ -1265,9 +1265,9 @@ test_handle_group_mod() {
   actions->port = 0x05060708;
   actions->max_len = 0xCAFE;
 
-  create_list( &buckets );
-  append_to_tail( &buckets, bucket[ 0 ] );
-  append_to_tail( &buckets, bucket[ 1 ] );
+  buckets = create_buckets();
+  append_to_tail( &buckets->list, bucket[ 0 ] );
+  append_to_tail( &buckets->list, bucket[ 1 ] );
 
   buffer = create_group_mod( TRANSACTION_ID, command, type, group_id, buckets );
   
@@ -1283,9 +1283,7 @@ test_handle_group_mod() {
   handle_group_mod( buffer );
 
   free_buffer( buffer );
-  delete_list( buckets );
-  xfree( bucket[ 0 ] );
-  xfree( bucket[ 1 ] );
+  delete_buckets( buckets );
 }
 
 
@@ -1294,7 +1292,7 @@ test_handle_group_mod_if_handler_is_not_registered() {
   uint16_t command = 0x1122;
   uint8_t type = 0x33;
   uint32_t group_id = 0x44556677;
-  list_element *buckets;
+  openflow_buckets *buckets;
   uint16_t bucket_len;
   struct ofp_bucket *bucket[ 2 ];
   buffer *buffer;
@@ -1326,9 +1324,9 @@ test_handle_group_mod_if_handler_is_not_registered() {
   actions->port = 0x05060708;
   actions->max_len = 0xCAFE;
 
-  create_list( &buckets );
-  append_to_tail( &buckets, bucket[ 0 ] );
-  append_to_tail( &buckets, bucket[ 1 ] );
+  buckets = create_buckets();
+  append_to_tail( &buckets->list, bucket[ 0 ] );
+  append_to_tail( &buckets->list, bucket[ 1 ] );
 
   buffer = create_group_mod( TRANSACTION_ID, command, type, group_id, buckets );
     
@@ -1337,9 +1335,7 @@ test_handle_group_mod_if_handler_is_not_registered() {
   handle_group_mod( buffer );
 
   free_buffer( buffer );
-  delete_list( buckets );
-  xfree( bucket[ 0 ] );
-  xfree( bucket[ 1 ] );
+  delete_buckets( buckets );
 }
 
 
@@ -2566,7 +2562,7 @@ test_handle_openflow_message() {
     uint16_t command = OFPGC_DELETE;
     uint8_t type = OFPGT_FF;
     uint32_t group_id = 0x44556677;
-    list_element *buckets;
+    openflow_buckets *buckets;
     uint16_t bucket_len;
     struct ofp_bucket *bucket[ 2 ];
     buffer *buffer;
@@ -2598,9 +2594,9 @@ test_handle_openflow_message() {
     actions->port = 0x05060708;
     actions->max_len = 0xCAFE;
 
-    create_list( &buckets );
-    append_to_tail( &buckets, bucket[ 0 ] );
-    append_to_tail( &buckets, bucket[ 1 ] );
+    buckets = create_buckets();
+    append_to_tail( &buckets->list, bucket[ 0 ] );
+    append_to_tail( &buckets->list, bucket[ 1 ] );
 
     buffer = create_group_mod( TRANSACTION_ID, command, type, group_id, buckets );
     
@@ -2616,9 +2612,7 @@ test_handle_openflow_message() {
     handle_openflow_message( buffer );
 
     free_buffer( buffer );
-    delete_list( buckets );
-    xfree( bucket[ 0 ] );
-    xfree( bucket[ 1 ] );
+    delete_buckets( buckets );
   }
   {
     uint32_t port_no = 0x12345678;
