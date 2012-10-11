@@ -50,3 +50,54 @@ License
 Trema is released under the GNU General Public License version 2.0:
 
 * http://www.gnu.org/licenses/gpl-2.0.html
+
+# About OpenFlow 1.3
+
+## Important modifications
+
++ Multiple tables,groups support (Setting of multiple tables, groups).
++ Extensible match support. (Extensible match support applicable to MPLS and IPv6 match setting).
++ Extensible packet rewrite support. (Extensible packet rewrite support applicable to MPLS and IPv6).
++ Support for added packet-in contents. (Support for additional cookie and match fields).
+
+## Frequently used packets expanded threfore became more time-consuming.
+
++ The packet-in has been expanded since packet includes the cookie and the match fields.
++ The `flow_mod` that had only match+actions has been expanded to match+instructions+actions.
+
+## Unsupported
+
++ The cookie mask is to be used in `flow_mod` modify/delete and `flow_stats_request` and
+  `aggregate_stats_request`. Therefore as trema does the the cookie translation became a problem.
+
+## Differences seen by applications
+
++ `Flow_mod` was necessary after switch connection establishment since the default packet-in was not sent.
+  It might be better that packet-in is not sent until the startup sequence is completed.
++ Since the cookie field is attached to packet-in the application can also attach it to `flow_mod`.
++ It is necessary to search for the `in_port` included in the match of the packet-in.
++ Since the features reply doesn't include port information it is necessary to use a different method to retrieve. (`OFPT_MULTIPART_REQUEST`)
+
+## Ambiguous specification item
+
+- undefined structure
+-- p.44: `ofp_instruction_experimenter`
+-- p.65,66: `ofp_table_feature_prop_header` and `ofp_table_feature_prop_experimenter`
+-- p.66: `ofp_instruction`
+- undefined macro
+-- p.54: `OFPTC_*`
+-- p.69: `OFPQ_ALL`
+-- p.70: `OFPG_ANY` and `OFPG_ALL`
+- typo
+-- p.43: `OFPXMT_OFP_MPLS_BOS` -> `OFPXMT_OFB_MPLS_BOS`
+-- p.83: `OFPQCFC_EPERM` -> `OFPSCFC_EPERM`
+-- p.38: `OFPQT_MIN` -> `OFPQT_MIN_RATE` and `OFPQT_MAX` -> `OFPQT_MAX_RATE`
+-- p.75: `NX_ROLE_` -> `OFPCR_ROLE_`
+-- p.72: `/* All OFPMC_* that apply. */` -> `/* All OFPMF_* that apply. */`
+- added macro
+-- `OFP_DEFAULT_PRIORITY`
+-- `OFP_DEFAULT_MISS_SEND_LEN`
+- data length of the OXM TLV
+-- `OXM_OF_IPV6_FLABEL` 20bits is 4bytes
+-- `OXM_OF_MPLS_LABEL` 20bits is 4bytes
+-- `OXM_OF_PBB_ISID` 24bits is 4bytes
