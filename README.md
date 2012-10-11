@@ -80,24 +80,24 @@ Trema is released under the GNU General Public License version 2.0:
 
 ## Ambiguous specification items
 
-- undefined structure
--- p.44: `ofp_instruction_experimenter`
--- p.65,66: `ofp_table_feature_prop_header` and `ofp_table_feature_prop_experimenter`
--- p.66: `ofp_instruction`
-- undefined macro
--- p.54: `OFPTC_*`
--- p.69: `OFPQ_ALL`
--- p.70: `OFPG_ANY` and `OFPG_ALL`
-- typo
--- p.43: `OFPXMT_OFP_MPLS_BOS` -> `OFPXMT_OFB_MPLS_BOS`
--- p.83: `OFPQCFC_EPERM` -> `OFPSCFC_EPERM`
--- p.38: `OFPQT_MIN` -> `OFPQT_MIN_RATE` and `OFPQT_MAX` -> `OFPQT_MAX_RATE`
--- p.75: `NX_ROLE_` -> `OFPCR_ROLE_`
--- p.72: `/* All OFPMC_* that apply. */` -> `/* All OFPMF_* that apply. */`
-- added macro
--- `OFP_DEFAULT_PRIORITY`
--- `OFP_DEFAULT_MISS_SEND_LEN`
-- data length of the OXM TLV
--- `OXM_OF_IPV6_FLABEL` 20bits is 4bytes
--- `OXM_OF_MPLS_LABEL` 20bits is 4bytes
--- `OXM_OF_PBB_ISID` 24bits is 4bytes
+- undefined structure  
+-- p.44: `ofp_instruction_experimenter`  
+-- p.65,66: `ofp_table_feature_prop_header` and `ofp_table_feature_prop_experimenter`  
+-- p.66: `ofp_instruction`  
+- undefined macro  
+-- p.54: `OFPTC_*`  
+-- p.69: `OFPQ_ALL`  
+-- p.70: `OFPG_ANY` and `OFPG_ALL`  
+- typo  
+-- p.43: `OFPXMT_OFP_MPLS_BOS` -> `OFPXMT_OFB_MPLS_BOS`  
+-- p.83: `OFPQCFC_EPERM` -> `OFPSCFC_EPERM`  
+-- p.38: `OFPQT_MIN` -> `OFPQT_MIN_RATE` and `OFPQT_MAX` -> `OFPQT_MAX_RATE`  
+-- p.75: `NX_ROLE_` -> `OFPCR_ROLE_`  
+-- p.72: `/* All OFPMC_* that apply. */` -> `/* All OFPMF_* that apply. */`  
+- added macro  
+-- `OFP_DEFAULT_PRIORITY`  
+-- `OFP_DEFAULT_MISS_SEND_LEN`  
+- data length of the OXM TLV  
+-- `OXM_OF_IPV6_FLABEL` 20bits is 4bytes  
+-- `OXM_OF_MPLS_LABEL` 20bits is 4bytes  
+-- `OXM_OF_PBB_ISID` 24bits is 4bytes  
