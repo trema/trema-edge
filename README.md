@@ -53,22 +53,22 @@ Trema is released under the GNU General Public License version 2.0:
 
 # About OpenFlow 1.3
 
-## Important modifications
+## Notable modifications
 
 + Multiple tables,groups support (Setting of multiple tables, groups).
 + Extensible match support. (Extensible match support applicable to MPLS and IPv6 match setting).
 + Extensible packet rewrite support. (Extensible packet rewrite support applicable to MPLS and IPv6).
 + Support for added packet-in contents. (Support for additional cookie and match fields).
 
-## Frequently used packets expanded threfore became more time-consuming.
+## Frequently used packets expanded hence processing time increased.
 
-+ The packet-in has been expanded since packet includes the cookie and the match fields.
++ The packet-in has been expanded to include the cookie and the match fields.
 + The `flow_mod` that had only match+actions has been expanded to match+instructions+actions.
 
 ## Unsupported
 
 + The cookie mask is to be used in `flow_mod` modify/delete and `flow_stats_request` and
-  `aggregate_stats_request`. Therefore as trema does the the cookie translation became a problem.
+  `aggregate_stats_request`. As currently trema does the cookie translation it is a problem.
 
 ## Differences seen by applications
 
@@ -78,7 +78,7 @@ Trema is released under the GNU General Public License version 2.0:
 + It is necessary to search for the `in_port` included in the match of the packet-in.
 + Since the features reply doesn't include port information it is necessary to use a different method to retrieve. (`OFPT_MULTIPART_REQUEST`)
 
-## Ambiguous specification item
+## Ambiguous specification items
 
 - undefined structure
 -- p.44: `ofp_instruction_experimenter`
