@@ -104,8 +104,7 @@ To be written later on.
 
 ## Differences seen by applications
 
-+ `Flow_mod` was necessary after switch connection establishment since the default packet-in was not sent.
-  It might be better that packet-in is not sent until the startup sequence is completed.
++ `Flow_mod` is necessary after switch connection establishment since the default packet-in is not sent.
 + Since the cookie field is attached to packet-in the application can also attach it to `flow_mod`.
 + It is necessary to search for the `in_port` included in the match of the packet-in.
 + Since the features reply doesn't include port information it is necessary to use a different method to retrieve. (`OFPT_MULTIPART_REQUEST`)
