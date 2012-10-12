@@ -4,7 +4,7 @@ This is a temporary repository that we create in order to receive some
 valuable feedback from our users. In the future we are planning to
 merge this repository into the current trema repository.
 
-## Trema for OpenFlow 1.3
+## Trema for OpenFlow 1.3.0
 
 We have already developed source that implements the OpenFlow 1.3.0
 specification and we also planning to include the newer OpenFlow
@@ -34,16 +34,16 @@ To be written later on.
 
 ## Build trema
 
-    $ git clone git://github.com/trema/trema-edge.git
-    $ cd trema-edge
-    $ ./build.rb
+    % git clone git://github.com/trema/trema-edge.git
+    % cd trema-edge
+    % ./build.rb
 
 ## Run learning switch
 
-    $ ./learning_switch.sh start
+    % ./learning_switch.sh start
 
     Stop learning switch
-    $ ./learning_switch.sh stop
+    % ./learning_switch.sh stop
 
 ## How to build your own controller application
 
@@ -112,26 +112,26 @@ To be written later on.
 ## Ambiguous specification items
 
 - undefined structure  
--- p.44: `ofp_instruction_experimenter`  
--- p.65,66: `ofp_table_feature_prop_header` and `ofp_table_feature_prop_experimenter`  
--- p.66: `ofp_instruction`  
+    - p.44: `ofp_instruction_experimenter`  
+    - p.65,66: `ofp_table_feature_prop_header` and `ofp_table_feature_prop_experimenter`  
+    - p.66: `ofp_instruction`  
 - undefined macro  
--- p.54: `OFPTC_*`  
--- p.69: `OFPQ_ALL`  
--- p.70: `OFPG_ANY` and `OFPG_ALL`  
+    - p.54: `OFPTC_*`  
+    - p.69: `OFPQ_ALL`  
+    - p.70: `OFPG_ANY` and `OFPG_ALL`  
 - typo  
--- p.43: `OFPXMT_OFP_MPLS_BOS` -> `OFPXMT_OFB_MPLS_BOS`  
--- p.83: `OFPQCFC_EPERM` -> `OFPSCFC_EPERM`  
--- p.38: `OFPQT_MIN` -> `OFPQT_MIN_RATE` and `OFPQT_MAX` -> `OFPQT_MAX_RATE`  
--- p.75: `NX_ROLE_` -> `OFPCR_ROLE_`  
--- p.72: `/* All OFPMC_* that apply. */` -> `/* All OFPMF_* that apply. */`  
+    - p.43: `OFPXMT_OFP_MPLS_BOS` -> `OFPXMT_OFB_MPLS_BOS`  
+    - p.83: `OFPQCFC_EPERM` -> `OFPSCFC_EPERM`  
+    - p.38: `OFPQT_MIN` -> `OFPQT_MIN_RATE` and `OFPQT_MAX` -> `OFPQT_MAX_RATE`  
+    - p.75: `NX_ROLE_` -> `OFPCR_ROLE_`  
+    - p.72: `/* All OFPMC_* that apply. */` -> `/* All OFPMF_* that apply. */`  
 - added macro  
--- `OFP_DEFAULT_PRIORITY`  
--- `OFP_DEFAULT_MISS_SEND_LEN`  
+    - `OFP_DEFAULT_PRIORITY`  
+    - `OFP_DEFAULT_MISS_SEND_LEN`  
 - data length of the OXM TLV  
--- `OXM_OF_IPV6_FLABEL` 20bits is 4bytes  
--- `OXM_OF_MPLS_LABEL` 20bits is 4bytes  
--- `OXM_OF_PBB_ISID` 24bits is 4bytes  
+    - `OXM_OF_IPV6_FLABEL` 20bits is 4bytes  
+    - `OXM_OF_MPLS_LABEL` 20bits is 4bytes  
+    - `OXM_OF_PBB_ISID` 24bits is 4bytes  
 
 License
 -------
