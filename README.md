@@ -20,6 +20,7 @@ Status of implementation:
 * `tremashark`: not yet implemented
 * `src/examples/dumper`: works (C only)
 * `src/examples/learning_switch`: works (C only)
+* `trema apps`: not work
 
 ## Tested platforms
 
@@ -44,14 +45,45 @@ To be written later on.
     Stop learning switch
     $ ./learning_switch.sh stop
 
-License
--------
+## How to build your own controller application
 
-Trema is released under the GNU General Public License version 2.0:
+### To build
 
-* http://www.gnu.org/licenses/gpl-2.0.html
+    % mkdir work
+    % cd work
+    % vi sample.c
+    ..
+    % cat sample.c
+    #include <inttypes.h>
+    #include "trema.h"
+    
+    static void
+    handle_switch_ready( uint64_t datapath_id, void *user_data ) {
+      info( "Hello %#" PRIx64 " from %s!", datapath_id, user_data );
+      stop_trema();
+    }
+    
+    int
+    main( int argc, char *argv[] ) {
+      init_trema( &argc, &argv );
+    
+      set_switch_ready_handler( handle_switch_ready, argv[ 0 ] );
+    
+      start_trema();
+    
+      return 0;
+    }
+    % cc `../trema-config -c` -o sample sample.c `../trema-config -l`
+    % cd ..
 
-# About OpenFlow 1.3
+### To start the controller
+
+    % ./trema-run.sh ./work/sample start
+    
+    Stop controller
+    % ./trema-run.sh ./work/sample stop
+
+# About OpenFlow 1.3.0
 
 ## Notable modifications
 
@@ -101,3 +133,10 @@ Trema is released under the GNU General Public License version 2.0:
 -- `OXM_OF_IPV6_FLABEL` 20bits is 4bytes  
 -- `OXM_OF_MPLS_LABEL` 20bits is 4bytes  
 -- `OXM_OF_PBB_ISID` 24bits is 4bytes  
+
+License
+-------
+
+Trema is released under the GNU General Public License version 2.0:
+
+* http://www.gnu.org/licenses/gpl-2.0.html
