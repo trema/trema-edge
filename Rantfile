@@ -236,7 +236,7 @@ import "sys/tgz"
 
 task :vendor => [
   "vendor:oflops",
-  "vendor:openflow",
+#  "vendor:openflow",
   "vendor:openvswitch",
   "vendor:phost",
 ]
@@ -244,7 +244,7 @@ task :vendor => [
 task :distclean => [
   "vendor:cmockery:distclean",
   "vendor:oflops:distclean",
-  "vendor:openflow:distclean",
+#  "vendor:openflow:distclean",
   "vendor:openvswitch:distclean",
   "vendor:phost:distclean",
 ]
@@ -256,15 +256,15 @@ task :distclean => [
 
 gen Directory, Trema.objects
 
-task "vendor:openflow" => Trema.openflow_h
-file Trema.openflow_h => Trema.objects do
-  sys.unpack_tgz "#{ Trema.vendor_openflow }.tar.gz", :in => Trema.vendor
-  sys.cp_r "#{ Trema.vendor_openflow }/include/openflow", Trema.objects
-end
+#task "vendor:openflow" => Trema.openflow_h
+#file Trema.openflow_h => Trema.objects do
+#  sys.unpack_tgz "#{ Trema.vendor_openflow }.tar.gz", :in => Trema.vendor
+#  sys.cp_r "#{ Trema.vendor_openflow }/include/openflow", Trema.objects
+#end
 
-task "vendor:openflow:distclean" do
-  sys.rm_rf Trema.vendor_openflow
-end
+#task "vendor:openflow:distclean" do
+#  sys.rm_rf Trema.vendor_openflow
+#end
 
 
 #
@@ -397,7 +397,7 @@ build_libtrema_a = Proc.new do | t |
 end
 
 
-task dependency( "libtrema" ) => "vendor:openflow"
+#task dependency( "libtrema" ) => "vendor:openflow"
 gen C::Dependencies, dependency( "libtrema" ),
   :search => [ Trema.include, objects( "openflow" ) ],
   :sources => sys[ "#{ Trema.include }/*.c" ]
