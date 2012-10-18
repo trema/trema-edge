@@ -633,7 +633,7 @@ main( int argc, char *argv[] ) {
 
   // default switch configuration
   switch_info.config_flags = OFPC_FRAG_NORMAL;
-  switch_info.miss_send_len = UINT16_MAX;
+  switch_info.miss_send_len = OFPCML_MAX;
 
   switch_info.fragment_buf = NULL;
   switch_info.send_queue = create_message_queue();

@@ -77,7 +77,7 @@ typedef struct {
 bool init_openflow_message( void );
 
 // Functions for creating OpenFlow messages
-buffer *create_hello( const uint32_t transaction_id );
+buffer *create_hello( const uint32_t transaction_id, const buffer *elements );
 buffer *create_error( const uint32_t transaction_id, const uint16_t type,
                       const uint16_t code, const buffer *data );
 buffer *create_error_experimenter( const uint32_t transaction_id, const uint16_t type,

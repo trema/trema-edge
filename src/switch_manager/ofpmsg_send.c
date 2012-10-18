@@ -35,7 +35,7 @@ ofpmsg_send_hello( struct switch_info *sw_info ) {
   int ret;
   buffer *buf;
 
-  buf = create_hello( generate_xid() );
+  buf = create_hello( generate_xid(), NULL );
 
   ret = send_to_secure_channel( sw_info, buf );
   if ( ret == 0 ) {

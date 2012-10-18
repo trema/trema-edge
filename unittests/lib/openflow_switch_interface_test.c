@@ -3273,7 +3273,7 @@ test_handle_openflow_message_with_malformed_message() {
   buffer *buffer;
   struct ofp_header *header;
 
-  buffer = create_hello( TRANSACTION_ID );
+  buffer = create_hello( TRANSACTION_ID, NULL );
   header = buffer->data;
   header->length = htons( UINT16_MAX );
 
@@ -3294,7 +3294,7 @@ test_handle_openflow_message_if_unhandled_message_type() {
   buffer *buffer;
   struct ofp_header *header;
 
-  buffer = create_hello( TRANSACTION_ID );
+  buffer = create_hello( TRANSACTION_ID, NULL );
   header = buffer->data;
   header->type = 0xFF;
 

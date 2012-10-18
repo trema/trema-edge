@@ -210,10 +210,23 @@ create_error_experimenter( const uint32_t transaction_id, const uint16_t type,
 
 
 buffer *
-create_hello( const uint32_t transaction_id ) {
-  debug( "Creating a hello ( xid = %#x ).", transaction_id );
+create_hello( const uint32_t transaction_id, const buffer *elements ) {
+  uint16_t elements_length = 0;
 
-  return create_header( transaction_id, OFPT_HELLO, sizeof( struct ofp_header ) );
+  if ( ( elements != NULL ) && ( elements->length > 0 ) ) {
+    elements_length = ( uint16_t ) elements->length;
+  }
+
+  debug( "Creating a hello ( xid = %#x, data length = %u ).", transaction_id, elements_length );
+
+  buffer *hello = create_header( transaction_id, OFPT_HELLO, ( uint16_t ) ( sizeof( struct ofp_hello ) + elements_length ) );
+  assert( hello != NULL );
+
+  if ( elements_length > 0 ) {
+    memcpy( ( char * ) hello->data + sizeof( struct ofp_hello ), elements->data, elements_length );
+  }
+
+  return hello;
 }
 
 
@@ -358,6 +371,11 @@ buffer *
 create_set_config( const uint32_t transaction_id, const uint16_t flags, uint16_t miss_send_len ) {
   debug( "Creating a set config ( xid = %#x, flags = %#x, miss_send_len = %#x ).",
          transaction_id, flags, miss_send_len );
+  if ( ( miss_send_len > OFPCML_MAX ) && ( miss_send_len != OFPCML_NO_BUFFER ) ) {
+    warn( "Invalid miss_send_len ( change %#x to %#x )", miss_send_len, OFPCML_MAX );
+    miss_send_len = OFPCML_MAX;
+  }
+
 
   buffer *set_config = create_header( transaction_id, OFPT_SET_CONFIG, sizeof( struct ofp_switch_config ) );
   assert( set_config != NULL );
@@ -2259,13 +2277,18 @@ delete_actions( openflow_actions *actions ) {
 
 
 bool
-append_action_output( openflow_actions *actions, const uint32_t port, const uint16_t max_len ) {
+append_action_output( openflow_actions *actions, const uint32_t port, uint16_t max_len ) {
   bool ret;
   struct ofp_action_output *action_output;
 
   debug( "Appending an output action ( port = %#x, max_len = %#x ).", port, max_len );
 
   assert( actions != NULL );
+
+  if ( ( max_len > OFPCML_MAX ) && ( max_len != OFPCML_NO_BUFFER ) ) {
+    warn( "Invalid max_len ( change %#x to %#x )", max_len, OFPCML_MAX );
+    max_len = OFPCML_MAX;
+  }
 
   action_output = ( struct ofp_action_output * ) xcalloc( 1, sizeof( struct ofp_action_output ) );
   action_output->type = OFPAT_OUTPUT;
@@ -3680,8 +3703,15 @@ validate_header( const buffer *message, const uint8_t type,
 
 int
 validate_hello( const buffer *message ) {
+  int ret;
+
   assert( message != NULL );
-  return validate_header( message, OFPT_HELLO, sizeof( struct ofp_header ), sizeof( struct ofp_header ) );
+  ret = validate_header( message, OFPT_HELLO, sizeof( struct ofp_hello ), UINT16_MAX );
+  if ( ret < 0 ) {
+    return ret;
+  }
+
+  return 0;
 }
 
 

@@ -88,7 +88,7 @@ handle_switch_ready( uint64_t datapath_id, void *user_data ) {
   UNUSED( user_data );
 
   openflow_actions *actions = create_actions();
-  append_action_output( actions, OFPP_CONTROLLER, UINT16_MAX );
+  append_action_output( actions, OFPP_CONTROLLER, OFPCML_NO_BUFFER );
 
   openflow_instructions *insts = create_instructions();
   append_instructions_write_actions( insts, actions );

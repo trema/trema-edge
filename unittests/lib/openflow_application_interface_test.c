@@ -1485,7 +1485,7 @@ test_send_openflow_message() {
   buffer *buffer;
   openflow_service_header_t *header;
 
-  buffer = create_hello( TRANSACTION_ID );
+  buffer = create_hello( TRANSACTION_ID, NULL );
 
   assert_true( buffer != NULL );
 
@@ -5564,7 +5564,7 @@ test_handle_openflow_message() {
   {
     buffer *buffer;
 
-    buffer = create_hello( TRANSACTION_ID );
+    buffer = create_hello( TRANSACTION_ID, NULL );
     struct ofp_header *header = buffer->data;
     header->type = OFPT_QUEUE_GET_CONFIG_REPLY + 1;
     append_front_buffer( buffer, sizeof( openflow_service_header_t ) );
@@ -5587,7 +5587,7 @@ test_handle_openflow_message_with_malformed_message() {
   messenger_header.datapath_id = htonll( DATAPATH_ID );
   messenger_header.service_name_length = 0;
 
-  buffer = create_hello( TRANSACTION_ID );
+  buffer = create_hello( TRANSACTION_ID, NULL );
   header = buffer->data;
   header->length = htons( UINT16_MAX );
   append_front_buffer( buffer, sizeof( openflow_service_header_t ) );

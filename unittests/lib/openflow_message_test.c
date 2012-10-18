@@ -545,7 +545,7 @@ test_get_cookie_if_cookie_overflows() {
 
 static void
 test_create_hello() {
-  buffer *buffer = create_hello( MY_TRANSACTION_ID );
+  buffer *buffer = create_hello( MY_TRANSACTION_ID, NULL );
   assert_true( buffer != NULL );
 
   struct ofp_header *hello = buffer->data;
@@ -561,7 +561,7 @@ test_create_hello() {
 
 static void
 test_validate_hello() {
-  buffer *hello = create_hello( MY_TRANSACTION_ID );
+  buffer *hello = create_hello( MY_TRANSACTION_ID, NULL );
   assert_true( validate_hello( hello ) == SUCCESS );
   free_buffer( hello );
 }
@@ -594,7 +594,7 @@ test_create_error() {
   struct ofp_error_msg *error_msg;
   uint16_t length;
 
-  data = create_hello( MY_TRANSACTION_ID );
+  data = create_hello( MY_TRANSACTION_ID, NULL );
 
   buffer = create_error( MY_TRANSACTION_ID, type, code, data );
   assert_true( buffer != NULL );
@@ -655,7 +655,7 @@ test_create_error_experimenter() {
   struct ofp_error_experimenter_msg *error_msg;
   uint16_t length;
 
-  data = create_hello( MY_TRANSACTION_ID );
+  data = create_hello( MY_TRANSACTION_ID, NULL );
 
   buffer = create_error_experimenter( MY_TRANSACTION_ID, type, exp_type, experimenter, data );
   assert_true( buffer != NULL );
@@ -773,7 +773,7 @@ test_validate_echo_request_fails_with_NULL() {
 
 static void
 test_validate_echo_request_fails_with_non_echo_request_message() {
-  buffer *hello = create_hello( MY_TRANSACTION_ID );
+  buffer *hello = create_hello( MY_TRANSACTION_ID, NULL );
 
   assert_int_equal( validate_echo_request( hello ), ERROR_INVALID_TYPE );
 
@@ -845,7 +845,7 @@ test_validate_echo_reply_fails_with_NULL() {
 
 static void
 test_validate_echo_reply_fails_with_non_echo_reply_message() {
-  buffer *hello = create_hello( MY_TRANSACTION_ID );
+  buffer *hello = create_hello( MY_TRANSACTION_ID, NULL );
 
   assert_int_equal( validate_echo_reply( hello ), ERROR_INVALID_TYPE );
 
@@ -948,7 +948,7 @@ test_validate_features_request_fails_with_NULL() {
 
 static void
 test_validate_features_request_fails_with_non_features_request_message() {
-  buffer *hello = create_hello( MY_TRANSACTION_ID );
+  buffer *hello = create_hello( MY_TRANSACTION_ID, NULL );
   assert_int_equal( validate_features_request( hello ), ERROR_INVALID_TYPE );
   free_buffer( hello );
 }
@@ -1091,7 +1091,7 @@ test_validate_set_config_fails_with_NULL() {
 
 static void
 test_validate_set_config_fails_with_non_set_config_message() {
-  buffer *hello = create_hello( MY_TRANSACTION_ID );
+  buffer *hello = create_hello( MY_TRANSACTION_ID, NULL );
   assert_int_equal( validate_set_config( hello ), ERROR_INVALID_TYPE );
   free_buffer( hello );
 }
@@ -6975,7 +6975,7 @@ test_validate_experimenter_fails_if_message_is_NULL() {
 
 static void
 test_validate_experimenter_fails_if_message_is_not_experimenter_header() {
-  buffer *message = create_hello( MY_TRANSACTION_ID );
+  buffer *message = create_hello( MY_TRANSACTION_ID, NULL );
 
   assert_int_equal( validate_experimenter( message ), ERROR_INVALID_TYPE );
 
@@ -7009,7 +7009,7 @@ test_validate_features_reply() {
   free_buffer( expected_message );
 
   // error case.
-  expected_message = create_hello( MY_TRANSACTION_ID );
+  expected_message = create_hello( MY_TRANSACTION_ID, NULL );
 
   ret_val = validate_features_reply( expected_message );
   assert_int_equal( ret_val, ERROR_INVALID_TYPE );
@@ -7040,7 +7040,7 @@ test_validate_get_config_request_fails_if_message_is_NULL() {
 
 static void
 test_validate_get_config_request_fails_if_message_is_not_get_config_request() {
-  buffer *hello = create_hello( MY_TRANSACTION_ID );
+  buffer *hello = create_hello( MY_TRANSACTION_ID, NULL );
 
   assert_int_equal( validate_get_config_request( hello ), ERROR_INVALID_TYPE );
 
@@ -11825,7 +11825,7 @@ test_validate_instructions_experimenter_with_too_short_ofp_instruction() {
 
 static void
 test_validate_openflow_message_succeeds_with_valid_OFPT_HELLO_message() {
-  buffer *hello = create_hello( MY_TRANSACTION_ID );
+  buffer *hello = create_hello( MY_TRANSACTION_ID, NULL );
 
   assert_int_equal( validate_openflow_message( hello ), 0 );
 
@@ -12438,7 +12438,7 @@ test_validate_openflow_message_fails_if_data_is_NULL() {
 
 static void
 test_valid_openflow_message() {
-  buffer *hello = create_hello( MY_TRANSACTION_ID );
+  buffer *hello = create_hello( MY_TRANSACTION_ID, NULL );
 
   assert_int_equal( valid_openflow_message( hello ), true );
 
