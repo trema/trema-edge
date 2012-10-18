@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include "bool.h"
 #include "openflow.h"
-#include "openflow_local.h"
 #include "oxm_match.h"
 
 #define MATCH_STRING_LENGTH 2048

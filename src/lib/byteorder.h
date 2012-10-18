@@ -28,7 +28,6 @@
 #include <byteswap.h>
 #include <openflow.h>
 #include "bool.h"
-#include "openflow_local.h"
 
 
 #if __BYTE_ORDER == __BIG_ENDIAN
