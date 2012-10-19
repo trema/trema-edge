@@ -588,9 +588,9 @@ create_packet_out( const uint32_t transaction_id, const uint32_t buffer_id,
   debug( "Creating a packet-out ( xid = %#x, buffer_id = %#x, in_port = %#x, data length = %u ).",
          transaction_id, buffer_id, in_port, data_length );
 
-  if ( buffer_id == UINT32_MAX ) {
+  if ( buffer_id == OFP_NO_BUFFER ) {
     if ( data == NULL ) {
-      die( "An Ethernet frame must be provided if buffer_id is equal to %#x", UINT32_MAX );
+      die( "An Ethernet frame must be provided if buffer_id is equal to %#x", OFP_NO_BUFFER );
     }
     if ( data->length + ETH_FCS_LENGTH < ETH_MINIMUM_LENGTH ) {
       die( "The length of the provided Ethernet frame is shorter than the minimum length of an Ethernet frame (= %d bytes).", ETH_MINIMUM_LENGTH );

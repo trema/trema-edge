@@ -1,5 +1,5 @@
 /*
- * An OpenFlow application interface library.
+ * MPLS header definitions
  *
  * Author: SUGYO Kazushi
  *

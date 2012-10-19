@@ -1598,7 +1598,7 @@ test_ntoh_flow_stats() {
   src->table_id = 1;
   src->duration_sec = htonl( 60 );
   src->duration_nsec = htonl( 5000 );
-  src->priority = htons( UINT16_MAX );
+  src->priority = htons( OFP_HIGH_PRIORITY );
   src->idle_timeout = htons( 60 );
   src->hard_timeout = htons( 300 );
   src->flags = htons( OFPFF_SEND_FLOW_REM );
@@ -1673,7 +1673,7 @@ test_hton_flow_stats() {
   src->table_id = 1;
   src->duration_sec = 60;
   src->duration_nsec = 5000;
-  src->priority = UINT16_MAX;
+  src->priority = OFP_HIGH_PRIORITY;
   src->idle_timeout = 60;
   src->hard_timeout = 300;
   src->flags = OFPFF_SEND_FLOW_REM;

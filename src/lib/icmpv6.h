@@ -1,5 +1,5 @@
 /*
- * An OpenFlow application interface library.
+ * ICMPv6 header definitions
  *
  * Author: SUGYO Kazushi
  *

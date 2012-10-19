@@ -57,7 +57,7 @@ static void ( *handle_reply ) ( uint16_t tag, void *data, size_t length, void *u
 static void *HANDLER = ( void * ) 0x12345678;
 static void *USER_DATA = ( void * ) 0x87654321;
 static oxm_matches *MATCH = NULL;
-static uint16_t PRIORITY = UINT16_MAX / 2;
+static uint16_t PRIORITY = OFP_HIGH_PRIORITY / 2;
 static char SERVICE_NAME[] = "send_message_to_here";
 static char CLIENT_SERVICE_NAME[] = "packetin_filter.1234";
 

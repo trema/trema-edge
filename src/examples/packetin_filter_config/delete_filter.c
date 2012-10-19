@@ -34,7 +34,7 @@ delete_filter( void ) {
   data.service_name[ sizeof( data.service_name ) - 1 ] = '\0';
   data.strict = false;
 
-  bool ret = delete_packetin_filter( data.match, UINT16_MAX, data.service_name, data.strict,
+  bool ret = delete_packetin_filter( data.match, OFP_HIGH_PRIORITY, data.service_name, data.strict,
                                      delete_filter_completed, &data );
   if ( ret == false ) {
     error( "Failed to delete a packetin filter ( ret = %d ).", ret );

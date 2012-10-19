@@ -41,12 +41,12 @@ send_flow_mod( uint64_t datapath_id, uint8_t *macsa, uint8_t *macda, uint16_t ou
   memcpy( match.dl_dst, macda, OFP_ETH_ALEN );
   uint16_t idle_timeout = 0;
   uint16_t hard_timeout = 10;
-  uint16_t priority = UINT16_MAX;
-  uint32_t buffer_id = UINT32_MAX;
+  uint16_t priority = OFP_HIGH_PRIORITY;
+  uint32_t buffer_id = OFP_NO_BUFFER;
   uint16_t out_port_for_delete_command = OFPP_NONE;
   uint16_t flags = OFPFF_SEND_FLOW_REM;
   openflow_actions *actions = create_actions();
-  append_action_output( actions, out_port, UINT16_MAX );
+  append_action_output( actions, out_port, OFPCML_NO_BUFFER );
   buffer *flow_mod = create_flow_mod( get_transaction_id(), match, get_cookie(), OFPFC_ADD,
                                       idle_timeout, hard_timeout, priority, buffer_id,
                                       out_port_for_delete_command, flags, actions );
@@ -62,13 +62,13 @@ send_packet_out( uint64_t datapath_id, packet_in *message, uint16_t out_port ) {
   uint32_t buffer_id = message->buffer_id;
   uint16_t in_port = message->in_port;
   if ( datapath_id != message->datapath_id ) {
-    buffer_id = UINT32_MAX;
+    buffer_id = OFP_NO_BUFFER;
     in_port = OFPP_NONE;
   }
   openflow_actions *actions = create_actions();
-  append_action_output( actions, out_port, UINT16_MAX );
+  append_action_output( actions, out_port, OFPCML_NO_BUFFER );
   const buffer *data = NULL;
-  if ( buffer_id == UINT32_MAX ) {
+  if ( buffer_id == OFP_NO_BUFFER ) {
     data = message->data;
   }
   buffer *packet_out = create_packet_out( get_transaction_id(), buffer_id, in_port, actions, data );

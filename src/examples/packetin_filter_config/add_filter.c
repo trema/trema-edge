@@ -43,7 +43,7 @@ add_filter( void ) {
   snprintf( data.service_name, sizeof( data.service_name ), "dumper" );
   data.service_name[ sizeof( data.service_name ) - 1 ] = '\0';
 
-  bool ret = add_packetin_filter( data.match, UINT16_MAX, data.service_name, add_filter_completed, &data );
+  bool ret = add_packetin_filter( data.match, OFP_HIGH_PRIORITY, data.service_name, add_filter_completed, &data );
   if ( ret == false ) {
     error( "Failed to add a packetin filter ( ret = %d ).", ret );
   }

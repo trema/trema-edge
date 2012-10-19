@@ -1,6 +1,4 @@
 /*
- * An OpenFlow application interface library.
- *
  * Author: Yasunobu Chiba
  *
  * Copyright (C) 2012 NEC Corporation

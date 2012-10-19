@@ -35,8 +35,8 @@ flow_mod_alloc( VALUE klass ) {
     0,
     0,
     0,
-    UINT16_MAX,
-    UINT32_MAX,
+    OFP_HIGH_PRIORITY,
+    OFP_NO_BUFFER,
     OFPP_NONE,
     0,
     NULL

@@ -77,7 +77,7 @@ action_output_init( VALUE self, VALUE options ) {
       }
     }
     else {
-      max_len = UINT2NUM( UINT16_MAX );
+      max_len = UINT2NUM( OFPCML_MAX );
     }
     rb_iv_set( self, "@max_len", max_len );
   }
@@ -86,7 +86,7 @@ action_output_init( VALUE self, VALUE options ) {
       rb_raise( rb_eArgError, "Port must be an unsigned 16-bit integer" );
     }
     rb_iv_set( self, "@port", options );
-    rb_iv_set( self, "@max_len", UINT2NUM( UINT16_MAX ) );
+    rb_iv_set( self, "@max_len", UINT2NUM( OFPCML_MAX ) );
   }
   else {
     rb_raise( rb_eArgError, "Invalid option" );

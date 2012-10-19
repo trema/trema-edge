@@ -232,7 +232,7 @@ ofpmsg_send_delete_all_flows( struct switch_info *sw_info ) {
   match = create_oxm_matches();
 
   buf = create_flow_mod( generate_xid(), RESERVED_COOKIE, 0, OFPTT_ALL, OFPFC_DELETE,
-                         0, 0, 0, UINT32_MAX, OFPP_ANY, OFPG_ANY, 0, match, NULL );
+                         0, 0, 0, OFP_NO_BUFFER, OFPP_ANY, OFPG_ANY, 0, match, NULL );
 
   delete_oxm_matches( match );
 
@@ -255,7 +255,7 @@ ofpmsg_send_deny_all( struct switch_info *sw_info ) {
   const uint16_t timeout = 10;
 
   buf = create_flow_mod( generate_xid(), RESERVED_COOKIE, 0, 0, OFPFC_ADD,
-                         0, timeout, UINT16_MAX, UINT32_MAX, 0, 0, 0, match, NULL );
+                         0, timeout, OFP_HIGH_PRIORITY, OFP_NO_BUFFER, 0, 0, 0, match, NULL );
 
   delete_oxm_matches( match );
 

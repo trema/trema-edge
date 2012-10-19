@@ -1,5 +1,5 @@
 /*
- * An OpenFlow application interface library.
+ * SCTP header definitions
  *
  * Author: SUGYO Kazushi
  *

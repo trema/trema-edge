@@ -2303,7 +2303,7 @@ test_handle_packet_in_should_die_if_message_length_is_zero() {
 static void
 test_handle_flow_removed() {
   uint64_t cookie = 0x1111222233334444;
-  uint16_t priority = UINT16_MAX;
+  uint16_t priority = OFP_HIGH_PRIORITY;
   uint8_t reason =  OFPRR_IDLE_TIMEOUT;
   uint8_t table_id = 0xAA;
   uint32_t duration_sec = 180;
@@ -2376,7 +2376,7 @@ test_handle_flow_removed() {
 static void
 test_handle_flow_removed_with_simple_handler() {
   uint64_t cookie = 0x1111222233334444;
-  uint16_t priority = UINT16_MAX;
+  uint16_t priority = OFP_HIGH_PRIORITY;
   uint8_t reason =  OFPRR_IDLE_TIMEOUT;
   uint8_t table_id = 0xAA;
   uint32_t duration_sec = 180;
@@ -2449,7 +2449,7 @@ test_handle_flow_removed_with_simple_handler() {
 static void
 test_handle_flow_removed_if_handler_is_not_registered() {
   uint64_t cookie = 0x1111222233334444;
-  uint16_t priority = UINT16_MAX;
+  uint16_t priority = OFP_HIGH_PRIORITY;
   uint8_t reason =  OFPRR_IDLE_TIMEOUT;
   uint8_t table_id = 0xAA;
   uint32_t duration_sec = 180;
@@ -4374,7 +4374,7 @@ test_handle_openflow_message() {
   // flow_removed
   {
     uint64_t cookie = 0x1111222233334444;
-    uint16_t priority = UINT16_MAX;
+    uint16_t priority = OFP_HIGH_PRIORITY;
     uint8_t reason =  OFPRR_IDLE_TIMEOUT;
     uint8_t table_id = 0xAA;
     uint32_t duration_sec = 180;

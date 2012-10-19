@@ -170,10 +170,10 @@ learn( hash_table *forwarding_db, uint16_t port_no, uint8_t *mac ) {
 static void
 do_flooding( packet_in packet_in ) {
   openflow_actions *actions = create_actions();
-  append_action_output( actions, OFPP_FLOOD, UINT16_MAX );
+  append_action_output( actions, OFPP_FLOOD, OFPCML_NO_BUFFER );
 
   buffer *packet_out;
-  if ( packet_in.buffer_id == UINT32_MAX ) {
+  if ( packet_in.buffer_id == OFP_NO_BUFFER ) {
     buffer *frame = duplicate_buffer( packet_in.data );
     fill_ether_padding( frame );
     packet_out = create_packet_out(
@@ -203,7 +203,7 @@ do_flooding( packet_in packet_in ) {
 static void
 send_packet( uint16_t destination_port, packet_in packet_in ) {
   openflow_actions *actions = create_actions();
-  append_action_output( actions, destination_port, UINT16_MAX );
+  append_action_output( actions, destination_port, OFPCML_NO_BUFFER );
 
   struct ofp_match match;
   set_match_from_packet( &match, packet_in.in_port, 0, packet_in.data );
@@ -215,7 +215,7 @@ send_packet( uint16_t destination_port, packet_in packet_in ) {
     OFPFC_ADD,
     60,
     0,
-    UINT16_MAX,
+    OFP_HIGH_PRIORITY,
     packet_in.buffer_id,
     OFPP_NONE,
     OFPFF_SEND_FLOW_REM,
@@ -224,7 +224,7 @@ send_packet( uint16_t destination_port, packet_in packet_in ) {
   send_openflow_message( packet_in.datapath_id, flow_mod );
   free_buffer( flow_mod );
 
-  if ( packet_in.buffer_id == UINT32_MAX ) {
+  if ( packet_in.buffer_id == OFP_NO_BUFFER ) {
     buffer *frame = duplicate_buffer( packet_in.data );
     fill_ether_padding( frame );
     buffer *packet_out = create_packet_out(

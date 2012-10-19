@@ -107,14 +107,14 @@ packet_in_buffer_id( VALUE self ) {
 
 
 /*
- * A buffer_id value either than +UINT32_MAX+ marks the packet_in as buffered.
+ * A buffer_id value either than +OFP_NO_BUFFER+ marks the packet_in as buffered.
  *
  * @return [true] if packet_in is buffered.
  * @return [false] if packet_in is not buffered.
  */
 static VALUE
 packet_in_is_buffered( VALUE self ) {
-  if ( get_packet_in( self )->buffer_id == UINT32_MAX ) {
+  if ( get_packet_in( self )->buffer_id == OFP_NO_BUFFER ) {
     return Qfalse;
   }
   else {

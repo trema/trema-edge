@@ -134,8 +134,8 @@ controller_send_flow_mod( uint16_t command, int argc, VALUE *argv, VALUE self ) 
   uint64_t cookie = get_cookie();
   uint16_t idle_timeout = 0;
   uint16_t hard_timeout = 0;
-  uint16_t priority = UINT16_MAX;
-  uint32_t buffer_id = UINT32_MAX;
+  uint16_t priority = OFP_HIGH_PRIORITY;
+  uint32_t buffer_id = OFP_NO_BUFFER;
   uint16_t out_port = OFPP_NONE;
   uint16_t flags = OFPFF_SEND_FLOW_REM;
   openflow_actions *actions = create_actions();
@@ -382,7 +382,7 @@ controller_send_packet_out( int argc, VALUE *argv, VALUE self ) {
   rb_scan_args( argc, argv, "11", &datapath_id, &options );
 
   // Defaults.
-  uint32_t buffer_id = UINT32_MAX;
+  uint32_t buffer_id = OFP_NO_BUFFER;
   uint16_t in_port = OFPP_NONE;
   openflow_actions *actions = create_actions();
   const buffer *data = NULL;
@@ -398,7 +398,7 @@ controller_send_packet_out( int argc, VALUE *argv, VALUE self ) {
         buffer_id = message->buffer_id;
         in_port = message->in_port;
       }
-      data = ( buffer_id == UINT32_MAX ? message->data : NULL );
+      data = ( buffer_id == OFP_NO_BUFFER ? message->data : NULL );
     }
 
     VALUE opt_buffer_id = rb_hash_aref( options, ID2SYM( rb_intern( "buffer_id" ) ) );

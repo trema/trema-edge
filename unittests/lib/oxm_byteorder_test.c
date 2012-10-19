@@ -1,5 +1,5 @@
 /*
- * An OpenFlow application interface library.
+ * Unit tests for byteorder converters.
  *
  * Author: Yasunobu Chiba
  *

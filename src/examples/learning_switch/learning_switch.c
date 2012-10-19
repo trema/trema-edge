@@ -92,10 +92,10 @@ learn( hash_table *forwarding_db, struct key new_key, uint32_t port_no ) {
 static void
 do_flooding( packet_in packet_in, uint32_t in_port ) {
   openflow_actions *actions = create_actions();
-  append_action_output( actions, OFPP_FLOOD, UINT16_MAX );
+  append_action_output( actions, OFPP_FLOOD, OFPCML_NO_BUFFER );
 
   buffer *packet_out;
-  if ( packet_in.buffer_id == UINT32_MAX ) {
+  if ( packet_in.buffer_id == OFP_NO_BUFFER ) {
     buffer *frame = duplicate_buffer( packet_in.data );
     fill_ether_padding( frame );
     packet_out = create_packet_out(
@@ -125,7 +125,7 @@ do_flooding( packet_in packet_in, uint32_t in_port ) {
 static void
 send_packet( uint32_t destination_port, packet_in packet_in, uint32_t in_port ) {
   openflow_actions *actions = create_actions();
-  append_action_output( actions, destination_port, UINT16_MAX );
+  append_action_output( actions, destination_port, OFPCML_NO_BUFFER );
 
   openflow_instructions *insts = create_instructions();
   append_instructions_write_actions( insts, actions );
@@ -141,7 +141,7 @@ send_packet( uint32_t destination_port, packet_in packet_in, uint32_t in_port ) 
     OFPFC_ADD,
     60,
     0,
-    UINT16_MAX,
+    OFP_HIGH_PRIORITY,
     packet_in.buffer_id,
     0,
     0,
@@ -154,7 +154,7 @@ send_packet( uint32_t destination_port, packet_in packet_in, uint32_t in_port ) 
   delete_oxm_matches( match );
   delete_instructions( insts );
 
-  if ( packet_in.buffer_id == UINT32_MAX ) {
+  if ( packet_in.buffer_id == OFP_NO_BUFFER ) {
     buffer *frame = duplicate_buffer( packet_in.data );
     fill_ether_padding( frame );
     buffer *packet_out = create_packet_out(
@@ -249,8 +249,8 @@ handle_switch_ready( uint64_t datapath_id, void *user_data ) {
     OFPFC_ADD,
     0,
     0,
-    UINT16_MAX,
-    UINT32_MAX,
+    OFP_HIGH_PRIORITY,
+    OFP_NO_BUFFER,
     0,
     0,
     OFPFF_SEND_FLOW_REM,

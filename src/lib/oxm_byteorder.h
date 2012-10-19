@@ -1,5 +1,5 @@
 /*
- * An OpenFlow application interface library.
+ * Utility functions for converting byteorder.
  *
  * Author: Yasunobu Chiba
  *

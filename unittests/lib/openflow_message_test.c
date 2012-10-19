@@ -7249,7 +7249,7 @@ test_validate_packet_out() {
   openflow_actions *actions = create_actions();
   append_action_output( actions, 1, 128 );
   buffer *data = create_dummy_data( LONG_DATA_LENGTH );
-  buffer *packet_out = create_packet_out( MY_TRANSACTION_ID, UINT32_MAX, 1, actions, data );
+  buffer *packet_out = create_packet_out( MY_TRANSACTION_ID, OFP_NO_BUFFER, 1, actions, data );
 
   assert_int_equal( validate_packet_out( packet_out ), 0 );
 
@@ -12053,7 +12053,7 @@ test_validate_openflow_message_succeeds_with_valid_OFPT_PACKET_OUT_message() {
   openflow_actions *actions = create_actions();
   append_action_output( actions, 1, 128 );
   buffer *data = create_dummy_data( LONG_DATA_LENGTH );
-  buffer *packet_out = create_packet_out( MY_TRANSACTION_ID, UINT32_MAX, 1, actions, data );
+  buffer *packet_out = create_packet_out( MY_TRANSACTION_ID, OFP_NO_BUFFER, 1, actions, data );
 
   assert_int_equal( validate_openflow_message( packet_out ), 0 );
 

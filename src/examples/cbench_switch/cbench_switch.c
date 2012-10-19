@@ -26,7 +26,7 @@
 static void
 handle_packet_in( uint64_t datapath_id, packet_in message ) {
   openflow_actions *actions = create_actions();
-  append_action_output( actions, ( uint16_t ) ( message.in_port + 1 ), UINT16_MAX );
+  append_action_output( actions, ( uint16_t ) ( message.in_port + 1 ), OFPCML_NO_BUFFER );
 
   struct ofp_match match;
   set_match_from_packet( &match, message.in_port, 0, message.data );
@@ -38,7 +38,7 @@ handle_packet_in( uint64_t datapath_id, packet_in message ) {
     OFPFC_ADD,
     0,
     0,
-    UINT16_MAX,
+    OFP_HIGH_PRIORITY,
     message.buffer_id,
     OFPP_NONE,
     0,

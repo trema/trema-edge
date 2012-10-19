@@ -1,5 +1,5 @@
 /*
- * An OpenFlow application interface library.
+ * Match fields values.
  *
  * Author: Yasunobu Chiba
  *

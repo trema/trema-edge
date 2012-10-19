@@ -34,7 +34,7 @@ dump_filter( void ) {
   data.service_name[ sizeof( data.service_name ) - 1 ] = '\0';
   data.strict = false;
 
-  bool ret = dump_packetin_filter( data.match, UINT16_MAX, data.service_name, data.strict,
+  bool ret = dump_packetin_filter( data.match, OFP_HIGH_PRIORITY, data.service_name, data.strict,
                                    dump_filters, &data );
   if ( ret == false ) {
     error( "Failed to dump packetin filters ( ret = %d ).", ret );

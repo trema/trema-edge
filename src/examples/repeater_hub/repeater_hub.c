@@ -35,7 +35,7 @@ handle_packet_in( uint64_t datapath_id, packet_in message ) {
   }
 
   openflow_actions *actions = create_actions();
-  append_action_output( actions, OFPP_FLOOD, UINT16_MAX );
+  append_action_output( actions, OFPP_FLOOD, OFPCML_NO_BUFFER );
 
   openflow_instructions *insts = create_instructions();
   append_instructions_write_actions( insts, actions );
@@ -51,7 +51,7 @@ handle_packet_in( uint64_t datapath_id, packet_in message ) {
     OFPFC_ADD,
     60,
     0,
-    UINT16_MAX,
+    OFP_HIGH_PRIORITY,
     message.buffer_id,
     0,
     0,
@@ -64,7 +64,7 @@ handle_packet_in( uint64_t datapath_id, packet_in message ) {
   delete_oxm_matches( match );
   delete_instructions( insts );
 
-  if ( message.buffer_id == UINT32_MAX ) {
+  if ( message.buffer_id == OFP_NO_BUFFER ) {
     buffer *frame = duplicate_buffer( message.data );
     fill_ether_padding( frame );
     buffer *packet_out = create_packet_out(
@@ -101,8 +101,8 @@ handle_switch_ready( uint64_t datapath_id, void *user_data ) {
     OFPFC_ADD,
     0,
     0,
-    UINT16_MAX,
-    UINT32_MAX,
+    OFP_HIGH_PRIORITY,
+    OFP_NO_BUFFER,
     0,
     0,
     OFPFF_SEND_FLOW_REM,

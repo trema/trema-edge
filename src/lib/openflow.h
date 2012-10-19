@@ -1,8 +1,4 @@
 /*
- * An OpenFlow application interface library.
- *
- * Author: SUGYO Kazushi
- *
  * Copyright (C) 2012 NEC Corporation
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,6 +30,7 @@
 
 #define OFP_TCP_PORT  6633
 #define OFP_SSL_PORT  6633
+
 
 // A.1  OpenFlow Header
 
@@ -150,6 +147,7 @@ enum ofp_port_config {
  */
 enum ofp_port_state {
     OFPPS_LINK_DOWN = 1 << 0, /* No physical link present. */
+
     OFPPS_BLOCKED   = 1 << 1, /* Port is blocked */
     OFPPS_LIVE      = 1 << 2  /* Live for Fast Failover Group. */
 };
@@ -268,9 +266,9 @@ struct ofp_match {
     uint16_t type;          /* One of OFPMT_* */
     uint16_t length;        /* Length of ofp_match (excluding padding) */
     /* Followed by:
-     * - Exactly (length - 4) (possibly 0) bytes containing OXM TLVs, then
-     * - Exactly ((length + 7)/8*8 - length) (between 0 and 7) bytes of
-     * all-zero bytes
+     *  - Exactly (length - 4) (possibly 0) bytes containing OXM TLVs, then
+     *  - Exactly ((length + 7)/8*8 - length) (between 0 and 7) bytes of
+     *    all-zero bytes
      * In summary, ofp_match is padded as needed, to make its overall size
      * a multiple of 8, to preserve alignement in structures using it.
      */
@@ -494,9 +492,9 @@ struct ofp_action_set_field {
     uint16_t type;          /* OFPAT_SET_FIELD. */
     uint16_t len;           /* Length is padded to 64 bits. */
     /* Followed by:
-     * - Exactly oxm_len bytes containing a single OXM TLV, then
-     * - Exactly ((oxm_len + 4) + 7)/8*8 - (oxm_len + 4) (between 0 and 7)
-     * bytes of all-zero bytes
+     *  - Exactly oxm_len bytes containing a single OXM TLV, then
+     *  - Exactly ((oxm_len + 4) + 7)/8*8 - (oxm_len + 4) (between 0 and 7)
+     *    bytes of all-zero bytes
      */
     uint8_t field[4];       /* OXM TLV - Make compiler happy */
 };
@@ -647,7 +645,7 @@ enum ofp_config_flags {
 
 // A.3.3  Flow Table Configuration
 
-/* Table numbering. Tables can use any number up to OFPT_MAX. */
+/* Table numbering. Tables can use any number up to OFPTT_MAX. */
 enum ofp_table {
     /* Last usable table number. */
     OFPTT_MAX = 0xfe,
@@ -712,6 +710,8 @@ OFP_ASSERT(sizeof(struct ofp_flow_mod) == 56);
 
 /* By default, choose a priority in the middle. */
 #define OFP_DEFAULT_PRIORITY 0x8000
+#define OFP_HIGH_PRIORITY    0xffff
+#define OFP_LOW_PRIORITY     0x0000
 
 enum ofp_flow_mod_command {
     OFPFC_ADD           = 0, /* New flow. */
@@ -1126,7 +1126,7 @@ struct ofp_table_feature_prop_instructions {
     /* Followed by:
      *  - Exactly (length - 4) bytes containing the instruction ids, then
      *  - Exactly (length + 7)/8*8 - (length) (between 0 and 7)
-     *     bytes of all-zero bytes */
+     *    bytes of all-zero bytes */
     struct ofp_instruction instruction_ids[0]; /* List of instructions */
 };
 OFP_ASSERT(sizeof(struct ofp_table_feature_prop_instructions) == 4);
@@ -1139,7 +1139,7 @@ struct ofp_table_feature_prop_next_tables {
     /* Followed by:
      *  - Exactly (length - 4) bytes containing the table_ids, then
      *  - Exactly (length + 7)/8*8 - (length) (between 0 and 7)
-     *      bytes of all-zero bytes */
+     *    bytes of all-zero bytes */
     uint8_t next_table_ids[0];
 };
 OFP_ASSERT(sizeof(struct ofp_table_feature_prop_next_tables) == 4);
@@ -1154,7 +1154,7 @@ struct ofp_table_feature_prop_actions {
     /* Followed by:
      *  - Exactly (length - 4) bytes containing the action_ids, then
      *  - Exactly (length + 7)/8*8 - (length) (between 0 and 7)
-     *      bytes of all-zero bytes */
+     *    bytes of all-zero bytes */
     struct ofp_action_header action_ids[0]; /* List of actions */
 };
 OFP_ASSERT(sizeof(struct ofp_table_feature_prop_actions) == 4);
@@ -1171,7 +1171,7 @@ struct ofp_table_feature_prop_oxm {
     /* Followed by:
      *  - Exactly (length - 4) bytes containing the oxm_ids, then
      *  - Exactly (length + 7)/8*8 - (length) (between 0 and 7)
-     *      bytes of all-zero bytes */
+     *    bytes of all-zero bytes */
     uint32_t oxm_ids[0]; /* Array of OXM headers */
 };
 OFP_ASSERT(sizeof(struct ofp_table_feature_prop_oxm) == 4);
@@ -1188,7 +1188,7 @@ struct ofp_table_feature_prop_experimenter {
     /* Followed by:
      *  - Exactly (length - 12) bytes containing the experimenter data, then
      *  - Exactly (length + 7)/8*8 - (length) (between 0 and 7)
-     * 	    bytes of all-zero bytes */
+     *    bytes of all-zero bytes */
     uint32_t experimenter_data[0];
 };
 OFP_ASSERT(sizeof(struct ofp_table_feature_prop_experimenter) == 12);
@@ -1454,7 +1454,8 @@ struct ofp_packet_out {
 OFP_ASSERT(sizeof(struct ofp_packet_out) == 24);
 
 /* if the buffer_id is OFP_NO_BUFFER, then the packet data is included in the data array */
-#define OFP_NO_BUFFER            0xffffffff
+#define OFP_NO_BUFFER 0xffffffff
+
 
 // A.3.8  Barrier Message
 
@@ -1505,8 +1506,8 @@ struct ofp_packet_in {
     uint64_t cookie;        /* Cookie of the flow entry that was looked up. */
     struct ofp_match match; /* Packet metadata. Variable size. */
     /* Followed by:
-     * - Exactly 2 all-zero padding bytes, then
-     * - An Ethernet frame whose length is inferred from header.length.
+     *  - Exactly 2 all-zero padding bytes, then
+     *  - An Ethernet frame whose length is inferred from header.length.
      * The padding bytes preceding the Ethernet frame ensure that the IP
      * header (if any) following the Ethernet header is 32-bit aligned.
      */
@@ -1840,7 +1841,6 @@ OFP_ASSERT(sizeof(struct ofp_error_experimenter_msg) == 16);
 
 // A.5  Symmetric Messages
 
-
 // A.5.1  Hello
 
 /* Common header for all Hello Elements */
@@ -1872,12 +1872,13 @@ struct ofp_hello_elem_versionbitmap {
    uint16_t type; /* OFPHET_VERSIONBITMAP. */
    uint16_t length; /* Length in bytes of this element. */
    /* Followed by:
-    * - Exactly (length - 4) bytes containing the bitmaps, then
-    * - Exactly (length + 7)/8*8 - (length) (between 0 and 7)
-    * bytes of all-zero bytes */
+    *  - Exactly (length - 4) bytes containing the bitmaps, then
+    *  - Exactly (length + 7)/8*8 - (length) (between 0 and 7)
+    *    bytes of all-zero bytes */
    uint32_t bitmaps[0]; /* List of bitmaps - supported versions */
 };
 OFP_ASSERT(sizeof(struct ofp_hello_elem_versionbitmap) == 4);
+
 
 // A.5.2  Echo Request
 

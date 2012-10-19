@@ -63,12 +63,12 @@ dump_and_delete_filters( int status, int n_entries, packetin_filter_entry *entri
 
   struct ofp_match *match = user_data;
   char *service_name = xstrdup( get_trema_name() );  
-  bool ret = delete_packetin_filter( *match, UINT16_MAX, service_name, true, delete_filter_completed, user_data );
+  bool ret = delete_packetin_filter( *match, OFP_HIGH_PRIORITY, service_name, true, delete_filter_completed, user_data );
   xfree( service_name );
   if ( ret == false ) {
     error( "Failed to delete a packetin filter." );
   }
-  ret = delete_packetin_filter( *match, UINT16_MAX, NULL, false, delete_filter_completed, user_data );
+  ret = delete_packetin_filter( *match, OFP_HIGH_PRIORITY, NULL, false, delete_filter_completed, user_data );
   if ( ret == false ) {
     error( "Failed to delete all packetin filters." );
   }
@@ -84,12 +84,12 @@ add_filter_completed( int status, void *user_data ) {
 
   struct ofp_match *match = user_data;
   char *service_name = xstrdup( get_trema_name() );  
-  bool ret = dump_packetin_filter( *match, UINT16_MAX, service_name, true, dump_filters, user_data );
+  bool ret = dump_packetin_filter( *match, OFP_HIGH_PRIORITY, service_name, true, dump_filters, user_data );
   xfree( service_name );
   if ( ret == false ) {
     error( "Failed to dump a packetin filter." );
   }
-  ret = dump_packetin_filter( *match, UINT16_MAX, NULL, false, dump_and_delete_filters, user_data );
+  ret = dump_packetin_filter( *match, OFP_HIGH_PRIORITY, NULL, false, dump_and_delete_filters, user_data );
   if ( ret == false ) {
     error( "Failed to dump all packetin filters." );
   }
@@ -103,7 +103,7 @@ add_filter( void ) {
   match.wildcards = OFPFW_ALL;
   char *service_name = xstrdup( get_trema_name() );
 
-  bool ret = add_packetin_filter( match, UINT16_MAX, service_name, add_filter_completed, &match );
+  bool ret = add_packetin_filter( match, OFP_HIGH_PRIORITY, service_name, add_filter_completed, &match );
   xfree( service_name );
   if ( ret == false ) {
     error( "Failed to add a packetin filter." );
