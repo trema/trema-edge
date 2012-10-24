@@ -1899,6 +1899,20 @@ struct ofp_experimenter_header {
 };
 OFP_ASSERT(sizeof(struct ofp_experimenter_header) == 16);
 
+
+// B.6.6 Vendor Extensions
+
+/* Vendor extension */
+struct ofp_vendor {
+  struct ofp_header header; /* Type OFPT_VENDOR. */
+  uint32_t vendor;          /* Vendor ID: 
+                             * - MSB 0: low-order bytes are IEEE OUI.
+                             * - MSB != 0: defined by OpenFlow
+                             *   consortium. */
+  /* Vendor-defined arbitrary additional data. */
+};
+
+
 #endif /* openflow.h */
 
 

@@ -102,7 +102,7 @@ vendor_init( int argc, VALUE *argv, VALUE self ) {
 
         tmp = rb_hash_aref( options, ID2SYM( rb_intern( "vendor" ) ) );
         if ( tmp != Qnil ) {
-          ( ( struct ofp_vendor_header * ) ( vendor->data ) )->vendor = htonl( ( uint32_t ) NUM2UINT( tmp ) );
+          ( ( struct ofp_vendor * ) ( vendor->data ) )->vendor = htonl( ( uint32_t ) NUM2UINT( tmp ) );
         }
 
         tmp = rb_hash_aref( options, ID2SYM( rb_intern( "data" ) ) );
@@ -111,7 +111,7 @@ vendor_init( int argc, VALUE *argv, VALUE self ) {
           uint16_t length = ( uint16_t ) RARRAY_LEN( tmp );
           append_back_buffer( vendor, length );
           set_length( vendor, length );
-          uint8_t *data = ( uint8_t * ) ( ( char * ) vendor->data + sizeof( struct ofp_vendor_header ) );
+          uint8_t *data = ( uint8_t * ) ( ( char * ) vendor->data + sizeof( struct ofp_vendor ) );
           int i;
           for ( i = 0; i < length; i++ ) {
             data[ i ] = ( uint8_t ) FIX2INT( RARRAY_PTR( tmp )[ i ] );
@@ -145,7 +145,7 @@ static VALUE
 vendor_vendor( VALUE self ) {
   buffer *vendor_message;
   Data_Get_Struct( self, buffer, vendor_message );
-  uint32_t vendor = ntohl( ( ( struct ofp_vendor_header * ) ( vendor_message->data ) )->vendor );
+  uint32_t vendor = ntohl( ( ( struct ofp_vendor * ) ( vendor_message->data ) )->vendor );
   return UINT2NUM( vendor );
 }
 
@@ -164,7 +164,7 @@ vendor_data( VALUE self ) {
 
   if ( length > 0 ) {
     VALUE data_array = rb_ary_new2( length );
-    uint8_t *data = ( uint8_t * ) ( ( char * ) vendor->data + sizeof( struct ofp_vendor_header ) );
+    uint8_t *data = ( uint8_t * ) ( ( char * ) vendor->data + sizeof( struct ofp_vendor ) );
     int i;
     for ( i = 0; i < length; i++ ) {
       rb_ary_push( data_array, INT2FIX( data[ i ] ) );

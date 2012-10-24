@@ -43,7 +43,7 @@ set_length( const buffer *openflow_message, uint16_t length ) {
 
 uint16_t
 get_length( const buffer *openflow_message ) {
-  return ( uint16_t ) ( openflow_message->length - sizeof( struct ofp_vendor_header ) );
+  return ( uint16_t ) ( openflow_message->length - sizeof( struct ofp_vendor ) );
 }
 
 
