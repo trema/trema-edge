@@ -24,18 +24,21 @@ Status of implementation:
 
 ## Tested platforms
 
+* Ruby 1.8.7 (1.9.x is NOT supported yet)
 * Ubuntu 12.04 (amd64)
 
 It may also run on other GNU/Linux distributions but is not tested.
 
 ## Required Packages
 
-To be written later on.
+    % sudo apt-get install gcc make ruby1.8 rubygems1.8 ruby1.8-dev libpcap-dev libsqlite3-0
+    % sudo gem install bundler
 
 ## Build trema
 
     % git clone git://github.com/trema/trema-edge.git
     % cd trema-edge
+    % sudo bundle install
     % ./build.rb
 
 ## Run learning switch
