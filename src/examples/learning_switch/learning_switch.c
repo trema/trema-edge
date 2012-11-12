@@ -128,7 +128,7 @@ send_packet( uint32_t destination_port, packet_in packet_in, uint32_t in_port ) 
   append_action_output( actions, destination_port, OFPCML_NO_BUFFER );
 
   openflow_instructions *insts = create_instructions();
-  append_instructions_write_actions( insts, actions );
+  append_instructions_apply_actions( insts, actions );
 
   oxm_matches *match = create_oxm_matches();
   set_match_from_packet( match, in_port, NULL, packet_in.data );
@@ -239,7 +239,7 @@ handle_switch_ready( uint64_t datapath_id, void *user_data ) {
   append_action_output( actions, OFPP_CONTROLLER, OFPCML_NO_BUFFER );
 
   openflow_instructions *insts = create_instructions();
-  append_instructions_write_actions( insts, actions );
+  append_instructions_apply_actions( insts, actions );
 
   buffer *flow_mod = create_flow_mod(
     get_transaction_id(),
@@ -249,7 +249,7 @@ handle_switch_ready( uint64_t datapath_id, void *user_data ) {
     OFPFC_ADD,
     0,
     0,
-    OFP_HIGH_PRIORITY,
+    OFP_LOW_PRIORITY,
     OFP_NO_BUFFER,
     0,
     0,
