@@ -1619,10 +1619,10 @@ switch_send_openflow_message( buffer *message ) {
 
 bool
 handle_secure_channel_message( buffer *message ) {
-  debug( "An OpenFlow message is received from remove." );
-
   assert( message != NULL );
   assert( message->length >= sizeof( struct ofp_header ) );
+
+  debug( "A message is received from remote ( length = %u ).", message->length );
 
   struct ofp_header *header = message->data;
 
@@ -1637,7 +1637,7 @@ handle_local_message( uint16_t tag, void *data, size_t length ) {
   assert( data != NULL );
   assert( length >= sizeof( openflow_service_header_t ) );
 
-  debug( "A message is received from remote ( tag = %u, data = %p, length = %u ).", tag, data, length );
+  debug( "A message is received from local ( tag = %u, data = %p, length = %u ).", tag, data, length );
 
   switch ( tag ) {
   case MESSENGER_OPENFLOW_MESSAGE:
