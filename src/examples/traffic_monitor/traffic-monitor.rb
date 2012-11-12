@@ -88,7 +88,7 @@ class TrafficMonitor < Controller
 
 
   def flood datapath_id, message
-    packet_out datapath_id, message, OFPP_FLOOD
+    packet_out datapath_id, message, OFPP_ALL
   end
 end
 

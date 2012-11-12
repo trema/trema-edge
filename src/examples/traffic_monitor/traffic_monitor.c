@@ -81,7 +81,7 @@ send_packet_out( uint64_t datapath_id, packet_in *message, uint16_t out_port ) {
 
 static void
 do_flooding( uint64_t datapath_id, packet_in *message ) {
-  send_packet_out( datapath_id, message, OFPP_FLOOD );
+  send_packet_out( datapath_id, message, OFPP_ALL );
 }
 
 

@@ -63,7 +63,7 @@ describe RepeaterHub do
       subject { vswitch( "switch" ) }
 
       it { should have( 1 ).flows }
-      its( "flows.first.actions" ) { should == "FLOOD" }
+      its( "flows.first.actions" ) { should == "ALL" }
     end
 
 
@@ -107,7 +107,7 @@ describe RepeaterHub do
       subject { vswitch( "switch" ) }
 
       it { should have( 1 ).flows }
-      its( "flows.first.actions" ) { should == "FLOOD" }
+      its( "flows.first.actions" ) { should == "ALL" }
     end
 
 

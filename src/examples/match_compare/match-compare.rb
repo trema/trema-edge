@@ -32,7 +32,7 @@ class MatchCompare < Controller
     action, log = lookup_rules( datapath_id, match )
     info "action=#{ action }, datapath_id=#{ datapath_id.to_hex }, message={#{ match.to_s }}" if log
     if action == :allow
-      actions = ActionOutput.new( OFPP_FLOOD )
+      actions = ActionOutput.new( OFPP_ALL )
       send_flow_mod_add( datapath_id, :match => match, :idle_timeout => 60, :actions => actions )
       send_packet_out( datapath_id, :packet_in => message, :actions => actions )
     else

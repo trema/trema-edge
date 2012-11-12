@@ -25,12 +25,12 @@ class RepeaterHub < Controller
     send_flow_mod_add(
       datapath_id,
       :match => ExactMatch.from( message ),
-      :actions => ActionOutput.new( OFPP_FLOOD )
+      :actions => ActionOutput.new( OFPP_ALL )
     )
     send_packet_out(
       datapath_id,
       :packet_in => message,
-      :actions => ActionOutput.new( OFPP_FLOOD )
+      :actions => ActionOutput.new( OFPP_ALL )
     )
   end
 end

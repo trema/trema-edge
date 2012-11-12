@@ -170,7 +170,7 @@ learn( hash_table *forwarding_db, uint16_t port_no, uint8_t *mac ) {
 static void
 do_flooding( packet_in packet_in ) {
   openflow_actions *actions = create_actions();
-  append_action_output( actions, OFPP_FLOOD, OFPCML_NO_BUFFER );
+  append_action_output( actions, OFPP_ALL, OFPCML_NO_BUFFER );
 
   buffer *packet_out;
   if ( packet_in.buffer_id == OFP_NO_BUFFER ) {

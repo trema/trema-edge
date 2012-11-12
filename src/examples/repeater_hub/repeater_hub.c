@@ -35,7 +35,7 @@ handle_packet_in( uint64_t datapath_id, packet_in message ) {
   }
 
   openflow_actions *actions = create_actions();
-  append_action_output( actions, OFPP_FLOOD, OFPCML_NO_BUFFER );
+  append_action_output( actions, OFPP_ALL, OFPCML_NO_BUFFER );
 
   openflow_instructions *insts = create_instructions();
   append_instructions_write_actions( insts, actions );
