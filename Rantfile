@@ -297,19 +297,19 @@ end
 # Open vSwitch
 #
 
-task "vendor:openvswitch" => Trema::Executables.ovs_openflowd
-file Trema::Executables.ovs_openflowd do
-  sys.unpack_tgz "#{ Trema.vendor_openvswitch }.tar.gz", :in => Trema.vendor
-  sys.cd Trema.vendor_openvswitch do
-    sys "./configure --prefix=#{ Trema.openvswitch } --with-rundir=#{ Trema.sock }"
-    sys "make install"
-    sys "cp ./tests/test-openflowd #{ Trema::Executables.ovs_openflowd }"
-  end
-end
+#task "vendor:openvswitch" => Trema::Executables.ovs_openflowd
+#file Trema::Executables.ovs_openflowd do
+#  sys.unpack_tgz "#{ Trema.vendor_openvswitch }.tar.gz", :in => Trema.vendor
+#  sys.cd Trema.vendor_openvswitch do
+#    sys "./configure --prefix=#{ Trema.openvswitch } --with-rundir=#{ Trema.sock }"
+#    sys "make install"
+#    sys "cp ./tests/test-openflowd #{ Trema::Executables.ovs_openflowd }"
+#  end
+#end
 
-task "vendor:openvswitch:distclean" do
-  sys.rm_rf Trema.vendor_openvswitch
-end
+#task "vendor:openvswitch:distclean" do
+#  sys.rm_rf Trema.vendor_openvswitch
+#end
 
 
 #
@@ -334,38 +334,38 @@ end
 # phost
 #
 
-def phost_src
-  File.join Trema.vendor_phost, "src"
-end
+#def phost_src
+#  File.join Trema.vendor_phost, "src"
+#end
 
 
-task "vendor:phost" => [ Trema::Executables.phost, Trema::Executables.cli ]
+#task "vendor:phost" => [ Trema::Executables.phost, Trema::Executables.cli ]
+#
+#file Trema::Executables.phost do
+#  sys.cd phost_src do
+#    sys "make"
+#  end
+#  sys.mkdir_p File.dirname( Trema::Executables.phost )
+#  sys.install File.join( phost_src, "phost" ), Trema::Executables.phost, :mode => 0755
+#end
 
-file Trema::Executables.phost do
-  sys.cd phost_src do
-    sys "make"
-  end
-  sys.mkdir_p File.dirname( Trema::Executables.phost )
-  sys.install File.join( phost_src, "phost" ), Trema::Executables.phost, :mode => 0755
-end
+#file Trema::Executables.cli do
+#  sys.cd phost_src do
+#    sys "make"
+#  end
+#  sys.mkdir_p File.dirname( Trema::Executables.cli )
+#  sys.install File.join( phost_src, "cli" ), Trema::Executables.cli, :mode => 0755
+#end
 
-file Trema::Executables.cli do
-  sys.cd phost_src do
-    sys "make"
-  end
-  sys.mkdir_p File.dirname( Trema::Executables.cli )
-  sys.install File.join( phost_src, "cli" ), Trema::Executables.cli, :mode => 0755
-end
-
-task "vendor:phost:distclean" do
-  begin
-    sys.cd phost_src do
-      sys "make clean"
-    end
-  rescue
-    # ignore.
-  end
-end
+#task "vendor:phost:distclean" do
+#  begin
+#    sys.cd phost_src do
+#      sys "make clean"
+#    end
+#  rescue
+#    # ignore.
+#  end
+#end
 
 
 #
@@ -578,11 +578,11 @@ tremashark_objects = [
   File.join tremashark_objects_dir, each
 end
 
-desc "Build tremashark."
-task :tremashark => Trema::Executables.tremashark
-file Trema::Executables.tremashark => tremashark_objects + [ libtrema ] do | t |
-  sys "gcc -L#{ Trema.lib } -o #{ t.name } #{ sys.sp t.prerequisites } -ltrema -lsqlite3 -ldl -lrt -lpcap -lpthread"
-end
+#desc "Build tremashark."
+#task :tremashark => Trema::Executables.tremashark
+#file Trema::Executables.tremashark => tremashark_objects + [ libtrema ] do | t |
+#  sys "gcc -L#{ Trema.lib } -o #{ t.name } #{ sys.sp t.prerequisites } -ltrema -lsqlite3 -ldl -lrt -lpcap -lpthread"
+#end
 
 
 packet_capture_objects = [
@@ -592,11 +592,11 @@ packet_capture_objects = [
   File.join tremashark_objects_dir, each
 end
 
-desc "Build packet_capture."
-task :packet_capture => Trema::Executables.packet_capture
-file Trema::Executables.packet_capture => packet_capture_objects + [ libtrema ] do | t |
-  sys "gcc -L#{ Trema.lib } -o #{ t.name } #{ sys.sp t.prerequisites } -ltrema -lsqlite3 -ldl -lrt -lpcap -lpthread"
-end
+#desc "Build packet_capture."
+#task :packet_capture => Trema::Executables.packet_capture
+#file Trema::Executables.packet_capture => packet_capture_objects + [ libtrema ] do | t |
+#  sys "gcc -L#{ Trema.lib } -o #{ t.name } #{ sys.sp t.prerequisites } -ltrema -lsqlite3 -ldl -lrt -lpcap -lpthread"
+#end
 
 
 syslog_relay_objects = [
@@ -605,11 +605,11 @@ syslog_relay_objects = [
   File.join tremashark_objects_dir, each
 end
 
-desc "Build syslog_relay."
-task :syslog_relay => Trema::Executables.syslog_relay
-file Trema::Executables.syslog_relay => syslog_relay_objects + [ libtrema ] do | t |
-  sys "gcc -L#{ Trema.lib } -o #{ t.name } #{ sys.sp t.prerequisites } -ltrema -lsqlite3 -ldl -lrt -lpcap -lpthread"
-end
+#desc "Build syslog_relay."
+#task :syslog_relay => Trema::Executables.syslog_relay
+#file Trema::Executables.syslog_relay => syslog_relay_objects + [ libtrema ] do | t |
+#  sys "gcc -L#{ Trema.lib } -o #{ t.name } #{ sys.sp t.prerequisites } -ltrema -lsqlite3 -ldl -lrt -lpcap -lpthread"
+#end
 
 
 stdin_relay_objects = [
@@ -618,11 +618,11 @@ stdin_relay_objects = [
   File.join tremashark_objects_dir, each
 end
 
-desc "Build stdin_relay."
-task :stdin_relay => Trema::Executables.stdin_relay
-file Trema::Executables.stdin_relay => stdin_relay_objects + [ libtrema ] do | t |
-  sys "gcc -L#{ Trema.lib } -o #{ t.name } #{ sys.sp t.prerequisites } -ltrema -lsqlite3 -ldl -lrt -lpcap -lpthread"
-end
+#desc "Build stdin_relay."
+#task :stdin_relay => Trema::Executables.stdin_relay
+#file Trema::Executables.stdin_relay => stdin_relay_objects + [ libtrema ] do | t |
+#  sys "gcc -L#{ Trema.lib } -o #{ t.name } #{ sys.sp t.prerequisites } -ltrema -lsqlite3 -ldl -lrt -lpcap -lpthread"
+#end
 
 
 ################################################################################
