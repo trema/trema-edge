@@ -34,7 +34,7 @@ usage() {
 static void
 send_hello( uint64_t datapath_id, void *count ) {
   for ( int i = 0; i < *( ( int * ) count ); i++ ) {
-    buffer *hello = create_hello( get_transaction_id() );
+    buffer *hello = create_hello( get_transaction_id() , NULL );
     bool ret = send_openflow_message( datapath_id, hello );
     if ( !ret ) {
       error( "Failed to send an hello message to the switch with datapath ID = %#" PRIx64 ".", datapath_id );
