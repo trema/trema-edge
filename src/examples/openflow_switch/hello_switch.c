@@ -1,7 +1,5 @@
 /*
- * Sends hello message(s).
- *
- * Author: Shin-ya Zenke, Yasuhito Takamiya <yasuhito@gmail.com>
+ * A simple switch that has minimum function to test hello message.
  *
  * Copyright (C) 2008-2012 NEC Corporation
  *
@@ -20,43 +18,42 @@
  */
 
 
-#include <inttypes.h>
-#include <stdio.h>
-#include "trema.h"
+#include "chibach.h"
 
 
-void
-usage() {
-  printf( "Usage: %s COUNT\n", get_executable_name() );
+static void handle_features_request( uint32_t, void * );
+static void handle_hello( uint32_t, uint8_t, void * );
+
+
+static void
+handle_features_request( uint32_t tid, void *user_data ) {
+  UNUSED( user_data );
+
+  switch_send_openflow_message( create_features_reply( tid, get_datapath_id(), 0, 1, 0, 0 ) );
 }
 
 
 static void
-send_hello( uint64_t datapath_id, void *count ) {
-  for ( int i = 0; i < *( ( int * ) count ); i++ ) {
-    buffer *hello = create_hello( get_transaction_id(), NULL );
-    bool ret = send_openflow_message( datapath_id, hello );
-    if ( !ret ) {
-      error( "Failed to send an hello message to the switch with datapath ID = %#" PRIx64 ".", datapath_id );
-    }
-    free_buffer( hello );
-  }
+handle_hello( uint32_t tid, uint8_t version, void *user_data ) {
+  UNUSED( version );
+  UNUSED( user_data );
+
+  info( "received: OFPT_HELLO" );
+
+  switch_send_openflow_message( create_hello( tid, NULL ) );
 }
 
 
 int
-main( int argc, char *argv[] ) {
-  init_trema( &argc, &argv );
+main( int argc, char **argv ) {
+  init_chibach( &argc, &argv );
 
-  if ( argc < 2 ) {
-    usage();
-    return -1;
-  }
+  set_hello_handler( handle_hello, NULL );
+  set_features_request_handler( handle_features_request, NULL );
 
-  int count = atoi( argv[ 1 ] );
-  set_switch_ready_handler( send_hello, &count );
+  start_chibach();
 
-  start_trema();
+  stop_chibach();
 
   return 0;
 }

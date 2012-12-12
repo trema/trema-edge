@@ -1,8 +1,4 @@
 #
-# The syntax definition of vswitch { ... } stanza in Trema DSL.
-#
-# Author: Yasuhito Takamiya <yasuhito@gmail.com>
-#
 # Copyright (C) 2008-2012 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
@@ -20,26 +16,33 @@
 #
 
 
-require "trema/dsl/switch"
-
+require "trema/hardware-switch"
 
 module Trema
-  module DSL
-    class Vswitch < Switch
-      def initialize name = nil
-        super name
-        @ip = "127.0.0.1"
-      end
+  class TestSwitch < HardwareSwitch
+    include Trema::Daemon
 
 
-      def ip str
-        @ip = str
-      end
+    log_file { |vswitch| "testswitch.#{ vswitch.name }.log" }
+
+    
+    def initialize stanza
+      super stanza
+    end
 
 
-      def stub name
-        @stub = name
-      end
+    def command
+      "CHIBACH_TMP=#{ Trema.tmp } #{ path } -i #{ dpid_short } > #{ log_file } &"
+    end
+
+
+    ############################################################################
+    private
+    ############################################################################
+
+
+    def path
+      File.join( Trema.objects, "examples/openflow_switch/", @stanza[ :stub ] )
     end
   end
 end

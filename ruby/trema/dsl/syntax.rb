@@ -35,6 +35,7 @@ require "trema/open-vswitch"
 require "trema/packetin-filter"
 require "trema/ruby-switch"
 require "trema/switch-manager"
+require "trema/test-switch"
 
 
 module Trema
@@ -66,7 +67,12 @@ module Trema
       def vswitch name = nil, &block
         stanza = Trema::DSL::Vswitch.new( name )
         stanza.instance_eval( &block )
-        Trema::OpenVswitch.new stanza, @config.port
+
+        if stanza[ :stub ].nil?
+          Trema::OpenVswitch.new stanza, @config.port
+        else
+          Trema::TestSwitch.new stanza
+        end
       end
 
 
