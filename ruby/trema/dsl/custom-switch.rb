@@ -1,5 +1,7 @@
 #
-# Copyright (C) 2008-2012 NEC Corporation
+# The syntax definition of custom_switch { ... } stanza in Trema DSL.
+#
+# Copyright (C) 2012 Hiroyasu OHYAMA
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2, as
@@ -16,33 +18,20 @@
 #
 
 
-require "trema/hardware-switch"
+require "trema/dsl/switch"
+
 
 module Trema
-  class TestSwitch < HardwareSwitch
-    include Trema::Daemon
+  module DSL
+    class CustomSwitch < Switch
+      def initialize name = nil
+        super name
+      end
 
 
-    log_file { |vswitch| "testswitch.#{ vswitch.name }.log" }
-
-    
-    def initialize stanza
-      super stanza
-    end
-
-
-    def command
-      "CHIBACH_TMP=#{ Trema.tmp } #{ path } -i #{ dpid_short } > #{ log_file } &"
-    end
-
-
-    ############################################################################
-    private
-    ############################################################################
-
-
-    def path
-      File.join( Trema.objects, "examples/openflow_switch/", @stanza[ :stub ] )
+      def path filepath
+        @path = filepath
+      end
     end
   end
 end
