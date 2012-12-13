@@ -1113,6 +1113,7 @@ test_create_packet_in() {
   oxm_matches *match;
   struct ofp_packet_in *packet_in;
   uint64_t tmp;
+  uint16_t expected_pad_len = 2;
   uint16_t expected_length;
 
   // with match
@@ -1136,7 +1137,7 @@ test_create_packet_in() {
 
     packet_in = buffer->data;
 
-    expected_length = ( uint16_t ) ( offsetof( struct ofp_packet_in, match ) + expected_ofp_match_len + expected_data->length );
+    expected_length = ( uint16_t ) ( offsetof( struct ofp_packet_in, match ) + expected_ofp_match_len + expected_pad_len + expected_data->length );
 
     assert_int_equal( ( int ) buffer->length, expected_length );
     assert_int_equal( packet_in->header.version, OFP_VERSION );
@@ -1154,7 +1155,7 @@ test_create_packet_in() {
     ntoh_match( &packet_in->match, &packet_in->match );
     assert_memory_equal( &packet_in->match, expected_ofp_match, expected_ofp_match_len );
 
-    void *d = ( void * ) ( ( char * ) buffer->data + offsetof( struct ofp_packet_in, match ) + expected_ofp_match_len );
+    void *d = ( void * ) ( ( char * ) buffer->data + offsetof( struct ofp_packet_in, match ) + expected_ofp_match_len + expected_pad_len );
     assert_memory_equal( d, expected_data->data, expected_data->length );
 
     delete_oxm_match_testdata();
@@ -1180,7 +1181,7 @@ test_create_packet_in() {
 
     packet_in = buffer->data;
 
-    expected_length = ( uint16_t ) ( offsetof( struct ofp_packet_in, match ) + expected_empty_ofp_match_len + expected_data->length );
+    expected_length = ( uint16_t ) ( offsetof( struct ofp_packet_in, match ) + expected_empty_ofp_match_len + expected_pad_len + expected_data->length );
 
     assert_int_equal( ( int ) buffer->length, expected_length );
     assert_int_equal( packet_in->header.version, OFP_VERSION );
@@ -1198,7 +1199,7 @@ test_create_packet_in() {
     ntoh_match( &packet_in->match, &packet_in->match );
     assert_memory_equal( &packet_in->match, expected_empty_ofp_match, expected_empty_ofp_match_len );
 
-    void *d = ( void * ) ( ( char * ) buffer->data + offsetof( struct ofp_packet_in, match ) + expected_empty_ofp_match_len );
+    void *d = ( void * ) ( ( char * ) buffer->data + offsetof( struct ofp_packet_in, match ) + expected_empty_ofp_match_len + expected_pad_len );
     assert_memory_equal( d, expected_data->data, expected_data->length );
 
     xfree( expected_empty_ofp_match );

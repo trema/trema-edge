@@ -888,9 +888,10 @@ handle_packet_in( const uint64_t datapath_id, buffer *data ) {
   oxm_matches *match = parse_ofp_match( &_packet_in->match );
   uint16_t match_len = ntohs( _packet_in->match.length );
   match_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
+  uint16_t pad_len = 2;
   buffer *body = NULL;
 
-  uint16_t body_length = ( uint16_t ) ( ntohs( _packet_in->header.length ) - offsetof( struct ofp_packet_in, match ) - match_len );
+  uint16_t body_length = ( uint16_t ) ( ntohs( _packet_in->header.length ) - offsetof( struct ofp_packet_in, match ) - pad_len - match_len );
 
   char match_string[ MATCH_STRING_LENGTH ];
   match_to_string( match, match_string, sizeof( match_string ) );
@@ -917,7 +918,7 @@ handle_packet_in( const uint64_t datapath_id, buffer *data ) {
 
   if ( body_length > 0 ) {
     body = duplicate_buffer( data );
-    remove_front_buffer( body, offsetof( struct ofp_packet_in, match ) + match_len );
+    remove_front_buffer( body, offsetof( struct ofp_packet_in, match ) + pad_len + match_len );
     bool parse_ok = parse_packet( body );
     if ( !parse_ok ) {
       error( "Failed to parse a packet." );

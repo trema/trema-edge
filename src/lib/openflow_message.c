@@ -394,6 +394,7 @@ create_packet_in( const uint32_t transaction_id, const uint32_t buffer_id,
                   const oxm_matches *match, const buffer *data ) {
   uint16_t length;
   uint16_t match_len;
+  uint16_t pad_len = 2;
   uint16_t data_length = 0;
   char match_str[ MATCH_STRING_LENGTH ];
   buffer *buffer;
@@ -416,7 +417,7 @@ create_packet_in( const uint32_t transaction_id, const uint32_t buffer_id,
 
   match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( match ) );
   match_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
-  length = ( uint16_t ) ( offsetof( struct ofp_packet_in, match ) + match_len + data_length );
+  length = ( uint16_t ) ( offsetof( struct ofp_packet_in, match ) + match_len + pad_len + data_length );
   buffer = create_header( transaction_id, OFPT_PACKET_IN, length );
   assert( buffer != NULL );
 
@@ -428,9 +429,12 @@ create_packet_in( const uint32_t transaction_id, const uint32_t buffer_id,
   packet_in->cookie = htonll( cookie );
   construct_ofp_match( &packet_in->match, match );
 
+  d = ( void * ) ( ( char * ) buffer->data + offsetof( struct ofp_packet_in, match ) + match_len );
+  memset( d, 0, pad_len );
+
   if ( data_length > 0 ) {
     d = ( void * ) ( ( char * ) buffer->data
-                     + offsetof( struct ofp_packet_in, match ) + match_len );
+                     + offsetof( struct ofp_packet_in, match ) + match_len + pad_len );
     memcpy( d, data->data, data_length );
   }
 
