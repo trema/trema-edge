@@ -5,21 +5,23 @@ Feature: Send hello messages
   So that I can start transactions with switches
 
 
+  @wip
   Scenario: Hello trema
     When I try trema run "./objects/examples/openflow_message/hello 10" with following configuration (backgrounded):
       """
-      vswitch("hello") { datapath_id "0xabc" }
       """
       And wait until "hello" is up
+      And I try hello-stub run with following dpid "0xabc" > "openflowd.hello.log"
       And I terminated all trema services
     Then the log file "openflowd.hello.log" should include "received: OFPT_HELLO" x 11
 
 
+  @wip
   Scenario: Hello trema in Ruby
     When I try trema run "./src/examples/openflow_message/hello.rb 0xabc, 10" with following configuration (backgrounded):
       """
-      vswitch("hello-r") { datapath_id "0xabc" }
       """
       And wait until "HelloController" is up
+      And I try hello-stub run with following dpid "0xabc" > "openflowd.hello-r.log"
       And I terminated all trema services
     Then the log file "openflowd.hello-r.log" should include "received: OFPT_HELLO" x 11

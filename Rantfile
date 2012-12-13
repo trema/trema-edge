@@ -61,7 +61,7 @@ task :default => [
 #  :packet_capture,
 #  :syslog_relay,
 #  :stdin_relay,
-#  :vendor,
+  :vendor,
   :examples
 ]
 
@@ -89,7 +89,7 @@ task :examples => [
   "examples:learning_switch",
   "examples:list_switches",
 #  "examples:multi_learning_switch",
-#  "examples:openflow_message",
+  "examples:openflow_message",
 #  "examples:packet_in",
   "examples:repeater_hub",
   "examples:packetin_filter_config",
@@ -235,10 +235,11 @@ import "sys/tgz"
 
 
 task :vendor => [
-  "vendor:oflops",
+#  "vendor:oflops",
 #  "vendor:openflow",
-  "vendor:openvswitch",
-  "vendor:phost",
+#  "vendor:openvswitch",
+#  "vendor:phost",
+  "vendor:stub",
 ]
 
 task :distclean => [
@@ -626,6 +627,30 @@ end
 
 
 ################################################################################
+# Build stubs
+################################################################################
+#
+stub_files = [
+  "hello_switch",
+]
+
+stub_dir = "vendor/stub"
+
+gen DirectedRule, stub_dir => [ stub_dir ], :o => :c do | t |
+  sys "gcc -I#{ Trema.include } -I#{ Trema.openflow } #{ var :CFLAGS } -c -o #{ t.name } #{ t.source }"
+end
+
+stub_files.each do | each |
+  target = File.join( stub_dir, each )
+  task "vendor:stub" => target
+  file target => [ File.join( stub_dir, "#{ each }.o" ), libtrema ] do | t |
+    sys "gcc -L#{ Trema.lib } -o #{ t.name } #{ t.source } -ltrema -lsqlite3 -ldl -lrt -lpthread"
+  end
+end
+
+
+
+################################################################################
 # Build standalone examples
 ################################################################################
 
@@ -675,11 +700,11 @@ end
 ################################################################################
 
 openflow_messages = [
-  "echo_reply",
-  "echo_request",
-  "features_request",
+#  "echo_reply",
+#  "echo_request",
+#  "features_request",
   "hello",
-  "set_config",
+#  "set_config",
 ]
 
 openflow_message_source_dir = "src/examples/openflow_message"

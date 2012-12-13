@@ -18,6 +18,13 @@
 #
 
 
+When /^I try hello\-stub run with following dpid "(.*?)" > "(.*?)"$/ do | dpid, log_name |
+  tmpdir = File.expand_path("./tmp")
+
+  run "CHIBACH_TMP=#{ tmpdir } ./vendor/stub/hello_switch -i #{ dpid } > #{ cucumber_log log_name } 2>&1"
+end
+
+
 When /^I try to run "([^"]*)"$/ do | command |
   @log ||= new_tmp_log
   run "#{ command } >> #{ @log }"
