@@ -5,7 +5,6 @@ Feature: Send hello messages
   So that I can start transactions with switches
 
 
-  @wip
   Scenario: Hello trema
     When I try trema run "./objects/examples/openflow_message/hello 10" with following configuration (backgrounded):
       """
