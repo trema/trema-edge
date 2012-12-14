@@ -3878,7 +3878,7 @@ validate_features_reply( const buffer *message ) {
 
   assert( message != NULL );
 
-  ret = validate_header( message, OFPT_FEATURES_REPLY, sizeof( struct ofp_switch_features ), UINT16_MAX );
+  ret = validate_header( message, OFPT_FEATURES_REPLY, sizeof( struct ofp_switch_features ), sizeof( struct ofp_switch_features ) );
   if ( ret < 0 ) {
     return ret;
   }
