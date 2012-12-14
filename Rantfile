@@ -53,15 +53,9 @@ import "directedrule"
 desc "Build trema."
 task :default => [
   :libtrema,
-#  :rubylib,
   :switch_manager,
   :switch,
   :packetin_filter,
-#  :tremashark,
-#  :packet_capture,
-#  :syslog_relay,
-#  :stdin_relay,
-#  :vendor,
   :examples
 ]
 
@@ -83,19 +77,16 @@ task :default => [
 #]
 # AFTER t-saito MOD
 task :examples => [
-#  "examples:cbench_switch",
   "examples:dumper",
   "examples:hello_trema",
   "examples:learning_switch",
   "examples:list_switches",
-#  "examples:multi_learning_switch",
-#  "examples:openflow_message",
-#  "examples:packet_in",
+  "examples:openflow_switch",
+  "examples:openflow_message",
   "examples:repeater_hub",
   "examples:packetin_filter_config",
   "examples:switch_info",
   "examples:switch_monitor",
-#  "examples:traffic_monitor",
 ]
 
 
@@ -236,7 +227,6 @@ import "sys/tgz"
 
 task :vendor => [
   "vendor:oflops",
-#  "vendor:openflow",
   "vendor:openvswitch",
   "vendor:phost",
 ]
@@ -244,7 +234,6 @@ task :vendor => [
 task :distclean => [
   "vendor:cmockery:distclean",
   "vendor:oflops:distclean",
-#  "vendor:openflow:distclean",
   "vendor:openvswitch:distclean",
   "vendor:phost:distclean",
 ]
@@ -671,15 +660,46 @@ end
 
 
 ################################################################################
+# Build openflow switches
+################################################################################
+
+openflow_switches = [
+  "hello_switch",
+]
+
+openflow_switch_source_dir = "src/examples/openflow_switch"
+openflow_switch_objects_dir = objects( "examples/openflow_switch" )
+
+gen C::Dependencies, dependency( "openflow_switch" ),
+  :search => [ Trema.include ], :sources => sys[ "#{ openflow_switch_source_dir }/*.c" ]
+
+gen Action do
+  source dependency( "openflow_switch" )
+end
+
+gen Directory, openflow_switch_objects_dir
+
+
+gen DirectedRule, openflow_switch_objects_dir => [ openflow_switch_source_dir ], :o => :c do | t |
+  sys "gcc -I#{ Trema.include } -I#{ Trema.openflow } #{ var :CFLAGS } -c -o #{ t.name } #{ t.source }"
+end
+
+
+openflow_switches.each do | each |
+  target = File.join( openflow_switch_objects_dir, each )
+  task "examples:openflow_switch" => target
+  file target => [ File.join( openflow_switch_objects_dir, "#{ each }.o" ), libtrema ] do | t |
+    sys "gcc -L#{ Trema.lib } -o #{ t.name } #{ t.source } -ltrema -lsqlite3 -ldl -lrt -lpthread"
+  end
+end
+
+
+################################################################################
 # Build openflow messages
 ################################################################################
 
 openflow_messages = [
-  "echo_reply",
-  "echo_request",
-  "features_request",
   "hello",
-  "set_config",
 ]
 
 openflow_message_source_dir = "src/examples/openflow_message"
