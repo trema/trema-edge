@@ -23,10 +23,16 @@
 
 #include <stdint.h>
 
+
+#if !defined(__cplusplus)
 /* Build-time assertion for use in a declaration context. */
 #define OFP_ASSERT(EXPR)                                                \
         extern int (*build_assert(void))[ sizeof(struct {               \
                     unsigned int build_assert_failed : (EXPR) ? 1 : -1; })]
+#else
+#define OFP_ASSERT(_EXPR) typedef int build_assert_failed[(_EXPR) ? 1 : -1]
+#endif
+
 
 #define OFP_TCP_PORT  6633
 #define OFP_SSL_PORT  6633
