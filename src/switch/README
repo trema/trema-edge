@@ -1,0 +1,37 @@
+Trema Switch: Trema-based OpenFlow switch implementation
+
+Trema Switch consists of two submodules, a protocol and a datapath.
+Those two modules implemented as two seperate threads. The protocol
+thread would either receive message from controller or the datapath
+thread. If a message received from the controller needs to be handled
+by the datapath it would translate the message and call the appropriate
+datapath function to execute it. In other cases it might simply return
+a reply back to controller. Messages from the datapath are passed via
+a message queue.
+
+The build.rb script creates the switch executable under objects/switch/
+switch/switch. The executable name is switch and to avoid name clashing
+with the previous switch_manager/switch program the switch_manager/
+switch has been renamed to switch_manager/switch_daemon.
+
+The switch program can be run using the following steps:
+
+1. Set SWITCH_HOME environment variable to where the top trema-edge
+   repository resides.
+
+  $ export SWITCH_HOME=/somewhere/trema-edge
+
+2. Run the switch executable like follows:
+
+  $ cd $SWITCH_HOME
+  $ sudo -E ./objects/switch/switch/switch --datapath_id=1 \
+  --server_ip=10.0.0.1 --server_port=6633 --switch_ports=eth0,eth1
+
+  This would create and use a datapath_id of 1 attempt to connect to
+  controller with ip address 10.0.0.1 using the port 6333. Two switch
+  ports are associated with the specified Ethernet devices.
+
+Trema Switch is released under the GNU General Public License
+version 2.0:
+
+  http://www.gnu.org/licenses/gpl-2.0.html

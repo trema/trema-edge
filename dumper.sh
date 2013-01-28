@@ -33,7 +33,7 @@ SWITCH_PACKET_IN="packet_in::${APP_NAME}"
 FILTER_LLDP="lldp::${APP_NAME}"
 FILTER_PACKET_IN="packet_in::${APP_NAME}"
 
-SWITCH_DAEMON="${OBJECTS}/switch_manager/switch"
+SWITCH_DAEMON="${OBJECTS}/switch_manager/switch_daemon"
 SWITCH_DAEMON_OPTS="--no-cookie-translation $SWITCH_STATE_NOTIFY $SWITCH_PORT_STATUS $SWITCH_VENDOR $SWITCH_PACKET_IN"
 #SWITCH_DAEMON_OPTS="-l debug --no-cookie-translation $SWITCH_STATE_NOTIFY $SWITCH_PORT_STATUS $SWITCH_VENDOR $SWITCH_PACKET_IN"
 SWITCH_MANAGER="${OBJECTS}/switch_manager/switch_manager"

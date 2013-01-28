@@ -64,12 +64,19 @@ enum {
   ETH_VTAG_SNAP = ETH_8021Q | ETH_8023_SNAP,
   ETH_ARP = ETH_DIX | NW_ARP,
   ETH_LLDP = ETH_DIX | NW_LLDP,
+  ETH_MPLS_IPV4 = ETH_DIX | MPLS | NW_IPV4,
   ETH_IPV4 = ETH_DIX | NW_IPV4,
+  ETH_IPV6 = ETH_DIX | NW_IPV6,
   ETH_IPV4_ICMPV4 = ETH_IPV4 | NW_ICMPV4,
+  ETH_MPLS_IPV4_ICMPV4 = ETH_MPLS_IPV4 | NW_ICMPV4,
   ETH_IPV4_IGMP = ETH_IPV4 | NW_IGMP,
+  ETH_MPLS_IPV4_IGMP = ETH_MPLS_IPV4 | NW_IGMP,
   ETH_IPV4_TCP = ETH_IPV4 | TP_TCP,
+  ETH_MPLS_IPV4_TCP = ETH_MPLS_IPV4 | TP_TCP,
   ETH_IPV4_UDP = ETH_IPV4 | TP_UDP,
+  ETH_MPLS_IPV4_UDP = ETH_MPLS_IPV4 | TP_UDP,
   ETH_IPV4_ETHERIP = ETH_IPV4 | TP_ETHERIP,
+  ETH_MPLS_IPV4_ETHERIP = ETH_MPLS_IPV4 | TP_ETHERIP,
   ETH_VTAG_ARP = ETH_VTAG_DIX | NW_ARP,
   ETH_VTAG_IPV4 = ETH_VTAG_DIX | NW_IPV4,
   ETH_VTAG_IPV4_ICMPV4 = ETH_VTAG_IPV4 | NW_ICMPV4,
@@ -85,6 +92,9 @@ enum {
   ETH_VTAG_SNAP_IPV4_ICMPV4 = ETH_VTAG_SNAP_IPV4 | NW_ICMPV4,
   ETH_VTAG_SNAP_IPV4_TCP = ETH_VTAG_SNAP_IPV4 | TP_TCP,
   ETH_VTAG_SNAP_IPV4_UDP = ETH_VTAG_SNAP_IPV4 | TP_UDP,
+  ETH_IPV6_ICMPV6 = ETH_IPV6 | NW_ICMPV6,
+  ETH_IPV6_TCP = ETH_IPV6 | TP_TCP,
+  ETH_IPV6_UDP = ETH_IPV6 | TP_UDP
 };
 
 
@@ -95,6 +105,11 @@ enum {
 
 
 typedef struct {
+  /*
+  * TODO to set this field according to openflow spec.
+  * Currently not set.
+  */
+  uint64_t metadata;
   uint32_t format;
 
   uint8_t eth_macda[ ETH_ADDRLEN ];
@@ -106,6 +121,13 @@ typedef struct {
   uint8_t vlan_prio;
   uint8_t vlan_cfi;
   uint16_t vlan_vid;
+  uint8_t  vlan_pcp;
+  uint8_t  ip_dscp;
+  /*
+  * TODO not set in packet parsing but necessary to compile ofdp.
+  */
+  uint8_t  ip_ecn;
+  uint8_t  ip_proto;
 
   uint8_t snap_llc[ SNAP_LLC_LENGTH ];
   uint8_t snap_oui[ SNAP_OUI_LENGTH ];
@@ -141,6 +163,7 @@ typedef struct {
   uint16_t ipv6_hoplimit;
   struct in6_addr ipv6_saddr;
   struct in6_addr ipv6_daddr;
+  struct in6_addr ipv6_nd_target;
   uint8_t ipv6_protocol;
 
   uint8_t icmpv4_type;
@@ -172,6 +195,8 @@ typedef struct {
 
   uint16_t etherip_version;
   uint16_t etherip_offset;
+  uint32_t eth_in_port;
+  uint32_t eth_in_phy_port;
 
   uint16_t sctp_src_port;
   uint16_t sctp_dst_port;
@@ -185,6 +210,10 @@ typedef struct {
   uint8_t icmpv6_nd_tll[ ETH_ADDRLEN ];
 
   uint32_t mpls_label;
+  uint8_t mpls_tc;
+  uint8_t mpls_bos;
+  uint32_t pbb_isid;
+  uint64_t tunnel_id;
 
   uint16_t ipv6_exthdr;
 
@@ -197,6 +226,8 @@ typedef struct {
   void *l4_header;
   void *l4_payload;
   size_t l4_payload_length;
+  void *l2_vlan_header;
+  void *l2_mpls_header;
 } packet_info;
 
 
@@ -211,6 +242,7 @@ bool packet_type_eth_vtag( const buffer *frame );
 bool packet_type_eth_raw( const buffer *frame );
 bool packet_type_eth_llc( const buffer *frame );
 bool packet_type_eth_snap( const buffer *frame );
+bool packet_type_eth_mpls( const buffer *frame );
 bool packet_type_ether( const buffer *frame );
 bool packet_type_arp( const buffer *frame );
 bool packet_type_ipv4( const buffer *frame );
@@ -231,6 +263,8 @@ bool packet_type_icmpv4_echo_reply( const buffer *frame );
 bool packet_type_icmpv4_dst_unreach( const buffer *frame );
 bool packet_type_icmpv4_redirect( const buffer *frame );
 bool packet_type_icmpv4_echo_request( const buffer *frame );
+
+bool packet_type_icmpv6( const buffer *frame );
 
 bool packet_type_igmp_membership_query( const buffer *frame );
 bool packet_type_igmp_v1_membership_report( const buffer *frame );

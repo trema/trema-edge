@@ -56,9 +56,18 @@ class Trema::Executables
   end
 
 
+  path "openvswitch/bin/ovs-ofctl"
+  path "openvswitch/bin/ovs-openflowd"
   path "packetin_filter/packetin_filter"
-  path "switch_manager/switch"
+  path "phost/cli"
+  path "phost/phost"
+  path "switch/switch/switch"
+  path "switch_manager/switch_daemon"
   path "switch_manager/switch_manager"
+  path "tremashark/packet_capture"
+  path "tremashark/stdin_relay"
+  path "tremashark/syslog_relay"
+  path "tremashark/tremashark"
 end
 
 

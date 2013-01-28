@@ -56,11 +56,12 @@ typedef void ( *controller_disconnected_handler )(
 typedef void ( *hello_handler )(
   uint32_t transaction_id,
   uint8_t version,
+  const buffer *data,
   void *user_data
 );
 
 
-typedef void ( *error_handler )(
+typedef void ( *switch_error_handler )(
   uint32_t transaction_id,
   uint16_t type,
   uint16_t code,
@@ -69,7 +70,7 @@ typedef void ( *error_handler )(
 );
 
 
-typedef void ( *experimenter_error_handler )(
+typedef void ( *switch_experimenter_error_handler )(
   uint32_t transaction_id,
   uint16_t type,
   uint16_t exp_type,
@@ -86,14 +87,14 @@ typedef void ( *echo_request_handler )(
 );
 
 
-typedef void ( *echo_reply_handler )(
+typedef void ( *switch_echo_reply_handler )(
   uint32_t transaction_id,
   const buffer *body,
   void *user_data
 );
 
 
-typedef void ( *experimenter_handler )(
+typedef void ( *switch_experimenter_handler )(
   uint32_t transaction_id,
   uint32_t experimenter,
   uint32_t exp_type,
@@ -245,19 +246,19 @@ typedef struct {
   hello_handler hello_callback;
   void *hello_user_data;
 
-  error_handler error_callback;
+  switch_error_handler error_callback;
   void *error_user_data;
 
-  experimenter_error_handler experimenter_error_callback;
+  switch_experimenter_error_handler experimenter_error_callback;
   void *experimenter_error_user_data;
 
   echo_request_handler echo_request_callback;
   void *echo_request_user_data;
 
-  echo_reply_handler echo_reply_callback;
+  switch_echo_reply_handler echo_reply_callback;
   void *echo_reply_user_data;
 
-  experimenter_handler experimenter_callback;
+  switch_experimenter_handler experimenter_callback;
   void *experimenter_user_data;
 
   features_request_handler features_request_callback;
@@ -315,11 +316,11 @@ bool switch_set_openflow_event_handlers( const openflow_event_handlers handlers 
 bool set_controller_connected_handler( controller_connected_handler callback, void *user_data );
 bool set_controller_disconnected_handler( controller_disconnected_handler callback, void *user_data );
 bool set_hello_handler( hello_handler callback, void *user_data );
-bool switch_set_error_handler( error_handler callback, void *user_data );
-bool switch_set_experimenter_error_handler( experimenter_error_handler callback, void *user_data );
+bool switch_set_error_handler( switch_error_handler callback, void *user_data );
+bool switch_set_experimenter_error_handler( switch_experimenter_error_handler callback, void *user_data );
 bool set_echo_request_handler( echo_request_handler callback, void *user_data );
-bool switch_set_echo_reply_handler( echo_reply_handler callback, void *user_data );
-bool switch_set_experimenter_handler( experimenter_handler callback, void *user_data );
+bool switch_set_echo_reply_handler( switch_echo_reply_handler callback, void *user_data );
+bool switch_set_experimenter_handler( switch_experimenter_handler callback, void *user_data );
 bool set_features_request_handler( features_request_handler callback, void *user_data );
 bool set_get_config_request_handler( get_config_request_handler callback, void *user_data );
 bool set_set_config_handler( set_config_handler callback, void *user_data );

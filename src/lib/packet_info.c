@@ -118,6 +118,13 @@ packet_type_eth_snap( const buffer *frame ) {
 
 
 bool
+packet_type_eth_mpls( const buffer *frame ) {
+  die_if_NULL( frame );
+  return if_packet_type( frame, MPLS );
+}
+
+
+bool
 packet_type_arp( const buffer *frame ) {
   die_if_NULL( frame );
   return if_packet_type( frame, NW_ARP );
@@ -149,6 +156,13 @@ bool
 packet_type_icmpv4( const buffer *frame ) {
   die_if_NULL( frame );
   return if_packet_type( frame, NW_ICMPV4 );
+}
+
+
+bool
+packet_type_icmpv6( const buffer *frame) {
+  die_if_NULL( frame );
+  return if_packet_type( frame, NW_ICMPV6 );
 }
 
 

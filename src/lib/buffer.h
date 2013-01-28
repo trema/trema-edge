@@ -43,6 +43,7 @@ void *remove_front_buffer( buffer *buf, size_t length );
 void *append_back_buffer( buffer *buf, size_t length );
 buffer *duplicate_buffer( const buffer *buf );
 void dump_buffer( const buffer *buf, void dump_function( const char *format, ... ) );
+void reset_buffer( buffer *buf );
 
 
 #endif // BUFFER_H

@@ -35,10 +35,10 @@ ntoh_port( struct ofp_port *dst, const struct ofp_port *src ) {
   assert( dst != NULL );
 
   dst->port_no = ntohl( src->port_no );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   bcopy( src->hw_addr, dst->hw_addr, OFP_ETH_ALEN );
-  memset( dst->pad2, 0, sizeof( dst->pad2 ) );
+  memset( &dst->pad2, 0, sizeof( dst->pad2 ) );
 
   bcopy( src->name, dst->name, OFP_MAX_PORT_NAME_LEN );
 
@@ -64,7 +64,7 @@ ntoh_action_output( struct ofp_action_output *dst, const struct ofp_action_outpu
   dst->len = ntohs( src->len );
   dst->port = ntohl( src->port );
   dst->max_len = ntohs( src->max_len );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 }
 
 
@@ -177,7 +177,7 @@ ntoh_action_mpls_ttl( struct ofp_action_mpls_ttl *dst, const struct ofp_action_m
   dst->type = ntohs( src->type );
   dst->len = ntohs( src->len );
   dst->mpls_ttl = src->mpls_ttl;
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 }
 
 
@@ -189,7 +189,7 @@ ntoh_action_push( struct ofp_action_push *dst, const struct ofp_action_push *src
   dst->type = ntohs( src->type );
   dst->len = ntohs( src->len );
   dst->ethertype = ntohs( src->ethertype );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 }
 
 
@@ -201,7 +201,7 @@ ntoh_action_pop_mpls( struct ofp_action_pop_mpls *dst, const struct ofp_action_p
   dst->type = ntohs( src->type );
   dst->len = ntohs( src->len );
   dst->ethertype = ntohs( src->ethertype );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 }
 
 
@@ -224,7 +224,7 @@ ntoh_action_nw_ttl( struct ofp_action_nw_ttl *dst, const struct ofp_action_nw_tt
   dst->type = ntohs( src->type );
   dst->len = ntohs( src->len );
   dst->nw_ttl = src->nw_ttl;
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 }
 
 
@@ -235,7 +235,7 @@ ntoh_action_header( struct ofp_action_header *dst, const struct ofp_action_heade
 
   dst->type = ntohs( src->type );
   dst->len = ntohs( src->len );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 }
 
 
@@ -357,7 +357,7 @@ ntoh_flow_stats( struct ofp_flow_stats *dst, const struct ofp_flow_stats *src ) 
   dst->idle_timeout = ntohs( fs->idle_timeout );
   dst->hard_timeout = ntohs( fs->hard_timeout );
   dst->flags = ntohs( fs->flags );
-  memset( dst->pad2, 0, sizeof( dst->pad2 ) );
+  memset( &dst->pad2, 0, sizeof( dst->pad2 ) );
   dst->cookie = ntohll( fs->cookie );
   dst->packet_count = ntohll( fs->packet_count );
   dst->byte_count = ntohll( fs->byte_count );
@@ -412,7 +412,7 @@ hton_flow_stats( struct ofp_flow_stats *dst, const struct ofp_flow_stats *src ) 
   dst->idle_timeout = htons( fs->idle_timeout );
   dst->hard_timeout = htons( fs->hard_timeout );
   dst->flags = htons( fs->flags );
-  memset( dst->pad2, 0, sizeof( dst->pad2 ) );
+  memset( &dst->pad2, 0, sizeof( dst->pad2 ) );
   dst->cookie = htonll( fs->cookie );
   dst->packet_count = htonll( fs->packet_count );
   dst->byte_count = htonll( fs->byte_count );
@@ -455,7 +455,7 @@ ntoh_aggregate_stats( struct ofp_aggregate_stats_reply *dst, const struct ofp_ag
   dst->packet_count = ntohll( src->packet_count );
   dst->byte_count = ntohll( src->byte_count );
   dst->flow_count = ntohl( src->flow_count );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 }
 
 
@@ -465,7 +465,7 @@ ntoh_table_stats( struct ofp_table_stats *dst, const struct ofp_table_stats *src
   assert( dst != NULL );
 
   dst->table_id = src->table_id;
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
   dst->active_count = ntohl( src->active_count );
   dst->lookup_count = ntohll( src->lookup_count );
   dst->matched_count = ntohll( src->matched_count );
@@ -478,7 +478,7 @@ ntoh_port_stats( struct ofp_port_stats *dst, const struct ofp_port_stats *src ) 
   assert( dst != NULL );
 
   dst->port_no = ntohl( src->port_no );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
   dst->rx_packets = ntohll( src->rx_packets );
   dst->tx_packets = ntohll( src->tx_packets );
   dst->rx_bytes = ntohll( src->rx_bytes );
@@ -610,7 +610,7 @@ ntoh_packet_queue( struct ofp_packet_queue *dst, const struct ofp_packet_queue *
   dst->queue_id = ntohl( pq->queue_id );
   dst->port = ntohl( pq->port );
   dst->len = ntohs( pq->len );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   size_t offset = offsetof( struct ofp_packet_queue, properties );
   if ( dst->len >= offset ) {
@@ -655,7 +655,7 @@ hton_packet_queue( struct ofp_packet_queue *dst, const struct ofp_packet_queue *
   dst->queue_id = htonl( pq->queue_id );
   dst->port = htonl( pq->port );
   dst->len = htons( pq->len );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   size_t offset = offsetof( struct ofp_packet_queue, properties );
   if ( total_len >= offset ) {
@@ -751,7 +751,7 @@ ntoh_instruction_goto_table( struct ofp_instruction_goto_table *dst, const struc
   dst->type = ntohs( src->type );
   dst->len = ntohs( src->len );
   dst->table_id = src->table_id;
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 }
 
 
@@ -762,7 +762,7 @@ ntoh_instruction_write_metadata( struct ofp_instruction_write_metadata *dst, con
 
   dst->type = ntohs( src->type );
   dst->len = ntohs( src->len );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
   dst->metadata = ntohll( src->metadata );
   dst->metadata_mask = ntohll( src->metadata_mask );
 }
@@ -779,7 +779,7 @@ ntoh_instruction_actions( struct ofp_instruction_actions *dst, const struct ofp_
 
   dst->type = ntohs( fs->type );
   dst->len = ntohs( fs->len );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   size_t offset = offsetof( struct ofp_instruction_actions, actions );
   if ( dst->len >= offset ) {
@@ -820,7 +820,7 @@ hton_instruction_actions( struct ofp_instruction_actions *dst, const struct ofp_
 
   dst->type = htons( fs->type );
   dst->len = htons( fs->len );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   size_t offset = offsetof( struct ofp_instruction_actions, actions );
   if ( total_len >= offset ) {
@@ -918,7 +918,7 @@ void ntoh_bucket( struct ofp_bucket *dst, const struct ofp_bucket *src ) {
   dst->weight = ntohs( fs->weight );
   dst->watch_port = ntohl( fs->watch_port );
   dst->watch_group = ntohl( fs->watch_group );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   size_t offset = offsetof( struct ofp_bucket, actions );
   if ( dst->len >= offset ) {
@@ -959,7 +959,7 @@ void hton_bucket( struct ofp_bucket *dst, const struct ofp_bucket *src ) {
   dst->weight = htons( fs->weight );
   dst->watch_port = htonl( fs->watch_port );
   dst->watch_group = htonl( fs->watch_group );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   size_t offset = offsetof( struct ofp_bucket, actions );
   if ( total_len >= offset ) {
@@ -995,7 +995,7 @@ void ntoh_meter_band_drop( struct ofp_meter_band_drop *dst, const struct ofp_met
   dst->len = ntohs( src->len );
   dst->rate = ntohl( src->rate );
   dst->burst_size = ntohl( src->burst_size );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 }
 
 
@@ -1008,7 +1008,7 @@ void ntoh_meter_band_dscp_remark( struct ofp_meter_band_dscp_remark *dst, const 
   dst->rate = ntohl( src->rate );
   dst->burst_size = ntohl( src->burst_size );
   dst->prec_level = src->prec_level;
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 }
 
 
@@ -1522,7 +1522,7 @@ void ntoh_table_features( struct ofp_table_features *dst, const struct ofp_table
 
   dst->length = ntohs( tf->length );
   dst->table_id = tf->table_id;
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
   bcopy( tf->name, dst->name, OFP_MAX_TABLE_NAME_LEN );
   dst->metadata_match = ntohll( tf->metadata_match );
   dst->metadata_write = ntohll( tf->metadata_write );
@@ -1572,7 +1572,7 @@ void hton_table_features( struct ofp_table_features *dst, const struct ofp_table
 
   dst->length = htons( tf->length );
   dst->table_id = tf->table_id;
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
   bcopy( tf->name, dst->name, OFP_MAX_TABLE_NAME_LEN );
   dst->metadata_match = htonll( tf->metadata_match );
   dst->metadata_write = htonll( tf->metadata_write );
@@ -1629,10 +1629,10 @@ void ntoh_group_stats( struct ofp_group_stats *dst, const struct ofp_group_stats
   memcpy( fs, src, ntohs( src->length ) );
 
   dst->length = ntohs( fs->length );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
   dst->group_id = ntohl( fs->group_id );
   dst->ref_count = ntohl( fs->ref_count );
-  memset( dst->pad2, 0, sizeof( dst->pad2 ) );
+  memset( &dst->pad2, 0, sizeof( dst->pad2 ) );
   dst->packet_count = ntohll( fs->packet_count );
   dst->byte_count = ntohll( fs->byte_count );
   dst->duration_sec = ntohl( fs->duration_sec );
@@ -1671,10 +1671,10 @@ void hton_group_stats( struct ofp_group_stats *dst, const struct ofp_group_stats
 
 
   dst->length = htons( fs->length );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
   dst->group_id = htonl( fs->group_id );
   dst->ref_count = htonl( fs->ref_count );
-  memset( dst->pad2, 0, sizeof( dst->pad2 ) );
+  memset( &dst->pad2, 0, sizeof( dst->pad2 ) );
   dst->packet_count = htonll( fs->packet_count );
   dst->byte_count = htonll( fs->byte_count );
   dst->duration_sec = htonl( fs->duration_sec );
@@ -1816,7 +1816,7 @@ void ntoh_meter_stats( struct ofp_meter_stats *dst, const struct ofp_meter_stats
 
   dst->meter_id = ntohl( fs->meter_id );
   dst->len = ntohs( fs->len );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
   dst->flow_count = ntohl( fs->flow_count );
   dst->packet_in_count = ntohll( fs->packet_in_count );
   dst->byte_in_count = ntohll( fs->byte_in_count );
@@ -1856,7 +1856,7 @@ void hton_meter_stats( struct ofp_meter_stats *dst, const struct ofp_meter_stats
 
   dst->meter_id = htonl( fs->meter_id );
   dst->len = htons( fs->len );
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
   dst->flow_count = htonl( fs->flow_count );
   dst->packet_in_count = htonll( fs->packet_in_count );
   dst->byte_in_count = htonll( fs->byte_in_count );
@@ -1973,7 +1973,7 @@ void ntoh_meter_features( struct ofp_meter_features *dst, const struct ofp_meter
   dst->capabilities = ntohl( src->capabilities );
   dst->max_bands = src->max_bands;
   dst->max_color = src->max_color;
-  memset( dst->pad, 0, sizeof( dst->pad ) );
+  memset( &dst->pad, 0, sizeof( dst->pad ) );
 }
 
 

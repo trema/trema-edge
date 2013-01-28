@@ -82,21 +82,21 @@ enum {
   EVENT_HANDLER_FINALIZED = 0x8
 };
 
-int event_handler_state = 0;
+static int event_handler_state = 0;
 
-event_fd event_list[ FD_SETSIZE ];
-event_fd *event_last;
+static event_fd event_list[ FD_SETSIZE ];
+static event_fd *event_last;
 
-event_fd *event_fd_set[ FD_SETSIZE ];
+static event_fd *event_fd_set[ FD_SETSIZE ];
 
-fd_set event_read_set;
-fd_set event_write_set;
-fd_set current_read_set;
-fd_set current_write_set;
+static fd_set event_read_set;
+static fd_set event_write_set;
+static fd_set current_read_set;
+static fd_set current_write_set;
 
-int fd_set_size = 0;
+static int fd_set_size = 0;
 
-external_callback_t external_callback = ( external_callback_t ) NULL;
+static external_callback_t external_callback = ( external_callback_t ) NULL;
 
 
 static void
@@ -189,6 +189,7 @@ static bool
 _start_event_handler() {
   debug( "Starting event handler." );
 
+  event_handler_state &= ~EVENT_HANDLER_STOP;
   event_handler_state |= EVENT_HANDLER_RUNNING;
 
   int timeout_usec;
@@ -231,7 +232,7 @@ _set_fd_handler( int fd,
     return;
   }
 
-  if ( fd < 0 || fd >= FD_SETSIZE ) {
+  if ( ( fd < 0 ) || ( fd >= FD_SETSIZE ) ) {
     error( "Tried to add an invalid fd." );
     return;
   }
@@ -266,7 +267,7 @@ _delete_fd_handler( int fd ) {
     event++;
   }
 
-  if ( event >= event_last || event_fd_set[ fd ] == NULL ) {
+  if ( ( event >= event_last ) || ( event_fd_set[ fd ] ) == NULL ) {
     error( "Tried to delete an inactive fd event handler." );
     return;
   }
@@ -311,12 +312,12 @@ void ( *delete_fd_handler )( int fd ) = _delete_fd_handler;
 
 static void
 _set_readable( int fd, bool state ) {
-  if ( fd < 0 || fd >= FD_SETSIZE ) {
+  if ( ( fd < 0 ) || ( fd >= FD_SETSIZE ) ) {
     error( "Invalid fd to set_readable call; %i.", fd );
     return;
   }
 
-  if ( event_fd_set[ fd ] == NULL || event_fd_set[ fd ]->read_callback == NULL ) {
+  if ( ( event_fd_set[ fd ] == NULL ) || ( event_fd_set[ fd ]->read_callback == NULL ) ) {
     error( "Found fd in invalid state in set_readable; %i, %p.", fd, event_fd_set[ fd ] );
     return;
   }
@@ -334,12 +335,12 @@ void ( *set_readable )( int fd, bool state ) = _set_readable;
 
 static void
 _set_writable( int fd, bool state ) {
-  if ( fd < 0 || fd >= FD_SETSIZE ) {
+  if ( ( fd < 0 ) || ( fd >= FD_SETSIZE ) ) {
     error( "Invalid fd to notify_writeable_event call; %i.", fd );
     return;
   }
 
-  if ( event_fd_set[ fd ] == NULL || event_fd_set[ fd ]->write_callback == NULL ) {
+  if ( ( event_fd_set[ fd ] == NULL ) || ( event_fd_set[ fd ]->write_callback == NULL ) ) {
     error( "Found fd in invalid state in notify_writeable_event; %i, %p.", fd, event_fd_set[ fd ] );
     return;
   }

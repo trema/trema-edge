@@ -78,6 +78,8 @@ bool init_openflow_message( void );
 
 // Functions for creating OpenFlow messages
 buffer *create_hello( const uint32_t transaction_id, const buffer *elements );
+buffer *create_hello_elem_versionbitmap( const uint32_t transaction_id,
+                                         const uint32_t ofp_versions[], const uint16_t nr_versions );
 buffer *create_error( const uint32_t transaction_id, const uint16_t type,
                       const uint16_t code, const buffer *data );
 buffer *create_error_experimenter( const uint32_t transaction_id, const uint16_t type,

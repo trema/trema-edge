@@ -32,6 +32,7 @@ int ( *trema_vprintf )( const char *format, va_list ap ) = vprintf;
 int ( *trema_vasprintf )( char **strp, const char *fmt, va_list ap ) = vasprintf;
 
 void * ( *trema_malloc )( size_t size ) = malloc;
+void * ( *trema_realloc )( void *ptr, size_t size ) = realloc;
 void * ( *trema_calloc )( size_t nmemb, size_t size ) = calloc;
 void ( *trema_free )( void *ptr ) = free;
 

@@ -368,6 +368,7 @@ iterate_hash_next( hash_iterator *iterator ) {
       return e->data;
     }
   }
+  return NULL;
 }
 
 

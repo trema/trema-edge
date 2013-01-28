@@ -311,7 +311,7 @@ handle_experimenter(
   uint16_t body_len;
   UNUSED( user_data );
   struct ofp_experimenter_header *experimenter_header;
-  buffer *body;
+  buffer *body = NULL;
   
   experimenter_header = ( struct ofp_experimenter_header * ) data->data;
   body_len = ( uint16_t ) ( experimenter_header->header.length - sizeof( struct ofp_experimenter_header ) );

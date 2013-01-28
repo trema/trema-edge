@@ -24,6 +24,10 @@
 #define TREMA_H
 
 
+#include "array_util.h"
+#include "async.h"
+#include "async_lock.h"
+#include "async_util.h"
 #include "bool.h"
 #include "buffer.h"
 #include "byteorder.h"
@@ -39,11 +43,14 @@
 #include "messenger.h"
 #include "openflow_application_interface.h"
 #include "openflow_message.h"
+#include "openflow_switch_interface.h"
 #include "oxm_match.h"
 #include "oxm_byteorder.h"
 #include "packet_info.h"
 #include "packetin_filter_interface.h"
 #include "persistent_storage.h"
+#include "safe_event_handler.h"
+#include "safe_timer.h"
 #include "stat.h"
 #include "timer.h"
 #include "utility.h"

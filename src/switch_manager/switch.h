@@ -35,7 +35,7 @@
 #define SWITCH_STATE_TIMEOUT_HELLO 5          // in seconds
 #define SWITCH_STATE_TIMEOUT_FEATURES_REPLY 5 // in seconds
 
-#define SWITCH_MANAGER_PREFIX "switch."
+#define SWITCH_MANAGER_PREFIX "switch_daemon."
 #define SWITCH_MANAGER_PREFIX_STR_LEN sizeof( SWITCH_MANAGER_PREFIX )
 #define SWITCH_MANAGER_DPID_STR_LEN sizeof( "1234567812345678" )
 

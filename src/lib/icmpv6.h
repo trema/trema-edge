@@ -26,6 +26,7 @@
 #include "ether.h"
 #include "ipv6.h"
 
+
 typedef struct icmpv6_header {
   uint8_t type;
   uint8_t code;
@@ -45,6 +46,8 @@ typedef struct icmpv6data_ndp {
 
 #define ICMPV6_TYPE_NEIGHBOR_SOL 135
 #define ICMPV6_TYPE_NEIGHBOR_ADV 136
+#define ICMPV6_ND_SOURCE_LINK_LAYER_ADDRESS 1
+#define ICMPV6_ND_TARGET_LINK_LAYER_ADDRESS 2
 
 
 #endif // ICMPV6_H

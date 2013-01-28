@@ -32,13 +32,13 @@
 #include <unistd.h>
 #include "buffer.h"
 #include "checks.h"
-#include "event_handler.h"
 #include "log.h"
 #include "message_queue.h"
 #include "openflow.h"
 #include "openflow_switch_interface.h"
+#include "safe_event_handler.h"
+#include "safe_timer.h"
 #include "secure_channel.h"
-#include "timer.h"
 #include "wrapper.h"
 
 
@@ -68,7 +68,7 @@ static bool secure_channel_initialized = false;
 static message_queue *send_queue = NULL;
 static message_queue *recv_queue = NULL;
 
-static const size_t RECEIVE_BUFFFER_SIZE = UINT16_MAX + sizeof( struct ofp_packet_in ) - 2;
+static const size_t RECEIVE_BUFFER_SIZE = UINT16_MAX + sizeof( struct ofp_packet_in ) - 2;
 static buffer *fragment_buf = NULL;
 
 
@@ -133,9 +133,9 @@ static void
 clear_connection() {
   if ( connection.fd >= 0 ) {
     close( connection.fd );
-    set_readable( connection.fd, false );
-    set_writable( connection.fd, false );
-    delete_fd_handler( connection.fd );
+    set_readable_safe( connection.fd, false );
+    set_writable_safe( connection.fd, false );
+    delete_fd_handler_safe( connection.fd );
   }
 
   connection.fd = -1;
@@ -185,10 +185,10 @@ recv_from_secure_channel( int fd, void *user_data ) {
   }
 
   if ( fragment_buf == NULL ) {
-    fragment_buf = alloc_buffer_with_length( RECEIVE_BUFFFER_SIZE );
+    fragment_buf = alloc_buffer_with_length( RECEIVE_BUFFER_SIZE );
   }
 
-  size_t remaining_length = RECEIVE_BUFFFER_SIZE - fragment_buf->length;
+  size_t remaining_length = RECEIVE_BUFFER_SIZE - fragment_buf->length;
   char *recv_buf = ( char * ) fragment_buf->data + fragment_buf->length;
   ssize_t recv_length = read( connection.fd, recv_buf, remaining_length );
   if ( recv_length < 0 ) {
@@ -241,14 +241,14 @@ flush_send_queue( int fd, void *user_data ) {
 
   debug( "Flushing send queue ( length = %d ).", send_queue->length );
 
-  set_writable( connection.fd, false );
+  set_writable_safe( connection.fd, false );
 
   buffer *buf = NULL;
   while ( ( buf = peek_message( send_queue ) ) != NULL ) {
     ssize_t write_length = write( connection.fd, buf->data, buf->length );
     if ( write_length < 0 ) {
       if ( errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK ) {
-        set_writable( connection.fd, true );
+        set_writable_safe( connection.fd, true );
         return;
       }
       error( "Failed to send a message to secure channel ( errno = %s [%d] ).",
@@ -257,7 +257,7 @@ flush_send_queue( int fd, void *user_data ) {
     }
     if ( ( size_t ) write_length < buf->length ) {
       remove_front_buffer( buf, ( size_t ) write_length );
-      set_writable( connection.fd, true );
+      set_writable_safe( connection.fd, true );
       return;
     }
 
@@ -271,9 +271,9 @@ static void
 connected() {
   transit_state( CONNECTED );
 
-  set_fd_handler( connection.fd, recv_from_secure_channel, NULL, flush_send_queue, NULL );
-  set_readable( connection.fd, true );
-  set_writable( connection.fd, false );
+  set_fd_handler_safe( connection.fd, recv_from_secure_channel, NULL, flush_send_queue, NULL );
+  set_readable_safe( connection.fd, true );
+  set_writable_safe( connection.fd, false );
 
   if ( connection.connected_callback != NULL ) {
     connection.connected_callback();
@@ -301,7 +301,7 @@ backoff() {
   }
 
   struct itimerspec spec = { { 0, 0 }, { 5, 0 } };
-  add_timer_event_callback( &spec, reconnect, NULL );
+  add_timer_event_callback_safe( &spec, reconnect, NULL );
 }
 
 
@@ -311,11 +311,11 @@ check_connected( void *user_data ) {
 
   debug( "Checking a connection ( fd = %d ip = %#x, port = %u ).", connection.fd, connection.ip, connection.port );
 
-  assert( secure_channel_initialized );
+  // assert( secure_channel_initialized );
   assert( connection.fd >= 0 );
 
-  set_writable( connection.fd, false );
-  delete_fd_handler( connection.fd );
+  set_writable_safe( connection.fd, false );
+  delete_fd_handler_safe( connection.fd );
 
   int err = 0;
   socklen_t length = sizeof( error );
@@ -341,8 +341,8 @@ check_connected( void *user_data ) {
       return;
 
     case EINPROGRESS:
-      set_fd_handler( connection.fd, NULL ,NULL, ( event_fd_callback ) check_connected, NULL );
-      set_writable( connection.fd, true );
+      set_fd_handler_safe( connection.fd, NULL ,NULL, ( event_fd_callback ) check_connected, NULL );
+      set_writable_safe( connection.fd, true );
       break;
 
     default:
@@ -415,8 +415,8 @@ try_connect() {
     }
   }
 
-  set_fd_handler( connection.fd, NULL, NULL, ( event_fd_callback ) check_connected, NULL );
-  set_writable( connection.fd, true );
+  set_fd_handler_safe( connection.fd, NULL, NULL, ( event_fd_callback ) check_connected, NULL );
+  set_writable_safe( connection.fd, true );
 
   return true;
 }
@@ -473,14 +473,16 @@ send_message_to_secure_channel( buffer *message ) {
   assert( send_queue != NULL );
   assert( message != NULL );
   assert( message->length > 0 );
-  assert( connection.state == CONNECTED );
-  assert( connection.fd >= 0 );
 
+  
+  if ( connection.state != CONNECTED || connection.fd == -1 ) {
+    return false;
+  }
   debug( "Enqueuing a message to send queue ( queue length = %d, message length = %d ).",
         send_queue->length, message->length );
 
   if ( send_queue->length == 0 ) {
-    set_writable( connection.fd, true );
+    set_writable_safe( connection.fd, true );
   }
 
   buffer *duplicated = duplicate_buffer( message );

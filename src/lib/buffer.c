@@ -297,6 +297,21 @@ dump_buffer( const buffer *buf, void dump_function( const char *format, ... ) ) 
 }
 
 
+void
+reset_buffer( buffer *buf ) {
+  assert( buf != NULL );
+
+  pthread_mutex_lock( ( ( private_buffer * ) buf )->mutex );
+
+  private_buffer *pbuf = ( private_buffer * ) buf;
+
+  pbuf->public.data = pbuf->top;
+  pbuf->public.length = 0;
+
+  pthread_mutex_unlock( ( ( private_buffer * ) buf )->mutex );
+}
+
+
 /*
  * Local variables:
  * c-basic-offset: 2

@@ -27,6 +27,7 @@ TAGS
 callgrind.out.*
 html
 objects
+.rake-builder
 
 # Have editor/IDE/OS specific files you need to ignore? Consider using a global gitignore: 
 #

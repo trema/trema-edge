@@ -37,10 +37,27 @@ _trema_malloc( size_t size, const char *error_message ) {
 }
 
 
+static void *
+_trema_realloc( void *ptr, size_t size, const char *error_message ) {
+  void *ret = trema_realloc( ptr, size );
+  if ( !ret ) {
+    die( error_message );
+  }
+  return ret;
+}
+
+
 void *
 xmalloc( size_t size ) {
   void *ret = _trema_malloc( size, "Out of memory, xmalloc failed" );
   memset( ret, 0xA5, size );
+  return ret;
+}
+
+
+void *
+xrealloc( void *ptr, size_t size ) {
+  void *ret = _trema_realloc( ptr, size, "Out of memory, xrealloc failed" );
   return ret;
 }
 

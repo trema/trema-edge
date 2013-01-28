@@ -210,6 +210,45 @@ create_error_experimenter( const uint32_t transaction_id, const uint16_t type,
 
 
 buffer *
+create_hello_elem_versionbitmap( const uint32_t transaction_id, const uint32_t ofp_versions[],
+  const uint16_t nr_versions ) {
+  uint32_t i;
+  uint32_t nr_bitmaps = 0;
+
+  // figure out how many bitmaps necessary to store the ofp_versions
+  for ( i = 0; i < nr_versions; i++ ) {
+    assert( ofp_versions[ i ] != 0 );
+    if ( nr_bitmaps < ofp_versions[ i ] / 32 ) {
+      nr_bitmaps = ofp_versions[ i ] / 32;
+    }
+  }
+  if ( !nr_bitmaps ) {
+    nr_bitmaps = 1;
+  }
+
+  buffer *hello_buf = create_header( transaction_id, OFPT_HELLO,
+    ( uint16_t ) ( sizeof( struct ofp_hello ) + sizeof( struct ofp_hello_elem_versionbitmap )
+    + nr_bitmaps * offsetof( struct ofp_hello_elem_versionbitmap, bitmaps ) ) );
+
+  assert( hello_buf != NULL );
+  struct ofp_hello *hello = ( struct ofp_hello * ) hello_buf->data;
+  struct ofp_hello_elem_versionbitmap *hello_elem_versionbitmap = ( struct ofp_hello_elem_versionbitmap * ) hello->elements;
+  hello_elem_versionbitmap->type = htons( OFPHET_VERSIONBITMAP );
+  hello_elem_versionbitmap->length = htons( ( uint16_t ) ( sizeof( struct ofp_hello_elem_header )
+          + nr_bitmaps * offsetof( struct ofp_hello_elem_versionbitmap, bitmaps ) ) );
+
+#define BIT_SET( bit ) ( ( ( uint32_t ) 1 ) << ( bit ) )
+#define SEGMENT( x ) ( ( x ) / 32 )
+
+  for ( i = 0; i < nr_versions; i++ ) {
+    hello_elem_versionbitmap->bitmaps[ SEGMENT( ofp_versions[ i ] ) ] |= htonl( BIT_SET( ofp_versions[ i ] ) );
+  }
+
+  return hello_buf;
+}
+
+
+buffer *
 create_hello( const uint32_t transaction_id, const buffer *elements ) {
   uint16_t elements_length = 0;
 
@@ -843,7 +882,7 @@ create_port_mod( const uint32_t transaction_id, const uint32_t port_no,
   port_mod->config = htonl( config );
   port_mod->mask = htonl( mask );
   port_mod->advertise = htonl( advertise );
-  memset( port_mod->pad, 0, sizeof( port_mod->pad ) );
+  memset( &port_mod->pad, 0, sizeof( port_mod->pad ) );
 
   return buffer;
 }
@@ -862,7 +901,7 @@ create_table_mod( const uint32_t transaction_id, const uint8_t table_id, uint32_
 
   table_mod = ( struct ofp_table_mod * ) buffer->data;
   table_mod->table_id = table_id;
-  memset( table_mod->pad, 0, sizeof( table_mod->pad ) );
+  memset( &table_mod->pad, 0, sizeof( table_mod->pad ) );
   table_mod->config = htonl( config );
 
   return buffer;
@@ -884,7 +923,7 @@ create_multipart_request( const uint32_t transaction_id, const uint16_t type,
   multipart_request = ( struct ofp_multipart_request * ) buffer->data;
   multipart_request->type = htons( type );
   multipart_request->flags = htons( flags );
-  memset( multipart_request->pad, 0, sizeof( multipart_request->pad ) );
+  memset( &multipart_request->pad, 0, sizeof( multipart_request->pad ) );
 
   return buffer;
 }
@@ -929,10 +968,10 @@ create_flow_multipart_request( const uint32_t transaction_id, const uint16_t fla
   flow_multipart_request = ( struct ofp_flow_stats_request * ) ( ( char * ) buffer->data
                        + offsetof( struct ofp_multipart_request, body ) );
   flow_multipart_request->table_id = table_id;
-  memset( flow_multipart_request->pad, 0, sizeof( flow_multipart_request->pad ) );
+  memset( &flow_multipart_request->pad, 0, sizeof( flow_multipart_request->pad ) );
   flow_multipart_request->out_port = htonl( out_port );
   flow_multipart_request->out_group = htonl( out_group );
-  memset( flow_multipart_request->pad2, 0, sizeof( flow_multipart_request->pad2 ) );
+  memset( &flow_multipart_request->pad2, 0, sizeof( flow_multipart_request->pad2 ) );
   flow_multipart_request->cookie = htonll( cookie );
   flow_multipart_request->cookie_mask = htonll( cookie_mask );
   construct_ofp_match( &flow_multipart_request->match, match );
@@ -971,10 +1010,10 @@ create_aggregate_multipart_request( const uint32_t transaction_id,
   aggregate_multipart_request = ( struct ofp_aggregate_stats_request * ) ( ( char * ) buffer->data
                             + offsetof( struct ofp_multipart_request, body ) );
   aggregate_multipart_request->table_id = table_id;
-  memset( aggregate_multipart_request->pad, 0, sizeof( aggregate_multipart_request->pad ) );
+  memset( &aggregate_multipart_request->pad, 0, sizeof( aggregate_multipart_request->pad ) );
   aggregate_multipart_request->out_port = htonl( out_port );
   aggregate_multipart_request->out_group = htonl( out_group );
-  memset( aggregate_multipart_request->pad2, 0, sizeof( aggregate_multipart_request->pad2 ) );
+  memset( &aggregate_multipart_request->pad2, 0, sizeof( aggregate_multipart_request->pad2 ) );
   aggregate_multipart_request->cookie = htonll( cookie );
   aggregate_multipart_request->cookie_mask = htonll( cookie_mask );
   construct_ofp_match( &aggregate_multipart_request->match, match );
@@ -2147,7 +2186,7 @@ create_meter_mod( const uint32_t transaction_id, const uint16_t command,
   uint16_t n_bands = 0;
   uint16_t bands_length = 0;
   buffer *buffer;
-  list_element *q, *queue;
+  list_element *q = NULL, *queue;
   struct ofp_meter_mod *meter_mod;
   struct ofp_meter_band_header *pq, *packet_queue;
 
@@ -3706,16 +3745,54 @@ validate_header( const buffer *message, const uint8_t type,
 
 
 int
-validate_hello( const buffer *message ) {
-  int ret;
+validate_hello_versionbitmap( const buffer *buffer ) {
+  struct ofp_hello *hello = ( struct ofp_hello * ) buffer->data;
 
-  assert( message != NULL );
-  ret = validate_header( message, OFPT_HELLO, sizeof( struct ofp_hello ), UINT16_MAX );
-  if ( ret < 0 ) {
-    return ret;
+  if (  ntohs( hello->elements[ 0 ].type ) != OFPHET_VERSIONBITMAP ) {
+    return ERROR_INVALID_TYPE;
+  }
+  if ( ntohs( hello->elements[ 0 ].length ) <= ( sizeof( struct ofp_hello_elem_header ) ) ) {
+    return ERROR_TOO_SHORT_MESSAGE;
+  }
+  struct ofp_hello_elem_versionbitmap *versionbitmap = ( struct ofp_hello_elem_versionbitmap * ) hello->elements;
+  if ( ntohs( versionbitmap->type ) != OFPHET_VERSIONBITMAP ) {
+    return ERROR_INVALID_TYPE;
+  }
+  if ( ntohs( versionbitmap->length ) <= sizeof( struct ofp_hello_elem_header ) ) {
+    return ERROR_TOO_SHORT_MESSAGE;
+  }
+  if ( ( ntohs( versionbitmap->length ) - sizeof( uint32_t ) ) % 4 != 0 ) {
+    return ERROR_UNDEFINED_TYPE;
+  }
+
+  uint32_t nr_bitmaps = ( uint32_t ) ( ntohs( versionbitmap->length ) - 4 ) / sizeof( uint32_t );
+  uint32_t i;
+  bool ret = false;
+
+  for ( i = 0; i < nr_bitmaps; i++ ) {
+    uint32_t bitmap = ntohl( versionbitmap->bitmaps[ i ] );
+    ret |= ( bitmap & ( 1 << 1 ) ) != 0;
+    ret |= ( bitmap & ( 1 << 4 ) ) != 0;
+  }
+  if ( ret == false ) {
+    return ERROR_UNSUPPORTED_VERSION;
   }
 
   return 0;
+}
+
+
+int
+validate_hello( const buffer *message ) {
+  assert( message != NULL );
+  int ret;
+
+  if ( !( ret = validate_header( message, OFPT_HELLO, sizeof( struct ofp_header ), UINT16_MAX ) ) ) {
+    if ( message->length > sizeof( struct ofp_hello ) ) {
+      ret = validate_hello_versionbitmap( message );
+    }
+  }
+  return ret;
 }
 
 
@@ -3878,7 +3955,7 @@ validate_features_reply( const buffer *message ) {
 
   assert( message != NULL );
 
-  ret = validate_header( message, OFPT_FEATURES_REPLY, sizeof( struct ofp_switch_features ), sizeof( struct ofp_switch_features ) );
+  ret = validate_header( message, OFPT_FEATURES_REPLY, sizeof( struct ofp_switch_features ), UINT16_MAX );
   if ( ret < 0 ) {
     return ret;
   }

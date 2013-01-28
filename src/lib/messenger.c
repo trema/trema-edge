@@ -876,6 +876,7 @@ send_queue_connect_timer( send_queue *sq ) {
   }
 
   int ret = send_queue_connect( sq );
+  int error = -1;
 
   switch ( ret ) {
   case -1:
@@ -883,7 +884,7 @@ send_queue_connect_timer( send_queue *sq ) {
     // queue has an error.
     sq->reconnect_interval.tv_sec = -1;
     sq->reconnect_interval.tv_nsec = 0;
-    return -1;
+    break;
 
   case 0:
     // Try again later.
@@ -897,20 +898,23 @@ send_queue_connect_timer( send_queue *sq ) {
     sq->running_timer = true;
 
     debug( "refused_count = %d, reconnect_interval = %u.", sq->refused_count, sq->reconnect_interval.tv_sec );
-    return 0;
+    error =  0;
+    break;
 
   case 1:
     // Success.
     sq->refused_count = 0;
     sq->reconnect_interval.tv_sec = 0;
     sq->reconnect_interval.tv_nsec = 0;
-    return 1;
+    error = 0;
+    break;
 
   default:
     die( "Got invalid value from send_queue_connect_timer( send_queue* )." );
-  };
+    break;
+  }
 
-  return -1;
+  return error;
 }
 
 
@@ -1469,6 +1473,7 @@ call_message_callbacks( receive_queue *rq, const uint8_t message_type, const uin
     default:
       error( "Unknown message type ( %#x ).", message_type );
       assert( 0 );
+      break;
     }
   }
 }
@@ -1672,6 +1677,7 @@ flush_messenger() {
     }
     run_event_handler_once( 100000 );
   }
+  return 0;
 }
 
 

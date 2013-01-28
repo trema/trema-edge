@@ -52,6 +52,20 @@ parse_ether( buffer *buf ) {
 
   ptr = ( void * ) ( ether_header + 1 );
 
+  // TODO This packet parsing source looks horible. Must fix later
+  // PBB(MAC-in-MAC) VLAN
+  if (packet_info->eth_type == ETH_ETHTYPE_PBB ) {
+      const uint8_t sizeof_pbb_header = 22;
+      length = REMAINED_BUFFER_LENGTH( buf, ptr );
+      if ( length < sizeof_pbb_header ) {
+        return;
+      }
+      packet_info->pbb_isid = ntohl(*((uint32_t *)ptr + 3)) & 0x00FFFFFF;
+      ptr = ( void * ) ( (char *)ptr + 2 + 6 + 6 + 6 ); // B-TAG/B-VID = 2, ethertype(0x88E7) + Flag + I-SID = 6, C-MAC SA = 6, C-MAC DA = 6
+      packet_info->eth_type = ntohs(*((uint16_t *)ptr)); // maybe TPID = 0x8100
+      ptr = ( void * ) ( (char *)ptr + 2);
+  }
+
   // vlan tag
   if ( packet_info->eth_type == ETH_ETHTYPE_TPID ) {
     // Check the length of remained buffer
@@ -108,6 +122,32 @@ parse_ether( buffer *buf ) {
   }
   else {
     packet_info->format |= ETH_DIX;
+  }
+
+
+  // TODO fix coding formatting and check source.
+  // Parse MPLS Header
+  if ( packet_info -> eth_type == ETH_ETHTYPE_MPLS_UNI ) {
+    packet_info -> eth_type   = ETH_ETHTYPE_IPV4;
+    packet_info -> format    |= MPLS;
+    packet_info->l2_mpls_header = ptr;
+
+    for (;;) {
+      const uint8_t sizeof_mpls_header = 4;
+      length = REMAINED_BUFFER_LENGTH( buf, ptr );
+      if ( length < sizeof_mpls_header ) {
+        return;
+      }
+      uint32_t mpls = 0;
+      mpls = ntohl( *( ( uint32_t * )ptr ) );
+      packet_info -> mpls_label = ( mpls & 0xFFFFF000 ) >> 12;
+      packet_info -> mpls_tc    = ( uint8_t ) ( mpls & 0x00000E00 ) >>  9;
+      packet_info -> mpls_bos   = ( uint8_t ) ( mpls & 0x00000100 ) >>  8;
+      ptr = ( void * ) ( ( char * ) ptr + 4 );
+      if (packet_info->mpls_bos == 1) {
+        break;
+      }
+    }
   }
 
   size_t payload_length = REMAINED_BUFFER_LENGTH( buf, ptr );
@@ -680,16 +720,15 @@ parse_packet( buffer *buf ) {
   }
 
   // Get L4 protocol num.
-  uint8_t ip_proto = 0;
   if ( packet_info->format & NW_IPV4 ) {
     if ( packet_info->ipv4_frag_off & IP_OFFMASK ) {
       // The ipv4 packet is fragmented.
       return true;
     }
-    ip_proto = packet_info->ipv4_protocol;
+    packet_info->ip_proto = packet_info->ipv4_protocol;
   }
   else if ( packet_info->format & NW_IPV6 ) {
-    ip_proto = packet_info->ipv6_protocol;
+    packet_info->ip_proto = packet_info->ipv6_protocol;
   }
   else {
     // Not IPv4/v6 type
@@ -697,7 +736,7 @@ parse_packet( buffer *buf ) {
   }
 
   // Parse the L4 header.
-  switch ( ip_proto ) {
+  switch ( packet_info->ip_proto ) {
   case IPPROTO_ICMP:
     packet_info->l4_header = packet_info->l3_payload;
     parse_icmp( buf );

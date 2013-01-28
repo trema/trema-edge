@@ -23,8 +23,8 @@ OBJECTS="${TREMA_SRC}/objects"
 
 APP_NAME="learning_switch"
 APP="${OBJECTS}/examples/learning_switch/learning_switch"
-APP_OPTS="--name ${APP_NAME} --daemonize"
-#APP_OPTS="-l debug --name ${APP_NAME} --daemonize"
+#APP_OPTS="--name ${APP_NAME} --daemonize"
+APP_OPTS="-l debug --name ${APP_NAME} --daemonize"
 
 SWITCH_STATE_NOTIFY="state_notify::${APP_NAME}"
 SWITCH_PORT_STATUS="port_status::${APP_NAME}"
@@ -33,12 +33,12 @@ SWITCH_PACKET_IN="packet_in::${APP_NAME}"
 FILTER_LLDP="lldp::${APP_NAME}"
 FILTER_PACKET_IN="packet_in::${APP_NAME}"
 
-SWITCH_DAEMON="${OBJECTS}/switch_manager/switch"
-SWITCH_DAEMON_OPTS="--no-cookie-translation $SWITCH_STATE_NOTIFY $SWITCH_PORT_STATUS $SWITCH_VENDOR $SWITCH_PACKET_IN"
-#SWITCH_DAEMON_OPTS="-l debug --no-cookie-translation $SWITCH_STATE_NOTIFY $SWITCH_PORT_STATUS $SWITCH_VENDOR $SWITCH_PACKET_IN"
+SWITCH_DAEMON="${OBJECTS}/switch_manager/switch_daemon"
+#SWITCH_DAEMON_OPTS="--no-cookie-translation $SWITCH_STATE_NOTIFY $SWITCH_PORT_STATUS $SWITCH_VENDOR $SWITCH_PACKET_IN"
+SWITCH_DAEMON_OPTS="-l debug --no-cookie-translation $SWITCH_STATE_NOTIFY $SWITCH_PORT_STATUS $SWITCH_VENDOR $SWITCH_PACKET_IN"
 SWITCH_MANAGER="${OBJECTS}/switch_manager/switch_manager"
-SWITCH_MANAGER_OPTS="--daemonize --switch=${SWITCH_DAEMON} -- $SWITCH_DAEMON_OPTS"
-#SWITCH_MANAGER_OPTS="-l debug --daemonize --switch=${SWITCH_DAEMON} -- $SWITCH_DAEMON_OPTS"
+#SWITCH_MANAGER_OPTS="--daemonize --switch=${SWITCH_DAEMON} -- $SWITCH_DAEMON_OPTS"
+SWITCH_MANAGER_OPTS="-l debug --daemonize --switch=${SWITCH_DAEMON} -- $SWITCH_DAEMON_OPTS"
 
 TREMA_HOME="${TREMA_SRC}"
 

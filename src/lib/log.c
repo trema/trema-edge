@@ -27,6 +27,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
+#include <sys/time.h>
 #include "bool.h"
 #include "log.h"
 #include "trema_wrapper.h"
@@ -98,11 +99,10 @@ static const size_t max_message_length = 1024;
 
 static void
 log_file( int priority, const char *format, va_list ap ) {
-  time_t tm = time( NULL );
+  struct timeval tv;
+  gettimeofday( &tv, NULL );
   char now[ 26 ];
-  asctime_r( localtime( &tm ), now );
-  now[ 24 ] = '\0'; // chomp
-
+  strftime( now, sizeof( now ), "%b %e %T", localtime( &tv.tv_sec ) ); // syslog message format look like
   const char *priority_name = priority_name_from( priority );
 
   char message[ max_message_length ];
@@ -110,7 +110,7 @@ log_file( int priority, const char *format, va_list ap ) {
   va_copy( new_ap, ap );
   vsnprintf( message, max_message_length, format, new_ap );
 
-  trema_fprintf( fd, "%s [%s] %s\n", now, priority_name, message );
+  trema_fprintf( fd, "%s.%03d [%s] %s\n", now, tv.tv_usec / 1000, priority_name, message );
   fflush( fd );
 }
 

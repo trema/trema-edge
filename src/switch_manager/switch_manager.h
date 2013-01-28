@@ -39,7 +39,7 @@ static const char SWITCH_MANAGER_PREFIX[] = "switch.";
 static const uint SWITCH_MANAGER_PREFIX_STR_LEN = sizeof( SWITCH_MANAGER_PREFIX );
 static const uint SWITCH_MANAGER_ADDR_STR_LEN = sizeof( "255.255.255.255:65535" );
 
-static const char SWITCH_MANAGER_PATH[] = "objects/switch_manager/switch";
+static const char SWITCH_MANAGER_PATH[] = "objects/switch_manager/switch_daemon";
 static const char SWITCH_MANAGER_STATE_PREFIX[] = "state_notify::";
 
 

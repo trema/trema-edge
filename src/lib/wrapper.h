@@ -56,6 +56,12 @@ void *xmalloc( size_t size );
 #endif
 void *xcalloc( size_t nmemb, size_t size );
 
+// Undef Ruby's xrealloc()
+#ifdef xrealloc
+#undef xrealloc
+#endif
+void *xrealloc( void *ptr, size_t size );
+
 // Undef Ruby's xfree()
 #ifdef xfree
 #undef xfree
