@@ -509,6 +509,7 @@ end
 desc "Build switch."
 task :switch => Trema::Executables.switch
 file Trema::Executables.switch => switch_objects + [ libtrema ] do | t |
+  sys.mkdir_p File.dirname( Trema::Executables.switch )
   sys "gcc -L#{ Trema.lib } -o #{ t.name } #{ sys.sp t.prerequisites } -ltrema -lsqlite3 -ldl -lrt -lpthread"
 end
 
