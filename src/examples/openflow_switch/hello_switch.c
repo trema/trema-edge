@@ -22,7 +22,7 @@
 
 
 static void handle_features_request( uint32_t, void * );
-static void handle_hello( uint32_t, uint8_t, void * );
+static void handle_hello( uint32_t, uint8_t, const buffer *, void * );
 
 
 static void
@@ -34,9 +34,10 @@ handle_features_request( uint32_t tid, void *user_data ) {
 
 
 static void
-handle_hello( uint32_t tid, uint8_t version, void *user_data ) {
+handle_hello( uint32_t tid, uint8_t version, const buffer *data, void *user_data ) {
   UNUSED( version );
   UNUSED( user_data );
+  UNUSED( data );
 
   info( "received: OFPT_HELLO" );
 
