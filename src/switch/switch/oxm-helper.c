@@ -333,6 +333,7 @@ _assign_match( match *match, const oxm_match_header *hdr ) {
       const uint8_t *value = ( const uint8_t * ) ( ( const char * ) hdr + sizeof( oxm_match_header ) );
       MATCH_ATTR_SET( ip_ecn, *value )
     }
+    break;
     case OXM_OF_IP_PROTO: {
       const uint8_t *value = ( const uint8_t * ) ( ( const char * ) hdr + sizeof( oxm_match_header ) );
       MATCH_ATTR_SET( ip_proto, *value )
