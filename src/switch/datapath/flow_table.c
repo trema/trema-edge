@@ -266,6 +266,7 @@ age_flow_entries_walker( flow_entry *entry, void *user_data ) {
     if ( diff.tv_sec >= entry->hard_timeout ) {
       flow_table *table = get_flow_table( entry->table_id );
       delete_flow_entry_from_table( table, entry, OFPRR_HARD_TIMEOUT, true );
+      return;
     }
   }
 
