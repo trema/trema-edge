@@ -31,15 +31,18 @@ It may also run on other GNU/Linux distributions but is not tested.
 
 ## Required Packages
 
-    % sudo apt-get install gcc make ruby1.8 rubygems1.8 ruby1.8-dev libpcap-dev libsqlite3-0
-    % sudo gem install bundler
+This repository has only been tested with ruby 1.9.3 and will not work with lower versions.
+We recommend installation of the rvm program for easy installation of ruby 1.9.3.
 
 ## Build trema
 
-    % git clone git://github.com/trema/trema-edge.git
-    % cd trema-edge
-    % sudo bundle install
-    % ./build.rb
+The familiar build.rb command has not been integrated yet therefore to build `trema-edge` please use the rake command.  
+But before running the `rake` command ensure that the gem `rake-compiler` version 0.7.0 is installed and in addition the  
+`xutils-dev` package since it is used by the `rake-compiler` gem invoking the `makedepend` program.  
+
+    % rake
+
+Also note that the `Rakefile` file that contains testing suite scripts has not been integrated into the build yet and can not be used.
 
 ## Run learning switch
 
