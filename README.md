@@ -4,13 +4,13 @@ This is a temporary repository that we create in order to receive some
 valuable feedback from our users. In the future we are planning to
 merge this repository into the current trema repository.
 
-## Trema for OpenFlow 1.3.0
+## Trema for OpenFlow 1.3.X
 
 We have already developed source that implements the OpenFlow 1.3.0
 specification and we also planning to include the newer OpenFlow
 version 1.3.1.
 The current implementation is C only.
-Trema for OpenFlow 1.3 does not support OpenFlow version 1.0.
+Trema for OpenFlow 1.3.X does not support OpenFlow version 1.0.
 
 Status of implementation:
 
@@ -24,25 +24,29 @@ Status of implementation:
 
 ## Tested platforms
 
-* Ruby 1.8.7 (1.9.x is NOT supported yet)
+* Ruby 1.9.3 (1.8.x is NOT supported)
 * Ubuntu 12.04 (amd64)
 
 It may also run on other GNU/Linux distributions but is not tested.
 
 ## Required Packages
 
-This repository has only been tested with ruby 1.9.3 and will not work with lower versions.
-We recommend installation of the rvm program for easy installation of ruby 1.9.3.
+This repository has only been tested with ruby 1.9.3 and will not work with
+lower versions. We recommend installation of the rvm program for easy
+installation of ruby 1.9.3.
+
+The familiar build.rb command has not been integrated yet therefore to build
+`trema-edge` please use the rake command. But before running the `rake` command
+ensure that the gem `rake-builder` version 0.7.0 is installed and in addition
+the `xutils-dev` package since it is used by the `rake-builder` gem invoking
+the `makedepend` program.
 
 ## Build trema
 
-The familiar build.rb command has not been integrated yet therefore to build `trema-edge` please use the rake command.  
-But before running the `rake` command ensure that the gem `rake-compiler` version 0.7.0 is installed and in addition the  
-`xutils-dev` package since it is used by the `rake-compiler` gem invoking the `makedepend` program.  
-
     % rake
 
-Also note that the `Rakefile` file that contains testing suite scripts has not been integrated into the build yet and can not be used.
+Note that the `Rakefile` file that contains testing suite scripts has not been
+integrated into the build yet and can not be used.
 
 ## Run learning switch
 
@@ -93,7 +97,7 @@ Also note that the `Rakefile` file that contains testing suite scripts has not b
 
 ## Notable modifications
 
-+ Multiple tables,groups support (Setting of multiple tables, groups).
++ Multiple tables, groups support (Setting of multiple tables, groups).
 + Extensible match support. (Extensible match support applicable to MPLS and IPv6 match setting).
 + Extensible packet rewrite support. (Extensible packet rewrite support applicable to MPLS and IPv6).
 + Support for added packet-in contents. (Support for additional cookie and match fields).
