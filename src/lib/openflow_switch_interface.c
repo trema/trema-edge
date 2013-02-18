@@ -1512,14 +1512,19 @@ handle_openflow_message( buffer *message ) {
   assert( message != NULL );
   assert( message->length >= sizeof( struct ofp_header ) );
 
+  struct ofp_header *header = ( struct ofp_header * ) message->data;
+
   int ret = validate_openflow_message( message );
   if ( ret < 0 ) {
     error( "Failed to validate an OpenFlow message ( code = %d, length = %u ).", ret, message->length );
+    uint16_t type = OFPET_BAD_REQUEST;
+    uint16_t code = OFPBRC_EPERM;
+    get_error_type_and_code( header->type, ret, &type, &code );
+    send_error_message( ntohl( header->xid ), type, code );
     return false;
   }
 
   ret = true;
-  struct ofp_header *header = ( struct ofp_header * ) message->data;
 
   switch ( header->type ) {
   case OFPT_HELLO:
