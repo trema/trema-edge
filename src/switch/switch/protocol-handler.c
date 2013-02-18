@@ -175,6 +175,12 @@ handle_flow_mod_add( const uint32_t transaction_id, const uint64_t cookie,
     send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPFMFC_BAD_TABLE_ID );
     return;
   }
+
+  if ( instructions == NULL ) {
+    send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPFMFC_UNKNOWN );
+    return;
+  }
+
   /*
    * If no buffered packet is associated with a flow mod it must be set
    * to OFP_NO_BUFFER otherwise it must be equal to the buffer_id sent to
@@ -309,6 +315,11 @@ handle_flow_mod_mod( const uint32_t transaction_id, const uint64_t cookie,
                      const openflow_instructions *instructions,
                      const bool strict, struct protocol *protocol ) {
   UNUSED( transaction_id );
+
+  if ( instructions == NULL ) {
+    send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPFMFC_UNKNOWN );
+    return;
+  }
 
   match *match = create_match( );
   if ( oxm != NULL && oxm->n_matches > 0 ) {
