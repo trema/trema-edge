@@ -9,7 +9,7 @@ datapath function to execute it. In other cases it might simply return
 a reply back to controller. Messages from the datapath are passed via
 a message queue.
 
-The build.rb script creates the switch executable under objects/switch/
+The rake command creates the switch executable under objects/switch/
 switch/switch. The executable name is switch and to avoid name clashing
 with the previous switch_manager/switch program the switch_manager/
 switch has been renamed to switch_manager/switch_daemon.
