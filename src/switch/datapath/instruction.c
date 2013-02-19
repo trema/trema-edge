@@ -489,7 +489,7 @@ OFDPE
 validate_instruction_set( const instruction_set *instructions, const uint64_t metadata_range ) {
   assert( instructions != NULL );
 
-  OFDPE ret = OFDPE_FAILED;
+  OFDPE ret = OFDPE_SUCCESS;
   if ( instructions->goto_table != NULL ) {
     ret = validate_instruction_goto_table( instructions->goto_table );
   }
