@@ -112,7 +112,7 @@ validate_buckets( bucket_list *buckets ) {
 
   OFDPE ret = OFDPE_SUCCESS;
   for ( dlist_element *element = get_first_element( buckets ); element != NULL; element = element->next ) {
-    if ( element->data != NULL ) {
+    if ( element->data == NULL ) {
       continue;
     }
     bucket *bucket = element->data;
