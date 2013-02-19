@@ -653,6 +653,8 @@ _request_send_flow_stats( const struct ofp_flow_stats_request *req, const uint32
       // We also don't have enough storage preallocated from the match.
       pack_ofp_match( &fs->match, oxm_matches );
 
+      // TODO: implement here to include the instruction set.
+
       // finally update the length construct_ofp_match performs htons on the length and type
       fs->length = ( uint16_t ) ( sizeof( *fs ) +  ( uint16_t ) ( fs->match.length  - 4 ) );
       append_to_tail( &list, ( void * ) fs );

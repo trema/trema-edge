@@ -141,17 +141,6 @@ _handle_echo_request( const uint32_t transaction_id, const buffer *body, void *u
 void ( *handle_echo_request )( const uint32_t transaction_id, const buffer *body, void *user_data ) = _handle_echo_request;
 
 
-static instruction_set *
-create_assign_instruction_set( list_element *list, uint8_t table_id ) {
-  instruction_set *ins_set = create_instruction_set();
-  int ret = assign_instructions( ins_set, list, table_id );
-  if ( ret == OFDPE_SUCCESS ) {
-    return ins_set;
-  }
-  return NULL;
-}
-
-
 static void
 handle_flow_mod_add( const uint32_t transaction_id, const uint64_t cookie, 
                      const uint64_t cookie_mask, const uint8_t table_id,
@@ -176,11 +165,6 @@ handle_flow_mod_add( const uint32_t transaction_id, const uint64_t cookie,
     return;
   }
 
-  if ( instructions == NULL ) {
-    send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPFMFC_UNKNOWN );
-    return;
-  }
-
   /*
    * If no buffered packet is associated with a flow mod it must be set
    * to OFP_NO_BUFFER otherwise it must be equal to the buffer_id sent to
@@ -202,11 +186,15 @@ handle_flow_mod_add( const uint32_t transaction_id, const uint64_t cookie,
     }
   }
 
-  instruction_set *instruction_set = create_assign_instruction_set( instructions->list, table_id );
-  if ( instruction_set == NULL ) {
-    send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPBIC_UNSUP_INST );
-    xfree( match );
-    return;
+  instruction_set *instruction_set = create_instruction_set();
+  if ( instructions != NULL ) {
+    OFDPE ret = assign_instructions( instruction_set, instructions->list, table_id );
+    if ( ret != OFDPE_SUCCESS ) {
+      send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPBIC_UNSUP_INST );
+      delete_instruction_set( instruction_set );
+      xfree( match );
+      return;
+    }
   }
 
   /*
@@ -316,11 +304,6 @@ handle_flow_mod_mod( const uint32_t transaction_id, const uint64_t cookie,
                      const bool strict, struct protocol *protocol ) {
   UNUSED( transaction_id );
 
-  if ( instructions == NULL ) {
-    send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPFMFC_UNKNOWN );
-    return;
-  }
-
   match *match = create_match( );
   if ( oxm != NULL && oxm->n_matches > 0 ) {
     for ( list_element *e = oxm->list; e != NULL; e = e->next ) {
@@ -328,10 +311,16 @@ handle_flow_mod_mod( const uint32_t transaction_id, const uint64_t cookie,
       assign_match( match, hdr );
     }
   }
-  instruction_set *ins_set = NULL;
+
+  instruction_set *ins_set = create_instruction_set();
   if ( instructions != NULL ) {
-    ins_set = create_instruction_set();
-    assign_instructions( ins_set, instructions->list, table_id );
+    OFDPE ret = assign_instructions( ins_set, instructions->list, table_id );
+    if ( ret != OFDPE_SUCCESS ) {
+      send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPBIC_UNSUP_INST );
+      delete_instruction_set( ins_set );
+      xfree( match );
+      return;
+    }
   }
 
   OFDPE ret = update_or_add_flow_entry( table_id, match, cookie, cookie_mask, priority, idle_timeout, hard_timeout,
