@@ -321,7 +321,7 @@ _assign_match( match *match, const oxm_match_header *hdr ) {
     break;
     case OXM_OF_VLAN_PCP: {
       const uint8_t *value = ( const uint8_t * ) ( ( const char * ) hdr + sizeof( oxm_match_header ) );
-      MATCH_ATTR_SET( vlan_pcp, * value )
+      MATCH_ATTR_SET( vlan_pcp, *value )
     }
     break;
     case OXM_OF_IP_DSCP: {
