@@ -550,23 +550,22 @@ _pack_ofp_match( struct ofp_match *match, const oxm_matches *matches ) {
   uint16_t oxms_len = 0;
   uint16_t ofp_match_len = 0;
   uint16_t pad_len = 0;
-  struct ofp_match *dst, *src;
+  oxm_match_header *oxm_dst, *oxm_src;
 
   if ( matches != NULL && matches->n_matches ) {
-    dst = match;
+    uint16_t offset = offsetof( struct ofp_match, oxm_fields );
+    oxm_dst = ( oxm_match_header * ) ( ( char * ) match + offset );
 
     list_element *elem = matches->list;
     while ( elem != NULL ) {
-      src = ( struct ofp_match * ) elem->data;
-      oxm_len = oxm_length( src->type );
-      memcpy( dst->oxm_fields, src->oxm_fields, oxm_len );
-
+      oxm_src = ( oxm_match_header * ) elem->data;
+      oxm_len = ( uint16_t ) ( sizeof( oxm_match_header ) + OXM_LENGTH( *oxm_src ) );
+      memcpy( oxm_dst, oxm_src, oxm_len );
       oxms_len = ( uint16_t ) ( oxms_len + oxm_len );
-      dst = ( struct ofp_match * ) ( ( char * ) dst + oxm_len );
+      oxm_dst = ( oxm_match_header * ) ( ( char * ) oxm_dst + oxm_len );
       elem = elem->next;
     }
   }
-
   ofp_match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + oxms_len );
   match->type = OFPMT_OXM;
   match->length = ( uint16_t ) ( ofp_match_len ); // exclude padding length
