@@ -1077,6 +1077,7 @@ get_table_stats( table_stats **stats, uint8_t *n_tables ) {
 
   table_stats *stat = *stats;
   for ( uint8_t i = 0; i <= FLOW_TABLE_ID_MAX; i++ ) {
+    stat->table_id = i;
     stat->active_count = get_active_count( i );
     stat->lookup_count = get_lookup_count( i );
     stat->matched_count = get_matched_count( i );
