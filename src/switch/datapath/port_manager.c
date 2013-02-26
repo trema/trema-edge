@@ -447,7 +447,7 @@ get_port_stats( const uint32_t port_no, port_stats **stats, uint32_t *n_ports ) 
   }
 
   list_element *ports = NULL;
-  if ( port_no != OFPP_ALL ) {
+  if ( port_no != OFPP_ANY ) {
     switch_port *port = lookup_switch_port( port_no );
     if ( port == NULL ) {
       return unlock_mutex( &mutex ) ? OFDPE_SUCCESS : ERROR_UNLOCK;
