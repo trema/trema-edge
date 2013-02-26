@@ -438,7 +438,7 @@ send_frame_from_switch_port( const uint32_t port_no, buffer *frame ) {
 
 OFDPE
 get_port_stats( const uint32_t port_no, port_stats **stats, uint32_t *n_ports ) {
-  assert( port_no > 0 || port_no == OFPP_ALL );
+  assert( ( port_no > 0 && port_no <= OFPP_MAX ) || port_no == OFPP_ANY );
   assert( stats != NULL );
   assert( n_ports != NULL );
 
