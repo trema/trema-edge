@@ -611,6 +611,7 @@ add_flow_entry( const uint8_t table_id, flow_entry *entry, const uint16_t flags 
 
   OFDPE ret = validate_instruction_set( entry->instructions, table->features.metadata_write );
   if ( ret == OFDPE_SUCCESS ) {
+    entry->table_id = table_id;
     ret = insert_flow_entry( table, entry, flags );
     if ( ret == OFDPE_SUCCESS ) {
       increment_reference_counters_in_groups( entry->instructions );
