@@ -81,10 +81,11 @@ void ntoh_action_set_field( struct ofp_action_set_field *dst, const struct ofp_a
   dst->type = ntohs( asf->type );
   dst->len = ntohs( asf->len );
 
-  s_oxm = ( oxm_match_header * ) asf->field;
-  d_oxm = ( oxm_match_header * ) dst->field;
-
-  ntoh_oxm_match( d_oxm, s_oxm );
+  if ( dst->len > ( uint16_t ) sizeof( struct ofp_action_set_field ) ) {
+    s_oxm = ( oxm_match_header * ) asf->field;
+    d_oxm = ( oxm_match_header * ) dst->field;
+    ntoh_oxm_match( d_oxm, s_oxm );
+  }
 
   xfree( asf );
 }
@@ -103,10 +104,12 @@ void hton_action_set_field( struct ofp_action_set_field *dst, const struct ofp_a
   dst->type = htons( asf->type );
   dst->len = htons( asf->len );
 
-  s_oxm = ( oxm_match_header * ) asf->field;
-  d_oxm = ( oxm_match_header * ) dst->field;
 
-  hton_oxm_match( d_oxm, s_oxm );
+  if ( src->len > ( uint16_t ) sizeof( struct ofp_action_set_field ) ) {
+    s_oxm = ( oxm_match_header * ) asf->field;
+    d_oxm = ( oxm_match_header * ) dst->field;
+    hton_oxm_match( d_oxm, s_oxm );
+  }
 
   xfree( asf );
 }
@@ -421,7 +424,7 @@ hton_flow_stats( struct ofp_flow_stats *dst, const struct ofp_flow_stats *src ) 
   uint16_t match_len = ( uint16_t ) ( src->match.length + PADLEN_TO_64( src->match.length ) );
   size_t offset = ( size_t ) ( offsetof( struct ofp_flow_stats, match ) + match_len );
 
-  if ( total_len >= offset ) {
+  if ( total_len > offset ) {
     struct ofp_instruction *inst_src = ( struct ofp_instruction * ) ( ( char * ) fs + offset );
     struct ofp_instruction *inst_dst = ( struct ofp_instruction * ) ( ( char * ) dst + offset );
 
