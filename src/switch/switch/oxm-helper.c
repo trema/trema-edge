@@ -578,15 +578,18 @@ _pack_ofp_match( struct ofp_match *match, const oxm_matches *matches ) {
 void ( *pack_ofp_match )( struct ofp_match *match, const oxm_matches *matches ) = _pack_ofp_match;
 
 
-static uint16_t
-assign_oxm_id( uint32_t *oxm_id, const uint64_t capability, enum oxm_ofb_match_fields oxm_type ) {
-  uint16_t total_len = 0;
+static uint32_t *
+assign_oxm_id( uint32_t *oxm_id, const uint64_t capability, enum oxm_ofb_match_fields oxm_type, uint16_t *len ) {
+  assert( oxm_id != NULL );
+  assert( len != NULL );
 
   if ( capability != 0 ) {
     *oxm_id = oxm_attr_field( true, oxm_type );
-    total_len = ( uint16_t ) sizeof( uint32_t );
+    *len = ( uint16_t ) ( *len + sizeof( uint32_t ) );
+    oxm_id++;
   }
-  return total_len;
+
+  return oxm_id;
 }
 
 
@@ -595,86 +598,47 @@ _assign_oxm_ids( uint32_t *oxm_id, match_capabilities *match_cap ) {
   const match_capabilities c = *match_cap;
   uint16_t total_len = 0;
 
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IN_PORT, OFPXMT_OFB_IN_PORT ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IN_PHY_PORT, OFPXMT_OFB_IN_PHY_PORT ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_METADATA, OFPXMT_OFB_METADATA ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_ETH_DST, OFPXMT_OFB_ETH_DST ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_ETH_SRC, OFPXMT_OFB_ETH_SRC ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_ETH_TYPE, OFPXMT_OFB_ETH_TYPE ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_VLAN_VID, OFPXMT_OFB_VLAN_VID ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_VLAN_PCP, OFPXMT_OFB_VLAN_PCP ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IP_DSCP, OFPXMT_OFB_IP_DSCP ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IP_ECN, OFPXMT_OFB_IP_ECN ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IP_PROTO, OFPXMT_OFB_IP_PROTO ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IPV4_SRC, OFPXMT_OFB_IPV4_SRC ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IPV4_DST, OFPXMT_OFB_IPV4_DST ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_TCP_SRC, OFPXMT_OFB_TCP_SRC ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_TCP_DST, OFPXMT_OFB_TCP_DST ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_UDP_SRC, OFPXMT_OFB_UDP_SRC ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_UDP_DST, OFPXMT_OFB_UDP_DST ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_SCTP_SRC, OFPXMT_OFB_SCTP_SRC ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_SCTP_DST, OFPXMT_OFB_SCTP_DST ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_ICMPV4_TYPE, OFPXMT_OFB_ICMPV4_TYPE ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_ICMPV4_CODE, OFPXMT_OFB_ICMPV4_CODE ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_ARP_OP, OFPXMT_OFB_ARP_OP ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_ARP_SPA, OFPXMT_OFB_ARP_SPA ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_ARP_TPA, OFPXMT_OFB_ARP_TPA ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_ARP_SHA, OFPXMT_OFB_ARP_SHA ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_ARP_THA, OFPXMT_OFB_ARP_THA ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IPV6_SRC, OFPXMT_OFB_IPV6_SRC ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IPV6_DST, OFPXMT_OFB_IPV6_DST ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IPV6_FLABEL, OFPXMT_OFB_IPV6_FLABEL ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_ICMPV6_TYPE, OFPXMT_OFB_ICMPV6_TYPE ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_ICMPV6_CODE, OFPXMT_OFB_ICMPV6_CODE ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IPV6_ND_TARGET, OFPXMT_OFB_IPV6_ND_TARGET ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IPV6_ND_SLL, OFPXMT_OFB_IPV6_ND_SLL ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IPV6_ND_TLL, OFPXMT_OFB_IPV6_ND_TLL ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_MPLS_LABEL, OFPXMT_OFB_MPLS_LABEL ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_MPLS_TC, OFPXMT_OFB_MPLS_TC ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_MPLS_BOS, OFPXMT_OFB_MPLS_BOS ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_PBB_ISID, OFPXMT_OFB_PBB_ISID ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_TUNNEL_ID, OFPXMT_OFB_TUNNEL_ID ) );
-  oxm_id = ( uint32_t * )( ( char * ) oxm_id + sizeof( uint32_t ) );
-  total_len = ( uint16_t ) ( total_len + assign_oxm_id( oxm_id, c & MATCH_IPV6_EXTHDR, OFPXMT_OFB_IPV6_EXTHDR ) );
-  
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IN_PORT, OFPXMT_OFB_IN_PORT, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IN_PHY_PORT, OFPXMT_OFB_IN_PHY_PORT, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_METADATA, OFPXMT_OFB_METADATA, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_ETH_DST, OFPXMT_OFB_ETH_DST, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_ETH_SRC, OFPXMT_OFB_ETH_SRC, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_ETH_TYPE, OFPXMT_OFB_ETH_TYPE, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_VLAN_VID, OFPXMT_OFB_VLAN_VID, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_VLAN_PCP, OFPXMT_OFB_VLAN_PCP, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IP_DSCP, OFPXMT_OFB_IP_DSCP, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IP_ECN, OFPXMT_OFB_IP_ECN, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IP_PROTO, OFPXMT_OFB_IP_PROTO, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IPV4_SRC, OFPXMT_OFB_IPV4_SRC, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IPV4_DST, OFPXMT_OFB_IPV4_DST, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_TCP_SRC, OFPXMT_OFB_TCP_SRC, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_TCP_DST, OFPXMT_OFB_TCP_DST, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_UDP_SRC, OFPXMT_OFB_UDP_SRC, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_UDP_DST, OFPXMT_OFB_UDP_DST, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_SCTP_SRC, OFPXMT_OFB_SCTP_SRC, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_SCTP_DST, OFPXMT_OFB_SCTP_DST, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_ICMPV4_TYPE, OFPXMT_OFB_ICMPV4_TYPE, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_ICMPV4_CODE, OFPXMT_OFB_ICMPV4_CODE, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_ARP_OP, OFPXMT_OFB_ARP_OP, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_ARP_SPA, OFPXMT_OFB_ARP_SPA, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_ARP_TPA, OFPXMT_OFB_ARP_TPA, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_ARP_SHA, OFPXMT_OFB_ARP_SHA, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_ARP_THA, OFPXMT_OFB_ARP_THA, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IPV6_SRC, OFPXMT_OFB_IPV6_SRC, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IPV6_DST, OFPXMT_OFB_IPV6_DST, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IPV6_FLABEL, OFPXMT_OFB_IPV6_FLABEL, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_ICMPV6_TYPE, OFPXMT_OFB_ICMPV6_TYPE, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_ICMPV6_CODE, OFPXMT_OFB_ICMPV6_CODE, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IPV6_ND_TARGET, OFPXMT_OFB_IPV6_ND_TARGET, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IPV6_ND_SLL, OFPXMT_OFB_IPV6_ND_SLL, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IPV6_ND_TLL, OFPXMT_OFB_IPV6_ND_TLL, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_MPLS_LABEL, OFPXMT_OFB_MPLS_LABEL, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_MPLS_TC, OFPXMT_OFB_MPLS_TC, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_MPLS_BOS, OFPXMT_OFB_MPLS_BOS, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_PBB_ISID, OFPXMT_OFB_PBB_ISID, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_TUNNEL_ID, OFPXMT_OFB_TUNNEL_ID, &total_len );
+  oxm_id = assign_oxm_id( oxm_id, c & MATCH_IPV6_EXTHDR, OFPXMT_OFB_IPV6_EXTHDR, &total_len );
+
   return total_len;
 }
 uint16_t ( *assign_oxm_ids )( uint32_t *oxm_id, match_capabilities *match_cap ) = _assign_oxm_ids;

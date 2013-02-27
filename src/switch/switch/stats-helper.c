@@ -265,85 +265,85 @@ get_table_features_len( flow_table_features *table_feature ) {
 
   len = instructions_capabilities_len( &table_feature->instructions );
   if ( len ) {
-    len += sizeof( struct ofp_table_feature_prop_instructions );
+    len += offsetof( struct ofp_table_feature_prop_instructions, instruction_ids );
     total_len += len + PADLEN_TO_64( len );
   }
 
   len = instructions_capabilities_len( &table_feature->instructions_miss );
   if ( len ) {
-    len += sizeof( struct ofp_table_feature_prop_instructions );
+    len += offsetof( struct ofp_table_feature_prop_instructions, instruction_ids );
     total_len += len + PADLEN_TO_64( len );
   }
 
   len = actions_capabilities_len( &table_feature->write_actions );
   if ( len ) {
-    len += sizeof( struct ofp_table_feature_prop_actions );
+    len += offsetof( struct ofp_table_feature_prop_actions, action_ids );
     total_len += len + PADLEN_TO_64( len );
   }
   
   len = actions_capabilities_len( &table_feature->write_actions_miss );
   if ( len ) {
-    len += sizeof( struct ofp_table_feature_prop_actions );
+    len += offsetof( struct ofp_table_feature_prop_actions, action_ids );
     total_len += len + PADLEN_TO_64( len );
   }
 
   len = actions_capabilities_len( &table_feature->apply_actions );
   if ( len ) {
-    len += sizeof( struct ofp_table_feature_prop_actions );
+    len += offsetof( struct ofp_table_feature_prop_actions, action_ids );
     total_len += len + PADLEN_TO_64( len );
   }
 
   len = actions_capabilities_len( &table_feature->apply_actions_miss );
   if ( len ) {
-    len += sizeof( struct ofp_table_feature_prop_actions );
+    len += offsetof( struct ofp_table_feature_prop_actions, action_ids );
     total_len += len + PADLEN_TO_64( len );
   }
 
   len = match_capabilities_len( &table_feature->matches );
   if ( len ) {
-    len += sizeof( struct ofp_table_feature_prop_oxm );
+    len += offsetof( struct ofp_table_feature_prop_oxm, oxm_ids );
     total_len += len + PADLEN_TO_64( len );
   }
   
   len = match_capabilities_len( &table_feature->wildcards );
   if ( len ) {
-    len += sizeof( struct ofp_table_feature_prop_oxm );
+    len += offsetof( struct ofp_table_feature_prop_oxm, oxm_ids );
     total_len += len + PADLEN_TO_64( len );
   }
 
   len = match_capabilities_len( &table_feature->write_setfield );
   if ( len ) {
-    len += sizeof( struct ofp_table_feature_prop_oxm );
+    len += offsetof( struct ofp_table_feature_prop_oxm, oxm_ids );
     total_len += len + PADLEN_TO_64( len );
   }
 
   len = match_capabilities_len( &table_feature->write_setfield_miss );
   if ( len ) {
-    len += sizeof( struct ofp_table_feature_prop_oxm );
+    len += offsetof( struct ofp_table_feature_prop_oxm, oxm_ids );
     total_len += len + PADLEN_TO_64( len );
   }
 
   len = match_capabilities_len( &table_feature->apply_setfield );
   if ( len ) {
-    len += sizeof( struct ofp_table_feature_prop_oxm );
+    len += offsetof( struct ofp_table_feature_prop_oxm, oxm_ids );
     total_len += len + PADLEN_TO_64( len );
   }
 
   len = match_capabilities_len( &table_feature->apply_setfield_miss );
   if ( len ) {
-    len += sizeof( struct ofp_table_feature_prop_oxm );
+    len += offsetof( struct ofp_table_feature_prop_oxm, oxm_ids );
     total_len += len + PADLEN_TO_64( len );
   }
 
   len = prop_next_table_ids_len( table_feature->next_table_ids );
   if ( len ) {
-    len = offsetof( struct ofp_table_feature_prop_next_tables, next_table_ids );
+    len += offsetof( struct ofp_table_feature_prop_next_tables, next_table_ids );
     total_len += len + PADLEN_TO_64( len );
   }
 
   len = prop_next_table_ids_len( table_feature->next_table_ids_miss );
   if ( len ) {
-    len = offsetof( struct ofp_table_feature_prop_next_tables, next_table_ids );
+    len += offsetof( struct ofp_table_feature_prop_next_tables, next_table_ids );
     total_len += len + PADLEN_TO_64( len );
   }
 
@@ -357,6 +357,12 @@ assign_instruction_ids( struct ofp_instruction *ins, instruction_capabilities *i
   uint16_t len = ( uint16_t ) sizeof( struct ofp_instruction );
   uint16_t total_len = 0;
 
+  if ( c & INSTRUCTION_EXPERIMENTER ) {
+    ins->type = OFPIT_EXPERIMENTER;
+    ins->len = len;
+    total_len = ( uint16_t )( total_len + len );
+    ins = ( struct ofp_instruction * )( ( char * ) ins + len );
+  }
   if ( c & INSTRUCTION_METER ) {
     ins->type = OFPIT_METER;
     ins->len = len;
@@ -409,14 +415,26 @@ assign_action_ids( struct ofp_action_header *ac_hdr, action_capabilities *action
     total_len = ( uint16_t )( total_len + len );
     ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
   }
-  if ( c & ACTION_SET_QUEUE ) {
-    ac_hdr->type = OFPAT_SET_QUEUE;
+  if ( c & ACTION_COPY_TTL_OUT ) {
+    ac_hdr->type = OFPAT_COPY_TTL_OUT;
     ac_hdr->len = len;
     total_len = ( uint16_t )( total_len + len );
     ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
   }
-  if ( c & ACTION_GROUP ) {
-    ac_hdr->type = OFPAT_GROUP;
+  if ( c & ACTION_COPY_TTL_IN ) {
+    ac_hdr->type = OFPAT_COPY_TTL_IN;
+    ac_hdr->len = len;
+    total_len = ( uint16_t )( total_len + len );
+    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+  }
+  if ( c & ACTION_SET_MPLS_TTL ) {
+    ac_hdr->type = OFPAT_SET_MPLS_TTL;
+    ac_hdr->len = len;
+    total_len = ( uint16_t )( total_len + len );
+    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+  }
+  if ( c & ACTION_DEC_MPLS_TTL ) {
+    ac_hdr->type = OFPAT_DEC_MPLS_TTL;
     ac_hdr->len = len;
     total_len = ( uint16_t )( total_len + len );
     ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
@@ -439,8 +457,38 @@ assign_action_ids( struct ofp_action_header *ac_hdr, action_capabilities *action
     total_len = ( uint16_t )( total_len + len );
     ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
   }
-  if( c & ACTION_POP_MPLS ) {
+  if ( c & ACTION_POP_MPLS ) {
     ac_hdr->type = OFPAT_POP_MPLS;
+    ac_hdr->len = len;
+    total_len = ( uint16_t )( total_len + len );
+    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+  }
+  if ( c & ACTION_SET_QUEUE ) {
+    ac_hdr->type = OFPAT_SET_QUEUE;
+    ac_hdr->len = len;
+    total_len = ( uint16_t )( total_len + len );
+    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+  }
+  if ( c & ACTION_GROUP ) {
+    ac_hdr->type = OFPAT_GROUP;
+    ac_hdr->len = len;
+    total_len = ( uint16_t )( total_len + len );
+    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+  }
+  if ( c & ACTION_SET_NW_TTL ) {
+    ac_hdr->type = OFPAT_SET_NW_TTL;
+    ac_hdr->len = len;
+    total_len = ( uint16_t )( total_len + len );
+    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+  }
+  if ( c & ACTION_DEC_NW_TTL ) {
+    ac_hdr->type = OFPAT_DEC_NW_TTL;
+    ac_hdr->len = len;
+    total_len = ( uint16_t )( total_len + len );
+    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+  }
+  if ( c & ACTION_SET_FIELD ) {
+    ac_hdr->type = OFPAT_SET_FIELD;
     ac_hdr->len = len;
     total_len = ( uint16_t )( total_len + len );
     ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
@@ -457,6 +505,13 @@ assign_action_ids( struct ofp_action_header *ac_hdr, action_capabilities *action
     total_len = ( uint16_t )( total_len + len );
     ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
   }
+  if ( c & ACTION_EXPERIMENTER ) {
+    ac_hdr->type = OFPAT_EXPERIMENTER;
+    ac_hdr->len = len;
+    total_len = ( uint16_t )( total_len + len );
+    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+  }
+
   return total_len;
 }
 
