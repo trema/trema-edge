@@ -180,7 +180,7 @@ void hton_oxm_match_eth_addr( oxm_match_header *dst, const oxm_match_header *src
 
   uint8_t length = OXM_LENGTH( *src );
   hton_oxm_match_header( dst, src );
-  bcopy( ( const char * ) src + sizeof( oxm_match_header ), ( char * ) dst + sizeof( oxm_match_header ), length );
+  memmove( ( char * ) dst + sizeof( oxm_match_header ), ( const char * ) src + sizeof( oxm_match_header ), length );
 }
 
 
@@ -343,7 +343,7 @@ void hton_oxm_match_ipv6_addr( oxm_match_header *dst, const oxm_match_header *sr
 
   uint8_t length = OXM_LENGTH( *src );
   hton_oxm_match_header( dst, src );
-  bcopy( ( const char * ) src + sizeof( oxm_match_header ), ( char * ) dst + sizeof( oxm_match_header ), length );
+  memmove( ( char * ) dst + sizeof( oxm_match_header ), ( const char * ) src + sizeof( oxm_match_header ), length );
 }
 
 
@@ -683,7 +683,7 @@ void hton_oxm_match( oxm_match_header *dst, const oxm_match_header *src ) {
 }
 
 
-void hton_match( struct ofp_match *dst, struct ofp_match *src ) {
+void hton_match( struct ofp_match *dst, const struct ofp_match *src ) {
   assert( dst != NULL );
   assert( src != NULL );
 
@@ -691,7 +691,6 @@ void hton_match( struct ofp_match *dst, struct ofp_match *src ) {
   uint16_t oxms_length = 0;
   uint16_t oxm_length = 0;
   uint16_t pad_len = 0;
-  oxm_match_header *d_oxm, *s_oxm;
 
   dst->type = htons( src->type );
   dst->length = htons( src->length );
@@ -699,8 +698,8 @@ void hton_match( struct ofp_match *dst, struct ofp_match *src ) {
   if ( total_len >= offsetof( struct ofp_match, oxm_fields ) ) {
     oxms_length = ( uint16_t ) ( total_len - offsetof( struct ofp_match, oxm_fields ) );
 
-    s_oxm = ( oxm_match_header * ) src->oxm_fields;
-    d_oxm = ( oxm_match_header * ) dst->oxm_fields;
+    const oxm_match_header *s_oxm = ( const oxm_match_header * ) src->oxm_fields;
+    oxm_match_header *d_oxm = ( oxm_match_header * ) dst->oxm_fields;
 
     while ( oxms_length > sizeof( oxm_match_header ) ) {
       oxm_length = ( uint16_t ) ( sizeof( oxm_match_header ) + OXM_LENGTH( *s_oxm ) );
@@ -711,7 +710,7 @@ void hton_match( struct ofp_match *dst, struct ofp_match *src ) {
       hton_oxm_match( d_oxm, s_oxm );
 
       oxms_length = ( uint16_t ) ( oxms_length - oxm_length );
-      s_oxm = ( oxm_match_header * ) ( ( char * ) s_oxm + oxm_length );
+      s_oxm = ( const oxm_match_header * ) ( ( const char * ) s_oxm + oxm_length );
       d_oxm = ( oxm_match_header * ) ( ( char * ) d_oxm + oxm_length );
     }
   }
@@ -769,7 +768,7 @@ void ntoh_oxm_match_eth_addr( oxm_match_header *dst, const oxm_match_header *src
           *dst == OXM_OF_IPV6_ND_SLL || *dst == OXM_OF_IPV6_ND_TLL );
   uint8_t length = OXM_LENGTH( *dst );
 
-  bcopy( ( const char * ) src + sizeof( oxm_match_header ), ( char * ) dst + sizeof( oxm_match_header ), length );
+  memmove( ( char * ) dst + sizeof( oxm_match_header ), ( const char * ) src + sizeof( oxm_match_header ), length );
 }
 
 
@@ -937,7 +936,7 @@ void ntoh_oxm_match_ipv6_addr( oxm_match_header *dst, const oxm_match_header *sr
           *dst == OXM_OF_IPV6_ND_TARGET );
   uint8_t length = OXM_LENGTH( *dst );
 
-  bcopy( ( const char * ) src + sizeof( oxm_match_header ), ( char * ) dst + sizeof( oxm_match_header ), length );
+  memmove( ( char * ) dst + sizeof( oxm_match_header ), ( const char * ) src + sizeof( oxm_match_header ), length );
 }
 
 
@@ -1285,22 +1284,21 @@ void ntoh_oxm_match( oxm_match_header *dst, const oxm_match_header *src ) {
 }
 
 
-void ntoh_match( struct ofp_match *dst, struct ofp_match *src ) {
+void ntoh_match( struct ofp_match *dst, const struct ofp_match *src ) {
   assert( dst != NULL );
   assert( src != NULL );
 
   uint16_t oxms_length = 0;
   uint16_t oxm_length = 0;
   uint16_t pad_len = 0;
-  oxm_match_header *d_oxm, *s_oxm;
 
   dst->type = ntohs( src->type );
   dst->length = ntohs( src->length );
 
   if ( dst->length >= offsetof( struct ofp_match, oxm_fields ) ) {
     oxms_length = ( uint16_t ) ( dst->length - offsetof( struct ofp_match, oxm_fields ) );
-    s_oxm = ( oxm_match_header * ) src->oxm_fields;
-    d_oxm = ( oxm_match_header * ) dst->oxm_fields;
+    const oxm_match_header *s_oxm = ( const oxm_match_header * ) src->oxm_fields;
+    oxm_match_header *d_oxm = ( oxm_match_header * ) dst->oxm_fields;
 
     while ( oxms_length > sizeof( oxm_match_header ) ) {
       oxm_length = ( uint16_t ) ( sizeof( oxm_match_header ) + OXM_LENGTH( ntohl( *s_oxm ) ) );
@@ -1311,7 +1309,7 @@ void ntoh_match( struct ofp_match *dst, struct ofp_match *src ) {
       ntoh_oxm_match( d_oxm, s_oxm );
 
       oxms_length = ( uint16_t ) ( oxms_length - oxm_length );
-      s_oxm = ( oxm_match_header * ) ( ( char * ) s_oxm + oxm_length );
+      s_oxm = ( const oxm_match_header * ) ( ( const char * ) s_oxm + oxm_length );
       d_oxm = ( oxm_match_header * ) ( ( char * ) d_oxm + oxm_length );
     }
   }

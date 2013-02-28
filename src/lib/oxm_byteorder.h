@@ -57,7 +57,7 @@ void hton_oxm_match_pbb_isid( oxm_match_header *dst, const oxm_match_header *src
 void hton_oxm_match_tunnel_id( oxm_match_header *dst, const oxm_match_header *src );
 void hton_oxm_match_ipv6_exthdr( oxm_match_header *dst, const oxm_match_header *src );
 void hton_oxm_match( oxm_match_header *dst, const oxm_match_header *src );
-void hton_match( struct ofp_match *dst, struct ofp_match *src );
+void hton_match( struct ofp_match *dst, const struct ofp_match *src );
 
 
 void ntoh_oxm_match_in_port( oxm_match_header *dst, const oxm_match_header *src );
@@ -91,7 +91,7 @@ void ntoh_oxm_match_pbb_isid( oxm_match_header *dst, const oxm_match_header *src
 void ntoh_oxm_match_tunnel_id( oxm_match_header *dst, const oxm_match_header *src );
 void ntoh_oxm_match_ipv6_exthdr( oxm_match_header *dst, const oxm_match_header *src );
 void ntoh_oxm_match( oxm_match_header *dst, const oxm_match_header *src );
-void ntoh_match( struct ofp_match *dst, struct ofp_match *src );
+void ntoh_match( struct ofp_match *dst, const struct ofp_match *src );
 
 
 #endif // OXM_BYTEORDER_H

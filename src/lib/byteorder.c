@@ -37,10 +37,10 @@ ntoh_port( struct ofp_port *dst, const struct ofp_port *src ) {
   dst->port_no = ntohl( src->port_no );
   memset( &dst->pad, 0, sizeof( dst->pad ) );
 
-  bcopy( src->hw_addr, dst->hw_addr, OFP_ETH_ALEN );
+  memmove( dst->hw_addr, src->hw_addr, OFP_ETH_ALEN );
   memset( &dst->pad2, 0, sizeof( dst->pad2 ) );
 
-  bcopy( src->name, dst->name, OFP_MAX_PORT_NAME_LEN );
+  memmove( dst->name, src->name, OFP_MAX_PORT_NAME_LEN );
 
   dst->config = ntohl( src->config );
   dst->state = ntohl( src->state );
@@ -73,21 +73,14 @@ void ntoh_action_set_field( struct ofp_action_set_field *dst, const struct ofp_a
   assert( dst != NULL );
   assert( ntohs( src->len ) != 0 );
 
-  oxm_match_header *d_oxm, *s_oxm;
-
-  struct ofp_action_set_field *asf = xcalloc( 1, ntohs( src->len ) );
-  memcpy( asf, src, ntohs( src->len ) );
-
-  dst->type = ntohs( asf->type );
-  dst->len = ntohs( asf->len );
+  dst->type = ntohs( src->type );
+  dst->len = ntohs( src->len );
 
   if ( dst->len > ( uint16_t ) sizeof( struct ofp_action_set_field ) ) {
-    s_oxm = ( oxm_match_header * ) asf->field;
-    d_oxm = ( oxm_match_header * ) dst->field;
+    const oxm_match_header *s_oxm = ( const oxm_match_header * ) src->field;
+    oxm_match_header *d_oxm = ( oxm_match_header * ) dst->field;
     ntoh_oxm_match( d_oxm, s_oxm );
   }
-
-  xfree( asf );
 }
 
 
@@ -96,22 +89,14 @@ void hton_action_set_field( struct ofp_action_set_field *dst, const struct ofp_a
   assert( dst != NULL );
   assert( src->len != 0 );
 
-  oxm_match_header *d_oxm, *s_oxm;
+  dst->type = htons( src->type );
+  dst->len = htons( src->len );
 
-  struct ofp_action_set_field *asf = xcalloc( 1, src->len );
-  memcpy( asf, src, src->len );
-
-  dst->type = htons( asf->type );
-  dst->len = htons( asf->len );
-
-
-  if ( src->len > ( uint16_t ) sizeof( struct ofp_action_set_field ) ) {
-    s_oxm = ( oxm_match_header * ) asf->field;
-    d_oxm = ( oxm_match_header * ) dst->field;
+  if ( ntohs( dst->len ) > ( uint16_t ) sizeof( struct ofp_action_set_field ) ) {
+    const oxm_match_header *s_oxm = ( const oxm_match_header * ) src->field;
+    oxm_match_header *d_oxm = ( oxm_match_header * ) dst->field;
     hton_oxm_match( d_oxm, s_oxm );
   }
-
-  xfree( asf );
 }
 
 
@@ -131,20 +116,15 @@ ntoh_action_experimenter( struct ofp_action_experimenter_header *dst, const stru
   assert( src != NULL );
   assert( dst != NULL );
 
-  struct ofp_action_experimenter_header *eh = xcalloc( 1, ntohs( src->len ) );
-  memcpy( eh, src, ntohs( src->len ) );
-
-  dst->type = ntohs( eh->type );
-  dst->len = ntohs( eh->len );
-  dst->experimenter = ntohl( eh->experimenter );
+  dst->type = ntohs( src->type );
+  dst->len = ntohs( src->len );
+  dst->experimenter = ntohl( src->experimenter );
 
   uint16_t offset = sizeof( struct ofp_action_experimenter_header );
   if ( dst->len > offset ) {
     uint16_t data_len = ( uint16_t ) ( dst->len - offset );
-    memcpy( ( char * ) dst + offset, ( char * ) eh + offset, data_len );
+    memmove( ( char * ) dst + offset, ( const char * ) src + offset, data_len );
   }
-
-  xfree( eh );
 }
 
 
@@ -153,22 +133,15 @@ hton_action_experimenter( struct ofp_action_experimenter_header *dst, const stru
   assert( src != NULL );
   assert( dst != NULL );
 
-  uint16_t src_len = src->len;
-
-  struct ofp_action_experimenter_header *eh = xcalloc( 1, src->len );
-  memcpy( eh, src, src->len );
-
-  dst->type = htons( eh->type );
-  dst->len = htons( eh->len );
-  dst->experimenter = htonl( eh->experimenter );
+  dst->type = htons( src->type );
+  dst->len = htons( src->len );
+  dst->experimenter = htonl( src->experimenter );
 
   uint16_t offset = sizeof( struct ofp_action_experimenter_header );
-  if ( src_len > offset ) {
-    uint16_t data_len = ( uint16_t ) ( src_len - offset );
-    memcpy( ( char * ) dst + offset, ( char * ) eh + offset, data_len );
+  if ( ntohs( dst->len ) > offset ) {
+    uint16_t data_len = ( uint16_t ) ( ntohs( dst->len ) - offset );
+    memmove( ( char * ) dst + offset, ( const char * ) src + offset, data_len );
   }
-
-  xfree( eh );
 }
 
 
@@ -348,37 +321,32 @@ ntoh_flow_stats( struct ofp_flow_stats *dst, const struct ofp_flow_stats *src ) 
   assert( dst != NULL );
   assert( ntohs( src->length ) != 0 );
 
-  struct ofp_flow_stats *fs = xcalloc( 1, ntohs( src->length ) );
-  memcpy( fs, src, ntohs( src->length ) );
-
-  dst->length = ntohs( fs->length );
-  dst->table_id = fs->table_id;
+  dst->length = ntohs( src->length );
+  dst->table_id = src->table_id;
   dst->pad = 0;
-  dst->duration_sec = ntohl( fs->duration_sec );
-  dst->duration_nsec = ntohl( fs->duration_nsec );
-  dst->priority = ntohs( fs->priority );
-  dst->idle_timeout = ntohs( fs->idle_timeout );
-  dst->hard_timeout = ntohs( fs->hard_timeout );
-  dst->flags = ntohs( fs->flags );
+  dst->duration_sec = ntohl( src->duration_sec );
+  dst->duration_nsec = ntohl( src->duration_nsec );
+  dst->priority = ntohs( src->priority );
+  dst->idle_timeout = ntohs( src->idle_timeout );
+  dst->hard_timeout = ntohs( src->hard_timeout );
+  dst->flags = ntohs( src->flags );
   memset( &dst->pad2, 0, sizeof( dst->pad2 ) );
-  dst->cookie = ntohll( fs->cookie );
-  dst->packet_count = ntohll( fs->packet_count );
-  dst->byte_count = ntohll( fs->byte_count );
-  ntoh_match( &dst->match, &fs->match );
+  dst->cookie = ntohll( src->cookie );
+  dst->packet_count = ntohll( src->packet_count );
+  dst->byte_count = ntohll( src->byte_count );
+  ntoh_match( &dst->match, &src->match );
 
   uint16_t match_len = ( uint16_t ) ( dst->match.length + PADLEN_TO_64( dst->match.length ) );
 
   size_t offset = ( size_t ) ( offsetof( struct ofp_flow_stats, match ) + match_len );
 
-  if ( dst->length >= offset ) {
-    struct ofp_instruction *inst_src = ( struct ofp_instruction * ) ( ( char * ) fs + offset );
+  if ( dst->length > offset ) {
+    const struct ofp_instruction *inst_src = ( const struct ofp_instruction * ) ( ( const char * ) src + offset );
     struct ofp_instruction *inst_dst = ( struct ofp_instruction * ) ( ( char * ) dst + offset );
 
     uint16_t instructions_len = ( uint16_t ) ( dst->length - offset );
-    uint16_t part_len;
-
     while ( instructions_len >= sizeof( struct ofp_instruction ) ) {
-      part_len = ntohs( inst_src->len );
+      uint16_t part_len = ntohs( inst_src->len );
       if ( instructions_len < part_len ) {
         break;
       }
@@ -386,12 +354,10 @@ ntoh_flow_stats( struct ofp_flow_stats *dst, const struct ofp_flow_stats *src ) 
 
       instructions_len = ( uint16_t ) ( instructions_len - part_len );
 
-      inst_src = ( struct ofp_instruction * ) ( ( char * ) inst_src + part_len );
+      inst_src = ( const struct ofp_instruction * ) ( ( const char * ) inst_src + part_len );
       inst_dst = ( struct ofp_instruction * ) ( ( char * ) inst_dst + part_len );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -401,38 +367,31 @@ hton_flow_stats( struct ofp_flow_stats *dst, const struct ofp_flow_stats *src ) 
   assert( dst != NULL );
   assert( src->length != 0 );
 
-  uint16_t total_len = src->length;
-
-  struct ofp_flow_stats *fs = xcalloc( 1, total_len );
-  memcpy( fs, src, total_len );
-
-  dst->length = htons( fs->length );
-  dst->table_id = fs->table_id;
+  dst->length = htons( src->length );
+  dst->table_id = src->table_id;
   dst->pad = 0;
-  dst->duration_sec = htonl( fs->duration_sec );
-  dst->duration_nsec = htonl( fs->duration_nsec );
-  dst->priority = htons( fs->priority );
-  dst->idle_timeout = htons( fs->idle_timeout );
-  dst->hard_timeout = htons( fs->hard_timeout );
-  dst->flags = htons( fs->flags );
+  dst->duration_sec = htonl( src->duration_sec );
+  dst->duration_nsec = htonl( src->duration_nsec );
+  dst->priority = htons( src->priority );
+  dst->idle_timeout = htons( src->idle_timeout );
+  dst->hard_timeout = htons( src->hard_timeout );
+  dst->flags = htons( src->flags );
   memset( &dst->pad2, 0, sizeof( dst->pad2 ) );
-  dst->cookie = htonll( fs->cookie );
-  dst->packet_count = htonll( fs->packet_count );
-  dst->byte_count = htonll( fs->byte_count );
-  hton_match( &dst->match, &fs->match );
+  dst->cookie = htonll( src->cookie );
+  dst->packet_count = htonll( src->packet_count );
+  dst->byte_count = htonll( src->byte_count );
+  hton_match( &dst->match, &src->match );
 
-  uint16_t match_len = ( uint16_t ) ( src->match.length + PADLEN_TO_64( src->match.length ) );
+  uint16_t match_len = ( uint16_t ) ( ntohs( dst->match.length ) + PADLEN_TO_64( ntohs( dst->match.length ) ) );
   size_t offset = ( size_t ) ( offsetof( struct ofp_flow_stats, match ) + match_len );
 
-  if ( total_len > offset ) {
-    struct ofp_instruction *inst_src = ( struct ofp_instruction * ) ( ( char * ) fs + offset );
+  if ( ntohs( dst->length ) > offset ) {
+    const struct ofp_instruction *inst_src = ( const struct ofp_instruction * ) ( ( const char * ) src + offset );
     struct ofp_instruction *inst_dst = ( struct ofp_instruction * ) ( ( char * ) dst + offset );
 
-    uint16_t instructions_len = ( uint16_t ) ( total_len - offset );
-    uint16_t part_len;
-
+    uint16_t instructions_len = ( uint16_t ) ( ntohs( dst->length ) - offset );
     while ( instructions_len >= sizeof( struct ofp_instruction ) ) {
-      part_len = inst_src->len;
+      uint16_t part_len = inst_src->len;
       if ( instructions_len < part_len ) {
         break;
       }
@@ -442,11 +401,9 @@ hton_flow_stats( struct ofp_flow_stats *dst, const struct ofp_flow_stats *src ) 
       instructions_len = ( uint16_t ) ( instructions_len - part_len );
 
       inst_dst = ( struct ofp_instruction * ) ( ( char * ) inst_dst + part_len );
-      inst_src = ( struct ofp_instruction * ) ( ( char * ) inst_src + part_len );
+      inst_src = ( const struct ofp_instruction * ) ( ( const char * ) inst_src + part_len );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -520,26 +477,23 @@ ntoh_queue_property( struct ofp_queue_prop_header *dst, const struct ofp_queue_p
   assert( dst != NULL );
   assert( ntohs( src->len ) != 0 );
 
-  struct ofp_queue_prop_header *ph = xcalloc( 1, ntohs( src->len ) );
-  memcpy( ph, src, ntohs( src->len ) );
-
-  dst->property = ntohs( ph->property );
-  dst->len = ntohs( ph->len );
+  dst->property = ntohs( src->property );
+  dst->len = ntohs( src->len );
   
   if ( dst->property == OFPQT_MIN_RATE ) {
-    struct ofp_queue_prop_min_rate *mr_src = ( struct ofp_queue_prop_min_rate * ) ph;
+    const struct ofp_queue_prop_min_rate *mr_src = ( const struct ofp_queue_prop_min_rate * ) src;
     struct ofp_queue_prop_min_rate *mr_dst = ( struct ofp_queue_prop_min_rate * ) dst;
 
     mr_dst->rate = ntohs( mr_src->rate );
-
-  } else if ( dst->property == OFPQT_MAX_RATE ) {
-    struct ofp_queue_prop_max_rate *mr_src = ( struct ofp_queue_prop_max_rate * ) ph;
+  }
+  else if ( dst->property == OFPQT_MAX_RATE ) {
+    const struct ofp_queue_prop_max_rate *mr_src = ( const struct ofp_queue_prop_max_rate * ) src;
     struct ofp_queue_prop_max_rate *mr_dst = ( struct ofp_queue_prop_max_rate * ) dst;
 
     mr_dst->rate = ntohs( mr_src->rate );
-
-  } else if ( dst->property == OFPQT_EXPERIMENTER ) {
-    struct ofp_queue_prop_experimenter *exp_src = ( struct ofp_queue_prop_experimenter * ) ph;
+  }
+  else if ( dst->property == OFPQT_EXPERIMENTER ) {
+    const struct ofp_queue_prop_experimenter *exp_src = ( const struct ofp_queue_prop_experimenter * ) src;
     struct ofp_queue_prop_experimenter *exp_dst = ( struct ofp_queue_prop_experimenter * ) dst;
 
     exp_dst->experimenter = ntohl( exp_src->experimenter );
@@ -547,11 +501,9 @@ ntoh_queue_property( struct ofp_queue_prop_header *dst, const struct ofp_queue_p
     uint16_t offset = offsetof( struct ofp_queue_prop_experimenter, data );
     if ( dst->len > offset ) {
       uint16_t data_len = ( uint16_t ) ( dst->len - offset );
-      memcpy( exp_dst->data, exp_src->data, data_len );
+      memmove( exp_dst->data, exp_src->data, data_len );
     }
   }
-
-  xfree( ph );
 }
 
 
@@ -561,40 +513,33 @@ hton_queue_property( struct ofp_queue_prop_header *dst, const struct ofp_queue_p
   assert( dst != NULL );
   assert( src->len != 0 );
 
-  struct ofp_queue_prop_header *ph = xcalloc( 1, src->len );
-  memcpy( ph, src, src->len );
-
-  uint16_t src_len = src->len;
-
-  dst->property = htons( ph->property );
-  dst->len = htons( ph->len );
+  dst->property = htons( src->property );
+  dst->len = htons( src->len );
   
   if ( src->property == OFPQT_MIN_RATE ) {
-    struct ofp_queue_prop_min_rate *mr_src = ( struct ofp_queue_prop_min_rate * ) ph;
+    const struct ofp_queue_prop_min_rate *mr_src = ( const struct ofp_queue_prop_min_rate * ) src;
     struct ofp_queue_prop_min_rate *mr_dst = ( struct ofp_queue_prop_min_rate * ) dst;
 
     mr_dst->rate = htons( mr_src->rate );
-
-  } else if ( src->property == OFPQT_MAX_RATE ) {
-    struct ofp_queue_prop_max_rate *mr_src = ( struct ofp_queue_prop_max_rate * ) ph;
+  }
+  else if ( src->property == OFPQT_MAX_RATE ) {
+    const struct ofp_queue_prop_max_rate *mr_src = ( const struct ofp_queue_prop_max_rate * ) src;
     struct ofp_queue_prop_max_rate *mr_dst = ( struct ofp_queue_prop_max_rate * ) dst;
 
     mr_dst->rate = htons( mr_src->rate );
-
-  } else if ( src->property == OFPQT_EXPERIMENTER ) {
-    struct ofp_queue_prop_experimenter *exp_src = ( struct ofp_queue_prop_experimenter * ) ph;
+  }
+  else if ( src->property == OFPQT_EXPERIMENTER ) {
+    const struct ofp_queue_prop_experimenter *exp_src = ( const struct ofp_queue_prop_experimenter * ) src;
     struct ofp_queue_prop_experimenter *exp_dst = ( struct ofp_queue_prop_experimenter * ) dst;
 
     exp_dst->experimenter = htonl( exp_src->experimenter );
 
     uint16_t offset = offsetof( struct ofp_queue_prop_experimenter, data );
-    if ( src_len > offset ) {
-      uint16_t data_len = ( uint16_t ) ( src_len - offset );
-      memcpy( exp_dst->data, exp_src->data, data_len );
+    if ( ntohs( dst->len ) > offset ) {
+      uint16_t data_len = ( uint16_t ) ( ntohs( dst->len ) - offset );
+      memmove( exp_dst->data, exp_src->data, data_len );
     }
   }
-
-  xfree( ph );
 }
 
 
@@ -607,24 +552,19 @@ ntoh_packet_queue( struct ofp_packet_queue *dst, const struct ofp_packet_queue *
   assert( dst != NULL );
   assert( ntohs( src->len ) != 0 );
 
-  struct ofp_packet_queue *pq = xcalloc( 1, ntohs( src->len ) );
-  memcpy( pq, src, ntohs( src->len ) );
-
-  dst->queue_id = ntohl( pq->queue_id );
-  dst->port = ntohl( pq->port );
-  dst->len = ntohs( pq->len );
+  dst->queue_id = ntohl( src->queue_id );
+  dst->port = ntohl( src->port );
+  dst->len = ntohs( src->len );
   memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   size_t offset = offsetof( struct ofp_packet_queue, properties );
   if ( dst->len >= offset ) {
-    struct ofp_queue_prop_header *ph_src = ( struct ofp_queue_prop_header * ) ( ( char * ) pq + offset );
+    const struct ofp_queue_prop_header *ph_src = ( const struct ofp_queue_prop_header * ) ( ( const char * ) src + offset );
     struct ofp_queue_prop_header *ph_dst = ( struct ofp_queue_prop_header * ) ( ( char * ) dst + offset );
 
     uint16_t properties_length = ( uint16_t ) ( dst->len - offset );
-    uint16_t part_len;
-
     while ( properties_length >= sizeof( struct ofp_queue_prop_header ) ) {
-      part_len = ntohs( ph_src->len );
+      uint16_t part_len = ntohs( ph_src->len );
       if ( properties_length < part_len ) {
         break;
       }
@@ -633,12 +573,10 @@ ntoh_packet_queue( struct ofp_packet_queue *dst, const struct ofp_packet_queue *
 
       properties_length = ( uint16_t ) ( properties_length - part_len );
 
-      ph_src = ( struct ofp_queue_prop_header * ) ( ( char * ) ph_src + part_len );
+      ph_src = ( const struct ofp_queue_prop_header * ) ( ( const char * ) ph_src + part_len );
       ph_dst = ( struct ofp_queue_prop_header * ) ( ( char * ) ph_dst + part_len );
     }
   }
-
-  xfree( pq );
 }
 
 
@@ -651,25 +589,19 @@ hton_packet_queue( struct ofp_packet_queue *dst, const struct ofp_packet_queue *
   assert( dst != NULL );
   assert( src->len != 0 );
 
-  uint16_t total_len = src->len;
-  struct ofp_packet_queue *pq = xcalloc( 1, total_len );
-  memcpy( pq, src, total_len );
-
-  dst->queue_id = htonl( pq->queue_id );
-  dst->port = htonl( pq->port );
-  dst->len = htons( pq->len );
+  dst->queue_id = htonl( src->queue_id );
+  dst->port = htonl( src->port );
+  dst->len = htons( src->len );
   memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   size_t offset = offsetof( struct ofp_packet_queue, properties );
-  if ( total_len >= offset ) {
-    struct ofp_queue_prop_header *ph_src = ( struct ofp_queue_prop_header * ) ( ( char * ) pq + offset );
+  if ( ntohs( dst->len ) >= offset ) {
+    const struct ofp_queue_prop_header *ph_src = ( const struct ofp_queue_prop_header * ) ( ( const char * ) src + offset );
     struct ofp_queue_prop_header *ph_dst = ( struct ofp_queue_prop_header * ) ( ( char * ) dst + offset );
 
-    uint16_t properties_length = ( uint16_t ) ( total_len - offset );
-    uint16_t part_len;
-
+    uint16_t properties_length = ( uint16_t ) ( ntohs( dst->len ) - offset );
     while ( properties_length >= sizeof( struct ofp_queue_prop_header ) ) {
-      part_len = ph_src->len;
+      uint16_t part_len = ph_src->len;
       if ( properties_length < part_len ) {
         break;
       }
@@ -678,11 +610,9 @@ hton_packet_queue( struct ofp_packet_queue *dst, const struct ofp_packet_queue *
       properties_length = ( uint16_t ) ( properties_length - part_len );
 
       ph_dst = ( struct ofp_queue_prop_header * ) ( ( char * ) ph_dst + part_len );
-      ph_src = ( struct ofp_queue_prop_header * ) ( ( char * ) ph_src + part_len );
+      ph_src = ( const struct ofp_queue_prop_header * ) ( ( const char * ) ph_src + part_len );
     }
   }
-
-  xfree( pq );
 }
 
 
@@ -777,23 +707,19 @@ ntoh_instruction_actions( struct ofp_instruction_actions *dst, const struct ofp_
   assert( dst != NULL );
   assert( ntohs( src->len ) != 0 );
 
-  struct ofp_instruction_actions *fs = xcalloc( 1, ntohs( src->len ) );
-  memcpy( fs, src, ntohs( src->len ) );
-
-  dst->type = ntohs( fs->type );
-  dst->len = ntohs( fs->len );
+  dst->type = ntohs( src->type );
+  dst->len = ntohs( src->len );
   memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   size_t offset = offsetof( struct ofp_instruction_actions, actions );
   if ( dst->len >= offset ) {
     uint16_t actions_length = ( uint16_t ) ( dst->len - offset );
 
-    struct ofp_action_header *ah_src = ( struct ofp_action_header * ) ( ( char * ) fs + offset );
+    const struct ofp_action_header *ah_src = ( const struct ofp_action_header * ) ( ( const char * ) src + offset );
     struct ofp_action_header *ah_dst = ( struct ofp_action_header * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( actions_length >= sizeof( struct ofp_action_header ) ) {
-      part_len = ntohs( ah_src->len );
+      uint16_t part_len = ntohs( ah_src->len );
       if ( actions_length < part_len ) {
         break;
       }
@@ -802,12 +728,10 @@ ntoh_instruction_actions( struct ofp_instruction_actions *dst, const struct ofp_
 
       actions_length = ( uint16_t ) ( actions_length - part_len );
 
-      ah_src = ( struct ofp_action_header * ) ( ( char * ) ah_src + part_len );
+      ah_src = ( const struct ofp_action_header * ) ( ( const char * ) ah_src + part_len );
       ah_dst = ( struct ofp_action_header * ) ( ( char * ) ah_dst + part_len );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -817,24 +741,19 @@ hton_instruction_actions( struct ofp_instruction_actions *dst, const struct ofp_
   assert( dst != NULL );
   assert( src->len != 0 );
 
-  uint16_t total_len = src->len;
-  struct ofp_instruction_actions *fs = xcalloc( 1, total_len );
-  memcpy( fs, src, total_len );
-
-  dst->type = htons( fs->type );
-  dst->len = htons( fs->len );
+  dst->type = htons( src->type );
+  dst->len = htons( src->len );
   memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   size_t offset = offsetof( struct ofp_instruction_actions, actions );
-  if ( total_len >= offset ) {
-    uint16_t actions_length = ( uint16_t ) ( total_len - offset );
+  if ( ntohs( dst->len ) >= offset ) {
+    uint16_t actions_length = ( uint16_t ) ( ntohs( dst->len ) - offset );
 
-    struct ofp_action_header *ah_src = ( struct ofp_action_header * ) ( ( char * ) fs + offset );
+    const struct ofp_action_header *ah_src = ( const struct ofp_action_header * ) ( ( const char * ) src + offset );
     struct ofp_action_header *ah_dst = ( struct ofp_action_header * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( actions_length >= sizeof( struct ofp_action_header ) ) {
-      part_len = ah_src->len;
+      uint16_t part_len = ah_src->len;
       if ( actions_length < part_len ) {
         break;
       }
@@ -844,11 +763,9 @@ hton_instruction_actions( struct ofp_instruction_actions *dst, const struct ofp_
       actions_length = ( uint16_t ) ( actions_length - part_len );
 
       ah_dst = ( struct ofp_action_header * ) ( ( char * ) ah_dst + part_len );
-      ah_src = ( struct ofp_action_header * ) ( ( char * ) ah_src + part_len );
+      ah_src = ( const struct ofp_action_header * ) ( ( const char * ) ah_src + part_len );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -868,20 +785,15 @@ ntoh_instruction_experimenter( struct ofp_instruction_experimenter *dst, const s
   assert( src != NULL );
   assert( dst != NULL );
 
-  struct ofp_instruction_experimenter *ie = xcalloc( 1, ntohs( src->len ) );
-  memcpy( ie, src, ntohs( src->len ) );
-
-  dst->type = ntohs( ie->type );
-  dst->len = ntohs( ie->len );
-  dst->experimenter = ntohl( ie->experimenter );
+  dst->type = ntohs( src->type );
+  dst->len = ntohs( src->len );
+  dst->experimenter = ntohl( src->experimenter );
 
   uint16_t offset = sizeof( struct ofp_instruction_experimenter );
   if ( dst->len > offset ) {
     uint16_t data_len = ( uint16_t ) ( dst->len - offset );
-    memcpy( ( char * ) dst + offset, ( char * ) ie + offset, data_len );
+    memmove( ( char * ) dst + offset, ( const char * ) src + offset, data_len );
   }
-
-  xfree( ie );
 }
 
 
@@ -890,22 +802,15 @@ hton_instruction_experimenter( struct ofp_instruction_experimenter *dst, const s
   assert( src != NULL );
   assert( dst != NULL );
 
-  uint16_t src_len = src->len;
-
-  struct ofp_instruction_experimenter *ie = xcalloc( 1, src->len );
-  memcpy( ie, src, src->len );
-
-  dst->type = htons( ie->type );
-  dst->len = htons( ie->len );
-  dst->experimenter = htonl( ie->experimenter );
+  dst->type = htons( src->type );
+  dst->len = htons( src->len );
+  dst->experimenter = htonl( src->experimenter );
 
   uint16_t offset = sizeof( struct ofp_instruction_experimenter );
-  if ( src_len > offset ) {
-    uint16_t data_len = ( uint16_t ) ( src_len - offset );
-    memcpy( ( char * ) dst + offset, ( char * ) ie + offset, data_len );
+  if ( ntohs( dst->len ) > offset ) {
+    uint16_t data_len = ( uint16_t ) ( ntohs( dst->len ) - offset );
+    memmove( ( char * ) dst + offset, ( const char * ) src + offset, data_len );
   }
-
-  xfree( ie );
 }
 
 
@@ -914,25 +819,21 @@ void ntoh_bucket( struct ofp_bucket *dst, const struct ofp_bucket *src ) {
   assert( dst != NULL );
   assert( ntohs( src->len ) != 0 );
 
-  struct ofp_bucket *fs = xcalloc( 1, ntohs( src->len ) );
-  memcpy( fs, src, ntohs( src->len ) );
-
-  dst->len = ntohs( fs->len );
-  dst->weight = ntohs( fs->weight );
-  dst->watch_port = ntohl( fs->watch_port );
-  dst->watch_group = ntohl( fs->watch_group );
+  dst->len = ntohs( src->len );
+  dst->weight = ntohs( src->weight );
+  dst->watch_port = ntohl( src->watch_port );
+  dst->watch_group = ntohl( src->watch_group );
   memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   size_t offset = offsetof( struct ofp_bucket, actions );
   if ( dst->len >= offset ) {
     uint16_t actions_length = ( uint16_t ) ( dst->len - offset );
 
-    struct ofp_action_header *ah_src = ( struct ofp_action_header * ) ( ( char * ) fs + offset );
+    const struct ofp_action_header *ah_src = ( const struct ofp_action_header * ) ( ( const char * ) src + offset );
     struct ofp_action_header *ah_dst = ( struct ofp_action_header * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( actions_length >= sizeof( struct ofp_action_header ) ) {
-      part_len = ntohs( ah_src->len );
+      uint16_t part_len = ntohs( ah_src->len );
       if ( actions_length < part_len ) {
         break;
       }
@@ -940,12 +841,10 @@ void ntoh_bucket( struct ofp_bucket *dst, const struct ofp_bucket *src ) {
 
       actions_length = ( uint16_t ) ( actions_length - part_len );
 
-      ah_src = ( struct ofp_action_header * ) ( ( char * ) ah_src + part_len );
+      ah_src = ( const struct ofp_action_header * ) ( ( const char * ) ah_src + part_len );
       ah_dst = ( struct ofp_action_header * ) ( ( char * ) ah_dst + part_len );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -954,26 +853,21 @@ void hton_bucket( struct ofp_bucket *dst, const struct ofp_bucket *src ) {
   assert( dst != NULL );
   assert( src->len != 0 );
 
-  uint16_t total_len = src->len;
-  struct ofp_bucket *fs = xcalloc( 1, total_len );
-  memcpy( fs, src, total_len );
-
-  dst->len = htons( fs->len );
-  dst->weight = htons( fs->weight );
-  dst->watch_port = htonl( fs->watch_port );
-  dst->watch_group = htonl( fs->watch_group );
+  dst->len = htons( src->len );
+  dst->weight = htons( src->weight );
+  dst->watch_port = htonl( src->watch_port );
+  dst->watch_group = htonl( src->watch_group );
   memset( &dst->pad, 0, sizeof( dst->pad ) );
 
   size_t offset = offsetof( struct ofp_bucket, actions );
-  if ( total_len >= offset ) {
-    uint16_t actions_length = ( uint16_t ) ( total_len - offset );
+  if ( ntohs( dst->len ) >= offset ) {
+    uint16_t actions_length = ( uint16_t ) ( ntohs( dst->len ) - offset );
 
-    struct ofp_action_header *ah_src = ( struct ofp_action_header * ) ( ( char * ) fs + offset );
+    const struct ofp_action_header *ah_src = ( const struct ofp_action_header * ) ( ( const char * ) src + offset );
     struct ofp_action_header *ah_dst = ( struct ofp_action_header * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( actions_length >= sizeof( struct ofp_action_header ) ) {
-      part_len = ah_src->len;
+      uint16_t part_len = ah_src->len;
       if ( actions_length < part_len ) {
         break;
       }
@@ -982,11 +876,9 @@ void hton_bucket( struct ofp_bucket *dst, const struct ofp_bucket *src ) {
       actions_length = ( uint16_t ) ( actions_length - part_len );
 
       ah_dst = ( struct ofp_action_header * ) ( ( char * ) ah_dst + part_len );
-      ah_src = ( struct ofp_action_header * ) ( ( char * ) ah_src + part_len );
+      ah_src = ( const struct ofp_action_header * ) ( ( const char * ) ah_src + part_len );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -1019,22 +911,17 @@ void ntoh_meter_band_experimenter( struct ofp_meter_band_experimenter *dst, cons
   assert( src != NULL );
   assert( dst != NULL );
 
-  struct ofp_meter_band_experimenter *be = xcalloc( 1, ntohs( src->len ) );
-  memcpy( be, src, ntohs( src->len ) );
-
-  dst->type = ntohs( be->type );
-  dst->len = ntohs( be->len );
-  dst->rate = ntohl( be->rate );
-  dst->burst_size = ntohl( be->burst_size );
-  dst->experimenter = ntohl( be->experimenter );
+  dst->type = ntohs( src->type );
+  dst->len = ntohs( src->len );
+  dst->rate = ntohl( src->rate );
+  dst->burst_size = ntohl( src->burst_size );
+  dst->experimenter = ntohl( src->experimenter );
 
   uint16_t offset = sizeof( struct ofp_meter_band_experimenter );
   if ( dst->len > offset ) {
     uint16_t data_len = ( uint16_t ) ( dst->len - offset );
-    memcpy( ( char * ) dst + offset, ( char * ) be + offset, data_len );
+    memmove( ( char * ) dst + offset, ( const char * ) src + offset, data_len );
   }
-
-  xfree( be );
 }
 
 
@@ -1042,24 +929,17 @@ void hton_meter_band_experimenter( struct ofp_meter_band_experimenter *dst, cons
   assert( src != NULL );
   assert( dst != NULL );
 
-  uint16_t src_len = src->len;
-
-  struct ofp_meter_band_experimenter *be = xcalloc( 1, src->len );
-  memcpy( be, src, src->len );
-
-  dst->type = htons( be->type );
-  dst->len = htons( be->len );
-  dst->rate = htonl( be->rate );
-  dst->burst_size = htonl( be->burst_size );
-  dst->experimenter = htonl( be->experimenter );
+  dst->type = htons( src->type );
+  dst->len = htons( src->len );
+  dst->rate = htonl( src->rate );
+  dst->burst_size = htonl( src->burst_size );
+  dst->experimenter = htonl( src->experimenter );
 
   uint16_t offset = sizeof( struct ofp_meter_band_experimenter );
-  if ( src_len > offset ) {
-    uint16_t data_len = ( uint16_t ) ( src_len - offset );
-    memcpy( ( char * ) dst + offset, ( char * ) be + offset, data_len );
+  if ( ntohs( dst->len ) > offset ) {
+    uint16_t data_len = ( uint16_t ) ( ntohs( dst->len ) - offset );
+    memmove( ( char * ) dst + offset, ( const char * ) src + offset, data_len );
   }
-
-  xfree( be );
 }
 
 
@@ -1110,22 +990,18 @@ void ntoh_table_feature_prop_instructions( struct ofp_table_feature_prop_instruc
   assert( dst != NULL );
   assert( ntohs( src->length ) != 0 );
 
-  struct ofp_table_feature_prop_instructions *tfpi = xcalloc( 1, ntohs( src->length ) );
-  memcpy( tfpi, src, ntohs( src->length ) );
-
-  dst->type = ntohs( tfpi->type );
-  dst->length = ntohs( tfpi->length );
+  dst->type = ntohs( src->type );
+  dst->length = ntohs( src->length );
 
   size_t offset = sizeof( struct ofp_table_feature_prop_instructions );
   if ( dst->length >= offset ) {
     uint16_t instructions_len = ( uint16_t ) ( dst->length - offset );
 
-    struct ofp_instruction *inst_src = ( struct ofp_instruction * ) ( ( char * ) tfpi + offset );
+    const struct ofp_instruction *inst_src = ( const struct ofp_instruction * ) ( ( const char * ) src + offset );
     struct ofp_instruction *inst_dst = ( struct ofp_instruction * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( instructions_len >= sizeof( struct ofp_instruction ) ) {
-      part_len = ntohs( inst_src->len );
+      uint16_t part_len = ntohs( inst_src->len );
       if ( instructions_len < part_len ) {
         break;
       }
@@ -1133,7 +1009,7 @@ void ntoh_table_feature_prop_instructions( struct ofp_table_feature_prop_instruc
 
       instructions_len = ( uint16_t ) ( instructions_len - part_len );
 
-      inst_src = ( struct ofp_instruction * ) ( ( char * ) inst_src + part_len );
+      inst_src = ( const struct ofp_instruction * ) ( ( const char * ) inst_src + part_len );
       inst_dst = ( struct ofp_instruction * ) ( ( char * ) inst_dst + part_len );
     }
 
@@ -1142,8 +1018,6 @@ void ntoh_table_feature_prop_instructions( struct ofp_table_feature_prop_instruc
       memset( inst_dst, 0, pad_len );
     }
   }
-
-  xfree( tfpi );
 }
 
 
@@ -1152,23 +1026,18 @@ void hton_table_feature_prop_instructions( struct ofp_table_feature_prop_instruc
   assert( dst != NULL );
   assert( src->length != 0 );
 
-  uint16_t total_len = src->length;
-  struct ofp_table_feature_prop_instructions *tfpi = xcalloc( 1, total_len );
-  memcpy( tfpi, src, total_len );
-
-  dst->type = htons( tfpi->type );
-  dst->length = htons( tfpi->length );
+  dst->type = htons( src->type );
+  dst->length = htons( src->length );
 
   size_t offset = sizeof( struct ofp_table_feature_prop_instructions );
-  if ( total_len >= offset ) {
-    uint16_t instructions_len = ( uint16_t ) ( total_len - offset );
+  if ( ntohs( dst->length ) >= offset ) {
+    uint16_t instructions_len = ( uint16_t ) ( ntohs( dst->length ) - offset );
 
-    struct ofp_instruction *inst_src = ( struct ofp_instruction * ) ( ( char * ) tfpi + offset );
+    const struct ofp_instruction *inst_src = ( const struct ofp_instruction * ) ( ( const char * ) src + offset );
     struct ofp_instruction *inst_dst = ( struct ofp_instruction * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( instructions_len >= sizeof( struct ofp_instruction ) ) {
-      part_len = inst_src->len;
+      uint16_t part_len = inst_src->len;
       if ( instructions_len < part_len ) {
         break;
       }
@@ -1177,16 +1046,14 @@ void hton_table_feature_prop_instructions( struct ofp_table_feature_prop_instruc
       instructions_len = ( uint16_t ) ( instructions_len - part_len );
 
       inst_dst = ( struct ofp_instruction * ) ( ( char * ) inst_dst + part_len );
-      inst_src = ( struct ofp_instruction * ) ( ( char * ) inst_src + part_len );
+      inst_src = ( const struct ofp_instruction * ) ( ( const char * ) inst_src + part_len );
     }
 
-    uint16_t pad_len = PADLEN_TO_64( total_len );
+    uint16_t pad_len = PADLEN_TO_64( ntohs( dst->length ) );
     if ( pad_len > 0 ) {
       memset( inst_dst, 0, pad_len );
     }
   }
-
-  xfree( tfpi );
 }
 
 
@@ -1195,11 +1062,8 @@ void ntoh_table_feature_prop_next_tables( struct ofp_table_feature_prop_next_tab
   assert( dst != NULL );
   assert( ntohs( src->length ) != 0 );
 
-  struct ofp_table_feature_prop_next_tables *tfpnt = xcalloc( 1, ntohs( src->length ) );
-  memcpy( tfpnt, src, ntohs( src->length ) );
-
-  dst->type = ntohs( tfpnt->type );
-  dst->length = ntohs( tfpnt->length );
+  dst->type = ntohs( src->type );
+  dst->length = ntohs( src->length );
 
   size_t offset = offsetof( struct ofp_table_feature_prop_next_tables, next_table_ids );
   if ( dst->length >= offset ) {
@@ -1208,7 +1072,7 @@ void ntoh_table_feature_prop_next_tables( struct ofp_table_feature_prop_next_tab
 
     uint16_t i;
     for ( i = 0; i < table_num; i++ ) {
-      dst->next_table_ids[ i ] = tfpnt->next_table_ids[ i ];
+      dst->next_table_ids[ i ] = src->next_table_ids[ i ];
     }
 
     uint16_t pad_len = PADLEN_TO_64( dst->length );
@@ -1216,8 +1080,6 @@ void ntoh_table_feature_prop_next_tables( struct ofp_table_feature_prop_next_tab
       memset( &dst->next_table_ids[ i ], 0, pad_len );
     }
   }
-
-  xfree( tfpnt );
 }
 
 
@@ -1226,30 +1088,24 @@ void hton_table_feature_prop_next_tables( struct ofp_table_feature_prop_next_tab
   assert( dst != NULL );
   assert( src->length != 0 );
 
-  uint16_t total_len = src->length;
-  struct ofp_table_feature_prop_next_tables *tfpnt = xcalloc( 1, total_len );
-  memcpy( tfpnt, src, total_len );
-
-  dst->type = htons( tfpnt->type );
-  dst->length = htons( tfpnt->length );
+  dst->type = htons( src->type );
+  dst->length = htons( src->length );
 
   size_t offset = offsetof( struct ofp_table_feature_prop_next_tables, next_table_ids );
-  if ( total_len >= offset ) {
-    uint16_t table_len = ( uint16_t ) ( total_len - offset );
+  if ( ntohs( dst->length ) >= offset ) {
+    uint16_t table_len = ( uint16_t ) ( ntohs( dst->length ) - offset );
     uint16_t table_num = ( uint16_t ) ( table_len / sizeof( uint8_t ) );
 
     uint16_t i;
     for ( i = 0; i < table_num; i++ ) {
-      dst->next_table_ids[ i ] = tfpnt->next_table_ids[ i ];
+      dst->next_table_ids[ i ] = src->next_table_ids[ i ];
     }
 
-    uint16_t pad_len = PADLEN_TO_64( total_len );
+    uint16_t pad_len = PADLEN_TO_64( ntohs( dst->length ) );
     if ( pad_len > 0 ) {
       memset( &dst->next_table_ids[ i ], 0, pad_len );
     }
   }
-
-  xfree( tfpnt );
 }
 
 
@@ -1258,22 +1114,18 @@ void ntoh_table_feature_prop_actions( struct ofp_table_feature_prop_actions *dst
   assert( dst != NULL );
   assert( ntohs( src->length ) != 0 );
 
-  struct ofp_table_feature_prop_actions *tfpa = xcalloc( 1, ntohs( src->length ) );
-  memcpy( tfpa, src, ntohs( src->length ) );
-
-  dst->type = ntohs( tfpa->type );
-  dst->length = ntohs( tfpa->length );
+  dst->type = ntohs( src->type );
+  dst->length = ntohs( src->length );
 
   size_t offset = ( size_t ) ( offsetof( struct ofp_table_feature_prop_actions, action_ids ) );
   if ( dst->length >= offset ) {
     uint16_t actions_len = ( uint16_t ) ( dst->length - offset );
 
-    struct ofp_action_header *act_src = ( struct ofp_action_header * ) ( ( char * ) tfpa + offset );
+    const struct ofp_action_header *act_src = ( const struct ofp_action_header * ) ( ( const char * ) src + offset );
     struct ofp_action_header *act_dst = ( struct ofp_action_header * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( actions_len >= sizeof( struct ofp_action_header ) ) {
-      part_len = ntohs( act_src->len );
+      uint16_t part_len = ntohs( act_src->len );
       if ( actions_len < part_len ) {
         break;
       }
@@ -1282,7 +1134,7 @@ void ntoh_table_feature_prop_actions( struct ofp_table_feature_prop_actions *dst
 
       actions_len = ( uint16_t ) ( actions_len - part_len );
 
-      act_src = ( struct ofp_action_header * ) ( ( char * ) act_src + part_len );
+      act_src = ( const struct ofp_action_header * ) ( ( const char * ) act_src + part_len );
       act_dst = ( struct ofp_action_header * ) ( ( char * ) act_dst + part_len );
     }
 
@@ -1291,8 +1143,6 @@ void ntoh_table_feature_prop_actions( struct ofp_table_feature_prop_actions *dst
       memset( act_dst, 0, pad_len );
     }
   }
-
-  xfree( tfpa );
 }
 
 
@@ -1301,23 +1151,18 @@ void hton_table_feature_prop_actions( struct ofp_table_feature_prop_actions *dst
   assert( dst != NULL );
   assert( src->length != 0 );
 
-  uint16_t total_len = src->length;
-  struct ofp_table_feature_prop_actions *tfpa = xcalloc( 1, total_len );
-  memcpy( tfpa, src, total_len );
-
-  dst->type = htons( tfpa->type );
-  dst->length = htons( tfpa->length );
+  dst->type = htons( src->type );
+  dst->length = htons( src->length );
 
   size_t offset = ( size_t ) ( offsetof( struct ofp_table_feature_prop_actions, action_ids ) );
-  if ( total_len >= offset ) {
-    uint16_t actions_len = ( uint16_t ) ( total_len - offset );
+  if ( ntohs( dst->length ) >= offset ) {
+    uint16_t actions_len = ( uint16_t ) ( ntohs( dst->length ) - offset );
 
-    struct ofp_action_header *act_src = ( struct ofp_action_header * ) ( ( char * ) tfpa + offset );
+    const struct ofp_action_header *act_src = ( const struct ofp_action_header * ) ( ( const char * ) src + offset );
     struct ofp_action_header *act_dst = ( struct ofp_action_header * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( actions_len >= sizeof( struct ofp_action_header ) ) {
-      part_len = act_src->len;
+      uint16_t part_len = act_src->len;
       if ( actions_len < part_len ) {
         break;
       }
@@ -1327,16 +1172,14 @@ void hton_table_feature_prop_actions( struct ofp_table_feature_prop_actions *dst
       actions_len = ( uint16_t ) ( actions_len - part_len );
 
       act_dst = ( struct ofp_action_header * ) ( ( char * ) act_dst + part_len );
-      act_src = ( struct ofp_action_header * ) ( ( char * ) act_src + part_len );
+      act_src = ( const struct ofp_action_header * ) ( ( const char * ) act_src + part_len );
     }
 
-    uint16_t pad_len = PADLEN_TO_64( total_len );
+    uint16_t pad_len = PADLEN_TO_64( ntohs( dst->length ) );
     if ( pad_len > 0 ) {
       memset( act_dst, 0, pad_len );
     }
   }
-
-  xfree( tfpa );
 }
 
 
@@ -1345,11 +1188,8 @@ void ntoh_table_feature_prop_oxm( struct ofp_table_feature_prop_oxm *dst, const 
   assert( dst != NULL );
   assert( ntohs( src->length ) != 0 );
 
-  struct ofp_table_feature_prop_oxm *tfpo = xcalloc( 1, ntohs( src->length ) );
-  memcpy( tfpo, src, ntohs( src->length ) );
-
-  dst->type = ntohs( tfpo->type );
-  dst->length = ntohs( tfpo->length );
+  dst->type = ntohs( src->type );
+  dst->length = ntohs( src->length );
 
   size_t offset = ( size_t ) ( offsetof( struct ofp_table_feature_prop_oxm, oxm_ids ) );
   if ( dst->length >= offset ) {
@@ -1358,7 +1198,7 @@ void ntoh_table_feature_prop_oxm( struct ofp_table_feature_prop_oxm *dst, const 
 
     uint16_t i;
     for ( i = 0; i < oxm_num; i++ ) {
-      dst->oxm_ids[ i ] = ntohl( tfpo->oxm_ids[ i ] );
+      dst->oxm_ids[ i ] = ntohl( src->oxm_ids[ i ] );
     }
 
     uint16_t pad_len = PADLEN_TO_64( dst->length );
@@ -1366,8 +1206,6 @@ void ntoh_table_feature_prop_oxm( struct ofp_table_feature_prop_oxm *dst, const 
       memset( &dst->oxm_ids[ i ], 0, pad_len );
     }
   }
-
-  xfree( tfpo );
 }
 
 
@@ -1376,30 +1214,24 @@ void hton_table_feature_prop_oxm( struct ofp_table_feature_prop_oxm *dst, const 
   assert( dst != NULL );
   assert( src->length != 0 );
 
-  uint16_t total_len = src->length;
-  struct ofp_table_feature_prop_oxm *tfpo = xcalloc( 1, total_len );
-  memcpy( tfpo, src, total_len );
-
-  dst->type = htons( tfpo->type );
-  dst->length = htons( tfpo->length );
+  dst->type = htons( src->type );
+  dst->length = htons( src->length );
 
   size_t offset = ( size_t ) ( offsetof( struct ofp_table_feature_prop_oxm, oxm_ids ) );
-  if ( total_len >= offset ) {
-    uint16_t oxm_len = ( uint16_t ) ( total_len - offset );
+  if ( ntohs( dst->length ) >= offset ) {
+    uint16_t oxm_len = ( uint16_t ) ( ntohs( dst->length ) - offset );
     uint16_t oxm_num = ( uint16_t ) ( oxm_len / sizeof( uint32_t ) );
 
     uint16_t i;
     for ( i = 0; i < oxm_num; i++ ) {
-      dst->oxm_ids[ i ] = htonl( tfpo->oxm_ids[ i ] );
+      dst->oxm_ids[ i ] = htonl( src->oxm_ids[ i ] );
     }
 
-    uint16_t pad_len = PADLEN_TO_64( total_len );
+    uint16_t pad_len = PADLEN_TO_64( ntohs( dst->length ) );
     if ( pad_len > 0 ) {
       memset( &dst->oxm_ids[ i ], 0, pad_len );
     }
   }
-
-  xfree( tfpo );
 }
 
 
@@ -1415,7 +1247,7 @@ void ntoh_table_feature_prop_experimenter( struct ofp_table_feature_prop_experim
   uint16_t offset = offsetof( struct ofp_table_feature_prop_experimenter, experimenter_data );
   if ( dst->length > offset ) {
     uint16_t data_len = ( uint16_t ) ( dst->length - offset );
-    memcpy( dst->experimenter_data, src->experimenter_data, data_len );
+    memmove( dst->experimenter_data, src->experimenter_data, data_len );
   }
 }
 
@@ -1434,7 +1266,7 @@ void hton_table_feature_prop_experimenter( struct ofp_table_feature_prop_experim
   uint16_t offset = offsetof( struct ofp_table_feature_prop_experimenter, experimenter_data );
   if ( src_len > offset ) {
     uint16_t data_len = ( uint16_t ) ( src_len - offset );
-    memcpy( dst->experimenter_data, src->experimenter_data, data_len );
+    memmove( dst->experimenter_data, src->experimenter_data, data_len );
   }
 }
 
@@ -1520,28 +1352,24 @@ void ntoh_table_features( struct ofp_table_features *dst, const struct ofp_table
   assert( dst != NULL );
   assert( ntohs( src->length ) != 0 );
 
-  struct ofp_table_features *tf = xcalloc( 1, ntohs( src->length ) );
-  memcpy( tf, src, ntohs( src->length ) );
-
-  dst->length = ntohs( tf->length );
-  dst->table_id = tf->table_id;
+  dst->length = ntohs( src->length );
+  dst->table_id = src->table_id;
   memset( &dst->pad, 0, sizeof( dst->pad ) );
-  bcopy( tf->name, dst->name, OFP_MAX_TABLE_NAME_LEN );
-  dst->metadata_match = ntohll( tf->metadata_match );
-  dst->metadata_write = ntohll( tf->metadata_write );
-  dst->config = ntohl( tf->config );
-  dst->max_entries = ntohl( tf->max_entries );
+  memmove( dst->name, src->name, OFP_MAX_TABLE_NAME_LEN );
+  dst->metadata_match = ntohll( src->metadata_match );
+  dst->metadata_write = ntohll( src->metadata_write );
+  dst->config = ntohl( src->config );
+  dst->max_entries = ntohl( src->max_entries );
 
   size_t offset = ( size_t ) sizeof( struct ofp_table_features );
   if ( dst->length >= offset ) {
     uint16_t tfp_len = ( uint16_t ) ( dst->length - offset );
 
-    struct ofp_table_feature_prop_header *act_src = ( struct ofp_table_feature_prop_header * ) ( ( char * ) tf + offset );
+    const struct ofp_table_feature_prop_header *act_src = ( const struct ofp_table_feature_prop_header * ) ( ( const char * ) src + offset );
     struct ofp_table_feature_prop_header *act_dst = ( struct ofp_table_feature_prop_header * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( tfp_len >= sizeof( struct ofp_table_feature_prop_header ) ) {
-      part_len = ntohs( act_src->length );
+      uint16_t part_len = ntohs( act_src->length );
       if ( tfp_len < part_len ) {
         break;
       }
@@ -1555,12 +1383,10 @@ void ntoh_table_features( struct ofp_table_features *dst, const struct ofp_table
 
       tfp_len = ( uint16_t ) ( tfp_len - offset );
 
-      act_src = ( struct ofp_table_feature_prop_header * ) ( ( char * ) act_src + offset );
+      act_src = ( const struct ofp_table_feature_prop_header * ) ( ( const char * ) act_src + offset );
       act_dst = ( struct ofp_table_feature_prop_header * ) ( ( char * ) act_dst + offset );
     }
   }
-
-  xfree( tf );
 }
 
 
@@ -1569,29 +1395,24 @@ void hton_table_features( struct ofp_table_features *dst, const struct ofp_table
   assert( dst != NULL );
   assert( src->length != 0 );
 
-  uint16_t total_len = src->length;
-  struct ofp_table_features *tf = xcalloc( 1, total_len );
-  memcpy( tf, src, total_len );
-
-  dst->length = htons( tf->length );
-  dst->table_id = tf->table_id;
+  dst->length = htons( src->length );
+  dst->table_id = src->table_id;
   memset( &dst->pad, 0, sizeof( dst->pad ) );
-  bcopy( tf->name, dst->name, OFP_MAX_TABLE_NAME_LEN );
-  dst->metadata_match = htonll( tf->metadata_match );
-  dst->metadata_write = htonll( tf->metadata_write );
-  dst->config = htonl( tf->config );
-  dst->max_entries = htonl( tf->max_entries );
+  memmove( dst->name, src->name, OFP_MAX_TABLE_NAME_LEN );
+  dst->metadata_match = htonll( src->metadata_match );
+  dst->metadata_write = htonll( src->metadata_write );
+  dst->config = htonl( src->config );
+  dst->max_entries = htonl( src->max_entries );
 
   size_t offset = ( size_t ) sizeof( struct ofp_table_features );
-  if ( total_len >= offset ) {
-    uint16_t tfp_len = ( uint16_t ) ( total_len - offset );
+  if ( ntohs( dst->length ) >= offset ) {
+    uint16_t tfp_len = ( uint16_t ) ( ntohs( dst->length ) - offset );
 
-    struct ofp_table_feature_prop_header *act_src = ( struct ofp_table_feature_prop_header * ) ( ( char * ) tf + offset );
+    const struct ofp_table_feature_prop_header *act_src = ( const struct ofp_table_feature_prop_header * ) ( ( const char * ) src + offset );
     struct ofp_table_feature_prop_header *act_dst = ( struct ofp_table_feature_prop_header * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( tfp_len >= sizeof( struct ofp_table_feature_prop_header ) ) {
-      part_len = act_src->length;
+      uint16_t part_len = act_src->length;
       if ( tfp_len < part_len ) {
         break;
       }
@@ -1606,11 +1427,9 @@ void hton_table_features( struct ofp_table_features *dst, const struct ofp_table
       tfp_len = ( uint16_t ) ( tfp_len - offset );
 
       act_dst = ( struct ofp_table_feature_prop_header * ) ( ( char * ) act_dst + offset );
-      act_src = ( struct ofp_table_feature_prop_header * ) ( ( char * ) act_src + offset );
+      act_src = ( const struct ofp_table_feature_prop_header * ) ( ( const char * ) act_src + offset );
     }
   }
-
-  xfree( tf );
 }
 
 
@@ -1628,24 +1447,21 @@ void ntoh_group_stats( struct ofp_group_stats *dst, const struct ofp_group_stats
   assert( dst != NULL );
   assert( ntohs( src->length ) != 0 );
 
-  struct ofp_group_stats *fs = xcalloc( 1, ntohs( src->length ) );
-  memcpy( fs, src, ntohs( src->length ) );
-
-  dst->length = ntohs( fs->length );
+  dst->length = ntohs( src->length );
   memset( &dst->pad, 0, sizeof( dst->pad ) );
-  dst->group_id = ntohl( fs->group_id );
-  dst->ref_count = ntohl( fs->ref_count );
+  dst->group_id = ntohl( src->group_id );
+  dst->ref_count = ntohl( src->ref_count );
   memset( &dst->pad2, 0, sizeof( dst->pad2 ) );
-  dst->packet_count = ntohll( fs->packet_count );
-  dst->byte_count = ntohll( fs->byte_count );
-  dst->duration_sec = ntohl( fs->duration_sec );
-  dst->duration_nsec = ntohl( fs->duration_nsec );
+  dst->packet_count = ntohll( src->packet_count );
+  dst->byte_count = ntohll( src->byte_count );
+  dst->duration_sec = ntohl( src->duration_sec );
+  dst->duration_nsec = ntohl( src->duration_nsec );
 
   size_t offset = offsetof( struct ofp_group_stats, bucket_stats );
   if ( dst->length >= offset ) {
     uint16_t stats_length = ( uint16_t ) ( dst->length - offset );
 
-    struct ofp_bucket_counter *ah_src = ( struct ofp_bucket_counter * ) ( ( char * ) fs + offset );
+    const struct ofp_bucket_counter *ah_src = ( const struct ofp_bucket_counter * ) ( ( const char * ) src + offset );
     struct ofp_bucket_counter *ah_dst = ( struct ofp_bucket_counter * ) ( ( char * ) dst + offset );
     offset = sizeof( struct ofp_bucket_counter );
 
@@ -1654,12 +1470,10 @@ void ntoh_group_stats( struct ofp_group_stats *dst, const struct ofp_group_stats
 
       stats_length = ( uint16_t ) ( stats_length - offset );
 
-      ah_src = ( struct ofp_bucket_counter * ) ( ( char * ) ah_src + offset );
+      ah_src = ( const struct ofp_bucket_counter * ) ( ( const char * ) ah_src + offset );
       ah_dst = ( struct ofp_bucket_counter * ) ( ( char * ) ah_dst + offset );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -1668,26 +1482,21 @@ void hton_group_stats( struct ofp_group_stats *dst, const struct ofp_group_stats
   assert( dst != NULL );
   assert( src->length != 0 );
 
-  uint16_t total_len = src->length;
-  struct ofp_group_stats *fs = xcalloc( 1, total_len );
-  memcpy( fs, src, total_len );
-
-
-  dst->length = htons( fs->length );
+  dst->length = htons( src->length );
   memset( &dst->pad, 0, sizeof( dst->pad ) );
-  dst->group_id = htonl( fs->group_id );
-  dst->ref_count = htonl( fs->ref_count );
+  dst->group_id = htonl( src->group_id );
+  dst->ref_count = htonl( src->ref_count );
   memset( &dst->pad2, 0, sizeof( dst->pad2 ) );
-  dst->packet_count = htonll( fs->packet_count );
-  dst->byte_count = htonll( fs->byte_count );
-  dst->duration_sec = htonl( fs->duration_sec );
-  dst->duration_nsec = htonl( fs->duration_nsec );
+  dst->packet_count = htonll( src->packet_count );
+  dst->byte_count = htonll( src->byte_count );
+  dst->duration_sec = htonl( src->duration_sec );
+  dst->duration_nsec = htonl( src->duration_nsec );
 
   size_t offset = offsetof( struct ofp_group_stats, bucket_stats );
-  if ( total_len >= offset ) {
-    uint16_t stats_length = ( uint16_t ) ( total_len - offset );
+  if ( ntohs( dst->length ) >= offset ) {
+    uint16_t stats_length = ( uint16_t ) ( ntohs( dst->length ) - offset );
 
-    struct ofp_bucket_counter *ah_src = ( struct ofp_bucket_counter * ) ( ( char * ) fs + offset );
+    const struct ofp_bucket_counter *ah_src = ( const struct ofp_bucket_counter * ) ( ( const char * ) src + offset );
     struct ofp_bucket_counter *ah_dst = ( struct ofp_bucket_counter * ) ( ( char * ) dst + offset );
     offset = sizeof( struct ofp_bucket_counter );
 
@@ -1697,11 +1506,9 @@ void hton_group_stats( struct ofp_group_stats *dst, const struct ofp_group_stats
       stats_length = ( uint16_t ) ( stats_length - offset );
 
       ah_dst = ( struct ofp_bucket_counter * ) ( ( char * ) ah_dst + offset );
-      ah_src = ( struct ofp_bucket_counter * ) ( ( char * ) ah_src + offset );
+      ah_src = ( const struct ofp_bucket_counter * ) ( ( const char * ) ah_src + offset );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -1710,24 +1517,20 @@ void ntoh_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_g
   assert( dst != NULL );
   assert( ntohs( src->length ) != 0 );
 
-  struct ofp_group_desc_stats *fs = xcalloc( 1, ntohs( src->length ) );
-  memcpy( fs, src, ntohs( src->length ) );
-
-  dst->length = ntohs( fs->length );
-  dst->type = fs->type;
+  dst->length = ntohs( src->length );
+  dst->type = src->type;
   dst->pad = 0;
-  dst->group_id = ntohl( fs->group_id );
+  dst->group_id = ntohl( src->group_id );
 
   size_t offset = offsetof( struct ofp_group_desc_stats, buckets );
   if ( dst->length >= offset ) {
     uint16_t buckets_length = ( uint16_t ) ( dst->length - offset );
 
-    struct ofp_bucket *ah_src = ( struct ofp_bucket * ) ( ( char * ) fs + offset );
+    const struct ofp_bucket *ah_src = ( const struct ofp_bucket * ) ( ( const char * ) src + offset );
     struct ofp_bucket *ah_dst = ( struct ofp_bucket * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( buckets_length >= sizeof( struct ofp_bucket ) ) {
-      part_len = ntohs( ah_src->len );
+      uint16_t part_len = ntohs( ah_src->len );
       if ( buckets_length < part_len ) {
         break;
       }
@@ -1736,12 +1539,10 @@ void ntoh_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_g
 
       buckets_length = ( uint16_t ) ( buckets_length - part_len );
 
-      ah_src = ( struct ofp_bucket * ) ( ( char * ) ah_src + part_len );
+      ah_src = ( const struct ofp_bucket * ) ( ( const char * ) ah_src + part_len );
       ah_dst = ( struct ofp_bucket * ) ( ( char * ) ah_dst + part_len );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -1750,25 +1551,20 @@ void hton_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_g
   assert( dst != NULL );
   assert( src->length != 0 );
 
-  uint16_t total_len = src->length;
-  struct ofp_group_desc_stats *fs = xcalloc( 1, total_len );
-  memcpy( fs, src, total_len );
-
-  dst->length = htons( fs->length );
-  dst->type = fs->type;
+  dst->length = htons( src->length );
+  dst->type = src->type;
   dst->pad = 0;
-  dst->group_id = htonl( fs->group_id );
+  dst->group_id = htonl( src->group_id );
 
   size_t offset = offsetof( struct ofp_group_desc_stats, buckets );
-  if ( total_len >= offset ) {
-    uint16_t buckets_length = ( uint16_t ) ( total_len - offset );
+  if ( ntohs( dst->length ) >= offset ) {
+    uint16_t buckets_length = ( uint16_t ) ( ntohs( dst->length ) - offset );
 
-    struct ofp_bucket *ah_src = ( struct ofp_bucket * ) ( ( char * ) fs + offset );
+    const struct ofp_bucket *ah_src = ( const struct ofp_bucket * ) ( ( const char * ) src + offset );
     struct ofp_bucket *ah_dst = ( struct ofp_bucket * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( buckets_length >= sizeof( struct ofp_bucket ) ) {
-      part_len = ah_src->len;
+      uint16_t part_len = ah_src->len;
       if ( buckets_length < part_len ) {
         break;
       }
@@ -1778,11 +1574,9 @@ void hton_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_g
       buckets_length = ( uint16_t ) ( buckets_length - part_len );
 
       ah_dst = ( struct ofp_bucket * ) ( ( char * ) ah_dst + part_len );
-      ah_src = ( struct ofp_bucket * ) ( ( char * ) ah_src + part_len );
+      ah_src = ( const struct ofp_bucket * ) ( ( const char * ) ah_src + part_len );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -1814,23 +1608,20 @@ void ntoh_meter_stats( struct ofp_meter_stats *dst, const struct ofp_meter_stats
   assert( dst != NULL );
   assert( ntohs( src->len ) != 0 );
 
-  struct ofp_meter_stats *fs = xcalloc( 1, ntohs( src->len ) );
-  memcpy( fs, src, ntohs( src->len ) );
-
-  dst->meter_id = ntohl( fs->meter_id );
-  dst->len = ntohs( fs->len );
+  dst->meter_id = ntohl( src->meter_id );
+  dst->len = ntohs( src->len );
   memset( &dst->pad, 0, sizeof( dst->pad ) );
-  dst->flow_count = ntohl( fs->flow_count );
-  dst->packet_in_count = ntohll( fs->packet_in_count );
-  dst->byte_in_count = ntohll( fs->byte_in_count );
-  dst->duration_sec = ntohl( fs->duration_sec );
-  dst->duration_nsec = ntohl( fs->duration_nsec );
+  dst->flow_count = ntohl( src->flow_count );
+  dst->packet_in_count = ntohll( src->packet_in_count );
+  dst->byte_in_count = ntohll( src->byte_in_count );
+  dst->duration_sec = ntohl( src->duration_sec );
+  dst->duration_nsec = ntohl( src->duration_nsec );
 
   size_t offset = offsetof( struct ofp_meter_stats, band_stats );
   if ( dst->len >= offset ) {
     uint16_t stats_length = ( uint16_t ) ( dst->len - offset );
 
-    struct ofp_meter_band_stats *ah_src = ( struct ofp_meter_band_stats * ) ( ( char * ) fs + offset );
+    const struct ofp_meter_band_stats *ah_src = ( const struct ofp_meter_band_stats * ) ( ( const char * ) src + offset );
     struct ofp_meter_band_stats *ah_dst = ( struct ofp_meter_band_stats * ) ( ( char * ) dst + offset );
     offset = sizeof( struct ofp_meter_band_stats );
 
@@ -1839,12 +1630,10 @@ void ntoh_meter_stats( struct ofp_meter_stats *dst, const struct ofp_meter_stats
 
       stats_length = ( uint16_t ) ( stats_length - offset );
 
-      ah_src = ( struct ofp_meter_band_stats * ) ( ( char * ) ah_src + offset );
+      ah_src = ( const struct ofp_meter_band_stats * ) ( ( const char * ) ah_src + offset );
       ah_dst = ( struct ofp_meter_band_stats * ) ( ( char * ) ah_dst + offset );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -1853,24 +1642,20 @@ void hton_meter_stats( struct ofp_meter_stats *dst, const struct ofp_meter_stats
   assert( dst != NULL );
   assert( src->len != 0 );
 
-  uint16_t total_len = src->len;
-  struct ofp_meter_stats *fs = xcalloc( 1, total_len );
-  memcpy( fs, src, total_len );
-
-  dst->meter_id = htonl( fs->meter_id );
-  dst->len = htons( fs->len );
+  dst->meter_id = htonl( src->meter_id );
+  dst->len = htons( src->len );
   memset( &dst->pad, 0, sizeof( dst->pad ) );
-  dst->flow_count = htonl( fs->flow_count );
-  dst->packet_in_count = htonll( fs->packet_in_count );
-  dst->byte_in_count = htonll( fs->byte_in_count );
-  dst->duration_sec = htonl( fs->duration_sec );
-  dst->duration_nsec = htonl( fs->duration_nsec );
+  dst->flow_count = htonl( src->flow_count );
+  dst->packet_in_count = htonll( src->packet_in_count );
+  dst->byte_in_count = htonll( src->byte_in_count );
+  dst->duration_sec = htonl( src->duration_sec );
+  dst->duration_nsec = htonl( src->duration_nsec );
 
   size_t offset = offsetof( struct ofp_meter_stats, band_stats );
-  if ( total_len > offset ) {
-    uint16_t stats_length = ( uint16_t ) ( total_len - offset );
+  if ( ntohs( dst->len ) > offset ) {
+    uint16_t stats_length = ( uint16_t ) ( ntohs( dst->len ) - offset );
 
-    struct ofp_meter_band_stats *ah_src = ( struct ofp_meter_band_stats * ) ( ( char * ) fs + offset );
+    const struct ofp_meter_band_stats *ah_src = ( const struct ofp_meter_band_stats * ) ( ( const char * ) src + offset );
     struct ofp_meter_band_stats *ah_dst = ( struct ofp_meter_band_stats * ) ( ( char * ) dst + offset );
     offset = sizeof( struct ofp_meter_band_stats );
 
@@ -1880,11 +1665,9 @@ void hton_meter_stats( struct ofp_meter_stats *dst, const struct ofp_meter_stats
       stats_length = ( uint16_t ) ( stats_length - offset );
 
       ah_dst = ( struct ofp_meter_band_stats * ) ( ( char * ) ah_dst + offset );
-      ah_src = ( struct ofp_meter_band_stats * ) ( ( char * ) ah_src + offset );
+      ah_src = ( const struct ofp_meter_band_stats * ) ( ( const char * ) ah_src + offset );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -1893,23 +1676,19 @@ void ntoh_meter_config( struct ofp_meter_config *dst, const struct ofp_meter_con
   assert( dst != NULL );
   assert( ntohs( src->length ) != 0 );
 
-  struct ofp_meter_config *fs = xcalloc( 1, ntohs( src->length ) );
-  memcpy( fs, src, ntohs( src->length ) );
-
-  dst->length = ntohs( fs->length );
-  dst->flags = ntohs( fs->flags );
-  dst->meter_id = ntohl( fs->meter_id );
+  dst->length = ntohs( src->length );
+  dst->flags = ntohs( src->flags );
+  dst->meter_id = ntohl( src->meter_id );
 
   size_t offset = offsetof( struct ofp_meter_config, bands );
   if ( dst->length >= offset ) {
     uint16_t bands_length = ( uint16_t ) ( dst->length - offset );
 
-    struct ofp_meter_band_header *ah_src = ( struct ofp_meter_band_header * ) ( ( char * ) fs + offset );
+    const struct ofp_meter_band_header *ah_src = ( const struct ofp_meter_band_header * ) ( ( const char * ) src + offset );
     struct ofp_meter_band_header *ah_dst = ( struct ofp_meter_band_header * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( bands_length >= sizeof( struct ofp_meter_band_header ) ) {
-      part_len = ntohs( ah_src->len );
+      uint16_t part_len = ntohs( ah_src->len );
       if ( bands_length < part_len ) {
         break;
       }
@@ -1918,12 +1697,10 @@ void ntoh_meter_config( struct ofp_meter_config *dst, const struct ofp_meter_con
 
       bands_length = ( uint16_t ) ( bands_length - part_len );
 
-      ah_src = ( struct ofp_meter_band_header * ) ( ( char * ) ah_src + part_len );
+      ah_src = ( const struct ofp_meter_band_header * ) ( ( const char * ) ah_src + part_len );
       ah_dst = ( struct ofp_meter_band_header * ) ( ( char * ) ah_dst + part_len );
     }
   }
-
-  xfree( fs );
 }
 
 
@@ -1932,24 +1709,19 @@ void hton_meter_config( struct ofp_meter_config *dst, const struct ofp_meter_con
   assert( dst != NULL );
   assert( src->length != 0 );
 
-  uint16_t total_len = src->length;
-  struct ofp_meter_config *fs = xcalloc( 1, total_len );
-  memcpy( fs, src, total_len );
-
-  dst->length = htons( fs->length );
-  dst->flags = htons( fs->flags );
-  dst->meter_id = htonl( fs->meter_id );
+  dst->length = htons( src->length );
+  dst->flags = htons( src->flags );
+  dst->meter_id = htonl( src->meter_id );
 
   size_t offset = offsetof( struct ofp_meter_config, bands );
-  if ( total_len >= offset ) {
-    uint16_t bands_length = ( uint16_t ) ( total_len - offset );
+  if ( ntohs( dst->length ) >= offset ) {
+    uint16_t bands_length = ( uint16_t ) ( ntohs( dst->length ) - offset );
 
-    struct ofp_meter_band_header *ah_src = ( struct ofp_meter_band_header * ) ( ( char * ) fs + offset );
+    const struct ofp_meter_band_header *ah_src = ( const struct ofp_meter_band_header * ) ( ( const char * ) src + offset );
     struct ofp_meter_band_header *ah_dst = ( struct ofp_meter_band_header * ) ( ( char * ) dst + offset );
-    uint16_t part_len;
 
     while ( bands_length >= sizeof( struct ofp_meter_band_header ) ) {
-      part_len = ah_src->len;
+      uint16_t part_len = ah_src->len;
       if ( bands_length < part_len ) {
         break;
       }
@@ -1959,11 +1731,9 @@ void hton_meter_config( struct ofp_meter_config *dst, const struct ofp_meter_con
       bands_length = ( uint16_t ) ( bands_length - part_len );
 
       ah_dst = ( struct ofp_meter_band_header * ) ( ( char * ) ah_dst + part_len );
-      ah_src = ( struct ofp_meter_band_header * ) ( ( char * ) ah_src + part_len );
+      ah_src = ( const struct ofp_meter_band_header * ) ( ( const char * ) ah_src + part_len );
     }
   }
-
-  xfree( fs );
 }
 
 
