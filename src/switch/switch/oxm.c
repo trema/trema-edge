@@ -121,6 +121,7 @@ init_oxm( void ) {
   init_oxm_udp_src();
   init_oxm_vlan_pcp();
   init_oxm_vlan_vid();
+  init_oxm_pbb_isid();
 }
 
 
