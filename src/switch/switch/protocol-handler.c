@@ -708,7 +708,10 @@ _handle_multipart_request( uint32_t transaction_id, uint16_t type, uint16_t flag
       break;
     case OFPMP_TABLE_FEATURES: 
       {
-        const struct ofp_table_features *table_features = ( const struct ofp_table_features * ) body->data;
+        const struct ofp_table_features *table_features = NULL;
+        if ( body != NULL && body->data != NULL ) {
+          table_features = ( const struct ofp_table_features * ) body->data;
+        }
         /*
          * TODO Currently the setting of table features not supported by datapath
          * therefore ignored.
