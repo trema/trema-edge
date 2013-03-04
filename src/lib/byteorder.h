@@ -3,7 +3,7 @@
  *
  * Author: Yasunobu Chiba
  *
- * Copyright (C) 2008-2012 NEC Corporation
+ * Copyright (C) 2008-2013 NEC Corporation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2, as
@@ -114,10 +114,6 @@ void ntoh_instruction_meter( struct ofp_instruction_meter *dst, const struct ofp
 void ntoh_instruction_experimenter( struct ofp_instruction_experimenter *dst, const struct ofp_instruction_experimenter *src );
 void hton_instruction_experimenter( struct ofp_instruction_experimenter *dst, const struct ofp_instruction_experimenter *src );
 
-
-
-
-
 void ntoh_bucket( struct ofp_bucket *dst, const struct ofp_bucket *src );
 void hton_bucket( struct ofp_bucket *dst, const struct ofp_bucket *src );
 
@@ -177,6 +173,7 @@ void hton_meter_config( struct ofp_meter_config *dst, const struct ofp_meter_con
 
 void ntoh_meter_features( struct ofp_meter_features *dst, const struct ofp_meter_features *src );
 #define hton_meter_features ntoh_meter_features
+
 
 #endif // BYTEORDER_H
 
