@@ -675,6 +675,13 @@ void
 ntoh_instruction( struct ofp_instruction *dst, const struct ofp_instruction *src ) {
   assert( src != NULL );
   assert( dst != NULL );
+  assert( ntohs( src->type ) <= OFPIT_METER || ntohs( src->type ) == OFPIT_EXPERIMENTER );
+
+  if ( ntohs( src->len ) == sizeof( struct ofp_instruction ) ) {
+    dst->type = ntohs( src->type );
+    dst->len = ntohs( src->len );
+    return;
+  }
 
   switch ( ntohs( src->type ) ) {
     case OFPIT_GOTO_TABLE:
@@ -722,6 +729,13 @@ void
 hton_instruction( struct ofp_instruction *dst, const struct ofp_instruction *src ) {
   assert( src != NULL );
   assert( dst != NULL );
+  assert( src->type <= OFPIT_METER || src->type == OFPIT_EXPERIMENTER );
+
+  if ( src->len == sizeof( struct ofp_instruction ) ) {
+    dst->type = htons( src->type );
+    dst->len = htons( src->len );
+    return;
+  }
 
   switch ( src->type ) {
     case OFPIT_GOTO_TABLE:
