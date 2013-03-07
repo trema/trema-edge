@@ -261,7 +261,7 @@ prop_next_table_ids_len( bool *tables ) {
 static size_t
 get_table_features_len( flow_table_features *table_feature ) {
   size_t len;
-  size_t total_len = 0;
+  size_t total_len = sizeof( struct ofp_table_features );
 
   len = instructions_capabilities_len( &table_feature->instructions );
   if ( len ) {
@@ -351,165 +351,166 @@ get_table_features_len( flow_table_features *table_feature ) {
 }
 
 
-static uint16_t
+static size_t
 assign_instruction_ids( struct ofp_instruction *ins, instruction_capabilities *instructions_cap ) {
   const instruction_capabilities c = *instructions_cap;
-  uint16_t len = ( uint16_t ) sizeof( struct ofp_instruction );
-  uint16_t total_len = 0;
+  const uint16_t len = ( uint16_t ) sizeof( struct ofp_instruction );
+  size_t total_len = 0;
 
   if ( c & INSTRUCTION_EXPERIMENTER ) {
     ins->type = OFPIT_EXPERIMENTER;
     ins->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ins = ( struct ofp_instruction * )( ( char * ) ins + len );
+    total_len += len;
+    ins = ( struct ofp_instruction * ) ( ( char * ) ins + len );
   }
   if ( c & INSTRUCTION_METER ) {
     ins->type = OFPIT_METER;
     ins->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ins = ( struct ofp_instruction * )( ( char * ) ins + len );
+    total_len += len;
+    ins = ( struct ofp_instruction * ) ( ( char * ) ins + len );
   }
   if ( c & INSTRUCTION_APPLY_ACTIONS ) {
     ins->type = OFPIT_APPLY_ACTIONS;
     ins->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ins = ( struct ofp_instruction * )( ( char * ) ins + len );
+    total_len += len;
+    ins = ( struct ofp_instruction * ) ( ( char * ) ins + len );
   }
   if ( c & INSTRUCTION_CLEAR_ACTIONS ) {
     ins->type = OFPIT_CLEAR_ACTIONS;
     ins->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ins = ( struct ofp_instruction * )( ( char * ) ins + len );
+    total_len += len;
+    ins = ( struct ofp_instruction * ) ( ( char * ) ins + len );
   }
   if ( c & INSTRUCTION_WRITE_ACTIONS ) {
     ins->type = OFPIT_WRITE_ACTIONS;
     ins->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ins = ( struct ofp_instruction * )( ( char * ) ins + len );
+    total_len += len;
+    ins = ( struct ofp_instruction * ) ( ( char * ) ins + len );
   }
   if ( c & INSTRUCTION_WRITE_METADATA ) {
     ins->type = OFPIT_WRITE_METADATA;
     ins->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ins = ( struct ofp_instruction * )( ( char * ) ins + len );
+    total_len += len;
+    ins = ( struct ofp_instruction * ) ( ( char * ) ins + len );
   }
   if ( c & INSTRUCTION_GOTO_TABLE ) {
     ins->type = OFPIT_GOTO_TABLE;
     ins->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ins = ( struct ofp_instruction * )( ( char * ) ins + len );
+    total_len += len;
+    ins = ( struct ofp_instruction * ) ( ( char * ) ins + len );
   }
+
   return total_len;
 }
 
 
-static uint16_t
+static size_t
 assign_action_ids( struct ofp_action_header *ac_hdr, action_capabilities *action_cap ) {
   const action_capabilities c = *action_cap;
-  uint16_t len = ( uint16_t ) sizeof( struct ofp_action_header );
-  uint16_t total_len = 0;
+  const uint16_t len = ( uint16_t ) sizeof( struct ofp_action_header );
+  size_t total_len = 0;
 
   if ( c & ACTION_OUTPUT ) {
     ac_hdr->type = OFPAT_OUTPUT;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_COPY_TTL_OUT ) {
     ac_hdr->type = OFPAT_COPY_TTL_OUT;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_COPY_TTL_IN ) {
     ac_hdr->type = OFPAT_COPY_TTL_IN;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_SET_MPLS_TTL ) {
     ac_hdr->type = OFPAT_SET_MPLS_TTL;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_DEC_MPLS_TTL ) {
     ac_hdr->type = OFPAT_DEC_MPLS_TTL;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_PUSH_VLAN ) {
     ac_hdr->type = OFPAT_PUSH_VLAN;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_POP_VLAN ) {
     ac_hdr->type = OFPAT_POP_VLAN;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_PUSH_MPLS ) {
     ac_hdr->type = OFPAT_PUSH_MPLS;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_POP_MPLS ) {
     ac_hdr->type = OFPAT_POP_MPLS;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_SET_QUEUE ) {
     ac_hdr->type = OFPAT_SET_QUEUE;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_GROUP ) {
     ac_hdr->type = OFPAT_GROUP;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_SET_NW_TTL ) {
     ac_hdr->type = OFPAT_SET_NW_TTL;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_DEC_NW_TTL ) {
     ac_hdr->type = OFPAT_DEC_NW_TTL;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_SET_FIELD ) {
     ac_hdr->type = OFPAT_SET_FIELD;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_PUSH_PBB ) {
     ac_hdr->type = OFPAT_PUSH_PBB;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_POP_PBB ) {
     ac_hdr->type = OFPAT_POP_PBB;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
   if ( c & ACTION_EXPERIMENTER ) {
     ac_hdr->type = OFPAT_EXPERIMENTER;
     ac_hdr->len = len;
-    total_len = ( uint16_t )( total_len + len );
-    ac_hdr = ( struct ofp_action_header * )( ( char * ) ac_hdr + len );
+    total_len += len;
+    ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + len );
   }
 
   return total_len;
@@ -518,9 +519,7 @@ assign_action_ids( struct ofp_action_header *ac_hdr, action_capabilities *action
 
 static struct ofp_table_features *
 assign_table_features( flow_table_features *table_feature ) {
-  size_t total_len = sizeof( struct ofp_table_features );
-
-  total_len += get_table_features_len( table_feature );
+  size_t total_len = get_table_features_len( table_feature );
   size_t total_padded_len = total_len + PADLEN_TO_64( total_len );
 
   struct ofp_table_features *ofp_table_feature = ( struct ofp_table_features * ) xmalloc( total_padded_len );
@@ -537,144 +536,137 @@ assign_table_features( flow_table_features *table_feature ) {
   size_t properties_len = 0;
 
   if ( is_any_table_feature_instruction_set( &table_feature->instructions ) ) {
-    struct ofp_table_feature_prop_instructions *tfpi = ( struct ofp_table_feature_prop_instructions * )( ( char * ) ofp_table_feature->properties + properties_len );
+    struct ofp_table_feature_prop_instructions *tfpi = ( struct ofp_table_feature_prop_instructions * ) ( ( char * ) ofp_table_feature->properties + properties_len );
     tfpi->type = OFPTFPT_INSTRUCTIONS;
     struct ofp_instruction *ins = tfpi->instruction_ids;
     tfpi->length = ( uint16_t ) ( prop_hdr_len + assign_instruction_ids( ins, &table_feature->instructions ) );
-    tfpi->length = ( uint16_t ) ( tfpi->length + PADLEN_TO_64( tfpi->length ) );
-    properties_len += tfpi->length;
+    properties_len += tfpi->length + ( size_t ) PADLEN_TO_64( tfpi->length );
   }
 
   if ( is_any_table_feature_instruction_set( &table_feature->instructions_miss ) ) {
-    struct ofp_table_feature_prop_instructions *tfpi = ( struct ofp_table_feature_prop_instructions * )( ( char * ) ofp_table_feature->properties + properties_len );
+    struct ofp_table_feature_prop_instructions *tfpi = ( struct ofp_table_feature_prop_instructions * ) ( ( char * ) ofp_table_feature->properties + properties_len );
     tfpi->type = OFPTFPT_INSTRUCTIONS_MISS;
     struct ofp_instruction *ins = tfpi->instruction_ids;
     tfpi->length = ( uint16_t ) ( prop_hdr_len + assign_instruction_ids( ins, &table_feature->instructions ) );
-    tfpi->length = ( uint16_t ) ( tfpi->length + PADLEN_TO_64( tfpi->length ) );
-    properties_len += tfpi->length;
+    properties_len += tfpi->length + ( size_t ) PADLEN_TO_64( tfpi->length );
   }
 
   prop_hdr_len = ( uint16_t ) sizeof( struct ofp_table_feature_prop_actions );
   if ( is_any_table_feature_action_set( &table_feature->write_actions ) ) {
-    struct ofp_table_feature_prop_actions *tfpa = ( struct ofp_table_feature_prop_actions * )( ( char * ) ofp_table_feature->properties + properties_len );
+    struct ofp_table_feature_prop_actions *tfpa = ( struct ofp_table_feature_prop_actions * ) ( ( char * ) ofp_table_feature->properties + properties_len );
     tfpa->type = OFPTFPT_WRITE_ACTIONS;
     struct ofp_action_header *ac_hdr = tfpa->action_ids;
     tfpa->length = ( uint16_t ) ( prop_hdr_len + assign_action_ids( ac_hdr, &table_feature->write_actions ) );
-    tfpa->length = ( uint16_t ) ( tfpa->length + PADLEN_TO_64( tfpa->length ) );
-    properties_len += tfpa->length;
+    properties_len += tfpa->length + ( size_t ) PADLEN_TO_64( tfpa->length );
   }
   
   if ( is_any_table_feature_action_set( &table_feature->write_actions_miss ) ) {
-    struct ofp_table_feature_prop_actions *tfpa = ( struct ofp_table_feature_prop_actions * )( ( char * ) ofp_table_feature->properties + properties_len );
+    struct ofp_table_feature_prop_actions *tfpa = ( struct ofp_table_feature_prop_actions * ) ( ( char * ) ofp_table_feature->properties + properties_len );
 
     tfpa->type = OFPTFPT_WRITE_ACTIONS_MISS;
     struct ofp_action_header *ac_hdr = tfpa->action_ids;
     tfpa->length = ( uint16_t ) ( prop_hdr_len + assign_action_ids( ac_hdr, &table_feature->write_actions_miss ) );
-    tfpa->length = ( uint16_t ) ( tfpa->length + PADLEN_TO_64( tfpa->length ) );
-    properties_len += tfpa->length;
+    properties_len += tfpa->length + ( size_t ) PADLEN_TO_64( tfpa->length );
   }
   
   if ( is_any_table_feature_action_set( &table_feature->apply_actions ) ) {
-    struct ofp_table_feature_prop_actions *tfpa = ( struct ofp_table_feature_prop_actions * )( ( char * ) ofp_table_feature->properties + properties_len );
+    struct ofp_table_feature_prop_actions *tfpa = ( struct ofp_table_feature_prop_actions * ) ( ( char * ) ofp_table_feature->properties + properties_len );
     tfpa->type = OFPTFPT_APPLY_ACTIONS;
     struct ofp_action_header *ac_hdr = tfpa->action_ids;
     tfpa->length = ( uint16_t ) ( prop_hdr_len + assign_action_ids( ac_hdr, &table_feature->apply_actions ) );
-    tfpa->length = ( uint16_t ) ( tfpa->length + PADLEN_TO_64( tfpa->length ) );
-    properties_len += tfpa->length;
+    properties_len += tfpa->length + ( size_t ) PADLEN_TO_64( tfpa->length );
   }
 
   if ( is_any_table_feature_action_set( &table_feature->apply_actions_miss ) ) {
-    struct ofp_table_feature_prop_actions *tfpa = ( struct ofp_table_feature_prop_actions * )( ( char * ) ofp_table_feature->properties + properties_len );
+    struct ofp_table_feature_prop_actions *tfpa = ( struct ofp_table_feature_prop_actions * ) ( ( char * ) ofp_table_feature->properties + properties_len );
     tfpa->type = OFPTFPT_APPLY_ACTIONS_MISS;
     struct ofp_action_header *ac_hdr = tfpa->action_ids;
     tfpa->length = ( uint16_t ) ( prop_hdr_len + assign_action_ids( ac_hdr, &table_feature->apply_actions_miss ) );
-    tfpa->length = ( uint16_t ) ( tfpa->length + PADLEN_TO_64( tfpa->length ) );
-    properties_len += tfpa->length;
+    properties_len += tfpa->length + ( size_t ) PADLEN_TO_64( tfpa->length );
   }
 
   prop_hdr_len = ( uint16_t ) sizeof( struct ofp_table_feature_prop_oxm );
   if ( is_any_table_feature_match_set( &table_feature->matches ) ) {
-    struct ofp_table_feature_prop_oxm *tfpo = ( struct ofp_table_feature_prop_oxm * )( ( char * ) ofp_table_feature->properties + properties_len );
+    struct ofp_table_feature_prop_oxm *tfpo = ( struct ofp_table_feature_prop_oxm * ) ( ( char * ) ofp_table_feature->properties + properties_len );
     tfpo->type = OFPTFPT_MATCH;
     uint32_t *oxm_id =  ( uint32_t * ) &tfpo->oxm_ids;
     tfpo->length = ( uint16_t ) ( prop_hdr_len + assign_oxm_ids( oxm_id, &table_feature->matches ) );
-    tfpo->length = ( uint16_t ) ( tfpo->length + PADLEN_TO_64( tfpo->length ) );
-    properties_len += tfpo->length;
+    properties_len += tfpo->length + ( size_t ) PADLEN_TO_64( tfpo->length );
   }
 
   if ( is_any_table_feature_match_set( &table_feature->wildcards ) ) {
-    struct ofp_table_feature_prop_oxm *tfpo = ( struct ofp_table_feature_prop_oxm * )( ( char * ) ofp_table_feature->properties + properties_len );
+    struct ofp_table_feature_prop_oxm *tfpo = ( struct ofp_table_feature_prop_oxm * ) ( ( char * ) ofp_table_feature->properties + properties_len );
     tfpo->type = OFPTFPT_WILDCARDS;
     uint32_t *oxm_id = ( uint32_t * ) &tfpo->oxm_ids;
     tfpo->length = ( uint16_t ) ( prop_hdr_len + assign_oxm_ids( oxm_id, &table_feature->wildcards ) );
-    tfpo->length = ( uint16_t ) ( tfpo->length + PADLEN_TO_64( tfpo->length ) );
-    properties_len += tfpo->length;
+    properties_len += tfpo->length + ( size_t ) PADLEN_TO_64( tfpo->length );
   }
 
   if ( is_any_table_feature_match_set( &table_feature->write_setfield ) ) {
-    struct ofp_table_feature_prop_oxm *tfpo = ( struct ofp_table_feature_prop_oxm * )( ( char * ) ofp_table_feature->properties + properties_len );
+    struct ofp_table_feature_prop_oxm *tfpo = ( struct ofp_table_feature_prop_oxm * ) ( ( char * ) ofp_table_feature->properties + properties_len );
     tfpo->type = OFPTFPT_WRITE_SETFIELD;
     uint32_t *oxm_id = ( uint32_t * ) &tfpo->oxm_ids;
     tfpo->length = ( uint16_t ) ( prop_hdr_len + assign_oxm_ids( oxm_id, &table_feature->write_setfield ) );
-    tfpo->length = ( uint16_t ) ( tfpo->length + PADLEN_TO_64( tfpo->length ) );
-    properties_len += tfpo->length;
+    properties_len += tfpo->length + ( size_t ) PADLEN_TO_64( tfpo->length );
   }
 
   if ( is_any_table_feature_match_set( &table_feature->write_setfield_miss ) ) {
-    struct ofp_table_feature_prop_oxm *tfpo = ( struct ofp_table_feature_prop_oxm * )( ( char * ) ofp_table_feature->properties + properties_len );
+    struct ofp_table_feature_prop_oxm *tfpo = ( struct ofp_table_feature_prop_oxm * ) ( ( char * ) ofp_table_feature->properties + properties_len );
     tfpo->type = OFPTFPT_WRITE_SETFIELD_MISS;
     uint32_t *oxm_id = ( uint32_t * ) &tfpo->oxm_ids;
     tfpo->length = ( uint16_t ) ( prop_hdr_len + assign_oxm_ids( oxm_id, &table_feature->write_setfield_miss ) );
-    tfpo->length = ( uint16_t ) ( tfpo->length + PADLEN_TO_64( tfpo->length ) );
-    properties_len += tfpo->length;
+    properties_len += tfpo->length + ( size_t ) PADLEN_TO_64( tfpo->length );
   }
   
   if ( is_any_table_feature_match_set( &table_feature->apply_setfield ) ) {
-    struct ofp_table_feature_prop_oxm *tfpo = ( struct ofp_table_feature_prop_oxm * )( ( char * ) ofp_table_feature->properties + properties_len );
+    struct ofp_table_feature_prop_oxm *tfpo = ( struct ofp_table_feature_prop_oxm * ) ( ( char * ) ofp_table_feature->properties + properties_len );
     tfpo->type = OFPTFPT_APPLY_SETFIELD;
     uint32_t *oxm_id = ( uint32_t * ) &tfpo->oxm_ids;
     tfpo->length = ( uint16_t ) ( prop_hdr_len + assign_oxm_ids( oxm_id, &table_feature->apply_setfield ) );
-    tfpo->length = ( uint16_t ) ( tfpo->length + PADLEN_TO_64( tfpo->length ) );
-    properties_len += tfpo->length;
+    properties_len += tfpo->length + ( size_t ) PADLEN_TO_64( tfpo->length );
   }
 
   if ( is_any_table_feature_match_set( &table_feature->apply_setfield_miss ) ) {
-    struct ofp_table_feature_prop_oxm *tfpo = ( struct ofp_table_feature_prop_oxm * )( ( char * ) ofp_table_feature->properties + properties_len );
+    struct ofp_table_feature_prop_oxm *tfpo = ( struct ofp_table_feature_prop_oxm * ) ( ( char * ) ofp_table_feature->properties + properties_len );
     tfpo->type = OFPTFPT_APPLY_SETFIELD_MISS;
     uint32_t *oxm_id = ( uint32_t * ) &tfpo->oxm_ids;
     tfpo->length = ( uint16_t ) ( prop_hdr_len + assign_oxm_ids( oxm_id, &table_feature->apply_setfield_miss ) );
-    tfpo->length = ( uint16_t ) ( tfpo->length + PADLEN_TO_64( tfpo->length ) );
-    properties_len += tfpo->length;
+    properties_len += tfpo->length + ( size_t ) PADLEN_TO_64( tfpo->length );
   }
+
+
 
   prop_hdr_len = ( uint16_t ) sizeof( struct ofp_table_feature_prop_next_tables );
-  struct ofp_table_feature_prop_next_tables *tfpnt = ( struct ofp_table_feature_prop_next_tables * )( ( char * ) ofp_table_feature->properties + properties_len );
-  tfpnt->type = OFPTFPT_NEXT_TABLES;
-  tfpnt->length = prop_hdr_len;
-  uint8_t *table_id = ( uint8_t * ) &tfpnt->next_table_ids;
-  for ( uint8_t i = 0; i <= FLOW_TABLE_ID_MAX; i++ ) {
-    if ( table_feature->next_table_ids[ i ] ) {
-      tfpnt->length = ( uint16_t ) ( tfpnt->length + sizeof( uint8_t ) );
-      *table_id = i;
-      table_id++;
-    }
-  }
-  tfpnt->length = ( uint16_t ) ( tfpnt->length + PADLEN_TO_64( tfpnt->length ) );
-  properties_len += tfpnt->length;
 
-  tfpnt = ( struct ofp_table_feature_prop_next_tables * )( ( char * ) ofp_table_feature->properties + properties_len );
-  tfpnt->type = OFPTFPT_NEXT_TABLES_MISS;
-  tfpnt->length = prop_hdr_len;
-  table_id = ( uint8_t * ) &tfpnt->next_table_ids;
-  for ( uint8_t i = 0; i <= FLOW_TABLE_ID_MAX; i++ ) {
-    if ( table_feature->next_table_ids_miss[ i ] ) {
-      tfpnt->length = ( uint16_t ) ( tfpnt->length + sizeof( uint8_t ) );
-      *table_id = i;
-      table_id++;
+  if ( prop_next_table_ids_len( table_feature->next_table_ids ) > 0 ) {
+    struct ofp_table_feature_prop_next_tables *tfpnt = ( struct ofp_table_feature_prop_next_tables * ) ( ( char * ) ofp_table_feature->properties + properties_len );
+    tfpnt->type = OFPTFPT_NEXT_TABLES;
+    tfpnt->length = prop_hdr_len;
+    uint8_t *table_id = ( uint8_t * ) &tfpnt->next_table_ids;
+    for ( uint8_t i = 0; i <= FLOW_TABLE_ID_MAX; i++ ) {
+      if ( table_feature->next_table_ids[ i ] ) {
+        tfpnt->length = ( uint16_t ) ( tfpnt->length + sizeof( uint8_t ) );
+        *table_id = i;
+        table_id++;
+      }
     }
+    properties_len += tfpnt->length + ( size_t ) PADLEN_TO_64( tfpnt->length );
   }
-  tfpnt->length = ( uint16_t ) ( tfpnt->length + PADLEN_TO_64( tfpnt->length ) );
-  properties_len += tfpnt->length;
+
+  if ( prop_next_table_ids_len( table_feature->next_table_ids_miss ) > 0 ) {
+    struct ofp_table_feature_prop_next_tables *tfpnt = ( struct ofp_table_feature_prop_next_tables * ) ( ( char * ) ofp_table_feature->properties + properties_len );
+    tfpnt->type = OFPTFPT_NEXT_TABLES_MISS;
+    tfpnt->length = prop_hdr_len;
+    uint8_t *table_id = ( uint8_t * ) &tfpnt->next_table_ids;
+    for ( uint8_t i = 0; i <= FLOW_TABLE_ID_MAX; i++ ) {
+      if ( table_feature->next_table_ids_miss[ i ] ) {
+        tfpnt->length = ( uint16_t ) ( tfpnt->length + sizeof( uint8_t ) );
+        *table_id = i;
+        table_id++;
+      }
+    }
+    properties_len += tfpnt->length + ( size_t ) PADLEN_TO_64( tfpnt->length );
+  }
 
   return ofp_table_feature;
 }
