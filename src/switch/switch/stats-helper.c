@@ -173,6 +173,19 @@ pack_bucket( struct ofp_bucket *ofp_bucket, bucket_list **list ) {
 }
 
 
+static void
+pack_bucket_counter( struct ofp_bucket_counter *dst_bucket_counter, list_element *list ) {
+  bucket_counter *src_bucket_counter;
+  for ( list_element *e = list; e != NULL; e = e->next ) {
+    src_bucket_counter = e->data;
+    if ( src_bucket_counter != NULL ) {
+      memcpy( dst_bucket_counter, src_bucket_counter, sizeof( *dst_bucket_counter ) );
+      dst_bucket_counter = ( struct ofp_bucket_counter * )( ( char * ) dst_bucket_counter + sizeof( *dst_bucket_counter ) );
+    }
+  }
+}
+
+
 static bool
 is_any_table_feature_set( const void *feature, size_t feature_size ) {
   const uint8_t *byte = feature;
@@ -262,6 +275,7 @@ static size_t
 get_table_features_len( flow_table_features *table_feature ) {
   size_t len;
   size_t total_len = sizeof( struct ofp_table_features );
+
 
   len = instructions_capabilities_len( &table_feature->instructions );
   if ( len ) {
@@ -710,7 +724,7 @@ _request_send_flow_stats( const struct ofp_flow_stats_request *req, const uint32
       if ( i == nr_stats - 1 ) {
         flags &= ( uint16_t ) ~OFPMPF_REPLY_MORE;
       }
-      SEND_STATS( flow, transaction_id, flags, list )
+      SEND_STATS( flow, transaction_id, flags, list );
       delete_element( &list, ( void * ) fs );
       xfree( fs );
     }
@@ -787,7 +801,7 @@ _request_send_port_stats( const struct ofp_port_stats_request *req, const uint32
       if ( i == nr_port_stats - 1 ) {
         flags &= ( uint16_t ) ~OFPMPF_REPLY_MORE;
       }
-      SEND_STATS( port, transaction_id, flags, list )
+      SEND_STATS( port, transaction_id, flags, list );
       delete_element( &list, ( void * ) &stats[ i ] );
     }
     xfree( stats );
@@ -797,25 +811,54 @@ _request_send_port_stats( const struct ofp_port_stats_request *req, const uint32
 void ( *request_send_port_stats )( const struct ofp_port_stats_request *req, const uint32_t transaction_id ) = _request_send_port_stats;
 
 
+static buffer *
+assign_group_stats( group_stats *stats ) {
+  uint16_t length = ( uint16_t )( sizeof( struct ofp_group_stats ) + list_length_of( stats->bucket_stats ) * sizeof( struct ofp_bucket_counter ) );
+  buffer *buffer = alloc_buffer_with_length( length );
+  append_back_buffer( buffer, length );
+  struct ofp_group_stats *group_stats = buffer->data;
+
+  group_stats->length = length;
+  group_stats->group_id = stats->group_id;
+  memset( &group_stats->pad, 0, sizeof( group_stats->pad ) );
+  group_stats->ref_count = stats->ref_count;
+  memset( &group_stats->pad2, 0, sizeof( group_stats->pad2 ) );
+  group_stats->packet_count = stats->packet_count;
+  group_stats->byte_count = stats->byte_count;
+  group_stats->duration_sec = stats->duration_sec;
+  group_stats->duration_nsec = stats->duration_nsec;
+  struct ofp_bucket_counter *bucket_counter = ( struct ofp_bucket_counter * )( ( char * ) group_stats + offsetof( struct ofp_group_stats, bucket_stats ) );
+  pack_bucket_counter( bucket_counter, stats->bucket_stats ); 
+  return buffer;
+}
+
+
 static void
 _request_send_group_stats( const struct ofp_group_stats_request *req, const uint32_t transaction_id ) {
   group_stats *stats = NULL;
-  list_element *list = new_list();
   uint32_t nr_group_stats = 0;
 
   if ( get_group_stats( req->group_id, &stats, &nr_group_stats ) == OFDPE_SUCCESS ) {
-    // FIXME: this may not work! group_stats is different type from struct ofp_group_stats.
+    list_element *list = NULL;
+    if ( nr_group_stats ) {
+      list = new_list();
+    }
     uint16_t flags = OFPMPF_REPLY_MORE;
     for ( uint32_t i = 0; i < nr_group_stats; i++ ) {
-      append_to_tail( &list, ( void * ) &stats[ i ] );
+      buffer *buf = assign_group_stats( &stats[ i ] );
+      struct ofp_group_stats *group_stats = buf->data;
+      append_to_tail( &list, ( void * ) group_stats );
       if ( i == nr_group_stats - 1 ) {
         flags &= ( uint16_t ) ~OFPMPF_REPLY_MORE;
       }
-      SEND_STATS( group, transaction_id, flags, list )
-      delete_element( &list, ( void * ) &stats[ i ] );
+      SEND_STATS( group, transaction_id, flags, list );
+      delete_element( &list, ( void * ) group_stats );
+      free_buffer( buf );
     }
     xfree( stats );
-    delete_list( list );
+    if ( list != NULL ) {
+      delete_list( list );
+    }
   }
 }
 void ( *request_send_group_stats)( const struct ofp_group_stats_request *req, const uint32_t transaction_id ) = _request_send_group_stats;
@@ -861,7 +904,7 @@ _request_send_table_features_stats( uint32_t transaction_id ) {
       if ( i == FLOW_TABLE_ID_MAX - 1 ) {
         flags &= ( uint16_t ) ~OFPMPF_REPLY_MORE;
       }
-      SEND_STATS( table_features, transaction_id, flags, list )
+      SEND_STATS( table_features, transaction_id, flags, list );
       delete_element( &list, ( void * ) table_features_reply );
       xfree( table_features_reply );
     }

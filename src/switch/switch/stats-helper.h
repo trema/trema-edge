@@ -26,9 +26,11 @@ extern "C" {
 
 
 #define SEND_STATS( stats_type, transaction_id, flags, list ) \
-  buffer *msg = create_##stats_type##_multipart_reply( transaction_id, flags, list ); \
-  switch_send_openflow_message( msg ); \
-  free_buffer( msg );
+  do {                                                        \
+    buffer *msg = create_##stats_type##_multipart_reply( transaction_id, flags, list ); \
+    switch_send_openflow_message( msg ); \
+    free_buffer( msg );                  \
+  } while( 0 )
 
 
 void ( *request_send_flow_stats)( const struct ofp_flow_stats_request *req, const uint32_t transaction_id );

@@ -646,7 +646,7 @@ _handle_multipart_request( uint32_t transaction_id, uint16_t type, uint16_t flag
       {
         // no request body is included with this type.
         list_element *list = request_port_desc();
-        SEND_STATS( port_desc, transaction_id, flags, list )
+        SEND_STATS( port_desc, transaction_id, flags, list );
       }
       break;
     case OFPMP_QUEUE: 
@@ -666,7 +666,7 @@ _handle_multipart_request( uint32_t transaction_id, uint16_t type, uint16_t flag
       {
         // the request body is empty.
         list_element *list = request_group_desc_stats();
-        SEND_STATS( group_desc, transaction_id, flags, list )
+        SEND_STATS( group_desc, transaction_id, flags, list );
       }
       break;
     case OFPMP_GROUP_FEATURES: 
