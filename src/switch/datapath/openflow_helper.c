@@ -426,10 +426,10 @@ get_ofp_action_length( const action *action ) {
         oxm_length += get_oxm_length( action->match );
       }
       else {
-        oxm_length += sizeof( struct ofp_action_set_field );
+        oxm_length = sizeof( struct ofp_action_set_field );
       }
       length += oxm_length;
-      length += ( oxm_length - 4 ) + ( ( oxm_length + 7 ) / 8 * 8 - oxm_length ); // padding
+      length += ( oxm_length + 7 ) / 8 * 8 - oxm_length; // padding
     }
     break;
 
