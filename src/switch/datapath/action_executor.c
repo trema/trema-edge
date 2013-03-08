@@ -347,7 +347,7 @@ set_vlan_vid( buffer *frame, uint16_t value ) {
   }
 
   vlantag_header_t *header = info->l2_vlan_header;
-  header->tci = ( uint16_t ) ( ( header->tci & htons( 0xf000 ) ) | value );
+  header->tci = ( uint16_t ) ( ( header->tci & htons( 0xf000 ) ) | ( value & 0x0fff ) );
 
   return parse_frame( frame );
 }
