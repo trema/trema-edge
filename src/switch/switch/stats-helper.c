@@ -901,7 +901,7 @@ _request_send_table_features_stats( uint32_t transaction_id ) {
     if ( get_flow_table_features( i, &table_features ) == OFDPE_SUCCESS ) {
       struct ofp_table_features *table_features_reply = assign_table_features( &table_features );
       append_to_tail( &list, ( void * ) table_features_reply );
-      if ( i == FLOW_TABLE_ID_MAX - 1 ) {
+      if ( i == FLOW_TABLE_ID_MAX ) {
         flags &= ( uint16_t ) ~OFPMPF_REPLY_MORE;
       }
       SEND_STATS( table_features, transaction_id, flags, list );
