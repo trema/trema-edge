@@ -7,20 +7,36 @@ merge this repository into the current trema repository.
 ## Trema for OpenFlow 1.3.X
 
 We have already developed source that implements the OpenFlow 1.3.0
-specification and we also planning to include the newer OpenFlow
-version 1.3.1.
-The current implementation is C only.
+specification and the newest OpenFlow version 1.3.1.
+The current implementation was C only but we also releasing a Ruby
+implementation.
 Trema for OpenFlow 1.3.X does not support OpenFlow version 1.0.
 
-Status of implementation:
+Implementation status:
 
-* `trema command`: will not work
+* `trema command`: works, all irrelevant commands have been removed.
+* `ruby/trema`: works Ruby controller
 * `libtrema`: works
 * `switch_manager, switch daemon`: works
 * `tremashark`: not yet implemented
 * `src/examples/dumper`: works (C only)
-* `src/examples/learning_switch`: works (C only)
+* `src/examples/learning_switch`: works (both C and Ruby )
+* `src/examples/repeater_hub`: works (Ruby only)
 * `trema apps`: not work
+* `features`: not work
+* `spec`: not work
+
+The `./trema ruby` not updated yet to include trema edge's API documentation and
+currently displays the trema's API documentation.
+
+The Ruby controller implements most of the messages except the following:
+
+* Experimenter
+* Barrier-request/Barrier-reply. Trema switch lacks implementation of this message.
+* Queue-get-config/request/reply
+* Role-request/reply
+* Get-async-requet/reply
+* Meter-mod
 
 ## Tested platforms
 
@@ -35,27 +51,95 @@ This repository has only been tested with ruby 1.9.3 and will not work with
 lower versions. We recommend installation of the rvm program for easy
 installation of ruby 1.9.3.
 
-The familiar build.rb command has not been integrated yet therefore to build
-`trema-edge` please use the rake command. But before running the `rake` command
+To build `trema-edge` please use the rake command. But before running the `rake` command
 ensure that the gem `rake-builder` version 0.7.0 is installed and in addition
-the `xutils-dev` package since it is used by the `rake-builder` gem invoking
+the `xutils-dev` package, since it is needed by the `rake-builder` gem invoking
 the `makedepend` program.
 
 ## Build trema
 
     % rake
 
-Note that the `Rakefile` file that contains testing suite scripts has not been
-integrated into the build yet and can not be used.
 
-## Run learning switch
+## Run the C learning switch
 
     % ./learning_switch.sh start
 
     Stop learning switch
     % ./learning_switch.sh stop
 
-## How to build your own controller application
+
+## Run the Ruby learning switch
+
+    % ./trema run src/examples/learning_switch/learning-switch.rb -c src/examples/learning_switch/learning_switch.conf
+
+## How to build your own Ruby controller application
+
+    % mkdir work
+    % cd work
+    % vi sample.rb
+    ..
+    % cat sample.rb
+    class Sample < Controller
+      def switch_ready datapath_id
+        # as an example create a flow to receive all packet-ins from port 1
+        redirect_action = SendOutPort.new( port_number: OFPP_CONTROLLER, max_len: OFPCML_NO_BUFFER )
+        apply_ins = ApplyAction.new( actions:  [ redirect_action ] )
+        match = Match.new( in_port: 1 )
+        send_flow_mod_add( datapath_id,
+                           priority: OFP_LOW_PRIORITY,
+                           buffer_id: OFP_NO_BUFFER,
+                           match: match,
+                           instructions: [ apply_ins ] )
+
+      end
+      def packet_in datapath_id, message
+        # print the packet-in message instance
+        puts message.inspect
+      end
+    end
+
+    % cat sample.conf
+    trema_switch( "lsw" ) {
+      datapath_id "0xabc"
+    }
+
+    vhost ("host1") {
+      ip "192.168.0.1"
+      netmask "255.255.0.0"
+      mac "00:00:00:01:00:01"
+    }
+
+    vhost ("host2") {
+      ip "192.168.0.2"
+      netmask "255.255.0.0"
+      mac "00:00:00:01:00:02"
+    }
+
+    link "host1", "lsw:1"
+    link "host2", "lsw:2" 
+
+The above DSL would create 2 ports and link each port to learning trema switch. 
+Since trema switch doesn't depend on an existence of a virtual network to function 
+it is possible to define trema switch's ports explicitly by using the ports attribute 
+in the trema_switch directive block.
+
+    % cat sample.conf
+    trema_switch( "lsw" ) {
+      datapath_id "0xabc"
+      ports "eth0,eth1"
+    }
+
+Define the above syntax only if you are not using a virtual network for your testing 
+otherwise use the link directive to define trema switch's virtual ports dynamically 
+which is the effortless and easy way.
+
+## To run the controller
+
+    % ./trema run work/sample.rb -c work/sample.conf
+
+
+## How to build your own C controller application
 
 ### To build
 
@@ -86,12 +170,13 @@ integrated into the build yet and can not be used.
     % cc `../trema-config -c` -o sample sample.c `../trema-config -l`
     % cd ..
 
-### To start the controller
+### To start the C controller
 
     % ./trema-run.sh ./work/sample start
     
     Stop controller
     % ./trema-run.sh ./work/sample stop
+
 
 # About OpenFlow 1.3.0
 
