@@ -43,7 +43,7 @@ module Trema
 
       def_delegators :@packet_info, :ip_dscp, :ip_ecn, :ip_proto
 
-      def_delegators :@packet_info, :vtag?, :vtag_tci, :vtag_vid, :vtag_prio, :vtag_tpid
+      def_delegators :@packet_info, :vtag?, :vlan_tci, :vlan_vid, :vlan_prio, :vlan_tpid
 
       def_delegators :@packet_info, :ipv4?, :ip_proto, :ipv4_src, :ipv4_dst
 
