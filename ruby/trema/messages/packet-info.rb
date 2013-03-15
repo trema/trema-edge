@@ -31,7 +31,7 @@ module Trema
       alias_method   :vtag?, :vtag
 
       unsigned_int16 :vlan_vid
-      unsigned_int16 :vlan_vid
+      unsigned_int16 :vlan_tci
       unsigned_int8  :vlan_prio
       unsigned_int16 :vlan_tpid
 

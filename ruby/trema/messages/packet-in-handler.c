@@ -464,7 +464,7 @@ unpack_packet_in( packet_in *message ) {
   VALUE attributes = rb_hash_new();
 
   HASH_SET( attributes, "datapath_id", ULL2NUM( message->datapath_id ) );  
-  HASH_SET( attributes, "transaction", UINT2NUM( message->transaction_id ) );
+  HASH_SET( attributes, "transaction_id", UINT2NUM( message->transaction_id ) );
   HASH_SET( attributes, "buffer_id", UINT2NUM( message->buffer_id ) );
   HASH_SET( attributes, "total_len", UINT2NUM( message->total_len ) );
   HASH_SET( attributes, "reason", UINT2NUM( message->reason ) );
@@ -506,7 +506,7 @@ unpack_packet_in( packet_in *message ) {
   HASH_SET( pi_attributes, "vtag", r_vtag );
   if ( r_vtag == Qtrue ) {
     HASH_SET( pi_attributes, "vlan_vid", packet_in_vlan_vid( message->data ) );
-    HASH_SET( pi_attributes, "vlan_pcp", packet_in_vlan_pcp( message->data ) );
+    HASH_SET( pi_attributes, "vlan_prio", packet_in_vlan_pcp( message->data ) );
     HASH_SET( pi_attributes, "vlan_tci", packet_in_vlan_tci( message->data ) );
     HASH_SET( pi_attributes, "vlan_tpid", packet_in_vlan_tpid( message->data ) );
     HASH_SET( pi_attributes, "vlan_cfi", packet_in_vlan_cfi( message->data ) );
