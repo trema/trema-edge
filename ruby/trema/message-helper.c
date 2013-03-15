@@ -81,10 +81,6 @@ send_flow_mod( int argc, VALUE *argv, VALUE self ) {
   if ( !NIL_P( options ) ) {
     VALUE flow_mod = rb_funcall( rb_eval_string( "Messages::FlowMod" ), rb_intern( "new" ), 1, options );
 
-    // the two lines below are for temporary debug
-    VALUE str = rb_inspect( flow_mod );
-    printf( "flow_mod %s\n", StringValuePtr( str ) );
-    
     send_controller_message( self, datapath_id, flow_mod );
   }
   return self;
@@ -165,10 +161,6 @@ send_group_mod( int argc, VALUE *argv, VALUE self ) {
   if ( !NIL_P( options ) ) {
     VALUE group_mod = rb_funcall( rb_eval_string( "Messages::GroupMod" ), rb_intern( "new" ), 1, options );
 
-    // the two lines below are for temporary debug
-    VALUE str = rb_inspect( group_mod );
-    printf( "group_mod %s\n", StringValuePtr( str ) );
-    
     send_controller_message( self, datapath_id, group_mod );
   }
   return self;
