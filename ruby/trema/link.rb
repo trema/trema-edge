@@ -1,7 +1,5 @@
 #
-# Author: Yasuhito Takamiya <yasuhito@gmail.com>
-#
-# Copyright (C) 2008-2012 NEC Corporation
+# Copyright (C) 2008-2013 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2, as
@@ -72,16 +70,16 @@ module Trema
     # @return [Link]
     #
     def initialize stanza
-      @link_id = Link.instances.size
       @stanza = stanza
       if real_eth?
         @name = real_eth
         @name_peer = nil
         @peers = @stanza.peers - [ real_eth ]
       else
+        @peers = @stanza.peers
+        @link_id = link_id( @peers )
         @name = "trema#{ @link_id }-0"
         @name_peer = "trema#{ @link_id }-1"
-        @peers = @stanza.peers
       end
       Link.add self
     end
@@ -98,8 +96,8 @@ module Trema
     def add!
       return if real_eth?
       sh "sudo ip link add name #{ @name } type veth peer name #{ @name_peer }"
-      sh "sudo sysctl -w net.ipv6.conf.#{ @name }.disable_ipv6=1 >/dev/null 2>&1"
-      sh "sudo sysctl -w net.ipv6.conf.#{ @name_peer }.disable_ipv6=1 >/dev/null 2>&1"
+      sh "sudo /sbin/sysctl -w net.ipv6.conf.#{ @name }.disable_ipv6=1 >/dev/null 2>&1"
+      sh "sudo /sbin/sysctl -w net.ipv6.conf.#{ @name_peer }.disable_ipv6=1 >/dev/null 2>&1"
     end
 
 
@@ -167,6 +165,12 @@ module Trema
         return true if interfaces.include?( each )
       end
       false
+    end
+
+
+    def link_id peers
+      switch_port = peers.select{ | each | each.include?( ':' ) }[ 0 ]
+      @link_id = switch_port.nil? ? Link.instances.size : switch_port.split( ':' )[ 1 ]
     end
   end
 end

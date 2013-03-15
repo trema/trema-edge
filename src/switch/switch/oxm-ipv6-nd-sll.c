@@ -24,12 +24,12 @@
 
 static uint32_t ipv6_nd_sll_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t ipv6_nd_sll_length( const match *match );
-static void pack_ipv6_nd_sll( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_ipv6_nd_sll( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_ipv6_nd_sll = {
   OFPXMT_OFB_IPV6_ND_SLL,
-  OFP_ETH_ALEN,
+  OFP_ETH_ALEN + sizeof( oxm_match_header ),
   ipv6_nd_sll_field,
   ipv6_nd_sll_length,
   pack_ipv6_nd_sll
@@ -64,13 +64,15 @@ ipv6_nd_sll_length( const match *match ) {
 }
 
 
-static void
-pack_ipv6_nd_sll( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_ipv6_nd_sll( oxm_match_header *hdr, const match *match ) {
   if ( match->ipv6_nd_sll[ 0 ].valid ) {
-    ofp_match->type = oxm_ipv6_nd_sll.type;
-    ofp_match->length = oxm_ipv6_nd_sll.length;
-    memcpy( &ofp_match->oxm_fields, &match->ipv6_nd_sll[ 0 ].value, oxm_ipv6_nd_sll.length );
+    *hdr = OXM_OF_IPV6_ND_SLL;
+    uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    memcpy( value, &match->ipv6_nd_sll[ 0 ].value, OFP_ETH_ALEN );
+    return oxm_ipv6_nd_sll.length;
   }
+  return 0;
 }
 
 

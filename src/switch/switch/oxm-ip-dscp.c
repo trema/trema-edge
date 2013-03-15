@@ -24,12 +24,12 @@
 
 static uint32_t ip_dscp_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t ip_dscp_length( const match *match );
-static void pack_ip_dscp( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_ip_dscp( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_ip_dscp = {
   OFPXMT_OFB_IP_DSCP,
-  ( uint16_t ) sizeof( uint8_t ),
+  ( uint16_t ) sizeof( oxm_match_header ) + sizeof( uint8_t ),
   ip_dscp_field,
   ip_dscp_length,
   pack_ip_dscp
@@ -64,13 +64,15 @@ ip_dscp_length( const match *match ) {
 }
 
 
-static void
-pack_ip_dscp( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_ip_dscp( oxm_match_header *hdr, const match *match ) {
   if ( match->ip_dscp.valid ) {
-    ofp_match->type = oxm_ip_dscp.type;
-    ofp_match->length = oxm_ip_dscp.length;
-    memcpy( &ofp_match->oxm_fields, &match->ip_dscp.value, oxm_ip_dscp.length );
+    *hdr = OXM_OF_IP_DSCP;
+    uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    *value = match->ip_dscp.value;
+    return oxm_ip_dscp.length;
   }
+  return 0;
 }
 
 

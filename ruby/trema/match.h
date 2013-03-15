@@ -1,7 +1,5 @@
 /*
- * Author: Yasuhito Takamiya <yasuhito@gmail.com>
- *
- * Copyright (C) 2008-2012 NEC Corporation
+ * Copyright (C) 2008-2013 NEC Corporation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2, as
@@ -18,14 +16,17 @@
  */
 
 
-#include "ruby.h"
-#include "trema.h"
+#ifndef MATCH_H
+#define MATCH_H
 
 
 extern VALUE cMatch;
 
 
 void Init_match( void );
+
+
+#endif // MATCH_H
 
 
 /*

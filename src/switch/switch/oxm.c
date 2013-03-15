@@ -159,13 +159,15 @@ match_length( const match *match ) {
 }
 
 
-static void
-_pack_oxm( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+_pack_oxm( oxm_match_header *hdr, const match *match ) {
+  int pack_len = 0;
   for ( uint32_t i = 0; i < nr_oxm; i++ ) {
-    oxm_arr[ i ]->pack( ofp_match, match );
+    pack_len += oxm_arr[ i ]->pack( hdr, match );
   }
+  return ( uint16_t ) pack_len;
 }
-void ( *pack_oxm )( struct ofp_match *ofp_match, const match *match ) = _pack_oxm;
+uint16_t ( *pack_oxm )( oxm_match_header *hdr, const match *match ) = _pack_oxm;
 
 
 /*

@@ -119,7 +119,9 @@ action_list_length( action_list **list ) {
     if ( action != NULL ) {
       length = ( uint16_t ) ( length + action_tlv_length_by_type( action->type ) );
       if ( action->type == OFPAT_SET_FIELD && action->match ) {
-        length = ( uint16_t ) ( length + match_length( action->match ) );
+        uint16_t m_len = match_length( action->match );
+        length = ( uint16_t ) ( length + m_len );
+        length = ( uint16_t ) ( length + PADLEN_TO_64( length ) );
       }
     }
     item = item->next;
@@ -164,9 +166,9 @@ pack_bucket( struct ofp_bucket *ofp_bucket, bucket_list **list ) {
       ofp_bucket->weight = bucket->weight;
       ofp_bucket->watch_port = bucket->watch_port;
       ofp_bucket->watch_group = bucket->watch_group;
-      void *p = ofp_bucket->actions;
+      void *p = ( ( char * ) ofp_bucket + offsetof( struct ofp_bucket, actions ) );
       action_pack( p, &bucket->actions );
-      ofp_bucket = ( struct ofp_bucket * ) ( ( char * )( ofp_bucket + bucket_length ) );
+      ofp_bucket = ( struct ofp_bucket * ) ( ( char * ) ofp_bucket + bucket_length );
     }
     element = element->next;
   }
@@ -881,7 +883,7 @@ _request_group_desc_stats( void ) {
       stat->length = length;
       stat->group_id = stats[ i ].group_id;
       stat->type = stats[ i ].type;
-      void *p = ( char * ) ( stat + offsetof( struct ofp_group_desc_stats, buckets ) );
+      void *p = ( ( char * ) stat + offsetof( struct ofp_group_desc_stats, buckets ) );
       pack_bucket( p, &stats[ i ].buckets );
       append_to_tail( &list, ( void * ) stat );
     }

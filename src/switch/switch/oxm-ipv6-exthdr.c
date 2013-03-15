@@ -24,12 +24,12 @@
 
 static uint32_t ipv6_exthdr_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t ipv6_exthdr_length( const match *match );
-static void pack_ipv6_exthdr( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_ipv6_exthdr( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_ipv6_exthdr = {
   OFPXMT_OFB_IPV6_EXTHDR,
-  ( uint16_t ) sizeof( uint16_t ),
+  ( uint16_t ) sizeof( oxm_match_header ) + sizeof( uint16_t ),
   ipv6_exthdr_field,
   ipv6_exthdr_length,
   pack_ipv6_exthdr
@@ -67,13 +67,15 @@ ipv6_exthdr_length( const match *match ) {
 }
 
 
-static void
-pack_ipv6_exthdr( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_ipv6_exthdr( oxm_match_header *hdr, const match *match ) {
   if ( match->ipv6_exthdr.valid ) {
-    ofp_match->type = oxm_ipv6_exthdr.type;
-    ofp_match->length = oxm_ipv6_exthdr.length;
-    memcpy( &ofp_match->oxm_fields, &match->ipv6_exthdr.value, oxm_ipv6_exthdr.length );
+    *hdr = OXM_OF_IPV6_EXTHDR;
+    uint16_t *value = ( uint16_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    *value = match->ipv6_exthdr.value;
+    return oxm_ipv6_exthdr.length;
   }
+  return 0;
 }
 
 

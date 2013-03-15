@@ -1,9 +1,7 @@
 #
 # show_stats command of Trema shell.
 #
-# Author: Yasuhito Takamiya <yasuhito@gmail.com>
-#
-# Copyright (C) 2008-2012 NEC Corporation
+# Copyright (C) 2008-2013 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2, as
@@ -26,7 +24,7 @@ require "trema/dsl"
 module Trema
   module Shell
     def show_stats host_name, option
-      sanity_check
+      assert_trema_is_built
 
       raise "Host '#{ host_name }' is not defined." if Host[ host_name ].nil?
       raise "Host '#{ host_name }' is not connected to any link." if Host[ host_name ].interface.nil?

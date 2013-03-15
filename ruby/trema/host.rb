@@ -1,7 +1,5 @@
 #
-# Author: Yasuhito Takamiya <yasuhito@gmail.com>
-#
-# Copyright (C) 2008-2012 NEC Corporation
+# Copyright (C) 2008-2013 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2, as
@@ -206,6 +204,14 @@ module Trema
     end
 
 
+    #
+    # Check stats type and delegate processing.
+    #
+    # @raise [RuntimeError] if stats type is invalid.
+    #
+    # @return [Stat]
+    #   the object that represents the results of a particular stats type.
+    #
     def stats type
       case type
       when :tx

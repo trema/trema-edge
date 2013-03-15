@@ -24,7 +24,7 @@
 
 static uint32_t mpls_tc_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t mpls_tc_length( const match *match );
-static void pack_mpls_tc( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_mpls_tc( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_mpls_tc = {
@@ -64,13 +64,12 @@ mpls_tc_length( const match *match ) {
 }
 
 
-static void
-pack_mpls_tc( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_mpls_tc( oxm_match_header *hdr, const match *match ) {
+  UNUSED( hdr );
   if ( match->mpls_tc.valid ) {
-    ofp_match->type = oxm_mpls_tc.type;
-    ofp_match->length = oxm_mpls_tc.length;
-    memcpy( &ofp_match->oxm_fields, &match->mpls_tc.value, oxm_mpls_tc.length );
   }
+  return 0;
 }
 
 

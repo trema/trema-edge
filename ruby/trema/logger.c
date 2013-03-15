@@ -1,7 +1,5 @@
 /*
- * Author: Yasuhito Takamiya <yasuhito@gmail.com>
- *
- * Copyright (C) 2008-2012 NEC Corporation
+ * Copyright (C) 2008-2013 NEC Corporation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2, as
@@ -30,7 +28,7 @@ VALUE mLogger;
 static VALUE
 do_log( void ( *log_function )( const char *format, ... ), int argc, VALUE *argv ) {
   VALUE message = rb_f_sprintf( argc, argv );
-  log_function( STR2CSTR( message ) );
+  log_function( StringValuePtr( message ) );
   return message;
 }
 
@@ -142,7 +140,8 @@ logger_debug( int argc, VALUE *argv, VALUE self ) {
 
 
 void
-Init_logger() {
+Init_logger( void ) {
+  mTrema = rb_define_module( "Trema" );
   mLogger = rb_define_module_under( mTrema, "Logger" );
 
   rb_define_method( mLogger, "critical", logger_critical, -1 );

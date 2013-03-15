@@ -24,12 +24,12 @@
 
 static uint32_t arp_tha_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t arp_tha_length( const match *match );
-static void pack_arp_tha( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_arp_tha( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_arp_tha = {
   OFPXMT_OFB_ARP_THA,
-  OFP_ETH_ALEN,
+  OFP_ETH_ALEN + sizeof( oxm_match_header ),
   arp_tha_field,
   arp_tha_length,
   pack_arp_tha
@@ -67,13 +67,15 @@ arp_tha_length( const match *match ) {
 }
 
 
-static void
-pack_arp_tha( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_arp_tha( oxm_match_header *hdr, const match *match ) {
   if ( match->arp_tha[ 0 ].valid ) {
-    ofp_match->type = oxm_arp_tha.type;
-    ofp_match->length = oxm_arp_tha.length;
-    memcpy( &ofp_match->oxm_fields, &match->arp_tha[ 0 ].value, oxm_arp_tha.length );
+    *hdr = OXM_OF_ARP_THA; 
+    uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof( oxm_match_header ) );
+    memcpy( value, &match->arp_tha[ 0 ].value, OFP_ETH_ALEN );
+    return oxm_arp_tha.length;
   }
+  return 0;
 }
 
 

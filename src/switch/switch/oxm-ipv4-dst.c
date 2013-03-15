@@ -24,12 +24,12 @@
 
 static uint32_t ipv4_dst_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t ipv4_dst_length( const match *match );
-static void pack_ipv4_dst( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_ipv4_dst( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_ipv4_dst = {
   OFPXMT_OFB_IPV4_DST,
-  ( uint16_t ) sizeof( uint32_t ),
+  ( uint16_t ) sizeof( oxm_match_header ) + sizeof( uint32_t ),
   ipv4_dst_field,
   ipv4_dst_length,
   pack_ipv4_dst
@@ -67,13 +67,15 @@ ipv4_dst_length( const match *match ) {
 }
 
 
-static void
-pack_ipv4_dst( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_ipv4_dst( oxm_match_header *hdr, const match *match ) {
   if ( match->ipv4_dst.valid ) {
-    ofp_match->type = oxm_ipv4_dst.type;
-    ofp_match->length = oxm_ipv4_dst.length;
-    memcpy( &ofp_match->oxm_fields, &match->ipv4_dst.value, oxm_ipv4_dst.length );
+    *hdr = OXM_OF_IPV4_DST;
+    uint32_t *value = ( uint32_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    *value = match->ipv4_dst.value;
+    return oxm_ipv4_dst.length;
   }
+  return 0;
 }
 
 

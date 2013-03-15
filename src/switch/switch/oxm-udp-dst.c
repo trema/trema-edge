@@ -24,12 +24,12 @@
 
 static uint32_t udp_dst_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t udp_dst_length( const match *match );
-static void pack_udp_dst( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_udp_dst( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_udp_dst = {
   OFPXMT_OFB_UDP_DST,
-  ( uint16_t ) sizeof( uint16_t ),
+  ( uint16_t ) sizeof( oxm_match_header ) + sizeof( uint16_t ),
   udp_dst_field,
   udp_dst_length,
   pack_udp_dst
@@ -64,13 +64,15 @@ udp_dst_length( const match *match ) {
 }
 
 
-static void
-pack_udp_dst( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_udp_dst( oxm_match_header *hdr, const match *match ) {
   if ( match->udp_dst.valid ) {
-    ofp_match->type = oxm_udp_dst.type;
-    ofp_match->length = oxm_udp_dst.length;
-    memcpy( &ofp_match->oxm_fields, &match->udp_dst.value, oxm_udp_dst.length );
+    *hdr = OXM_OF_UDP_DST;
+    uint16_t *value = ( uint16_t * ) ( ( char * ) hdr + sizeof( oxm_match_header ) );
+    *value = match->udp_dst.value;
+    return oxm_udp_dst.length;
   }
+  return 0;
 }
 
 

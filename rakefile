@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2008-2012 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
@@ -36,6 +37,7 @@ end
 
 CFLAGS = [ 
     '-g',
+    '-fPIC',
     '-std=gnu99',
     '-D_GNU_SOURCE',
     '-fno-strict-aliasing',
@@ -51,39 +53,42 @@ CFLAGS = [
     '-Wpointer-arith'
 ]
 
-#Rake::Builder.new do | builder |
-#  builder.programming_language = 'c'
-#  builder.target = 'ruby/trema.so'
-#  builder.target_type = :shared_library
-#  builder.target_prerequisites = [ 
-#    "#{ File.expand_path 'objects/lib/libtrema.a' }"
-#  ]
-#  builder.source_search_paths = [ 'ruby/trema' ]
-#  builder.installable_headers = [ 'src/lib' ]
-#  ruby_includes = [ 
-#    RbConfig::CONFIG[ 'rubyhdrdir' ] + '/' + RbConfig::CONFIG[ 'arch' ],
-#    RbConfig::CONFIG[ 'rubyhdrdir' ] + '/ruby/backward',
-#    RbConfig::CONFIG[ 'rubyhdrdir' ]
-#  ]
-#  builder.include_paths = ruby_includes + [ 'src/lib' ]
-#  builder.objects_path = 'ruby'
-#  builder.compilation_options = CFLAGS
-#  builder.library_paths = [
-#    RbConfig::CONFIG[ 'libdir' ],
-#    'objects/lib'
-#  ]
-#  builder.linker_options = [ '-Wl', '-Bsymbolic' ]
-#  builder.library_dependencies = [
-#    'ruby',
-#    'trema',
-#    'sqlite3',
-#    'pthread',
-#    'rt',
-#    'dl',
-#    'crypt',
-#    'm'
-#  ]
-#end
+Rake::Builder.new do | builder |
+  builder.programming_language = 'c'
+  builder.target = 'ruby/trema.so'
+  builder.target_type = :shared_library
+  builder.target_prerequisites = [ 
+    "#{ File.expand_path 'objects/lib/libtrema.a' }"
+  ]
+  builder.source_search_paths = [ 
+    'ruby/trema',
+    'ruby/trema/messages',
+  ]
+  builder.installable_headers = [ 'src/lib' ]
+  ruby_includes = [ 
+    RbConfig::CONFIG[ 'rubyhdrdir' ] + '/' + RbConfig::CONFIG[ 'arch' ],
+    RbConfig::CONFIG[ 'rubyhdrdir' ] + '/ruby/backward',
+    RbConfig::CONFIG[ 'rubyhdrdir' ]
+  ]
+  builder.include_paths = ruby_includes + [ 'ruby/trema', 'src/lib' ]
+  builder.objects_path = 'ruby'
+  builder.compilation_options = CFLAGS
+  builder.library_paths = [
+    RbConfig::CONFIG[ 'libdir' ],
+    'objects/lib'
+  ]
+  builder.linker_options = [ '-Wl,-Bsymbolic' ]
+  builder.library_dependencies = [
+    'ruby',
+    'trema',
+    'sqlite3',
+    'pthread',
+    'rt',
+    'dl',
+    'crypt',
+    'm'
+  ]
+end
 
 
 desc "build cmockery library"
@@ -97,7 +102,44 @@ file Trema.libcmockery_a do
 end
 Rake::Task[ "vendor:cmockery" ].invoke
  
+
+def phost_src
+  File.join Trema.vendor_phost, "src"
+end
+
+
+task "vendor:phost" => [ Trema::Executables.phost, Trema::Executables.cli ]
+
+directory File.dirname( Trema::Executables.phost )
+file Trema::Executables.phost => File.dirname( Trema::Executables.phost ) do
+  cd phost_src do
+    sh "make"
+  end
+  sh "install #{ File.join( phost_src, "phost" ) } #{ Trema::Executables.phost } --mode=0755"
+end
+
+directory File.dirname( Trema::Executables.cli )
+file Trema::Executables.cli => File.dirname( Trema::Executables.cli ) do
+  cd phost_src do
+    sh "make"
+  end
+  sh "install #{ File.join( phost_src, "cli" ) } #{ Trema::Executables.cli } --mode=0755"
+end
+Rake::Task[ "vendor:phost" ].invoke
+
   
+Rake::Builder.new do | builder |
+  builder.programming_language = 'c'
+  builder.target = 'objects/lib/libtrema.a'
+  builder.target_type = :static_library
+  builder.source_search_paths = [ 'src/lib' ]
+  builder.installable_headers = [ 'src/lib' ]
+  builder.include_paths = [ 'src/lib' ]
+  builder.objects_path = 'objects/lib'
+  builder.compilation_options = CFLAGS
+end
+
+
 Rake::Builder.new do | builder |
   builder.programming_language = 'c'
   builder.target = 'objects/lib/libtrema.a'

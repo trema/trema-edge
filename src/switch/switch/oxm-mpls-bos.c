@@ -24,12 +24,12 @@
 
 static uint32_t mpls_bos_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t mpls_bos_length( const match *match );
-static void pack_mpls_bos( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_mpls_bos( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_mpls_bos = {
   OFPXMT_OFB_MPLS_BOS,
-  ( uint16_t ) sizeof( uint8_t ),
+  ( uint16_t ) sizeof( oxm_match_header ) + sizeof( uint8_t ),
   mpls_bos_field,
   mpls_bos_length,
   pack_mpls_bos
@@ -64,13 +64,15 @@ mpls_bos_length( const match *match ) {
 }
 
 
-static void
-pack_mpls_bos( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_mpls_bos( oxm_match_header *hdr, const match *match ) {
   if ( match->mpls_bos.valid ) {
-    ofp_match->type = oxm_mpls_bos.type;
-    ofp_match->length = oxm_mpls_bos.length;
-    memcpy( &ofp_match->oxm_fields, &match->mpls_bos.value, oxm_mpls_bos.length );
+    *hdr = OXM_OF_MPLS_BOS;
+    uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    *value = match->mpls_bos.value;
+    return oxm_mpls_bos.length;
   }
+  return 0;
 }
 
 

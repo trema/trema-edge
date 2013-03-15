@@ -1,9 +1,7 @@
 #
 # The top-level definition of Trema network DSL.
 #
-# Author: Yasuhito Takamiya <yasuhito@gmail.com>
-#
-# Copyright (C) 2008-2012 NEC Corporation
+# Copyright (C) 2008-2013 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2, as
@@ -22,19 +20,24 @@
 
 require "trema/app"
 require "trema/dsl/link"
+require "trema/dsl/netns"
 require "trema/dsl/rswitch"
 require "trema/dsl/run"
 require "trema/dsl/switch"
 require "trema/dsl/vhost"
 require "trema/dsl/vswitch"
+require "trema/dsl/custom-switch"
+require "trema/dsl/trema-switch"
 require "trema/hardware-switch"
 require "trema/host"
 require "trema/link"
 require "trema/monkey-patch/module"
-require "trema/open-vswitch"
+require "trema/netns"
 require "trema/packetin-filter"
 require "trema/ruby-switch"
 require "trema/switch-manager"
+require "trema/custom-switch"
+require "trema/trema-switch"
 
 
 module Trema
@@ -63,13 +66,6 @@ module Trema
       end
 
 
-      def vswitch name = nil, &block
-        stanza = Trema::DSL::Vswitch.new( name )
-        stanza.instance_eval( &block )
-        Trema::OpenVswitch.new stanza, @config.port
-      end
-
-
       def rswitch name = nil, &block
         stanza = Trema::DSL::Rswitch.new( name )
         stanza.instance_eval( &block )
@@ -77,10 +73,31 @@ module Trema
       end
 
 
+      def custom_switch name = nil, &block
+        stanza = Trema::DSL::CustomSwitch.new( name )
+        stanza.instance_eval( &block )
+        Trema::CustomSwitch.new stanza
+      end
+
+
+      def trema_switch name = nil, &block
+        stanza = Trema::DSL::TremaSwitch.new( name )
+        stanza.instance_eval( &block )
+        Trema::TremaSwitch.new stanza
+      end
+
+
       def vhost name = nil, &block
         stanza = Trema::DSL::Vhost.new( name )
         stanza.instance_eval( &block ) if block
         Trema::Host.new( stanza )
+      end
+
+
+      def netns name, &block
+        stanza = Trema::DSL::Netns.new( name )
+        stanza.instance_eval( &block ) if block
+        Trema::Netns.new( stanza )
       end
 
 

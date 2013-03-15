@@ -1,7 +1,7 @@
 #
 # The syntax definition of custom_switch { ... } stanza in Trema DSL.
 #
-# Copyright (C) 2012 Hiroyasu OHYAMA
+# Copyright (C) 2013 Hiroyasu OHYAMA
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2, as

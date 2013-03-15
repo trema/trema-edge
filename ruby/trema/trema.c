@@ -1,7 +1,7 @@
 /*
  * Ruby wrapper around libtrema.
  *
- * Copyright (C) 2008-2012 NEC Corporation
+ * Copyright (C) 2008-2013 NEC Corporation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2, as
@@ -18,125 +18,37 @@
  */
 
 
-#include "action-enqueue.h"
-#include "action-output.h"
-#include "action-set-dl-dst.h"
-#include "action-set-dl-src.h"
-#include "action-set-nw-dst.h"
-#include "action-set-nw-src.h"
-#include "action-set-nw-tos.h"
-#include "action-set-tp-dst.h"
-#include "action-set-tp-src.h"
-#include "action-set-vlan-pcp.h"
-#include "action-set-vlan-vid.h"
-#include "action-strip-vlan.h"
-#include "action-vendor.h"
-#include "barrier-reply.h"
-#include "barrier-request.h"
 #include "controller.h"
-#include "echo-reply.h"
-#include "echo-request.h"
-#include "error.h"
-#include "features-reply.h"
-#include "features-request.h"
-#include "flow-mod.h"
-#include "flow-removed.h"
-#include "get-config-reply.h"
-#include "get-config-request.h"
-#include "hello.h"
 #include "logger.h"
+#include "message-handler.h"
+#include "actions.h"
+#include "instructions.h"
 #include "match.h"
-#include "openflow-error.h"
-#include "packet-in.h"
-#include "port-mod.h"
-#include "port-status.h"
-#include "port.h"
-#include "queue-get-config-reply.h"
-#include "queue-get-config-request.h"
-#include "ruby.h"
-#include "set-config.h"
-#include "stats-reply.h"
-#include "stats-request.h"
-#include "switch.h"
-#include "vendor.h"
+#include "message-const.h"
+#include "messages.h"
+#include "message-handler.h"
+#include "message-helper.h"
 
 
 VALUE mTrema;
 
 
 void
-Init_trema() {
+Init_trema( void ) {
   mTrema = rb_define_module( "Trema" );
-
-  rb_define_const( mTrema, "OFPC_FLOW_STATS", INT2NUM( OFPC_FLOW_STATS ) );
-  rb_define_const( mTrema, "OFPC_TABLE_STATS", INT2NUM( OFPC_TABLE_STATS ) );
-  rb_define_const( mTrema, "OFPC_PORT_STATS", INT2NUM( OFPC_PORT_STATS ) );
-  rb_define_const( mTrema, "OFPC_STP", INT2NUM( OFPC_STP) );
-  rb_define_const( mTrema, "OFPC_RESERVED", INT2NUM( OFPC_RESERVED ) );
-  rb_define_const( mTrema, "OFPC_IP_REASM", INT2NUM( OFPC_IP_REASM ) );
-  rb_define_const( mTrema, "OFPC_QUEUE_STATS", INT2NUM( OFPC_QUEUE_STATS ) );
-  rb_define_const( mTrema, "OFPC_ARP_MATCH_IP", INT2NUM( OFPC_ARP_MATCH_IP ) );
-
-  rb_define_const( mTrema, "OFPAT_OUTPUT", INT2NUM( OFPAT_OUTPUT ) );
-  rb_define_const( mTrema, "OFPAT_SET_VLAN_VID", INT2NUM( OFPAT_SET_VLAN_VID ) );
-  rb_define_const( mTrema, "OFPAT_SET_VLAN_PCP", INT2NUM( OFPAT_SET_VLAN_PCP ) );
-  rb_define_const( mTrema, "OFPAT_STRIP_VLAN", INT2NUM( OFPAT_STRIP_VLAN ) );
-  rb_define_const( mTrema, "OFPAT_SET_DL_SRC", INT2NUM( OFPAT_SET_DL_SRC) );
-  rb_define_const( mTrema, "OFPAT_SET_DL_DST", INT2NUM( OFPAT_SET_DL_DST) );
-  rb_define_const( mTrema, "OFPAT_SET_NW_SRC", INT2NUM( OFPAT_SET_NW_SRC ) );
-  rb_define_const( mTrema, "OFPAT_SET_NW_DST", INT2NUM( OFPAT_SET_NW_DST ) );
-  rb_define_const( mTrema, "OFPAT_SET_NW_TOS", INT2NUM( OFPAT_SET_NW_TOS ) );
-  rb_define_const( mTrema, "OFPAT_SET_TP_SRC", INT2NUM( OFPAT_SET_TP_SRC ) );
-  rb_define_const( mTrema, "OFPAT_SET_TP_DST", INT2NUM( OFPAT_SET_TP_DST ) );
-  rb_define_const( mTrema, "OFPAT_ENQUEUE", INT2NUM( OFPAT_ENQUEUE ) );
-  rb_define_const( mTrema, "OFPAT_VENDOR", INT2NUM( OFPAT_VENDOR ) );
-
   rb_require( "trema/host" );
-  rb_require( "trema/openflow-switch" );
   rb_require( "trema/path" );
 
-  Init_action_enqueue();
-  Init_action_output();
-  Init_action_set_dl_dst();
-  Init_action_set_dl_src();
-  Init_action_set_nw_dst();
-  Init_action_set_nw_src();
-  Init_action_set_nw_tos();
-  Init_action_set_tp_dst();
-  Init_action_set_tp_src();
-  Init_action_set_vlan_pcp();
-  Init_action_set_vlan_vid();
-  Init_action_strip_vlan();
-  Init_action_vendor();
-  Init_barrier_reply();
-  Init_barrier_request();
   Init_controller();
-  Init_echo_reply();
-  Init_echo_request();
-  Init_error();
-  Init_features_reply();
-  Init_features_request();
-  Init_flow_mod();
-  Init_flow_removed();
-  Init_get_config_reply();
-  Init_get_config_request();
-  Init_hello();
   Init_logger();
+  Init_message_const();
+  Init_actions();
+  Init_instructions();
+  Init_messages();
+  Init_message_handler();
+  Init_message_helper();
   Init_match();
-  Init_openflow_error();
-  Init_packet_in();
-  Init_port();
-  Init_port_mod();
-  Init_port_status();
-  Init_queue_get_config_reply();
-  Init_queue_get_config_request();
-  Init_set_config();
-  Init_stats_reply();
-  Init_stats_request();
-  Init_switch();
-  Init_vendor();
-
-  rb_require( "trema/exact-match" );
+  rb_require( "trema/exact-match" );  
 }
 
 

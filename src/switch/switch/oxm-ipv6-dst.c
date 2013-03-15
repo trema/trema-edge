@@ -24,12 +24,12 @@
 
 static uint32_t ipv6_dst_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t ipv6_dst_length( const match *match );
-static void pack_ipv6_dst( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_ipv6_dst( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_ipv6_dst = {
   OFPXMT_OFB_IPV6_DST,
-  IPV6_ADDRLEN,
+  IPV6_ADDRLEN + sizeof( oxm_match_header ),
   ipv6_dst_field,
   ipv6_dst_length,
   pack_ipv6_dst
@@ -67,13 +67,15 @@ ipv6_dst_length( const match *match ) {
 }
 
 
-static void
-pack_ipv6_dst( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_ipv6_dst( oxm_match_header *hdr, const match *match ) {
   if ( match->ipv6_dst[ 0 ].valid ) {
-    ofp_match->type = oxm_ipv6_dst.type;
-    ofp_match->length = oxm_ipv6_dst.length;
-    memcpy( &ofp_match->oxm_fields, &match->ipv6_dst[ 0 ].value, oxm_ipv6_dst.length );
+    *hdr = OXM_OF_IPV6_DST;
+    uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    memcpy( value, &match->ipv6_dst[ 0 ].value, IPV6_ADDRLEN );
+    return oxm_ipv6_dst.length;
   }
+  return 0;
 }
 
 

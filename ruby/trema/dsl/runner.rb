@@ -1,9 +1,7 @@
 #
 # Runs DSL objects in right order.
 #
-# Author: Yasuhito Takamiya <yasuhito@gmail.com>
-#
-# Copyright (C) 2008-2012 NEC Corporation
+# Copyright (C) 2008-2013 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2, as
@@ -44,6 +42,9 @@ module Trema
 
 
       def maybe_run_switch_manager
+        # FIXME
+        return if FileTest.exists? File.join( Trema.pid, "switch_manager.pid" )
+
         switch_manager =
           if @context.switch_manager and @context.apps.values.size > 0
             last_app = @context.apps.values.last.name
@@ -88,6 +89,8 @@ module Trema
         maybe_create_links
         maybe_run_hosts
         maybe_run_switches
+        maybe_run_trema_switch
+        maybe_run_netnss
       end
 
 
@@ -133,6 +136,18 @@ module Trema
         end
       end
 
+
+      def maybe_run_netnss
+        @context.netnss.each do | name, netns |
+          netns.run!
+        end
+      end
+
+
+      def maybe_run_trema_switch
+        @context.trema_switch.run! if @context.trema_switch
+      end
+      
 
       def maybe_run_apps
         return if @context.apps.values.empty?

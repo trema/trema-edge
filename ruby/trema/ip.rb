@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2012 NEC Corporation
+# Copyright (C) 2008-2013 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2, as
@@ -94,11 +94,12 @@ module Trema
     # @return [Array]
     #    an array of decimal numbers converted from IP address.
     #
-    def to_array
-      self.to_s.split( "." ).collect do | each |
+    def to_a
+      to_s.split( "." ).collect do | each |
         each.to_i
       end
     end
+    alias :to_array :to_a
   end
 end
 

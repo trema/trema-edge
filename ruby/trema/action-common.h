@@ -1,7 +1,5 @@
 /*
- * Author: Nick Karanatsios <nickkaranatsios@gmail.com>
- *
- * Copyright (C) 2008-2012 NEC Corporation
+ * Copyright (C) 2008-2013 NEC Corporation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 2, as
@@ -22,13 +20,15 @@
 #define ACTION_COMMON_H
 
 
+#include <stdint.h>
+
+
 uint32_t nw_addr_to_i( VALUE nw_addr );
-
-
-VALUE nw_addr_to_s( VALUE nw_addr );
-
-
-uint8_t *dl_addr_short( VALUE dl_addr, uint8_t *ret_dl_addr );
+uint8_t *dl_addr_to_a( VALUE dl_addr, uint8_t *ret_dl_addr );
+uint8_t *mac_addr_to_cstr( VALUE mac_addr );
+openflow_actions *pack_basic_action( VALUE r_action );
+oxm_matches *pack_flexible_action( VALUE r_action );
+openflow_instructions *pack_instruction( VALUE r_instruction );
 
 
 #endif // ACTION_COMMON_H

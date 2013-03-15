@@ -24,12 +24,12 @@
 
 static uint32_t tcp_dst_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t tcp_dst_length( const match *match );
-static void pack_tcp_dst( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_tcp_dst( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_tcp_dst = {
   OFPXMT_OFB_TCP_DST,
-  ( uint16_t ) sizeof( uint16_t ),
+  ( uint16_t ) sizeof( oxm_match_header ) + sizeof( uint16_t ),
   tcp_dst_field,
   tcp_dst_length,
   pack_tcp_dst
@@ -64,13 +64,15 @@ tcp_dst_length( const match *match ) {
 }
 
 
-static void
-pack_tcp_dst( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_tcp_dst( oxm_match_header *hdr, const match *match ) {
   if ( match->tcp_dst.valid ) {
-    ofp_match->type = oxm_tcp_dst.type;
-    ofp_match->length = oxm_tcp_dst.length;
-    memcpy( &ofp_match->oxm_fields, &match->tcp_dst.value, oxm_tcp_dst.length );
+    *hdr = OXM_OF_TCP_DST;
+    uint16_t *value = ( uint16_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    *value = match->tcp_dst.value;
+    return oxm_tcp_dst.length;
   }
+  return 0;
 }
 
 

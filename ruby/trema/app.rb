@@ -1,7 +1,5 @@
 #
-# Author: Yasuhito Takamiya <yasuhito@gmail.com>
-#
-# Copyright (C) 2008-2012 NEC Corporation
+# Copyright (C) 2008-2013 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2, as
@@ -30,6 +28,10 @@ module Trema
     include Trema::Daemon
 
 
+    #
+    # @return [Trema::DSL::Stanza] a map of key-value pair settings
+    #   for trema's dsl run{} syntax.
+    #
     attr_reader :stanza
 
 
@@ -37,7 +39,7 @@ module Trema
 
 
     #
-    # Creates a new Trema application from {Trema::DSL::App}
+    # Creates a new Trema application from {Trema::DSL::Run}
     #
     # @example
     #   app = Trema::App.new( stanza )

@@ -1,9 +1,7 @@
 #
 # send_packets command of Trema shell.
 #
-# Author: Yasuhito Takamiya <yasuhito@gmail.com>
-#
-# Copyright (C) 2008-2012 NEC Corporation
+# Copyright (C) 2008-2013 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2, as
@@ -26,7 +24,7 @@ require "trema/dsl"
 module Trema
   module Shell
     def send_packets source, dest, options = {}
-      sanity_check
+      assert_trema_is_built
       Cli.new( Host[ source ] ).send_packets( Host[ dest ], options )
       true
     end

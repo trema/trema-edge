@@ -24,12 +24,12 @@
 
 static uint32_t tunnel_id_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t tunnel_id_length( const match *match );
-static void pack_tunnel_id( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_tunnel_id( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_tunnel_id = {
   OFPXMT_OFB_TUNNEL_ID,
-  ( uint16_t ) sizeof( uint64_t ),
+  ( uint16_t ) sizeof( oxm_match_header ) + sizeof( uint64_t ),
   tunnel_id_field,
   tunnel_id_length,
   pack_tunnel_id
@@ -67,13 +67,15 @@ tunnel_id_length( const match *match ) {
 }
 
 
-static void
-pack_tunnel_id( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_tunnel_id( oxm_match_header *hdr, const match *match ) {
   if ( match->tunnel_id.valid ) {
-    ofp_match->type = oxm_tunnel_id.type;
-    ofp_match->length = oxm_tunnel_id.length;
-    memcpy( &ofp_match->oxm_fields, &match->tunnel_id.value, oxm_tunnel_id.length );
+    *hdr = OXM_OF_TUNNEL_ID;
+    uint64_t *value = ( uint64_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    *value = match->tunnel_id.value;
+    return oxm_tunnel_id.length;
   }
+  return 0;
 }
 
 

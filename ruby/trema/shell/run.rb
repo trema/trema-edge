@@ -1,9 +1,7 @@
 #
 # run command of Trema shell.
 #
-# Author: Yasuhito Takamiya <yasuhito@gmail.com>
-#
-# Copyright (C) 2008-2012 NEC Corporation
+# Copyright (C) 2008-2013 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2, as
@@ -26,18 +24,20 @@ require "trema/dsl"
 module Trema
   module Shell
     def run controller
-      sanity_check
+      assert_trema_is_built
 
       if controller
-        if /ELF/=~ `file #{ controller }`
-          stanza = DSL::Run.new
-          stanza.path controller
-          App.new stanza
-        else
+        if /\.rb\Z/=~ controller.split.first
           require "trema"
+          include Trema
           ARGV.replace controller.split
           $LOAD_PATH << File.dirname( controller )
-          Trema.module_eval IO.read( controller )
+          load controller
+        else
+          # Assume that the controller is written in C
+          stanza = Trema::DSL::Run.new
+          stanza.path controller
+          Trema::App.new( stanza )
         end
       end
 

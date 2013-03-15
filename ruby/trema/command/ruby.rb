@@ -1,9 +1,5 @@
 #
-# trema ruby command.
-#
-# Author: Yasuhito Takamiya <yasuhito@gmail.com>
-#
-# Copyright (C) 2008-2012 NEC Corporation
+# Copyright (C) 2008-2013 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2, as
@@ -20,7 +16,7 @@
 #
 
 
-require "optparse"
+require "trema/util"
 
 
 module Trema
@@ -28,20 +24,7 @@ module Trema
     include Trema::Util
 
 
-    def ruby
-      options = OptionParser.new
-      options.banner = "Usage: trema ruby [OPTIONS ...]"
-
-      options.on( "-h", "--help" ) do
-        puts options.to_s
-        exit 0
-      end
-      options.on( "-v", "--verbose" ) do
-        $verbose = true
-      end
-
-      options.parse! ARGV
-
+    def trema_ruby
       sh "x-www-browser http://rubydoc.info/github/trema/trema/master/frames"
     end
   end

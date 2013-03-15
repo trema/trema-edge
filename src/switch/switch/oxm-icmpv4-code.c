@@ -24,12 +24,12 @@
 
 static uint32_t icmpv4_code_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t icmpv4_code_length( const match *match );
-static void pack_icmpv4_code( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_icmpv4_code( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_icmpv4_code = {
   OFPXMT_OFB_ICMPV4_CODE,
-  ( uint16_t ) sizeof( uint8_t ),
+  ( uint16_t ) sizeof( oxm_match_header ) + sizeof( uint8_t ),
   icmpv4_code_field,
   icmpv4_code_length,
   pack_icmpv4_code
@@ -64,13 +64,15 @@ icmpv4_code_length( const match *match ) {
 }
 
 
-static void
-pack_icmpv4_code( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_icmpv4_code( oxm_match_header *hdr, const match *match ) {
   if ( match->icmpv4_code.valid ) {
-    ofp_match->type = oxm_icmpv4_code.type;
-    ofp_match->length = oxm_icmpv4_code.type;
-    memcpy( &ofp_match->oxm_fields, &match->icmpv4_code.value, oxm_icmpv4_code.length );
+    *hdr = OXM_OF_ICMPV4_CODE;
+    uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    *value = match->icmpv4_code.value;
+    return oxm_icmpv4_code.length;
   }
+  return 0;
 }
 
 

@@ -24,12 +24,12 @@
 
 static uint32_t get_eth_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t eth_type_length( const match *match );
-static void pack_eth_type( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_eth_type( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_eth_type = {
   OFPXMT_OFB_ETH_TYPE,
-  ( uint16_t ) sizeof( uint16_t ),
+  ( uint16_t ) sizeof( oxm_match_header ) + sizeof( uint16_t ),
   get_eth_field,
   eth_type_length,
   pack_eth_type
@@ -64,13 +64,15 @@ eth_type_length( const match *match ) {
 }
 
 
-static void
-pack_eth_type( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_eth_type( oxm_match_header *hdr, const match *match ) {
   if ( match->eth_type.valid ) {
-    ofp_match->type = oxm_eth_type.type;
-    ofp_match->length = oxm_eth_type.length;
-    memcpy( &ofp_match->oxm_fields, &match->eth_type.value, oxm_eth_type.length );
+    *hdr = OXM_OF_ETH_TYPE;
+    uint16_t *value = ( uint16_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    *value = match->eth_type.value;
+    return oxm_eth_type.length;
   }
+  return 0;
 }
 
 

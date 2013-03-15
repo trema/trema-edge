@@ -24,12 +24,12 @@
 
 static uint32_t eth_dst_field( const bool attr, const enum oxm_ofb_match_fields oxm_type );
 static uint16_t eth_dst_length( const match *match );
-static void pack_eth_dst( struct ofp_match *ofp_match, const match *match );
+static uint16_t pack_eth_dst( oxm_match_header *hdr, const match *match );
 
 
 static struct oxm oxm_eth_dst = {
   OFPXMT_OFB_ETH_DST,
-  OFP_ETH_ALEN,
+  OFP_ETH_ALEN + sizeof( oxm_match_header ),
   eth_dst_field,
   eth_dst_length,
   pack_eth_dst
@@ -67,13 +67,15 @@ eth_dst_length( const match *match ) {
 }
 
 
-static void
-pack_eth_dst( struct ofp_match *ofp_match, const match *match ) {
+static uint16_t
+pack_eth_dst( oxm_match_header *hdr, const match *match ) {
   if ( match->eth_dst[ 0 ].valid ) {
-    ofp_match->type = oxm_eth_dst.type;
-    ofp_match->length = oxm_eth_dst.length;
-    memcpy( &ofp_match->oxm_fields, &match->eth_dst[ 0 ].value, oxm_eth_dst.length );
+    *hdr = OXM_OF_ETH_DST;
+    uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof( oxm_match_header ) );
+    memcpy( value, &match->eth_dst[ 0 ].value, OFP_ETH_ALEN );
+    return oxm_eth_dst.length;
   }
+  return 0;
 }
 
 

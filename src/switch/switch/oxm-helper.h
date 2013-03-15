@@ -58,7 +58,7 @@ extern "C" {
 void ( *assign_match )( match *match, const oxm_match_header *hdr );
 void ( *construct_oxm )( oxm_matches *oxm_match, match *match );
 uint16_t ( *assign_oxm_ids )( uint32_t *oxm_id, match_capabilities *match_cap );
-void ( *pack_oxm )( struct ofp_match *ofp_match, const match *match );
+uint16_t ( *pack_oxm )( oxm_match_header *hdr, const match *match );
 void ( *pack_ofp_match)( struct ofp_match *match, const oxm_matches *matches );
 
 
