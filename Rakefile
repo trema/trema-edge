@@ -619,6 +619,18 @@ end
 #end
 
 
+require "rspec/core"
+require "rspec/core/rake_task"
+
+
+task :spec => :default
+RSpec::Core::RakeTask.new do | task |
+  task.verbose = $trace
+  task.pattern = FileList[ "spec/trema_spec.rb" ]
+  task.rspec_opts = "--format documentation --color"
+end
+
+
 ## Local variables:
 ## mode: Ruby
 ## coding: utf-8-unix

@@ -28,8 +28,6 @@ require "rspec"
 require "trema"
 require "trema/dsl/configuration"
 require "trema/dsl/context"
-require "trema/ofctl"
-require "trema/shell"
 require "trema/util"
 
 

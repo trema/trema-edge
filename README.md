@@ -4,9 +4,7 @@ Welcome to Trema-Edge
 [![Build Status](https://travis-ci.org/trema/trema-edge.png?branch=master)](https://travis-ci.org/trema/trema-edge)
 [![Code Climate](https://codeclimate.com/github/trema/trema-edge.png)](https://codeclimate.com/github/trema/trema-edge)
 [![Dependency Status](https://gemnasium.com/trema/trema-edge.png)](https://gemnasium.com/trema/trema-edge)
-
-
-# Trema edge
+[![Coverage Status](https://coveralls.io/repos/trema/trema-edge/badge.png?branch=master)](https://coveralls.io/r/trema/trema-edge)
 
 This is a temporary repository that we create in order to receive some
 valuable feedback from our users. In the future we are planning to

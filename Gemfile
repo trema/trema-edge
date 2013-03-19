@@ -9,6 +9,11 @@ gem "rake-builder", "~> 0.8.0"
 gem "coveralls", require: false
 
 
+group :development do
+  gem "rspec", "~> 2.13.0"
+end
+
+
 ### Local variables:
 ### mode: Ruby
 ### coding: utf-8-unix
