@@ -2,3 +2,4 @@
 Makefile
 mkmf.log
 trema.so
+.trema.so.depend.mf

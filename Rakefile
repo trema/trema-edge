@@ -29,19 +29,19 @@ require "trema/executables"
 require "trema/path"
 require "trema/dsl/parser"
 
-ENV[ 'DEBUG' ] = "true"
 desc "Do not output any build messages"
 task :silent do
   ENV[ 'DEBUG' ] = nil
 end
 
-CFLAGS = [ 
+CFLAGS = [
     '-g',
     '-fPIC',
     '-std=gnu99',
     '-D_GNU_SOURCE',
     '-fno-strict-aliasing',
-    '-Werror',
+    # FIXME
+    # '-Werror',
     '-Wall',
     '-Wextra',
     '-Wformat=2',
@@ -57,15 +57,13 @@ Rake::Builder.new do | builder |
   builder.programming_language = 'c'
   builder.target = 'ruby/trema.so'
   builder.target_type = :shared_library
-  builder.target_prerequisites = [ 
-    "#{ File.expand_path 'objects/lib/libtrema.a' }"
-  ]
-  builder.source_search_paths = [ 
+  builder.target_prerequisites = [ 'objects/lib/libtrema.a' ]
+  builder.source_search_paths = [
     'ruby/trema',
     'ruby/trema/messages',
   ]
   builder.installable_headers = [ 'src/lib' ]
-  ruby_includes = [ 
+  ruby_includes = [
     RbConfig::CONFIG[ 'rubyhdrdir' ] + '/' + RbConfig::CONFIG[ 'arch' ],
     RbConfig::CONFIG[ 'rubyhdrdir' ] + '/ruby/backward',
     RbConfig::CONFIG[ 'rubyhdrdir' ]
@@ -101,7 +99,7 @@ file Trema.libcmockery_a do
   end
 end
 Rake::Task[ "vendor:cmockery" ].invoke
- 
+
 
 def phost_src
   File.join Trema.vendor_phost, "src"
@@ -127,7 +125,7 @@ file Trema::Executables.cli => File.dirname( Trema::Executables.cli ) do
 end
 Rake::Task[ "vendor:phost" ].invoke
 
-  
+
 Rake::Builder.new do | builder |
   builder.programming_language = 'c'
   builder.target = 'objects/lib/libtrema.a'
@@ -189,7 +187,7 @@ Rake::Builder.new do | builder |
     'rt',
     'pthread'
   ]
-  builder.target_prerequisites = [ 
+  builder.target_prerequisites = [
     "#{ File.expand_path 'objects/switch/datapath/libofdp.a' }",
     "#{ File.expand_path 'objects/lib/libtrema.a' }"
   ]
@@ -201,10 +199,10 @@ Rake::Builder.new do | builder |
   builder.programming_language = 'c'
   builder.target = Trema::Executables.switch_manager
   builder.target_type = :executable
-  builder.source_search_paths = [ 
+  builder.source_search_paths = [
     'src/switch_manager/dpid_table.c',
     'src/switch_manager/switch_manager.c',
-    'src/switch_manager/secure_channel_listener.c' 
+    'src/switch_manager/secure_channel_listener.c'
   ]
   builder.installable_headers = [ 'src/switch_manager' ]
   builder.include_paths = [ 'src/lib' ]
@@ -366,7 +364,7 @@ Rake::Builder.new do | builder |
   builder.objects_path = 'objects/tremashark'
   builder.compilation_options = CFLAGS
   builder.library_paths = [ 'objects/lib' ]
-  builder.library_dependencies = [ 
+  builder.library_dependencies = [
     'trema',
     'sqlite3',
     'dl',
@@ -551,7 +549,7 @@ end
 def switch_tests
   # { target => source_dependencies }
   {
-    "parse-options-test" => [ 
+    "parse-options-test" => [
       "unittests/switch/switch/parse-options-test.c",
       "unittests/switch/switch/mocks.c",
       "src/switch/switch/parse-options.c"
@@ -593,14 +591,14 @@ end
 #      'src/lib',
 #      'src/switch/datapath',
 #      'src/switch/switch',
-#      "#{ File.dirname Trema.cmockery_h }", "unittests" 
+#      "#{ File.dirname Trema.cmockery_h }", "unittests"
 #    ]
 #    builder.objects_path = 'objects/unittests/switch'
 #    builder.compilation_options = [ '--coverage', '-DUNIT_TESTING' ] + CFLAGS
-#    builder.library_paths = [ 
+#    builder.library_paths = [
 #      'objects/unittests/switch/datapath',
 #      'objects/unittests',
-#      "#{ File.dirname Trema.libcmockery_a }" 
+#      "#{ File.dirname Trema.libcmockery_a }"
 #    ]
 #    builder.library_dependencies = [
 #      'ofdp',
