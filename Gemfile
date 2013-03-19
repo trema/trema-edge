@@ -6,6 +6,7 @@ source "https://rubygems.org"
 #   gem "activesupport", ">= 2.3.5"
 
 gem "rake-builder", "~> 0.8.0"
+gem "coveralls", require: false
 
 
 ### Local variables:

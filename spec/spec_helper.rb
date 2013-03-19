@@ -33,6 +33,10 @@ require "trema/shell"
 require "trema/util"
 
 
+require "coveralls"
+Coveralls.wear!
+
+
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.
 Dir[ "#{ File.dirname( __FILE__ ) }/support/**/*.rb" ].each do | each |
