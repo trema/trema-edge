@@ -1,3 +1,5 @@
+[![Code Climate](https://codeclimate.com/github/trema/trema-edge.png)](https://codeclimate.com/github/trema/trema-edge)
+
 # Trema edge
 
 This is a temporary repository that we create in order to receive some
