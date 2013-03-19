@@ -3,6 +3,7 @@ Welcome to Trema-Edge
 
 [![Build Status](https://travis-ci.org/trema/trema-edge.png?branch=master)](https://travis-ci.org/trema/trema-edge)
 [![Code Climate](https://codeclimate.com/github/trema/trema-edge.png)](https://codeclimate.com/github/trema/trema-edge)
+[![Dependency Status](https://gemnasium.com/trema/trema-edge.png)](https://gemnasium.com/trema/trema-edge)
 
 
 # Trema edge
