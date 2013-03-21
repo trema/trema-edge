@@ -368,35 +368,6 @@ Rake::Builder.new do | builder |
 end
 
 
-# build standalone examples
-standalone_examples = [
-  "learning_switch",
-  "dumper"
-]
-
-standalone_examples.each do | each |
-  Rake::Builder.new do | builder |
-    builder.programming_language = 'c'
-    builder.target = "objects/examples/#{ each }/#{ each }"
-    builder.target_type = :executable
-    builder.source_search_paths = [ "src/examples/#{ each }/#{ each }.c" ]
-    builder.installable_headers = [ "src/examples/#{ each }" ]
-    builder.include_paths = [ 'src/lib' ]
-    builder.objects_path = "objects/examples/#{ each }"
-    builder.compilation_options = CFLAGS
-    builder.library_paths = [ 'objects/lib' ]
-    builder.library_dependencies = [
-      'trema',
-      'sqlite3',
-      'dl',
-      'rt',
-      'pthread'
-    ]
-    builder.target_prerequisites = [ "#{ File.expand_path 'objects/lib/libtrema.a' }" ]
-  end
-end
-
-
 packetin_filter_config = [
   "add_filter",
   "delete_filter",
