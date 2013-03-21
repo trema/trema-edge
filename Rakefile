@@ -76,6 +76,23 @@ end
 file "objects/lib/libtrema.a" => "libtrema:static"
 
 
+################################################################################
+# cmockery
+################################################################################
+
+task "vendor:cmockery" => Trema.libcmockery_a
+file Trema.libcmockery_a do
+  sh "tar xzf #{ Trema.vendor_cmockery }.tar.gz -C #{ Trema.vendor }"
+  cd Trema.vendor_cmockery do
+    sh "./configure --prefix=#{ Trema.cmockery }"
+    sh "make install"
+  end
+end
+
+CLEAN.include Trema.vendor_cmockery
+CLOBBER.include Trema.cmockery
+
+
 Rake::Builder.new do | builder |
   builder.programming_language = 'c'
   builder.target = 'ruby/trema.so'
@@ -112,18 +129,6 @@ Rake::Builder.new do | builder |
 end
 
 
-desc "build cmockery library"
-task "vendor:cmockery" => Trema.libcmockery_a
-file Trema.libcmockery_a do
-  sh "tar -xzf #{ Trema.vendor_cmockery }.tar.gz -C #{ Trema.vendor }"
-  cd Trema::vendor_cmockery do
-    sh "./configure --prefix=#{ Trema.cmockery }"
-    sh "make install"
-  end
-end
-Rake::Task[ "vendor:cmockery" ].invoke
-
-
 def phost_src
   File.join Trema.vendor_phost, "src"
 end
@@ -146,7 +151,6 @@ file Trema::Executables.cli => File.dirname( Trema::Executables.cli ) do
   end
   sh "install #{ File.join( phost_src, "cli" ) } #{ Trema::Executables.cli } --mode=0755"
 end
-Rake::Task[ "vendor:phost" ].invoke
 
 
 Rake::Builder.new do | builder |
@@ -460,163 +464,9 @@ packetin_filter_config.each do | each |
 end
 
 
-Rake::Builder.new do | builder |
-  builder.programming_language = 'c'
-  builder.target = "objects/unittests/libtrema.a"
-  builder.target_type = :static_library
-  builder.source_search_paths = [ 'src/lib' ]
-  builder.installable_headers = [ 'src/lib' ]
-  builder.include_paths = [ 'src/lib' ]
-  builder.objects_path = 'objects/unittests'
-  builder.compilation_options = [ '--coverage' ] + CFLAGS
-end
-
-
-Rake::Builder.new do | builder |
-  builder.programming_language = 'c'
-  builder.target = 'objects/unittests/switch/datapath/libofdp.a'
-  builder.target_type = :static_library
-  builder.source_search_paths = [ 'src/switch/datapath' ]
-  builder.installable_headers = [ 'src/switch/datapath' ]
-  builder.include_paths = [
-    'src/lib',
-    'src/switch/datapath',
-    "#{ File.dirname Trema.cmockery_h }", 'unittests/switch'
-  ]
-  builder.objects_path = 'objects/unittests/switch/datapath'
-  builder.compilation_options = [ '--coverage', '-DUNIT_TESTING' ] + CFLAGS
-end
-
-
-tests = [
-  "objects/unittests/buffer_test",
-  "objects/unittests/doubly_linked_list_test",
-  "objects/unittests/ether_test",
-  "objects/unittests/hash_table_test",
-  "objects/unittests/linked_list_test",
-  "objects/unittests/log_test",
-  "objects/unittests/packetin_filter_interface_test",
-  "objects/unittests/packet_info_test",
-  "objects/unittests/packet_parser_test", # this test fails"
-  "objects/unittests/persistent_storage_test",
-  "objects/unittests/trema_private_test",
-  "objects/unittests/utility_test",
-  "objects/unittests/wrapper_test",
-  "objects/unittests/match_table_test",
-  "objects/unittests/message_queue_test",
-#  "objects/unittests/management_interface_test",
-#  "objects/unittests/management_service_interface_test",
-]
-
-
-tests.each do | each |
-  Rake::Builder.new do | builder |
-    builder.programming_language = 'c'
-    builder.target = each
-    builder.target_type = :executable
-    builder.source_search_paths = [
-      "unittests/lib/#{ File.basename each }.c",
-      'unittests/cmockery_trema.c'
-    ]
-    builder.installable_headers = [ "unittests/lib" ]
-    builder.include_paths = [
-      "src/lib", "#{ File.dirname Trema.cmockery_h }",
-      'unittests' ]
-    builder.objects_path = 'objects/unittests'
-    builder.compilation_options = [ '--coverage' ] + CFLAGS
-    builder.library_paths = [
-      'objects/unittests',
-      "#{ File.dirname Trema.libcmockery_a }"
-    ]
-    builder.library_dependencies = [
-      'trema',
-      'rt',
-      'cmockery',
-      'sqlite3',
-      'dl',
-      'pthread'
-    ]
-    builder.linker_options = '--coverage --static'
-    builder.target_prerequisites = [
-      "#{ File.expand_path 'objects/unittests/libtrema.a' }",
-      'vendor:cmockery'
-    ]
-  end
-end
-
-
-def switch_tests
-  # { target => source_dependencies }
-  {
-    "parse-options-test" => [
-      "unittests/switch/switch/parse-options-test.c",
-      "unittests/switch/switch/mocks.c",
-      "src/switch/switch/parse-options.c"
-    ],
-    "group-helper-test" => [
-      "unittests/switch/switch/group-helper-test.c",
-      "unittests/switch/switch/mocks.c",
-      "src/switch/switch/group-helper.c",
-      "src/switch/switch/action*.c"
-    ],
-    "stats-helper-test" => [
-      "unittests/switch/switch/stats-helper-test.c",
-      "unittests/switch/switch/mocks.c",
-      "src/switch/switch/stats-helper.c",
-      "src/switch/switch/oxm*.c",
-      "src/switch/switch/action*.c"
-    ],
-    "protocol-handler-test" => [
-       "unittests/switch/switch/protocol-handler-test.c",
-       "unittests/switch/switch/mocks.c",
-       "src/switch/switch/protocol-handler.c",
-       "src/switch/switch/stats-helper.c",
-       "src/switch/switch/switch-common.c",
-       "src/switch/switch/action*.c",
-       "src/switch/switch/oxm*.c"
-    ]
-  }
-end
-
-
-#switch_tests.keys.each do | each |
-#  Rake::Builder.new do | builder |
-#    builder.programming_language = 'c'
-#    builder.target  = "objects/unittests/switch/#{ each }"
-#    builder.target_type = :executable
-#    builder.source_search_paths = switch_tests[ each ]
-#    builder.installable_headers = [ "unittests/switch" ]
-#    builder.include_paths = [
-#      'src/lib',
-#      'src/switch/datapath',
-#      'src/switch/switch',
-#      "#{ File.dirname Trema.cmockery_h }", "unittests"
-#    ]
-#    builder.objects_path = 'objects/unittests/switch'
-#    builder.compilation_options = [ '--coverage', '-DUNIT_TESTING' ] + CFLAGS
-#    builder.library_paths = [
-#      'objects/unittests/switch/datapath',
-#      'objects/unittests',
-#      "#{ File.dirname Trema.libcmockery_a }"
-#    ]
-#    builder.library_dependencies = [
-#      'ofdp',
-#      'trema',
-#      'rt',
-#      'cmockery',
-#      'sqlite3',
-#      'dl',
-#      'pthread'
-#    ]
-#    builder.linker_options = '--coverage --static'
-#    builder.target_prerequisites = [
-#      'vendor:cmockery',
-#      "#{ File.expand_path 'objects/unittests/switch/datapath/libofdp.a' }",
-#      "#{ File.expand_path 'objects/unittests/libtrema.a' }"
-#    ]
-#  end
-#end
-
+################################################################################
+# Tests
+################################################################################
 
 require "rspec/core"
 require "rspec/core/rake_task"
