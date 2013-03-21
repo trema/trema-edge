@@ -115,6 +115,20 @@ CLOBBER.include Trema.cmockery
 
 
 ################################################################################
+# Build libofdp.a
+################################################################################
+
+desc "Build libofdp.a"
+Rake::C::StaticLibraryTask.new "libofdp:static" do | task |
+  task.library_name = "libofdp"
+  task.target_directory = "#{ Trema.objects }/switch/datapath"
+  task.sources = "#{ Trema.home }/src/switch/datapath/*.c"
+  task.includes = [ Trema.include ]
+  task.cflags = CFLAGS
+end
+
+
+################################################################################
 # Misc.
 ################################################################################
 
@@ -139,21 +153,6 @@ file Trema::Executables.cli => File.dirname( Trema::Executables.cli ) do
     sh "make"
   end
   sh "install #{ File.join( phost_src, "cli" ) } #{ Trema::Executables.cli } --mode=0755"
-end
-
-
-Rake::Builder.new do | builder |
-  builder.programming_language = 'c'
-  builder.target = 'objects/switch/datapath/libofdp.a'
-  builder.target_type = :static_library
-  builder.source_search_paths = [ 'src/switch/datapath' ]
-  builder.installable_headers = [ 'src/switch/datapath' ]
-  builder.include_paths = [
-    'src/lib',
-    'src/switch/datapath'
-  ]
-  builder.objects_path = 'objects/switch/datapath'
-  builder.compilation_options = CFLAGS
 end
 
 
