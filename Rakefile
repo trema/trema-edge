@@ -129,6 +129,67 @@ end
 
 
 ################################################################################
+# Build switch manager.
+################################################################################
+
+require "rake/c/executable-task"
+
+desc "Build switch manager."
+Rake::C::ExecutableTask.new "switch_manager" do | task |
+  task.executable_name = "switch_manager"
+  task.target_directory = File.dirname( Trema::Executables.switch_manager )
+  task.sources = [
+    "src/switch_manager/dpid_table.c",
+    "src/switch_manager/switch_manager.c",
+    "src/switch_manager/secure_channel_listener.c"
+  ]
+  task.includes = [ Trema.include ]
+  task.cflags = CFLAGS
+  task.ldflags = [ "-L#{ Trema.lib }" ]
+  task.library_dependencies = [
+    "trema",
+    "sqlite3",
+    "pthread",
+    "rt",
+    "dl",
+  ]
+end
+task "switch_manager" => "libtrema:static"
+
+
+################################################################################
+# Build switch daemon.
+################################################################################
+
+desc "Build switch daemon."
+Rake::C::ExecutableTask.new "switch_daemon" do | task |
+  task.executable_name = "switch_daemon"
+  task.target_directory = File.dirname( Trema::Executables.switch_daemon )
+  task.sources = [
+    "src/switch_manager/cookie_table.c",
+    "src/switch_manager/ofpmsg_recv.c",
+    "src/switch_manager/ofpmsg_send.c",
+    "src/switch_manager/secure_channel_receiver.c",
+    "src/switch_manager/secure_channel_sender.c",
+    "src/switch_manager/service_interface.c",
+    "src/switch_manager/switch.c",
+    "src/switch_manager/xid_table.c"
+  ]
+  task.includes = [ Trema.include ]
+  task.cflags = CFLAGS
+  task.ldflags = [ "-L#{ Trema.lib }" ]
+  task.library_dependencies = [
+    "trema",
+    "sqlite3",
+    "pthread",
+    "rt",
+    "dl",
+  ]
+end
+task "switch_daemon" => "libtrema:static"
+
+
+################################################################################
 # Misc.
 ################################################################################
 
@@ -182,63 +243,6 @@ Rake::Builder.new do | builder |
     "#{ File.expand_path 'objects/switch/datapath/libofdp.a' }",
     "#{ File.expand_path 'objects/lib/libtrema.a' }"
   ]
-end
-
-
-# build switch_manager
-Rake::Builder.new do | builder |
-  builder.programming_language = 'c'
-  builder.target = Trema::Executables.switch_manager
-  builder.target_type = :executable
-  builder.source_search_paths = [
-    'src/switch_manager/dpid_table.c',
-    'src/switch_manager/switch_manager.c',
-    'src/switch_manager/secure_channel_listener.c'
-  ]
-  builder.installable_headers = [ 'src/switch_manager' ]
-  builder.include_paths = [ 'src/lib' ]
-  builder.objects_path = File.dirname Trema::Executables.switch_manager
-  builder.compilation_options = CFLAGS
-  builder.library_paths = [ 'objects/lib' ]
-  builder.library_dependencies = [
-    'trema',
-    'sqlite3',
-    'dl',
-    'rt',
-    'pthread'
-  ]
-  builder.target_prerequisites = [ "#{ File.expand_path 'objects/lib/libtrema.a' }" ]
-end
-
-
-# build switch_daemon
-Rake::Builder.new do | builder |
-  builder.programming_language = 'c'
-  builder.target = 'objects/switch_manager/switch_daemon'
-  builder.target_type = :executable
-  builder.source_search_paths = [
-    'src/switch_manager/cookie_table.c',
-    'src/switch_manager/ofpmsg_recv.c',
-    'src/switch_manager/ofpmsg_send.c',
-    'src/switch_manager/secure_channel_receiver.c',
-    'src/switch_manager/secure_channel_sender.c',
-    'src/switch_manager/service_interface.c',
-    'src/switch_manager/switch.c',
-    'src/switch_manager/xid_table.c'
-  ]
-  builder.installable_headers = [ 'src/switch_manager' ]
-  builder.include_paths = [ 'src/lib' ]
-  builder.objects_path = File.dirname Trema::Executables.switch_manager
-  builder.compilation_options = CFLAGS
-  builder.library_paths = [ 'objects/lib' ]
-  builder.library_dependencies = [
-    'trema',
-    'sqlite3',
-    'dl',
-    'rt',
-    'pthread'
-  ]
-  builder.target_prerequisites = [ "#{ File.expand_path 'objects/lib/libtrema.a' }" ]
 end
 
 

@@ -12,7 +12,7 @@ module Rake
       ##########################################################################
 
 
-      def generate_library
+      def generate_target
         return if uptodate?( target_path, objects )
         sh "gcc -shared -Wl,-soname=#{ soname } -o #{ target_path } #{ objects.to_s }"
       end

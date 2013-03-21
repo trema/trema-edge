@@ -9,7 +9,7 @@ module Rake
       ##########################################################################
 
 
-      def generate_library
+      def generate_target
         if not uptodate?( target_path, objects )
           sh "ar -cq #{ target_path } #{ objects.join ' ' }"
           sh "ranlib #{ target_path }"

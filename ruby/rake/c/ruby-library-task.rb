@@ -13,16 +13,9 @@ module Rake
       ##########################################################################
 
 
-      def generate_library
+      def generate_target
         return if uptodate?( target_path, objects )
         sh "gcc -shared -o #{ target_path } #{ objects.to_s } #{ @ldflags.join " " } -L#{ RbConfig::CONFIG[ 'libdir' ] } #{ gcc_l_options }"
-      end
-
-
-      def gcc_l_options
-        @library_dependencies.collect do | each |
-          "-l#{ each }"
-        end.join( " " )
       end
 
 
