@@ -55,11 +55,13 @@ module Trema
   dir :home, "objects"
   dir :home, "ruby"
   dir :home, "src/lib", :include
+  dir :home, "src/switch/datapath", :src_datapath
   dir :home, "vendor"
   dir :objects, "cmockery"
   dir :objects, "lib"
   dir :objects, "oflops"
   dir :objects, "openflow"
+  dir :objects, "switch/datapath", :obj_datapath
   dir :tmp, "log"
   dir :tmp, "pid"
   dir :tmp, "sock"

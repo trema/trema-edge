@@ -134,6 +134,8 @@ end
 
 require "rake/c/executable-task"
 
+task "switch_manager" => "libtrema:static"
+
 desc "Build switch manager."
 Rake::C::ExecutableTask.new "switch_manager" do | task |
   task.executable_name = "switch_manager"
@@ -154,12 +156,13 @@ Rake::C::ExecutableTask.new "switch_manager" do | task |
     "dl",
   ]
 end
-task "switch_manager" => "libtrema:static"
 
 
 ################################################################################
 # Build switch daemon.
 ################################################################################
+
+task "switch_daemon" => "libtrema:static"
 
 desc "Build switch daemon."
 Rake::C::ExecutableTask.new "switch_daemon" do | task |
@@ -186,7 +189,31 @@ Rake::C::ExecutableTask.new "switch_daemon" do | task |
     "dl",
   ]
 end
-task "switch_daemon" => "libtrema:static"
+
+
+################################################################################
+# Build Trema switch.
+################################################################################
+
+task :trema_switch => [ "libofdp:static", "libtrema:static" ]
+
+desc "Build Trema switch."
+Rake::C::ExecutableTask.new "trema_switch" do | task |
+  task.executable_name = "switch"
+  task.target_directory = File.dirname( Trema::Executables.switch )
+  task.sources = "src/switch/switch/*.c"
+  task.includes = [ Trema.include, Trema.src_datapath ]
+  task.cflags = CFLAGS
+  task.ldflags = [ "-L#{ Trema.lib }", "-L#{ Trema.obj_datapath }" ]
+  task.library_dependencies = [
+    "ofdp",
+    "trema",
+    "sqlite3",
+    "pthread",
+    "rt",
+    "dl",
+  ]
+end
 
 
 ################################################################################
@@ -214,35 +241,6 @@ file Trema::Executables.cli => File.dirname( Trema::Executables.cli ) do
     sh "make"
   end
   sh "install #{ File.join( phost_src, "cli" ) } #{ Trema::Executables.cli } --mode=0755"
-end
-
-
-# build switch
-Rake::Builder.new do | builder |
-  builder.programming_language = 'c'
-  builder.target = 'objects/switch/switch/switch'
-  builder.target_type = :executable
-  builder.source_search_paths = [ 'src/switch/switch' ]
-  builder.installable_headers = [ 'src/switch/switch' ]
-  builder.include_paths = [ 'src/lib', 'src/switch/datapath' ]
-  builder.objects_path = 'objects/switch/switch'
-  builder.compilation_options = CFLAGS
-  builder.library_paths = [
-    'objects/switch/datapath',
-    'objects/lib'
-  ]
-  builder.library_dependencies = [
-    'ofdp',
-    'trema',
-    'sqlite3',
-    'dl',
-    'rt',
-    'pthread'
-  ]
-  builder.target_prerequisites = [
-    "#{ File.expand_path 'objects/switch/datapath/libofdp.a' }",
-    "#{ File.expand_path 'objects/lib/libtrema.a' }"
-  ]
 end
 
 
