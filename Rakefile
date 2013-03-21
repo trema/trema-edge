@@ -367,40 +367,6 @@ Rake::Builder.new do | builder |
 end
 
 
-packetin_filter_config = [
-  "add_filter",
-  "delete_filter",
-  "delete_filter_strict",
-  "dump_filter",
-  "dump_filter_strict",
-]
-
-packetin_filter_config.each do | each |
-  Rake::Builder.new do | builder |
-    builder.programming_language = 'c'
-    builder.target = "objects/examples/packetin_filter_config/#{ each }"
-    builder.target_type = :executable
-    builder.source_search_paths = [
-      "src/examples/packetin_filter_config/#{ each }.c",
-      'src/examples/packetin_filter_config/utils.c'
-    ]
-    builder.installable_headers = [ "src/examples/packetin_filter_config" ]
-    builder.include_paths = [ 'src/lib' ]
-    builder.objects_path = "objects/examples/packetin_filter_config"
-    builder.compilation_options = CFLAGS
-    builder.library_paths = [ 'objects/lib' ]
-    builder.library_dependencies = [
-      'trema',
-      'sqlite3',
-      'dl',
-      'rt',
-      'pthread'
-    ]
-    builder.target_prerequisites = [ "#{ File.expand_path 'objects/lib/libtrema.a' }" ]
-  end
-end
-
-
 ################################################################################
 # Tests
 ################################################################################
