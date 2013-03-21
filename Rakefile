@@ -34,6 +34,15 @@ task :silent do
   ENV[ 'DEBUG' ] = nil
 end
 
+
+################################################################################
+# Build libtrema.{a,so}
+################################################################################
+
+require "rake/c/library-task"
+require "trema/version"
+
+
 CFLAGS = [
     '-g',
     '-fPIC',
@@ -52,6 +61,20 @@ CFLAGS = [
     '-Wfloat-equal',
     '-Wpointer-arith'
 ]
+
+
+desc "Build trema library (static library)."
+Rake::C::StaticLibraryTask.new "libtrema:static" do | task |
+  task.library_name = "libtrema"
+  task.target_directory = Trema.lib
+  task.sources = "#{ Trema.include }/*.c"
+  task.includes = [ Trema.include ]
+  task.cflags = CFLAGS
+end
+
+# FIXME
+file "objects/lib/libtrema.a" => "libtrema:static"
+
 
 Rake::Builder.new do | builder |
   builder.programming_language = 'c'
@@ -124,30 +147,6 @@ file Trema::Executables.cli => File.dirname( Trema::Executables.cli ) do
   sh "install #{ File.join( phost_src, "cli" ) } #{ Trema::Executables.cli } --mode=0755"
 end
 Rake::Task[ "vendor:phost" ].invoke
-
-
-Rake::Builder.new do | builder |
-  builder.programming_language = 'c'
-  builder.target = 'objects/lib/libtrema.a'
-  builder.target_type = :static_library
-  builder.source_search_paths = [ 'src/lib' ]
-  builder.installable_headers = [ 'src/lib' ]
-  builder.include_paths = [ 'src/lib' ]
-  builder.objects_path = 'objects/lib'
-  builder.compilation_options = CFLAGS
-end
-
-
-Rake::Builder.new do | builder |
-  builder.programming_language = 'c'
-  builder.target = 'objects/lib/libtrema.a'
-  builder.target_type = :static_library
-  builder.source_search_paths = [ 'src/lib' ]
-  builder.installable_headers = [ 'src/lib' ]
-  builder.include_paths = [ 'src/lib' ]
-  builder.objects_path = 'objects/lib'
-  builder.compilation_options = CFLAGS
-end
 
 
 Rake::Builder.new do | builder |

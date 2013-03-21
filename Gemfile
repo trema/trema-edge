@@ -10,6 +10,7 @@ gem "coveralls", require: false
 
 
 group :development do
+  gem "popen4", "~> 0.1.2"
   gem "rspec", "~> 2.13.0"
   gem "yard", "~> 0.8.5.2"
 end
