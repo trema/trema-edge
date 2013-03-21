@@ -631,6 +631,23 @@ RSpec::Core::RakeTask.new do | task |
 end
 
 
+################################################################################
+# YARD
+################################################################################
+
+begin
+  require "yard"
+
+  YARD::Rake::YardocTask.new do | t |
+    t.files = [ "ruby/trema/**/*.c", "ruby/trema/**/*.rb" ]
+    t.options = [ "--no-private" ]
+    t.options << "--debug" << "--verbose" if $trace
+  end
+rescue LoadError
+  $stderr.puts $!.to_s
+end
+
+
 ## Local variables:
 ## mode: Ruby
 ## coding: utf-8-unix

@@ -11,6 +11,7 @@ gem "coveralls", require: false
 
 group :development do
   gem "rspec", "~> 2.13.0"
+  gem "yard", "~> 0.8.5.2"
 end
 
 
