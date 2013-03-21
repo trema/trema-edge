@@ -44,23 +44,21 @@ The Ruby controller implements most of the messages except the following:
 * Get-async-requet/reply
 * Meter-mod
 
+
 ## Tested platforms
 
-* Ruby 1.9.3 (1.8.x is NOT supported)
+* Ruby 2.0.0 (1.8.x is NOT supported)
 * Ubuntu 12.04 (amd64)
 
 It may also run on other GNU/Linux distributions but is not tested.
 
+
 ## Required Packages
 
-This repository has only been tested with ruby 1.9.3 and will not work with
-lower versions. We recommend installation of the rvm program for easy
-installation of ruby 1.9.3.
+This repository has only been tested with ruby 2.0.0 and
+rvm program for easy installation of ruby 2.0.0.
+will not work with 1.8.x. We recommend installation of the
 
-To build `trema-edge` please use the rake command. But before running the `rake` command
-ensure that the gem `rake-builder` version 0.7.0 is installed and in addition
-the `xutils-dev` package, since it is needed by the `rake-builder` gem invoking
-the `makedepend` program.
 
 ## Build trema
 

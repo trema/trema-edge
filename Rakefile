@@ -17,62 +17,67 @@
 
 
 $LOAD_PATH.unshift File.expand_path( File.join File.dirname( __FILE__ ), "ruby" )
-$LOAD_PATH.unshift File.expand_path( File.join File.dirname( __FILE__ ), "vendor", "ruby-ifconfig-1.2", "lib" )
 
 
-require "rake/builder"
+require "rake/c/executable-task"
+require "rake/c/library-task"
 require "rake/clean"
-require "rake/loaders/makefile"
+require "rspec/core"
+require "rspec/core/rake_task"
 require "trema/dsl/parser"
 require "trema/executables"
 require "trema/path"
-
-
-################################################################################
-# Build libtrema.{a,so}
-################################################################################
-
-require "rake/c/library-task"
 require "trema/version"
 
 
-CFLAGS = [
-    '-g',
-    '-fPIC',
-    '-std=gnu99',
-    '-D_GNU_SOURCE',
-    '-fno-strict-aliasing',
-    # FIXME
-    # '-Werror',
-    '-Wall',
-    '-Wextra',
-    '-Wformat=2',
-    '-Wcast-qual',
-    '-Wcast-align',
-    '-Wwrite-strings',
-    '-Wconversion',
-    '-Wfloat-equal',
-    '-Wpointer-arith'
+task :default => [
+  :rubylib,
+  :switch_manager,
+  :switch_daemon,
+  :trema_switch,
+  :packetin_filter,
+  "vendor:phost"
 ]
 
 
-desc "Build trema library (static library)."
-Rake::C::StaticLibraryTask.new "libtrema:static" do | task |
+################################################################################
+# Build libtrema.a
+################################################################################
+
+CFLAGS = [
+  "-g",
+  "-fPIC",
+  "-std=gnu99",
+  "-D_GNU_SOURCE",
+  "-fno-strict-aliasing",
+  # FIXME
+  # "-Werror",
+  "-Wall",
+  "-Wextra",
+  "-Wformat=2",
+  "-Wcast-qual",
+  "-Wcast-align",
+  "-Wwrite-strings",
+  "-Wconversion",
+  "-Wfloat-equal",
+  "-Wpointer-arith"
+]
+
+
+desc "Build Trema C library."
+Rake::C::StaticLibraryTask.new "libtrema" do | task |
   task.library_name = "libtrema"
   task.target_directory = Trema.lib
   task.sources = "#{ Trema.include }/*.c"
   task.cflags = CFLAGS
 end
 
-# FIXME
-file "objects/lib/libtrema.a" => "libtrema:static"
-
 
 ################################################################################
 # Build Ruby library
 ################################################################################
 
-task :rubylib => "libtrema:static"
+task :rubylib => "libtrema"
 
 desc "Build Ruby library."
 Rake::C::RubyLibraryTask.new :rubylib do | task |
@@ -112,6 +117,7 @@ end
 
 CLEAN.include Trema.vendor_cmockery
 CLOBBER.include Trema.cmockery
+CLOBBER.include Trema.objects
 
 
 ################################################################################
@@ -119,7 +125,7 @@ CLOBBER.include Trema.cmockery
 ################################################################################
 
 desc "Build libofdp.a"
-Rake::C::StaticLibraryTask.new "libofdp:static" do | task |
+Rake::C::StaticLibraryTask.new "libofdp" do | task |
   task.library_name = "libofdp"
   task.target_directory = "#{ Trema.objects }/switch/datapath"
   task.sources = "#{ Trema.home }/src/switch/datapath/*.c"
@@ -132,9 +138,7 @@ end
 # Build switch manager.
 ################################################################################
 
-require "rake/c/executable-task"
-
-task "switch_manager" => "libtrema:static"
+task "switch_manager" => "libtrema"
 
 desc "Build switch manager."
 Rake::C::ExecutableTask.new "switch_manager" do | task |
@@ -162,7 +166,7 @@ end
 # Build switch daemon.
 ################################################################################
 
-task "switch_daemon" => "libtrema:static"
+task "switch_daemon" => "libtrema"
 
 desc "Build switch daemon."
 Rake::C::ExecutableTask.new "switch_daemon" do | task |
@@ -195,7 +199,7 @@ end
 # Build Trema switch.
 ################################################################################
 
-task :trema_switch => [ "libofdp:static", "libtrema:static" ]
+task :trema_switch => [ "libofdp", "libtrema" ]
 
 desc "Build Trema switch."
 Rake::C::ExecutableTask.new "trema_switch" do | task |
@@ -207,6 +211,30 @@ Rake::C::ExecutableTask.new "trema_switch" do | task |
   task.ldflags = [ "-L#{ Trema.lib }", "-L#{ Trema.obj_datapath }" ]
   task.library_dependencies = [
     "ofdp",
+    "trema",
+    "sqlite3",
+    "pthread",
+    "rt",
+    "dl",
+  ]
+end
+
+
+################################################################################
+# Build PacketIn Filter.
+################################################################################
+
+task :packetin_filter => "libtrema"
+
+desc "Build PacketIn Filter."
+Rake::C::ExecutableTask.new "packetin_filter" do | task |
+  task.executable_name = "packetin_filter"
+  task.target_directory = File.dirname( Trema::Executables.packetin_filter )
+  task.sources = "src/packetin_filter/*.c"
+  task.includes = [ Trema.include ]
+  task.cflags = CFLAGS
+  task.ldflags = [ "-L#{ Trema.lib }", "-L#{ Trema.obj_datapath }" ]
+  task.library_dependencies = [
     "trema",
     "sqlite3",
     "pthread",
@@ -244,35 +272,9 @@ file Trema::Executables.cli => File.dirname( Trema::Executables.cli ) do
 end
 
 
-# build packetin_filter
-Rake::Builder.new do | builder |
-  builder.programming_language = 'c'
-  builder.target = Trema::Executables.packetin_filter
-  builder.target_type = :executable
-  builder.source_search_paths = [ 'src/packetin_filter' ]
-  builder.installable_headers = [ 'src/packetin_filter' ]
-  builder.include_paths = [ 'src/lib' ]
-  builder.objects_path = 'objects/packetin_filter'
-  builder.compilation_options = CFLAGS
-  builder.library_paths = [ 'objects/lib' ]
-  builder.library_dependencies = [
-    'trema',
-    'pthread',
-    'sqlite3',
-    'dl',
-    'rt'
-  ]
-  builder.target_prerequisites = [ "#{ File.expand_path 'objects/lib/libtrema.a' }" ]
-end
-
-
 ################################################################################
 # Tests
 ################################################################################
-
-require "rspec/core"
-require "rspec/core/rake_task"
-
 
 task :spec => :rubylib
 RSpec::Core::RakeTask.new do | task |

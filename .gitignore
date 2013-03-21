@@ -16,7 +16,6 @@ doc
 .yardoc
 
 # other generated files
-*.dependency
 *.depends
 /tmp
 /conf
