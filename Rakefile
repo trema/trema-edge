@@ -20,19 +20,12 @@ $LOAD_PATH.unshift File.expand_path( File.join File.dirname( __FILE__ ), "ruby" 
 $LOAD_PATH.unshift File.expand_path( File.join File.dirname( __FILE__ ), "vendor", "ruby-ifconfig-1.2", "lib" )
 
 
-require "rake/clean"
 require "rake/builder"
+require "rake/clean"
 require "rake/loaders/makefile"
-
-
+require "trema/dsl/parser"
 require "trema/executables"
 require "trema/path"
-require "trema/dsl/parser"
-
-desc "Do not output any build messages"
-task :silent do
-  ENV[ 'DEBUG' ] = nil
-end
 
 
 ################################################################################
@@ -68,12 +61,40 @@ Rake::C::StaticLibraryTask.new "libtrema:static" do | task |
   task.library_name = "libtrema"
   task.target_directory = Trema.lib
   task.sources = "#{ Trema.include }/*.c"
-  task.includes = [ Trema.include ]
   task.cflags = CFLAGS
 end
 
 # FIXME
 file "objects/lib/libtrema.a" => "libtrema:static"
+
+
+################################################################################
+# Build Ruby library
+################################################################################
+
+task :rubylib => "libtrema:static"
+
+desc "Build Ruby library."
+Rake::C::RubyLibraryTask.new :rubylib do | task |
+  task.library_name = "trema"
+  task.target_directory = Trema.ruby
+  task.sources = [
+    "#{ Trema.ruby }/trema/*.c",
+    "#{ Trema.ruby }/trema/messages/*.c"
+  ]
+  task.includes = [ Trema.include ]
+  task.cflags = CFLAGS
+  task.ldflags = [ "-Wl,-Bsymbolic", "-L#{ Trema.lib }" ]
+  task.library_dependencies = [
+    "trema",
+    "sqlite3",
+    "pthread",
+    "rt",
+    "dl",
+    "crypt",
+    "m"
+  ]
+end
 
 
 ################################################################################
@@ -93,41 +114,9 @@ CLEAN.include Trema.vendor_cmockery
 CLOBBER.include Trema.cmockery
 
 
-Rake::Builder.new do | builder |
-  builder.programming_language = 'c'
-  builder.target = 'ruby/trema.so'
-  builder.target_type = :shared_library
-  builder.target_prerequisites = [ 'objects/lib/libtrema.a' ]
-  builder.source_search_paths = [
-    'ruby/trema',
-    'ruby/trema/messages',
-  ]
-  builder.installable_headers = [ 'src/lib' ]
-  ruby_includes = [
-    RbConfig::CONFIG[ 'rubyhdrdir' ] + '/' + RbConfig::CONFIG[ 'arch' ],
-    RbConfig::CONFIG[ 'rubyhdrdir' ] + '/ruby/backward',
-    RbConfig::CONFIG[ 'rubyhdrdir' ]
-  ]
-  builder.include_paths = ruby_includes + [ 'ruby/trema', 'src/lib' ]
-  builder.objects_path = 'ruby'
-  builder.compilation_options = CFLAGS
-  builder.library_paths = [
-    RbConfig::CONFIG[ 'libdir' ],
-    'objects/lib'
-  ]
-  builder.linker_options = [ '-Wl,-Bsymbolic' ]
-  builder.library_dependencies = [
-    'ruby',
-    'trema',
-    'sqlite3',
-    'pthread',
-    'rt',
-    'dl',
-    'crypt',
-    'm'
-  ]
-end
-
+################################################################################
+# Misc.
+################################################################################
 
 def phost_src
   File.join Trema.vendor_phost, "src"
@@ -378,28 +367,6 @@ Rake::Builder.new do | builder |
   builder.target_prerequisites = [ "#{ File.expand_path 'objects/lib/libtrema.a' }" ]
 end
 
-# build management commands
-#management_commands = [
-#  "application",
-#  "echo",
-#  "set_logging_level",
-#  "show_stats",
-#]
-
-#management_commands.each do | each |
-#  Rake::Builder.new do | builder |
-#    builder.programming_language = 'c'
-#    builder.target = each
-#    builder.target_type = :executable
-#    builder.source_search_paths = [ "src/management/#{ each }.c" ]
-#    builder.installable_headers = [ 'src/management' ]
-#    builder.include_paths = [ 'src/lib' ]
-#    builder.objects_path = 'objects/management'
-#    builder.compilation_options = CFLAGS
-#    builder.library_paths = [ 'objects/lib' ]
-#    builder.library_dependencies = [ 'trema', 'sqlite3', 'dl', 'rt', 'pthread' ]
-#  end
-#end
 
 # build standalone examples
 standalone_examples = [
@@ -472,7 +439,7 @@ require "rspec/core"
 require "rspec/core/rake_task"
 
 
-task :spec => :default
+task :spec => :rubylib
 RSpec::Core::RakeTask.new do | task |
   task.verbose = $trace
   task.pattern = FileList[ "spec/trema_spec.rb" ]

@@ -40,7 +40,7 @@ module Rake
 
       def define
         CLEAN.include objects
-        CLOBBER.include target_directory
+        CLOBBER.include target_path
         CLOBBER.include Dependency.path( @library_name )
 
         task name => [ target_directory, target_path ]
@@ -122,15 +122,21 @@ module Rake
 
 
       def gcc_I_options
-        @includes.collect do | each |
+        ( @includes + c_includes ).collect do | each |
           "-I#{ each }"
         end.join( " " )
+      end
+
+
+      def c_includes
+        sources.pathmap( "%d" ).uniq
       end
     end
   end
 end
 
 
+require "rake/c/ruby-library-task"
 require "rake/c/shared-library-task"
 require "rake/c/static-library-task"
 
