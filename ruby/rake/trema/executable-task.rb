@@ -16,11 +16,11 @@
 #
 
 
-require "rake/c/build-task"
+require "rake/trema/build-task"
 
 
 module Rake
-  module C
+  module Trema
     #
     # Compile *.c files into an executable file.
     #

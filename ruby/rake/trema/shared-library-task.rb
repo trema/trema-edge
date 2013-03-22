@@ -1,8 +1,8 @@
-require "rake/c/library-task"
+require "rake/trema/library-task"
 
 
 module Rake
-  module C
+  module Trema
     class SharedLibraryTask < LibraryTask
       attr_accessor :version
 

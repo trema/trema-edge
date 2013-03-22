@@ -1,8 +1,8 @@
-require "rake/c/build-task"
+require "rake/trema/build-task"
 
 
 module Rake
-  module C
+  module Trema
     class LibraryTask < BuildTask
       attr_accessor :library_name
     end
@@ -10,9 +10,9 @@ module Rake
 end
 
 
-require "rake/c/ruby-library-task"
-require "rake/c/shared-library-task"
-require "rake/c/static-library-task"
+require "rake/trema/ruby-library-task"
+require "rake/trema/shared-library-task"
+require "rake/trema/static-library-task"
 
 
 ### Local variables:

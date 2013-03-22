@@ -1,11 +1,11 @@
 require "popen4"
-require "rake/c/dependency"
 require "rake/clean"
 require "rake/tasklib"
+require "rake/trema/dependency"
 
 
 module Rake
-  module C
+  module Trema
     class BuildTask < TaskLib
       attr_accessor :cflags
       attr_accessor :includes

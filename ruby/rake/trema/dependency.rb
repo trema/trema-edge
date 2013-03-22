@@ -3,7 +3,7 @@ require "trema/path"
 
 
 module Rake
-  module C
+  module Trema
     module Dependency
       @@store = {}
 
@@ -28,7 +28,7 @@ module Rake
 
 
       def self.path name
-        File.join Trema.home, ".#{ name }.depends"
+        File.join ::Trema.home, ".#{ name }.depends"
       end
     end
   end
