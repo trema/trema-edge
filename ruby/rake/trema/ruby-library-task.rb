@@ -52,7 +52,11 @@ module Rake
 
 
       def gcc_options
-        #{ @ldflags.join " " } #{ gcc_ldflags } #{ gcc_l_options }
+        [
+          @ldflags.join( " " ),
+          gcc_ldflags,
+          gcc_l_options,
+        ].join " "
       end
 
 
