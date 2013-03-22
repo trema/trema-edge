@@ -17,6 +17,7 @@
 
 
 require "rake/trema/library-task"
+require "rake/trema/linker-options"
 
 
 module Rake
@@ -25,15 +26,14 @@ module Rake
     # Compile *.c files into a Ruby extension library.
     #
     class RubyLibraryTask < LibraryTask
+      include LinkerOptions
+
+
       RUBY_INCLUDES = [
         File.join( RbConfig::CONFIG[ "rubyhdrdir" ], RbConfig::CONFIG[ "arch" ] ),
         File.join( RbConfig::CONFIG[ "rubyhdrdir" ], "ruby/backward" ),
         RbConfig::CONFIG[ "rubyhdrdir" ]
       ]
-
-
-      attr_writer :ldflags
-      attr_writer :library_dependencies
 
 
       ##########################################################################

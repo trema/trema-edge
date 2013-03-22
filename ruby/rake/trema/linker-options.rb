@@ -16,46 +16,11 @@
 #
 
 
-require "rake/trema/build-task"
-require "rake/trema/linker-options"
-
-
 module Rake
   module Trema
-    #
-    # Compile *.c files into an executable file.
-    #
-    class ExecutableTask < BuildTask
-      include LinkerOptions
-
-
-      attr_writer :executable_name
-
-
-      ##########################################################################
-      private
-      ##########################################################################
-
-
-      def executable_name
-        @executable_name || @name
-      end
-      alias :target_file_name :executable_name
-
-
-      def generate_target
-        sh "gcc -o #{ target_path } #{ objects.to_s } #{ gcc_options }"
-      end
-
-
-      def gcc_options
-        [ gcc_ldflags, gcc_l_options ].join " "
-      end
-
-
-      def gcc_ldflags
-        [ @ldflags ].flatten.join " "
-      end
+    module LinkerOptions
+      attr_writer :ldflags
+      attr_writer :library_dependencies
     end
   end
 end

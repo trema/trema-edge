@@ -15,7 +15,7 @@ module Rake
 
 
       def initialize name, &block
-        init name
+        init name.to_s
         block.call self
         define
       end
