@@ -22,6 +22,7 @@ $LOAD_PATH.unshift File.expand_path( File.join File.dirname( __FILE__ ), "ruby" 
 require "rake/clean"
 require "rake/trema/executable-task"
 require "rake/trema/library-task"
+require "rake/trema/ruby-library-task"
 require "rake/trema/static-library-task"
 require "rspec/core"
 require "rspec/core/rake_task"
@@ -32,7 +33,7 @@ require "trema/version"
 
 
 task :default => [
-  :rubylib,
+  :libruby,
   :switch_manager,
   :switch_daemon,
   :trema_switch,
@@ -73,21 +74,17 @@ Rake::Trema::StaticLibraryTask.new "libtrema" do | task |
 end
 
 
-################################################################################
-# Build Ruby library
-################################################################################
+desc "Build Trema Ruby library."
+task :libruby => :libtrema
 
-task :rubylib => :libtrema
-
-desc "Build Ruby library."
-Rake::Trema::RubyLibraryTask.new :rubylib do | task |
+Rake::Trema::RubyLibraryTask.new :libruby do | task |
   task.library_name = "trema"
   task.target_directory = Trema.ruby
   task.sources = [
     "#{ Trema.ruby }/trema/*.c",
     "#{ Trema.ruby }/trema/messages/*.c"
   ]
-  task.includes = [ Trema.include ]
+  task.includes = Trema.include
   task.cflags = CFLAGS
   task.ldflags = [ "-Wl,-Bsymbolic", "-L#{ Trema.lib }" ]
   task.library_dependencies = [
@@ -252,7 +249,7 @@ end
 # Tests
 ################################################################################
 
-task :spec => :rubylib
+task :spec => :libruby
 RSpec::Core::RakeTask.new do | task |
   task.verbose = $trace
   task.pattern = FileList[ "spec/trema_spec.rb" ]

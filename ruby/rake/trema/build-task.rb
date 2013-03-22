@@ -90,7 +90,7 @@ module Rake
 
       def compile o_file, c_file
         return if uptodate?( o_file, [ c_file ] + Dependency.read( @name, o_file ) )
-        autodepends = run_gcc_H( "gcc -H #{ gcc_cflags } -fPIC #{ gcc_I_options } -c #{ c_file } -o #{ o_file }" )
+        autodepends = run_gcc_H( "gcc -H #{ gcc_cflags } -fPIC #{ gcc_i_options } -c #{ c_file } -o #{ o_file }" )
         Dependency.write( @name, o_file, autodepends )
       end
 
@@ -129,7 +129,7 @@ module Rake
       end
 
 
-      def gcc_I_options
+      def gcc_i_options
         ( [ @includes ].flatten + c_includes ).collect do | each |
           "-I#{ each }"
         end.join( " " )
