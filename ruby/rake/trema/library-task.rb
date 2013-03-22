@@ -21,6 +21,9 @@ require "rake/trema/build-task"
 
 module Rake
   module Trema
+    #
+    # Common base class for static, shared, and ruby library tasks.
+    #
     class LibraryTask < BuildTask
       attr_accessor :library_name
     end
