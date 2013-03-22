@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 
 gem "coveralls", require: false
-gem "popen4", "~> 0.1.2"
+gem "paper-house", "= 0.1.3"
 
 
 group :development do

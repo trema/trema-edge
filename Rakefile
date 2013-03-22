@@ -20,9 +20,9 @@ $LOAD_PATH.unshift File.expand_path( File.join File.dirname( __FILE__ ), "ruby" 
 
 
 require "rake/clean"
-require "rake/trema/executable-task"
-require "rake/trema/ruby-library-task"
-require "rake/trema/static-library-task"
+require "rake/paper-house/executable-task"
+require "rake/paper-house/ruby-library-task"
+require "rake/paper-house/static-library-task"
 require "rspec/core"
 require "rspec/core/rake_task"
 require "trema/dsl/parser"
@@ -65,7 +65,7 @@ task :default => [
 
 
 desc "Build Trema C library."
-Rake::Trema::StaticLibraryTask.new :libtrema do | task |
+Rake::PaperHouse::StaticLibraryTask.new :libtrema do | task |
   task.target_directory = Trema.lib
   task.sources = "#{ Trema.include }/*.c"
   task.cflags = CFLAGS
@@ -75,7 +75,7 @@ end
 desc "Build Trema Ruby library."
 task :libruby => :libtrema
 
-Rake::Trema::RubyLibraryTask.new :libruby do | task |
+Rake::PaperHouse::RubyLibraryTask.new :libruby do | task |
   task.library_name = "trema"
   task.target_directory = Trema.ruby
   task.sources = [
@@ -98,7 +98,7 @@ end
 
 
 desc "Build switch datapath library."
-Rake::Trema::StaticLibraryTask.new :libofdp do | task |
+Rake::PaperHouse::StaticLibraryTask.new :libofdp do | task |
   task.target_directory = Trema.obj_datapath
   task.sources = "#{ Trema.src_datapath }/*.c"
   task.includes = Trema.include
@@ -122,7 +122,7 @@ CLOBBER.include Trema.cmockery
 desc "Build switch manager."
 task :switch_manager => :libtrema
 
-Rake::Trema::ExecutableTask.new :switch_manager do | task |
+Rake::PaperHouse::ExecutableTask.new :switch_manager do | task |
   task.target_directory = File.dirname( Trema::Executables.switch_manager )
   task.sources = [
     "src/switch_manager/dpid_table.c",
@@ -145,7 +145,7 @@ end
 desc "Build switch daemon."
 task :switch_daemon => :libtrema
 
-Rake::Trema::ExecutableTask.new :switch_daemon do | task |
+Rake::PaperHouse::ExecutableTask.new :switch_daemon do | task |
   task.target_directory = File.dirname( Trema::Executables.switch_daemon )
   task.sources = [
     "src/switch_manager/cookie_table.c",
@@ -173,7 +173,7 @@ end
 desc "Build Trema switch."
 task :trema_switch => [ :libofdp, :libtrema ]
 
-Rake::Trema::ExecutableTask.new :trema_switch do | task |
+Rake::PaperHouse::ExecutableTask.new :trema_switch do | task |
   task.executable_name = "switch"
   task.target_directory = File.dirname( Trema::Executables.switch )
   task.sources = "src/switch/switch/*.c"
@@ -194,7 +194,7 @@ end
 desc "Build PacketIn filter."
 task :packetin_filter => :libtrema
 
-Rake::Trema::ExecutableTask.new :packetin_filter do | task |
+Rake::PaperHouse::ExecutableTask.new :packetin_filter do | task |
   task.target_directory = File.dirname( Trema::Executables.packetin_filter )
   task.sources = "src/packetin_filter/*.c"
   task.includes = Trema.include
