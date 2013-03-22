@@ -1,11 +1,32 @@
-require "popen4"
+#
+# Copyright (C) 2013 NEC Corporation
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License, version 2, as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+
+
 require "rake/clean"
 require "rake/tasklib"
+require "rake/trema/auto-depends"
 require "rake/trema/dependency"
 
 
 module Rake
   module Trema
+    #
+    # Common base class for *.c compilation tasks.
+    #
     class BuildTask < TaskLib
       attr_accessor :cflags
       attr_accessor :includes
@@ -32,24 +53,50 @@ module Rake
 
 
       def define
+        define_main_task
+        define_all_c_compile_tasks
+        define_maybe_generate_target_task
+        define_clean_targets
+        define_clobber_targets
+      end
+
+
+      def define_main_task
+        directory @target_directory
+        task name => [ @target_directory, target_path ]
+      end
+
+
+      def define_all_c_compile_tasks
+        sources.zip( objects ) do | source, object |
+          define_c_compile_task source, object
+        end
+      end
+
+
+      def define_c_compile_task source, object
+        task object => source do | task |
+          compile task.name, task.prerequisites[ 0 ]
+        end
+      end
+
+
+      def define_maybe_generate_target_task
+        file target_path => objects do | task |
+          next if uptodate?( task.name, task.prerequisites )
+          generate_target
+        end
+      end
+
+
+      def define_clean_targets
         CLEAN.include objects
+      end
+
+
+      def define_clobber_targets
         CLOBBER.include target_path
         CLOBBER.include Dependency.path( @name )
-
-        task name => [ target_directory, target_path ]
-        directory target_directory
-
-        sources.zip( objects ) do | source, object |
-          task object => source do | task |
-            compile task.name, task.prerequisites[ 0 ]
-          end
-        end
-
-        file target_path => objects do | task |
-          if not uptodate?( target_path, objects )
-            generate_target
-          end
-        end
       end
 
 
@@ -62,16 +109,6 @@ module Rake
         sources.collect do | each |
           File.join @target_directory, File.basename( each ).ext( ".o" )
         end
-      end
-
-
-      def generate_target
-        raise NotImplementedError, "Override this!"
-      end
-
-
-      def target_file_name
-        raise NotImplementedError, "Override this!"
       end
 
 
@@ -89,43 +126,21 @@ module Rake
 
 
       def compile o_file, c_file
-        return if uptodate?( o_file, [ c_file ] + Dependency.read( @name, o_file ) )
-        autodepends = run_gcc_H( "gcc -H #{ gcc_cflags } -fPIC #{ gcc_i_options } -c #{ c_file } -o #{ o_file }" )
-        Dependency.write( @name, o_file, autodepends )
-      end
-
-
-      def run_gcc_H command
-        autodepends = []
-
-        puts command
-        status = POpen4.popen4( command ) do | stdout, stderr, stdin, pid |
-          stdin.close
-          stderr.each do | line |
-            case line
-            when /^\./
-              autodepends << line.sub( /^\.+\s+/, "" ).strip
-            when /Multiple include guards/
-              # Filter out include guards warnings.
-              stderr.each do | line |
-                if line =~ /:$/
-                  puts line
-                  break
-                end
-              end
-            else
-              puts line
-            end
-          end
+        if uptodate?( o_file, Dependency.read( @name, o_file ) << c_file )
+          return
         end
-        fail "gcc failed" if status.exitstatus != 0
-
-        autodepends
+        auto_depends = AutoDepends.new(
+                         c_file,
+                         o_file,
+                         auto_depends_gcc_options
+                       )
+        auto_depends.run
+        Dependency.write @name, o_file, auto_depends.data
       end
 
 
-      def gcc_cflags
-        @cflags.join " "
+      def auto_depends_gcc_options
+        "#{ @cflags.join " " } -fPIC #{ gcc_i_options }"
       end
 
 
