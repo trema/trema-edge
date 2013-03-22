@@ -12,7 +12,6 @@ end
 
 require "rake/trema/ruby-library-task"
 require "rake/trema/shared-library-task"
-require "rake/trema/static-library-task"
 
 
 ### Local variables:

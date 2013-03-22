@@ -19,9 +19,10 @@
 $LOAD_PATH.unshift File.expand_path( File.join File.dirname( __FILE__ ), "ruby" )
 
 
+require "rake/clean"
 require "rake/trema/executable-task"
 require "rake/trema/library-task"
-require "rake/clean"
+require "rake/trema/static-library-task"
 require "rspec/core"
 require "rspec/core/rake_task"
 require "trema/dsl/parser"
@@ -66,7 +67,6 @@ CFLAGS = [
 
 desc "Build Trema C library."
 Rake::Trema::StaticLibraryTask.new "libtrema" do | task |
-  task.library_name = "libtrema"
   task.target_directory = Trema.lib
   task.sources = "#{ Trema.include }/*.c"
   task.cflags = CFLAGS
@@ -120,16 +120,11 @@ CLOBBER.include Trema.cmockery
 CLOBBER.include Trema.objects
 
 
-################################################################################
-# Build libofdp.a
-################################################################################
-
-desc "Build libofdp.a"
+desc "Build switch datapath library."
 Rake::Trema::StaticLibraryTask.new "libofdp" do | task |
-  task.library_name = "libofdp"
-  task.target_directory = "#{ Trema.objects }/switch/datapath"
-  task.sources = "#{ Trema.home }/src/switch/datapath/*.c"
-  task.includes = [ Trema.include ]
+  task.target_directory = Trema.obj_datapath
+  task.sources = "#{ Trema.src_datapath }/*.c"
+  task.includes = Trema.include
   task.cflags = CFLAGS
 end
 
