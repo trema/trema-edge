@@ -77,7 +77,7 @@ end
 # Build Ruby library
 ################################################################################
 
-task :rubylib => "libtrema"
+task :rubylib => :libtrema
 
 desc "Build Ruby library."
 Rake::C::RubyLibraryTask.new :rubylib do | task |
@@ -134,24 +134,19 @@ Rake::C::StaticLibraryTask.new "libofdp" do | task |
 end
 
 
-################################################################################
-# Build switch manager.
-################################################################################
-
-task "switch_manager" => "libtrema"
-
 desc "Build switch manager."
+task :switch_manager => :libtrema
+
 Rake::C::ExecutableTask.new "switch_manager" do | task |
-  task.executable_name = "switch_manager"
   task.target_directory = File.dirname( Trema::Executables.switch_manager )
   task.sources = [
     "src/switch_manager/dpid_table.c",
+    "src/switch_manager/secure_channel_listener.c",
     "src/switch_manager/switch_manager.c",
-    "src/switch_manager/secure_channel_listener.c"
   ]
-  task.includes = [ Trema.include ]
+  task.includes = Trema.include
   task.cflags = CFLAGS
-  task.ldflags = [ "-L#{ Trema.lib }" ]
+  task.ldflags = "-L#{ Trema.lib }"
   task.library_dependencies = [
     "trema",
     "sqlite3",
@@ -162,15 +157,10 @@ Rake::C::ExecutableTask.new "switch_manager" do | task |
 end
 
 
-################################################################################
-# Build switch daemon.
-################################################################################
-
-task "switch_daemon" => "libtrema"
-
 desc "Build switch daemon."
+task :switch_daemon => :libtrema
+
 Rake::C::ExecutableTask.new "switch_daemon" do | task |
-  task.executable_name = "switch_daemon"
   task.target_directory = File.dirname( Trema::Executables.switch_daemon )
   task.sources = [
     "src/switch_manager/cookie_table.c",
@@ -180,11 +170,11 @@ Rake::C::ExecutableTask.new "switch_daemon" do | task |
     "src/switch_manager/secure_channel_sender.c",
     "src/switch_manager/service_interface.c",
     "src/switch_manager/switch.c",
-    "src/switch_manager/xid_table.c"
+    "src/switch_manager/xid_table.c",
   ]
-  task.includes = [ Trema.include ]
+  task.includes = Trema.include
   task.cflags = CFLAGS
-  task.ldflags = [ "-L#{ Trema.lib }" ]
+  task.ldflags = "-L#{ Trema.lib }"
   task.library_dependencies = [
     "trema",
     "sqlite3",
@@ -195,13 +185,9 @@ Rake::C::ExecutableTask.new "switch_daemon" do | task |
 end
 
 
-################################################################################
-# Build Trema switch.
-################################################################################
-
-task :trema_switch => [ "libofdp", "libtrema" ]
-
 desc "Build Trema switch."
+task :trema_switch => [ :libofdp, :libtrema ]
+
 Rake::C::ExecutableTask.new "trema_switch" do | task |
   task.executable_name = "switch"
   task.target_directory = File.dirname( Trema::Executables.switch )
@@ -220,18 +206,13 @@ Rake::C::ExecutableTask.new "trema_switch" do | task |
 end
 
 
-################################################################################
-# Build PacketIn Filter.
-################################################################################
+desc "Build PacketIn filter."
+task :packetin_filter => :libtrema
 
-task :packetin_filter => "libtrema"
-
-desc "Build PacketIn Filter."
 Rake::C::ExecutableTask.new "packetin_filter" do | task |
-  task.executable_name = "packetin_filter"
   task.target_directory = File.dirname( Trema::Executables.packetin_filter )
   task.sources = "src/packetin_filter/*.c"
-  task.includes = [ Trema.include ]
+  task.includes = Trema.include
   task.cflags = CFLAGS
   task.ldflags = [ "-L#{ Trema.lib }", "-L#{ Trema.obj_datapath }" ]
   task.library_dependencies = [

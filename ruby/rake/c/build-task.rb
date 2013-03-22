@@ -46,7 +46,9 @@ module Rake
         end
 
         file target_path => objects do | task |
-          generate_target
+          if not uptodate?( target_path, objects )
+            generate_target
+          end
         end
       end
 
@@ -128,7 +130,7 @@ module Rake
 
 
       def gcc_I_options
-        ( @includes + c_includes ).collect do | each |
+        ( [ @includes ].flatten + c_includes ).collect do | each |
           "-I#{ each }"
         end.join( " " )
       end

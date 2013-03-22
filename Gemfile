@@ -2,10 +2,13 @@ source "https://rubygems.org"
 
 
 gem "coveralls", require: false
+gem "popen4", "~> 0.1.2"
 
 
 group :development do
-  gem "popen4", "~> 0.1.2"
+  gem "flay", "~> 2.1.0"
+  gem "flog", "~> 3.2.2"
+  gem "reek", "~> 1.3.1"
   gem "rspec", "~> 2.13.0"
   gem "yard", "~> 0.8.5.2"
 end
