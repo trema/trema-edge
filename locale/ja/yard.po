@@ -1,5 +1,5 @@
 # Japanese translations for Trema http://trema.github.com/trema/.
-# Copyright (C) 2012 NEC Corporation. 
+# Copyright (C) 2013 NEC Corporation. 
 # This file is distributed under the same license as the Trema.
 # Yasuhito TAKAMIYA <yasuhito@gmail.com>, 2012.
 #

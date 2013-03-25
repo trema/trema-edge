@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012 NEC Corporation
+# Copyright (C) 2013 NEC Corporation
 #
 
 CC = gcc
