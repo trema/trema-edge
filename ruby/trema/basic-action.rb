@@ -57,7 +57,7 @@ module Trema
             options[ attr.to_s.sub( '@', '' ).to_sym ] = action.instance_variable_get( attr )
           end
           method = "pack_#{ action.class.name.demodulize.underscore }"
-         action.__send__ method, set_field, options
+          action.__send__ method, set_field, options
         end
       end
     end
