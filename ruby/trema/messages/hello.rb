@@ -31,6 +31,9 @@ module Trema
 end
 
 
+Hello = Trema::Messages::Hello
+
+
 ### Local variables:
 ### mode: Ruby
 ### coding: utf-8-unix

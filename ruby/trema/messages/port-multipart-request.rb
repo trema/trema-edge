@@ -25,6 +25,9 @@ module Trema
 end
 
 
+PortMultipartRequest = Trema::Messages::PortMultipartRequest
+
+
 ### Local variables:
 ### mode: Ruby
 ### coding: utf-8-unix

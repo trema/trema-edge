@@ -29,6 +29,9 @@ module Trema
 end
 
 
+FlowMultipartRequest = Trema::Messages::FlowMultipartRequest
+
+
 ### Local variables:
 ### mode: Ruby
 ### coding: utf-8-unix

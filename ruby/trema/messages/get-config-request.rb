@@ -25,6 +25,9 @@ module Trema
 end
 
 
+GetConfigRequest = Trema::Messages::GetConfigRequest
+
+
 ### Local variables:
 ### mode: Ruby
 ### coding: utf-8-unix

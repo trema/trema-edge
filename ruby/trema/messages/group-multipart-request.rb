@@ -26,6 +26,9 @@ module Trema
 end
 
 
+GroupMultipartRequest = Trema::Messages::GroupMultipartRequest
+
+
 ### Local variables:
 ### mode: Ruby
 ### coding: utf-8-unix

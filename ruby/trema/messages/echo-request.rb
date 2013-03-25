@@ -26,6 +26,9 @@ module Trema
 end
 
 
+EchoRequest = Trema::Messages::EchoRequest
+
+
 ### Local variables:
 ### mode: Ruby
 ### coding: utf-8-unix

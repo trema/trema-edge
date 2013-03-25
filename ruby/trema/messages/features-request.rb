@@ -25,6 +25,9 @@ module Trema
 end
 
 
+FeaturesRequest = Trema::Messages::FeaturesRequest
+
+
 ### Local variables:
 ### mode: Ruby
 ### coding: utf-8-unix

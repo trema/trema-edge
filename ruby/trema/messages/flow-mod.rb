@@ -32,6 +32,9 @@ module Trema
 end
 
 
+FlowMod = Trema::Messages::FlowMod
+
+
 ### Local variables:
 ### mode: Ruby
 ### coding: utf-8-unix

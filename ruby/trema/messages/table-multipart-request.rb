@@ -25,6 +25,9 @@ module Trema
 end
 
 
+TableMultipartRequest = Trema::Messages::TableMultipartRequest
+
+
 ### Local variables:
 ### mode: Ruby
 ### coding: utf-8-unix
