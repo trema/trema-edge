@@ -55,13 +55,14 @@ It may also run on other GNU/Linux distributions but is not tested.
 
 ## Required Packages
 
-This repository has only been tested with ruby 2.0.0 and
+This repository has only been tested with ruby 2.0.0 (maybe with
+1.9.3) and will not work with 1.8.x. We recommend installation of the
 rvm program for easy installation of ruby 2.0.0.
-will not work with 1.8.x. We recommend installation of the
 
 
-## Build trema
+## Build Trema
 
+    % bundle install
     % rake
 
 
