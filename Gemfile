@@ -1,11 +1,11 @@
 source "https://rubygems.org"
 
 
-gem "coveralls", require: false
-gem "paper-house", "= 0.1.5"
+gem "paper-house", "~> 0.1.7"
 
 
 group :development do
+  gem "coveralls", require: false
   gem "flay", "~> 2.1.0"
   gem "flog", "~> 3.2.2"
   gem "reek", "~> 1.3.1"
