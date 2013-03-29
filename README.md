@@ -38,7 +38,6 @@ currently displays the trema's API documentation.
 The Ruby controller implements most of the messages except the following:
 
 * Experimenter
-* Barrier-request/Barrier-reply. Trema switch lacks implementation of this message.
 * Queue-get-config/request/reply
 * Role-request/reply
 * Get-async-requet/reply
