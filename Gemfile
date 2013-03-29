@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 
-gem "paper-house", "~> 0.1.9"
+gem "paper-house", "~> 0.1.13"
 
 
 group :development do
