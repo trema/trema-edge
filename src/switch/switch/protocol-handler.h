@@ -78,11 +78,12 @@ void ( *handle_group_mod )( const uint32_t transaction_id,
         const uint32_t group_id,
         const list_element *buckets,
         void *user_data );
-void ( *handle_multipart_request)( uint32_t transaction_id,
+void ( *handle_multipart_request )( uint32_t transaction_id,
         uint16_t type,
         uint16_t flags,
         const buffer *body,
         void *user_data );
+void ( *handle_barrier_request )( uint32_t transaction_id, void *user_data );
 
 
 #ifdef __cplusplus
