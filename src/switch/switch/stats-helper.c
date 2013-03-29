@@ -733,6 +733,7 @@ _request_send_flow_stats( const struct ofp_flow_stats_request *req, const uint32
     xfree( stats );
     delete_oxm_matches( oxm_matches );
   }
+  delete_list( list );
 }
 void ( *request_send_flow_stats)( const struct ofp_flow_stats_request *req, uint32_t transaction_id ) = _request_send_flow_stats;
 
@@ -807,8 +808,8 @@ _request_send_port_stats( const struct ofp_port_stats_request *req, const uint32
       delete_element( &list, ( void * ) &stats[ i ] );
     }
     xfree( stats );
-    delete_list( list );
   }
+  delete_list( list );
 }
 void ( *request_send_port_stats )( const struct ofp_port_stats_request *req, const uint32_t transaction_id ) = _request_send_port_stats;
 
