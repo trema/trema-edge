@@ -1,6 +1,7 @@
 source "https://rubygems.org"
 
 
+gem "gli", "~> 2.5.5"
 gem "paper-house", "~> 0.1.13"
 
 

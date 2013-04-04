@@ -36,7 +36,11 @@ class Trema::Executables
     #
     def compiled?
       @list.each do | each |
-        return false unless FileTest.executable?( __send__ each )
+        path = __send__( each )
+        if not FileTest.executable?( path )
+          $stderr.puts "ERROR: #{ path } does not exist." if $verbose
+          return false
+        end
       end
     end
 
@@ -84,10 +88,6 @@ class Trema::Executables
   path "switch/switch/switch"
   path "switch_manager/switch_daemon"
   path "switch_manager/switch_manager"
-  path "tremashark/packet_capture"
-  path "tremashark/stdin_relay"
-  path "tremashark/syslog_relay"
-  path "tremashark/tremashark"
 end
 
 

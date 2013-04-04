@@ -26,7 +26,7 @@ Implementation status:
 * `switch_manager, switch daemon`: works
 * `tremashark`: not yet implemented
 * `src/examples/dumper`: works (C only)
-* `src/examples/learning_switch`: works (both C and Ruby )
+* `src/examples/learning_switch`: works (both C and Ruby)
 * `src/examples/repeater_hub`: works (Ruby only)
 * `trema apps`: not work
 * `features`: not work
@@ -63,14 +63,6 @@ rvm program for easy installation of ruby 2.0.0.
 
     % bundle install
     % rake
-
-
-## Run the C learning switch
-
-    % ./learning_switch.sh start
-
-    Stop learning switch
-    % ./learning_switch.sh stop
 
 
 ## Run the Ruby learning switch
