@@ -1,3 +1,4 @@
+@wip
 Feature: Send hello messages
 
   As a Trema user

@@ -6,6 +6,7 @@ gem "paper-house", "~> 0.1.13"
 
 group :development do
   gem "coveralls", require: false
+  gem "cucumber", "~> 1.2.3"
   gem "flay", "~> 2.1.0"
   gem "flog", "~> 3.2.2"
   gem "reek", "~> 1.3.1"

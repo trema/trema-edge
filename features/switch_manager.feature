@@ -1,3 +1,4 @@
+@wip
 Feature: switch_manager help
 
   As a Trema user

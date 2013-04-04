@@ -1,3 +1,4 @@
+@wip
 Feature: Get the list of openflow switches with list_switches
 
   As a Trema user

@@ -1,3 +1,4 @@
+@wip
 Feature: kill all trema processes with `trema killall' command
 
   As a Trema user

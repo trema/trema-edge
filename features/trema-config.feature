@@ -1,3 +1,4 @@
+@wip
 Feature: trema-config compile helper
 
   As a Trema user

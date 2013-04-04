@@ -1,3 +1,4 @@
+@wip
 Feature: Send set config messages
 
   As a Trema user

@@ -1,3 +1,4 @@
+@wip
 Feature: show network stats with `trema show_stats' command
 
   As a Trema user

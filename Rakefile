@@ -250,6 +250,13 @@ RSpec::Core::RakeTask.new do | task |
 end
 
 
+require "cucumber/rake/task"
+task :features => :default
+Cucumber::Rake::Task.new( :features ) do | t |
+  t.cucumber_opts = "features --tags ~@wip"
+end
+
+
 ################################################################################
 # YARD
 ################################################################################

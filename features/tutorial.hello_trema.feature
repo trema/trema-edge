@@ -1,3 +1,4 @@
+@wip
 Feature: Hello trema sample application
 
   As a Trema user

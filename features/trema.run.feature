@@ -1,3 +1,4 @@
+@wip
 Feature: run trema application with `trema run' command
 
   As a Trema user

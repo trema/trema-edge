@@ -1,3 +1,4 @@
+@wip
 Feature: "Getting switch info" sample application
 
   As a Trema user

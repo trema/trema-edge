@@ -1,3 +1,4 @@
+@wip
 Feature: Send a features request message
 
   As a Trema user
