@@ -31,7 +31,7 @@
 
 static const char *
 get_switch_home( void ) {
-  return getenv( "SWITCH_HOME" );
+  return getenv( "TREMA_HOME" );
 }
 
 

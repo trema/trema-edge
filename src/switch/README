@@ -16,14 +16,14 @@ switch has been renamed to switch_manager/switch_daemon.
 
 The switch program can be run using the following steps:
 
-1. Set SWITCH_HOME environment variable to where the top trema-edge
+1. Set TREMA_HOME environment variable to where the top trema-edge
    repository resides.
 
-  $ export SWITCH_HOME=/somewhere/trema-edge
+  $ export TREMA_HOME=/somewhere/trema-edge
 
 2. Run the switch executable like follows:
 
-  $ cd $SWITCH_HOME
+  $ cd $TREMA_HOME
   $ sudo -E ./objects/switch/switch/switch --datapath_id=1 \
   --server_ip=10.0.0.1 --server_port=6633 --switch_ports=eth0,eth1
 
