@@ -192,7 +192,7 @@ handle_flow_mod_add( const uint32_t transaction_id, const uint64_t cookie,
     if ( ret != OFDPE_SUCCESS ) {
       send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPBIC_UNSUP_INST );
       delete_instruction_set( instruction_set );
-      xfree( match );
+      delete_match( match );
       return;
     }
   }
@@ -213,7 +213,7 @@ handle_flow_mod_add( const uint32_t transaction_id, const uint64_t cookie,
      * datapath errors.
      */
     delete_instruction_set( instruction_set );
-    xfree( match );
+    delete_match( match );
     send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPFMFC_UNKNOWN );
     return;
   }
@@ -222,7 +222,7 @@ handle_flow_mod_add( const uint32_t transaction_id, const uint64_t cookie,
   if ( ret != OFDPE_SUCCESS ) {
     error( "Failed to add a flow entry ( ret = %d ).", ret );
     delete_instruction_set( instruction_set );
-    xfree( match );
+    delete_match( match );
 
     uint16_t type = OFPET_FLOW_MOD_FAILED;
     uint16_t code = OFPFMFC_UNKNOWN;
@@ -259,7 +259,6 @@ handle_flow_mod_delete( const uint32_t transaction_id, const uint64_t cookie,
                         const openflow_instructions *instructions,
                         const bool strict ) {
 
-  UNUSED( transaction_id );
   UNUSED( idle_timeout );
   UNUSED( hard_timeout );
   UNUSED( priority );
@@ -302,7 +301,6 @@ handle_flow_mod_mod( const uint32_t transaction_id, const uint64_t cookie,
                      const uint16_t flags, const oxm_matches *oxm,
                      const openflow_instructions *instructions,
                      const bool strict, struct protocol *protocol ) {
-  UNUSED( transaction_id );
 
   match *match = create_match( );
   if ( oxm != NULL && oxm->n_matches > 0 ) {
@@ -318,7 +316,7 @@ handle_flow_mod_mod( const uint32_t transaction_id, const uint64_t cookie,
     if ( ret != OFDPE_SUCCESS ) {
       send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPBIC_UNSUP_INST );
       delete_instruction_set( ins_set );
-      xfree( match );
+      delete_match( match );
       return;
     }
   }
