@@ -978,7 +978,8 @@ _hw_desc( void ) {
     snprintf( hw_desc, DESC_STR_LEN, "%s %s %s %s %s",
       buf.sysname, buf.nodename, buf.release, buf.version, buf.machine );
     hw_desc[ DESC_STR_LEN - 1 ] = '\0';
-  } else {
+  }
+  else {
     hw_desc[ 0 ] = '\0';
   }
   return hw_desc;

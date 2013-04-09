@@ -47,7 +47,8 @@ notify_protocol( int fd, void *user_data ) {
     char *error_string = strerror_r( errno, buf, sizeof( buf ) - 1 );    
     error( "Failed to notify protocol count= " PRIu64 ", ret = %d errno %s [%d]", datapath->send_count, ret, error_string, errno );
     return;
-  } else if ( ret != sizeof( datapath->send_count ) ) {
+  }
+  else if ( ret != sizeof( datapath->send_count ) ) {
     error( "Failed to notify protocol count= " PRIu64 ",ret = %d", datapath->send_count, ret );
   }
   datapath->send_count = 0;
