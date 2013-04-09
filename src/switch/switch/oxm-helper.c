@@ -248,23 +248,23 @@ assign_ether_addr( const oxm_match_header *hdr, match *match ) {
   switch( *hdr ) {
     case OXM_OF_ETH_DST:
       MATCH_ARRAY_ATTR_SET( eth_dst, addr, ETH_ADDRLEN )
-      break;
+    break;
     case OXM_OF_ETH_DST_W:
       MATCH_ARRAY_ATTR_SET( eth_dst, addr, ETH_ADDRLEN )
       mask = addr + ( sizeof ( uint8_t ) * ETH_ADDRLEN );
       MATCH_ARRAY_MASK_SET( eth_dst, mask, ETH_ADDRLEN )
-      break;
+    break;
     case OXM_OF_ETH_SRC:
       MATCH_ARRAY_ATTR_SET( eth_src, addr, ETH_ADDRLEN );
-      break;
+    break;
     case OXM_OF_ETH_SRC_W:
       MATCH_ARRAY_ATTR_SET( eth_src, addr, ETH_ADDRLEN )
       mask = addr + ( sizeof ( uint8_t ) * ETH_ADDRLEN );
       MATCH_ARRAY_MASK_SET( eth_src, mask, ETH_ADDRLEN )
-      break;
+    break;
     default:
       assert( 0 );
-      break;
+    break;
   }
 }
 

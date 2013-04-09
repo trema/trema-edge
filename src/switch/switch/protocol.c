@@ -49,7 +49,8 @@ notify_datapath( int fd, void *user_data ) {
     char *error_string = strerror_r( errno, buf, sizeof( buf ) - 1 );    
     error( "Failed to notify datapath count= " PRIu64 ", ret = %d errno %s [%d]", protocol->send_count, ret, error_string, errno );
     return;
-  } else if ( ret != sizeof( protocol->send_count ) ) {
+  }
+  else if ( ret != sizeof( protocol->send_count ) ) {
     error( "Failed to notify datapath count= " PRIu64 ",ret = %d", protocol->send_count, ret );
   }
   protocol->send_count = 0;
@@ -122,16 +123,16 @@ handle_datapath_opf_packet( buffer *packet, struct protocol *protocol ) {
   switch( header->type ) {
     case OFPT_PACKET_IN:
       handle_datapath_packet_in( packet, protocol );
-      break;
+    break;
     case OFPT_PORT_STATUS:
       handle_datapath_port_status( packet, protocol );
-      break;
+    break;
     case OFPT_FLOW_REMOVED:
       handle_datapath_flow_removed( packet, protocol );
-      break;
+    break;
     default:
       warn( "Unhandled datapath packet %d", header->type );
-      break;
+    break;
   }
 }
 

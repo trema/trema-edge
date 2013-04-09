@@ -90,26 +90,26 @@ _parse_options( struct switch_arguments *args, int argc, char **argv ) {
     switch ( c ) {
       case 'h':
         print_usage( args, 0 );
-        break;
+      break;
       case 'l':
         if ( optarg ) {
           args->log_level = optarg;
           set_logging_level( args->log_level );
         }
-        break;
+      break;
       case 'd':
         args->run_as_daemon = true;
-        break;
+      break;
       case 'i':
         if ( optarg ) {
           string_to_datapath_id( optarg, &args->datapath_id );
         }
-        break;
+      break;
       case 'm':
         if ( optarg ) {
           args->max_flow_entries = ( uint16_t ) atoi( optarg );
         }
-        break;
+      break;
       case 'c':
         if ( optarg ) {
             char *save_ptr = NULL;
@@ -123,19 +123,19 @@ _parse_options( struct switch_arguments *args, int argc, char **argv ) {
               args->server_ip = temp_addr;
             }
         }
-        break;
+      break;
       case 'p':
         if ( optarg ) {
           args->server_port = ( uint16_t ) atoi( optarg );
         }
-        break;
+      break;
       case 'e':
         if ( optarg ) {
           args->datapath_ports = optarg;
         }
-        break;
+      break;
       default:
-        break;
+      break;
     }
   }
 }
