@@ -735,7 +735,7 @@ _request_send_flow_stats( const struct ofp_flow_stats_request *req, const uint32
   }
   delete_list( list );
 }
-void ( *request_send_flow_stats)( const struct ofp_flow_stats_request *req, uint32_t transaction_id ) = _request_send_flow_stats;
+void ( *request_send_flow_stats )( const struct ofp_flow_stats_request *req, uint32_t transaction_id ) = _request_send_flow_stats;
 
 
 static struct ofp_aggregate_stats_reply *
@@ -757,7 +757,7 @@ _request_aggregate_stats( const struct ofp_aggregate_stats_request *req ) {
   }
   return NULL;
 }
-struct ofp_aggregate_stats_reply * (* request_aggregate_stats)( const struct ofp_aggregate_stats_request *req ) = _request_aggregate_stats;
+struct ofp_aggregate_stats_reply * ( *request_aggregate_stats )( const struct ofp_aggregate_stats_request *req ) = _request_aggregate_stats;
 
 
 /*
@@ -788,7 +788,7 @@ _request_send_table_stats( const uint32_t transaction_id ) {
     xfree( stats );
   }
 }
-void ( *request_send_table_stats)( const uint32_t transaction_id ) = _request_send_table_stats;
+void ( *request_send_table_stats )( const uint32_t transaction_id ) = _request_send_table_stats;
 
 
 static void
@@ -864,7 +864,7 @@ _request_send_group_stats( const struct ofp_group_stats_request *req, const uint
     }
   }
 }
-void ( *request_send_group_stats)( const struct ofp_group_stats_request *req, const uint32_t transaction_id ) = _request_send_group_stats;
+void ( *request_send_group_stats )( const struct ofp_group_stats_request *req, const uint32_t transaction_id ) = _request_send_group_stats;
 
 
 static list_element *
@@ -891,7 +891,7 @@ _request_group_desc_stats( void ) {
   }
   return list;
 }
-list_element * ( *request_group_desc_stats)( void ) = _request_group_desc_stats;
+list_element * ( *request_group_desc_stats )( void ) = _request_group_desc_stats;
 
 
 static void
@@ -914,7 +914,7 @@ _request_send_table_features_stats( uint32_t transaction_id ) {
   }
   delete_list( list );
 }
-void ( *request_send_table_features_stats)( uint32_t transaction_id ) = _request_send_table_features_stats;
+void ( *request_send_table_features_stats )( uint32_t transaction_id ) = _request_send_table_features_stats;
 
 
 list_element *
