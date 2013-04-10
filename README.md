@@ -191,10 +191,10 @@ which is the effortless and easy way.
 
     % ./trema run work/sample -c work/sample.conf
     
-    If sucessfully run should observe the following
+    If sucessfully run should observe the following:
     Hello 0xabc from work/sample!
     
-    Stop controller
+    To stop the controller
     % Press Ctrl-c.
 
 
