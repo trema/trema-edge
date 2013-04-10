@@ -164,14 +164,38 @@ which is the effortless and easy way.
       return 0;
     }
     % cc `../trema-config -c` -o sample sample.c `../trema-config -l`
+
+    % cat sample.conf
+    trema_switch( "lsw" ) {
+      datapath_id "0xabc"
+    }
+
+    vhost ("host1") {
+      ip "192.168.0.1"
+      netmask "255.255.0.0"
+      mac "00:00:00:01:00:01"
+    }
+
+    vhost ("host2") {
+      ip "192.168.0.2"
+      netmask "255.255.0.0"
+      mac "00:00:00:01:00:02"
+    }
+
+    link "host1", "lsw:1"
+    link "host2", "lsw:2" 
+
     % cd ..
 
 ### To start the C controller
 
-    % ./trema-run.sh ./work/sample start
+    % ./trema run work/sample -c work/sample.conf
+    
+    If sucessfully run should observe the following
+    Hello 0xabc from work/sample!
     
     Stop controller
-    % ./trema-run.sh ./work/sample stop
+    % Press Ctrl-c.
 
 
 # About OpenFlow 1.3.0
