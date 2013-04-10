@@ -106,6 +106,7 @@ PaperHouse::StaticLibraryTask.new :libofdp do | task |
 end
 
 
+desc "Build google cmockery library"
 task "vendor:cmockery" => Trema.libcmockery_a
 file Trema.libcmockery_a do
   sh "tar xzf #{ Trema.vendor_cmockery }.tar.gz -C #{ Trema.vendor }"
@@ -239,6 +240,79 @@ end
 
 
 ################################################################################
+# UNITTESTS
+################################################################################
+desc "Build Trema C unittest library."
+PaperHouse::StaticLibraryTask.new :libtrema do | task |
+  task.target_directory = Trema.obj_unittests
+  task.sources = "#{ Trema.include }/*.c"
+  task.cflags = [ '--coverage' ] + CFLAGS
+end
+
+
+desc "Build libofdp.a unittest library"
+PaperHouse::StaticLibraryTask.new :libofdp do | task |
+  task.target_directory = "#{ Trema.obj_unittests }/switch/datapath"
+  task.sources = "#{ Trema.src_datapath }/*.c"
+  task.includes = Trema.include
+  task.cflags = [ '--coverage', '-DUNIT_TESTING' ] + CFLAGS
+end
+
+
+def switch_tests
+  {
+    parse_options_test: [
+      "#{ Trema.src_unittests }/switch/switch/parse-options-test.c",
+      "#{ Trema.src_unittests }/switch/switch/mocks.c",
+      "#{ Trema.src_trema_switch }/parse-options.c"
+    ],
+    group_helper_test: [
+      "#{ Trema.src_unittests }/switch/switch/group-helper-test.c",
+      "#{ Trema.src_unittests }/switch/switch/mocks.c",
+      "#{ Trema.src_trema_switch }/group-helper.c",
+      "#{ Trema.src_trema_switch }/action*.c"
+    ]
+  }
+end
+
+
+desc "Build switch unittest"
+switch_tests.keys.each do | each |
+  task each => [ 'vendor:cmockery', :libtrema, :libofdp ]
+  PaperHouse::ExecutableTask.new each do | task |
+    task.target_directory = "#{ Trema.obj_unittests }/switch/switch"
+    task.sources = switch_tests[ each ]
+    task.includes = [
+      File.dirname( Trema.cmockery_h ),
+      Trema.src_datapath,
+      Trema.include,
+      Trema.src_unittests
+    ]
+    task.cflags = [ '--coverage', '-DUNIT_TESTING' ] + CFLAGS
+    task.ldflags = "-Wl,--rpath -Wl,#{ Trema.cmockery }/lib --coverage -L#{ Trema.obj_unittests } -L#{ Trema.cmockery }/lib -L#{ Trema.obj_unittests }/switch/datapath"
+    task.library_dependencies = [
+      'cmockery',
+      'ofdp',
+      'trema',
+      'sqlite3',
+      'pthread',
+      'rt',
+      'dl'
+    ]
+  end
+end
+
+
+desc "Run unittests"
+task :run_unittests => switch_tests.keys do
+  cd Trema.obj_unittests do
+    Dir.glob( "*/*/*_test" ).each do | exec |
+      sh "sudo -E #{ exec }"
+    end
+  end
+end
+################################################################################
+
 # Tests
 ################################################################################
 
