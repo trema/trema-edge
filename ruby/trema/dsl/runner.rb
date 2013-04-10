@@ -145,7 +145,9 @@ module Trema
 
 
       def maybe_run_trema_switch
-        @context.trema_switch.run! if @context.trema_switch
+        @context.trema_switches.each do | name, trema_switch |
+          trema_switch.run!
+        end
       end
       
 

@@ -90,6 +90,12 @@ module Trema
 
 
       #
+      # holds all instances of configured trema switches
+      #
+      attr_reader :trema_switches
+
+
+      #
       # Creates a new Trema configuration
       #
       # @example
@@ -104,7 +110,7 @@ module Trema
         @links = Trema::Link.clear
         @packetin_filter = Trema::PacketinFilter.clear
         @switch_manager = Trema::SwitchManager.clear
-        @trema_switch = Trema::TremaSwitch.clear
+        @trema_switches = Trema::TremaSwitch.clear
         @switches = Trema::OpenflowSwitch.clear
         @netnss = Trema::Netns.clear
       end
@@ -133,11 +139,6 @@ module Trema
       #
       def switch_manager
         @switch_manager.values.last
-      end
-
-
-      def trema_switch
-        @trema_switch.values.last
       end
     end
   end

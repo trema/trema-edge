@@ -53,7 +53,16 @@ module Trema
 
     def command
       ports = @stanza[ :ports ]
-      ports = Trema::Link.instances.values.map.with_index { | each, i | "#{ each.name }/#{ i + 1 }"  }.join( ',' ) if @stanza[ :ports ].nil?
+      if @stanza[ :ports ].nil?
+        ports = []
+        # TODO refactor
+        Trema::Link.instances.values.map.with_index do | each, i |
+          if each.peers[ 0 ].split( ':' )[ 0 ] == @stanza[ :name ] || each.peers[ 1 ].split( ':' )[ 0 ] == @stanza[ :name ]
+            ports << "#{ each.name }/#{ i + 1 }"
+          end
+        end
+        ports = ports.join( ',' )
+      end
       "export TREMA_HOME=`pwd`; sudo -E #{ Executables.switch } -i #{ dpid_short } -e #{ ports } > #{ log_file } &"
     end
   end
