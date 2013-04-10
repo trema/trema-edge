@@ -15,134 +15,32 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+
 #include <stdio.h>
 #include <string.h>
-#include "cmockery_trema.h"
-#include "openflow.h"
-#include "wrapper.h"
-#include "checks.h"
-#include "table_manager_group.h"
+#include "trema.h"
+#include "ofdp.h"
 #include "group-helper.h"
 #include "mocks.h"
+#include "cmockery_trema.h"
 
 
+#define DATAPATH_ID 0xabc
 #define MY_TRANSACTION_ID 0x11223344
 #define GROUP_ID 1
 #define INVALID_GROUP_ID 3333
 #define WATCH_GROUP_1 0xaa
 #define WATCH_GROUP_2 0xbb
+#define DEV_PORT_1 "trema1-0"
+#define DEV_PORT_2 "trema2-0"
 #define WATCH_PORT_1 1
 #define WATCH_PORT_2 2
 #define WEIGHT_1 123
 #define WEIGHT_2 456
 
-#ifdef TEST
-static void 
-insert_num( list_element **head, uint32_t *num ) {
-  list_element *e;
-
-  for ( e = *head; e != NULL; e = e->next ) {
-    if ( *num > *( uint32_t * ) e->data ) {
-      break;
-    }
-  }
-  if ( e == NULL ) {
-    append_to_tail( head, num );
-  }
-  else if ( e == *head ) {
-    insert_in_front( head, num );
-  }
-  else {
-    insert_before( head, e->data, num );
-  }
-}
-#endif
-
-void
-insert_dnum( dlist_element *list, uint32_t *num ) {
-  dlist_element *e;
-  dlist_element *last = list;
-
-  if ( list->next != NULL ) {
-    e = list->next;
-  }
-  else if ( list->prev != NULL ) {
-    e = list->prev;
-  }
-  else {
-    e = list;
-  }
-  while ( e != NULL ) {
-    if ( e->data != NULL ) {
-      if ( *num > *( uint32_t * ) e->data ) {
-        insert_before_dlist( e, num );
-        return;
-      }
-    }
-    last = e;
-    e = e->next;
-  }
-  insert_after_dlist( last, num );
-}
 
 static void
-create_group_mod( void **state ) {
-  dlist_element *test_list = create_dlist();
-  list_element *ll;
-  create_list( &ll );
-  uint32_t *nums = ( uint32_t * ) xmalloc( sizeof( uint32_t ) * 5 );
-  uint32_t i;
-  i = 0;
-  nums[ i ] = 1;
-  insert_dnum( test_list, &nums[ i ] );
-  i = 1;
-  nums[ i ] = 2;
-  insert_dnum( test_list, &nums[ i ] );
-  i = 2;
-  nums[ i ] = 3;
-  insert_dnum( test_list, &nums[ i ] );
-  i = 3;
-  nums[ i ] = 4;
-  insert_dnum( test_list, &nums[ i ] );
-  i = 4;
-  nums[ i ] = 5;
-  insert_dnum( test_list, &nums[ i ] );
-  
-#ifdef TEST  
-  for ( i = 0; i < 5; i++ ) {
-    nums[ i ] = i + 1;
-    insert_num( &ll, &nums[ i ] );
-  }
-#endif  
-  for ( list_element *e = ll; e != NULL; e = e->next ) {
-    uint32_t *num = e->data;
-    printf( "ll num = %u\n", *num );
-  }
-
-  dlist_element *node = find_element( test_list, ( void * ) &nums[ 2 ] );
-  assert( node );
-  dlist_element *first = get_first_element( test_list );
-  if ( first->data == NULL ) {
-    first = first->next;
-  }
-  while ( first != NULL ) {
-    if ( first->data != NULL ) {
-      uint32_t *num = first->data;
-      printf( "first dl num = %u\n", *num );
-    }
-    first = first->next;
-  }
-  dlist_element *last = get_last_element( test_list );
-  if ( last->data == NULL ) {
-    last = last->prev;
-  }
-  while ( last != NULL ) {
-    if ( last->data != NULL ) {
-      uint32_t *num = last->data;
-      printf( "last dl num = %u\n", *num );
-    }
-    last = last->prev;
-  }
+test_create_group_mod( void **state ) {
   list_element *buckets_head;
 
   create_list( &buckets_head );
@@ -170,21 +68,28 @@ create_group_mod( void **state ) {
   ac_output->port = 2;
   ac_output->max_len = 1024;
   append_to_tail( &buckets_head, bucket );
-  init_group_table();
+  system( "sudo ip link add name trema1-0 type veth peer name trema1-1" );
+  system( "sudo ip link add name trema2-0 type veth peer name trema2-1" );
+  add_thread();
+  init_event_handler_safe();
+  init_timer_safe();
+  init_table_manager( UINT8_MAX );
+  init_switch_port();
+  add_switch_port( DEV_PORT_1, WATCH_PORT_1, UINT8_MAX, UINT8_MAX );
+  add_switch_port( DEV_PORT_2, WATCH_PORT_2, UINT8_MAX, UINT8_MAX );
   *state = ( void * ) buckets_head;
 }
 
 
 static void
-destroy_group_mod( void **state ) {
+test_destroy_group_mod( void **state ) {
   UNUSED( state );
-  remove_group_entry( GROUP_ID );
-}
-
-
-static void
-destroy_group_delete( void **state ) {
-  UNUSED( state );
+  system( "sudo ip link delete trema1-0 2>/dev/null" );
+  system( "sudo ip link delete trema2-0 2>/dev/null" );
+  finalize_table_manager();
+  finalize_switch_port();
+  finalize_timer_safe();
+  finalize_event_handler_safe();
 }
 
 
@@ -197,7 +102,7 @@ test_group_mod_add( void **state ) {
   assert_int_equal( group_entry->group_id, GROUP_ID );
   assert_int_equal( group_entry->type, OFPGT_SELECT );
 
-  bucket_list *bkt_element = get_first_element( group_entry->bucket_list );
+  bucket_list *bkt_element = get_first_element( group_entry->buckets );
   if ( bkt_element->data == NULL ) {
     bkt_element = bkt_element->next;
   }
@@ -262,7 +167,7 @@ test_group_mod_mod( void **state ) {
   group_entry *group_entry = lookup_group_entry( GROUP_ID );
   assert_int_equal( group_entry->group_id, GROUP_ID );
 
-  bucket_list *bkt_element = get_first_element( group_entry->bucket_list );
+  bucket_list *bkt_element = get_first_element( group_entry->buckets );
   if ( bkt_element->data == NULL ) {
     bkt_element = bkt_element->next;
   }
@@ -297,11 +202,7 @@ static void
 test_group_mod_delete_invalid( void **state ) {
   list_element *buckets = *state;
 
-  expect_value( mock_send_error_message, transaction_id, MY_TRANSACTION_ID );
-  expect_value( mock_send_error_message, type, OFPET_GROUP_MOD_FAILED );
-  expect_value( mock_send_error_message, code, OFPGMFC_UNKNOWN_GROUP );
   handle_group_add( MY_TRANSACTION_ID, OFPGT_SELECT, GROUP_ID, buckets );
-
   handle_group_mod_delete( MY_TRANSACTION_ID, INVALID_GROUP_ID );
   group_entry *group_entry = lookup_group_entry( GROUP_ID );
   assert_true( group_entry );
@@ -310,10 +211,10 @@ test_group_mod_delete_invalid( void **state ) {
 int
 main() {
   const UnitTest tests[] = {
-    unit_test_setup_teardown( test_group_mod_add, create_group_mod, destroy_group_mod ),
-    unit_test_setup_teardown( test_group_mod_mod, create_group_mod, destroy_group_mod ),
-    unit_test_setup_teardown( test_group_mod_delete, create_group_mod, destroy_group_delete ),
-    unit_test_setup_teardown( test_group_mod_delete_invalid, create_group_mod, destroy_group_mod )
+    unit_test_setup_teardown( test_group_mod_add, test_create_group_mod, test_destroy_group_mod ),
+    unit_test_setup_teardown( test_group_mod_mod, test_create_group_mod, test_destroy_group_mod ),
+    unit_test_setup_teardown( test_group_mod_delete, test_create_group_mod, test_destroy_group_mod ),
+    unit_test_setup_teardown( test_group_mod_delete_invalid, test_create_group_mod, test_destroy_group_mod )
   };
   return run_tests( tests );
 }

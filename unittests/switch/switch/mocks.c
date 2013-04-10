@@ -16,10 +16,9 @@
  */
 
 
+#include "trema.h"
+#include "ofdp.h"
 #include "cmockery_trema.h"
-#include "wrapper.h"
-#include "checks.h"
-#include "port_manager.h"
 
 
 bool
