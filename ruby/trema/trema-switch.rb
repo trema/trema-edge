@@ -55,15 +55,20 @@ module Trema
       ports = @stanza[ :ports ]
       if @stanza[ :ports ].nil?
         ports = []
-        # TODO refactor
-        Trema::Link.instances.values.map.with_index do | each, i |
-          if each.peers[ 0 ].split( ':' )[ 0 ] == @stanza[ :name ] || each.peers[ 1 ].split( ':' )[ 0 ] == @stanza[ :name ]
-            ports << "#{ each.name }/#{ i + 1 }"
-          end
+        Trema::Link.instances.values.each_with_index do | each, i |
+          ports << "#{ each.name }/#{ i + 1 }" if match_switch( each.peers, @stanza[ :name ] ) != []
         end
         ports = ports.join( ',' )
       end
       "export TREMA_HOME=`pwd`; sudo -E #{ Executables.switch } -i #{ dpid_short } -e #{ ports } > #{ log_file } &"
+    end
+
+
+    private
+
+
+    def match_switch peers, name
+      peers.each.select { | peer | peer.match( /\b#{ name }\b/ ) }
     end
   end
 end
