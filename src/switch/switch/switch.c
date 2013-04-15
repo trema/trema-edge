@@ -23,11 +23,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "trema.h"
+#include "daemon.h"
 #include "datapath.h"
 #include "parse-options.h"
 #include "protocol.h"
 #include "switch-init.h"
 #include "switch.h"
+
+
+static struct switch_arguments *args;
 
 
 static struct switch_arguments *
@@ -73,10 +77,24 @@ set_signal_mask() {
 }
 
 
+/*
+ * Trap the SIGINT delete the switch.datapath.pid file and exit.
+ */
+static void
+sigint_handler( int signum ) {
+  if ( args != NULL ) {
+    char *switch_pid_dir = get_switch_pid_dir();
+    char name[ PATH_MAX ];
+    snprintf( name, PATH_MAX, "%s.%#" PRIx64, args->progname, args->datapath_id );
+    unlink_pid( switch_pid_dir, name );
+  }
+  exit( signum );
+}
+
+
 int
 main( int argc, char **argv ) {
-  struct switch_arguments *args;
-
+  signal( SIGINT, sigint_handler );
   set_signal_mask();
 
   if ( ( args = init_switch( argc, argv ) ) != NULL ) {

@@ -27,6 +27,7 @@ extern "C" {
 
 struct switch_arguments *init_parse_args( int argc, char **argv );
 char *get_switch_tmp( void );
+char *get_switch_pid_dir( void );
 
 
 #ifdef __cplusplus
