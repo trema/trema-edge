@@ -447,14 +447,15 @@ _handle_packet_out( const uint32_t transaction_id, uint32_t buffer_id,
                     uint32_t in_port, const openflow_actions *actions,
                     const buffer *frame, void *user_data ) {
   UNUSED( transaction_id );
-  assert( actions->list );
 
   struct protocol *protocol = user_data;
 
   action_list *ac_list = create_action_list();
-  for ( list_element *e = actions->list; e != NULL; e = e->next ) {
-    struct ofp_action_header *ac_hdr = e->data;
-    ac_list = assign_actions( ac_list, ac_hdr, ac_hdr->len );
+  if ( actions != NULL ) {
+    for ( list_element *e = actions->list; e != NULL; e = e->next ) {
+      struct ofp_action_header *ac_hdr = e->data;
+      ac_list = assign_actions( ac_list, ac_hdr, ac_hdr->len );
+    }
   }
   buffer *duplicated = NULL;
   if ( frame != NULL && frame->length > 0 ) {
