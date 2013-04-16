@@ -29,7 +29,7 @@ module Trema
 
     log_file { | switch | "switch.#{ switch.dpid }.log" }
 
-    
+
     def initialize stanza
       @stanza = stanza
       TremaSwitch.add self
@@ -54,7 +54,7 @@ module Trema
     def command
       ports = @stanza[ :ports ]
       ports = Trema::Link.instances.values.map.with_index { | each, i | "#{ each.name }/#{ i + 1 }"  }.join( ',' ) if @stanza[ :ports ].nil?
-      "export SWITCH_HOME=`pwd`; sudo -E #{ Executables.switch } -i #{ dpid_short } -e #{ ports } > #{ log_file } &"
+      "sudo -E #{ Executables.switch } -i #{ dpid_short } -e #{ ports } > #{ log_file } &"
     end
   end
 end

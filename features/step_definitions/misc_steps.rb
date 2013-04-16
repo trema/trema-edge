@@ -18,6 +18,14 @@
 #
 
 
+require "aruba/cucumber"
+
+
+Given /^I compile "(.*?)" into "(.*?)"$/ do | c_source, executable |
+  run_simple "gcc #{ c_source } #{`trema-config -c -l`} -o #{ executable }", true
+end
+
+
 When /^\*\*\* sleep (\d+) \*\*\*$/ do | sec |
   sleep sec.to_i
 end
