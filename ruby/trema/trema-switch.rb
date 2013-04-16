@@ -53,8 +53,22 @@ module Trema
 
     def command
       ports = @stanza[ :ports ]
-      ports = Trema::Link.instances.values.map.with_index { | each, i | "#{ each.name }/#{ i + 1 }"  }.join( ',' ) if @stanza[ :ports ].nil?
+      if @stanza[ :ports ].nil?
+        ports = []
+        Trema::Link.instances.values.each_with_index do | each, i |
+          ports << "#{ each.name }/#{ i + 1 }" if match_switch( each.peers, @stanza[ :name ] ) != []
+        end
+        ports = ports.join( ',' )
+      end
       "sudo -E #{ Executables.switch } -i #{ dpid_short } -e #{ ports } > #{ log_file } &"
+    end
+
+
+    private
+
+
+    def match_switch peers, name
+      peers.each.select { | peer | peer.match( /\b#{ name }\b/ ) }
     end
   end
 end

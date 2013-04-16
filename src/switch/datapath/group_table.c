@@ -88,12 +88,14 @@ lookup_group_entry( const uint32_t group_id ) {
   }
 
   group_entry *entry = NULL;
+  bool found = false;
   for ( list_element *element = table->entries; element != NULL; element = element->next ) {
     if ( element->data == NULL ) {
       continue;
     }
     entry = element->data;
     if ( entry->group_id == group_id ) {
+      found = true;
       break;
     }
   }
@@ -102,7 +104,7 @@ lookup_group_entry( const uint32_t group_id ) {
     return NULL;
   }
 
-  return entry;
+  return found == true ? entry : NULL;
 }
 
 

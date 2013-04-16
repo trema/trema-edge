@@ -25,7 +25,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "trema.h"
+#include "daemon.h"
 #include "parse-options.h"
 
 
@@ -44,6 +48,17 @@ get_switch_tmp( void ) {
     tmp = "/tmp";
   }
   snprintf( path, PATH_MAX, "%s/tmp", tmp );
+  return xstrdup( path );
+}
+
+
+char *
+get_switch_pid_dir( void ) {
+  char path[ PATH_MAX ];
+
+  char *switch_tmp = get_switch_tmp();
+  sprintf( path, "%s/pid", switch_tmp );
+  xfree( switch_tmp );
   return xstrdup( path );
 }
 
@@ -93,10 +108,22 @@ init_parse_args( int argc, char **argv ) {
   if ( args->run_as_daemon == false ) {
     log_output_type |= LOGGING_TYPE_STDOUT;
   }
-  char log_name[ PATH_MAX ];
-  snprintf( log_name, PATH_MAX, "%s.%#" PRIx64, args->progname, args->datapath_id );
-  init_log( log_name, switch_log, log_output_type );
+  char name[ PATH_MAX ];
+  snprintf( name, PATH_MAX, "%s.%#" PRIx64, args->progname, args->datapath_id );
+  init_log( name, switch_log, log_output_type );
   xfree( switch_log );
+
+  char *switch_pid_dir = get_switch_pid_dir();
+  write_pid( switch_pid_dir, name );
+  char cmd[ PATH_MAX ];
+  /*
+   * change the pid file permissions to allow deletion since switch is started
+   * as sudo. This would become obsolete if sudo is removed.
+   */
+  snprintf( cmd, PATH_MAX, "chmod 0666 %s/%s.pid", switch_pid_dir, name );
+  system( cmd );
+  xfree( switch_pid_dir );
+
   ignore_sigpipe();
 #ifdef NOT_TESTED
   if ( args->run_as_daemon == true ) {

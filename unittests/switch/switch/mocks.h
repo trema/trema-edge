@@ -16,9 +16,6 @@
  */
 
 
-#include "port_manager.h"
-
-
 bool mock_send_error_message( uint32_t transaction_id, uint16_t type, uint16_t code );
 int mock_time_now( struct timespec *now );
 ether_device * mock_create_ether_device( const char *name, const size_t max_send_queue, const size_t max_recv_queue );

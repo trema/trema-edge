@@ -56,12 +56,15 @@ module Trema
   dir :home, "ruby"
   dir :home, "src/lib", :include
   dir :home, "src/switch/datapath", :src_datapath
+  dir :home, "src/switch/switch", :src_trema_switch
+  dir :home, "unittests", :src_unittests
   dir :home, "vendor"
   dir :objects, "cmockery"
   dir :objects, "lib"
   dir :objects, "oflops"
   dir :objects, "openflow"
   dir :objects, "switch/datapath", :obj_datapath
+  dir :objects, "unittests", :obj_unittests
   dir :tmp, "log"
   dir :tmp, "pid"
   dir :tmp, "sock"

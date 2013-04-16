@@ -17,10 +17,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "cmockery_trema.h"
-#include "wrapper.h"
-#include "checks.h"
+#include "trema.h"
 #include "parse-options.h"
+#include "cmockery_trema.h"
 
 
 static void *
