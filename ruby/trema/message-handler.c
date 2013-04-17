@@ -25,6 +25,7 @@
 #include "messages/error-handler.h"
 #include "messages/multipart-reply-handler.h"
 #include "messages/barrier-reply-handler.h"
+#include "messages/echo-reply-handler.h"
 
 
 extern VALUE mTrema;
@@ -40,6 +41,7 @@ install_handlers( VALUE self ) {
   set_error_handler( handle_error, ( void * ) self );
   set_multipart_reply_handler( handle_multipart_reply, ( void * ) self );
   set_barrier_reply_handler( handle_barrier_reply, ( void * ) self );
+  set_echo_reply_handler( handle_echo_reply, ( void * ) self );
   return self;
 }
 
