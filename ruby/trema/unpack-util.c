@@ -20,6 +20,7 @@
 #include "trema.h"
 #include "ruby.h"
 #include "hash-util.h"
+#include "conversion-util.h"
 
 
 void
@@ -370,6 +371,7 @@ unpack_ipv6_exthdr( const oxm_match_header *hdr, VALUE r_attributes ) {
   }
 }
 
+
 void
 unpack_r_match( const oxm_match_header *hdr, VALUE r_attributes ) {
   switch( *hdr ) {
@@ -538,6 +540,279 @@ unpack_r_match( const oxm_match_header *hdr, VALUE r_attributes ) {
       error( "Undefined oxm type ( header = %#x, type = %#x, has_mask = %u, length = %u ). ",
               *hdr, OXM_TYPE( *hdr ), OXM_HASMASK( *hdr ), OXM_LENGTH( *hdr ) );
     break;
+  }
+}
+
+
+static void
+unpack_action_set_field( const struct ofp_action_set_field *src, VALUE r_action_ary ) {
+  VALUE r_attributes = rb_hash_new();
+  VALUE r_flexible_action = Qnil;
+  uint32_t field_length = src->len - offsetof( struct ofp_action_set_field, field );
+
+  if ( field_length > sizeof( oxm_match_header ) ) {
+    const oxm_match_header *oxm_src = ( const oxm_match_header * ) src->field;
+    unpack_r_match( oxm_src, r_attributes );
+
+
+    VALUE r_field = UINT2NUM( OXM_FIELD( *oxm_src ) );
+    VALUE r_klass = rb_funcall( rb_eval_string( "FlexibleAction" ), rb_intern( "search" ), 2, rb_str_new_cstr( "OFPXMT_OFB" ), r_field );
+    
+    r_flexible_action = rb_funcall( r_klass, rb_intern( "new" ), 1, r_attributes );
+  }
+  VALUE r_action_set = rb_ary_new();
+  rb_ary_push( r_action_set, r_flexible_action );
+  HASH_SET( r_attributes, "action_set", r_action_set );
+  VALUE set_field = rb_funcall( rb_eval_string( "SetField" ), rb_intern( "new" ), 1, r_attributes ); 
+  rb_ary_push( r_action_ary, set_field );
+}
+
+
+static VALUE
+find_basic_action( const uint16_t type ) {
+  VALUE r_type = UINT2NUM( type );
+  VALUE r_klass = rb_funcall( rb_eval_string( "BasicAction" ), rb_intern( "search" ), 2, rb_str_new_cstr( "OFPAT" ), r_type );
+  return r_klass;
+}
+
+
+static void
+push_basic_action( const uint16_t type, VALUE r_action_ary, VALUE r_attributes ) {
+  VALUE r_klass = find_basic_action( type );
+  if ( !NIL_P( r_klass ) ) {
+    VALUE r_basic_action = Qnil;
+    if ( !NIL_P( r_attributes ) ) {
+      r_basic_action = rb_funcall( r_klass, rb_intern( "new" ), 1, r_attributes );
+    }
+    else {
+      r_basic_action = rb_funcall( r_klass, rb_intern( "new" ), 0 );
+    }
+    rb_ary_push( r_action_ary, r_basic_action );
+  }
+}
+
+
+static void
+unpack_output_action( const struct ofp_action_output *src, VALUE r_action_ary ) {
+  VALUE r_attributes = rb_hash_new();
+  HASH_SET( r_attributes, "port_number", UINT2NUM( src->port ) );
+  HASH_SET( r_attributes, "max_len", UINT2NUM( src->max_len ) );
+  push_basic_action( src->type, r_action_ary, r_attributes );
+}
+
+
+static void
+unpack_action_header( const struct ofp_action_header *src, VALUE r_action_ary ) {
+  push_basic_action( src->type, r_action_ary, Qnil );
+}
+
+
+static void
+unpack_set_mpls_ttl_action( const struct ofp_action_mpls_ttl *src, VALUE r_action_ary ) {
+  VALUE r_attributes = rb_hash_new();
+  HASH_SET( r_attributes, "mpls_ttl", UINT2NUM( src->mpls_ttl ) );
+  push_basic_action( src->type, r_action_ary, r_attributes );
+}
+
+
+static void
+unpack_ether_type( const uint16_t ether_type, VALUE r_attributes ) {
+  HASH_SET( r_attributes, "ether_type", UINT2NUM( ether_type ) );
+}
+
+
+static void
+unpack_push_action( const struct ofp_action_push *src, VALUE r_action_ary ) {
+  VALUE r_attributes = rb_hash_new();
+  unpack_ether_type( src->ethertype, r_attributes );
+  push_basic_action( src->type, r_action_ary, r_attributes );
+}
+
+
+static void
+unpack_pop_mpls_action( const struct ofp_action_pop_mpls *src, VALUE r_action_ary ) {
+  VALUE r_attributes = rb_hash_new();
+  unpack_ether_type( src->ethertype, r_attributes );
+  push_basic_action( src->type, r_action_ary, r_attributes );
+}
+
+
+static void
+unpack_set_queue_action( const struct ofp_action_set_queue *src, VALUE r_action_ary ) {
+  VALUE r_attributes = rb_hash_new();
+  HASH_SET( r_attributes, "queue_id", UINT2NUM( src->queue_id ) );
+  push_basic_action( src->type, r_action_ary, r_attributes );
+}
+
+
+static void
+unpack_group_action( const struct ofp_action_group *src, VALUE r_action_ary ) {
+  VALUE r_attributes = rb_hash_new();
+  HASH_SET( r_attributes, "group_id", UINT2NUM( src->group_id ) );
+  push_basic_action( src->type, r_action_ary, r_attributes );
+}
+
+
+static void
+unpack_set_nw_ttl_action( const struct ofp_action_nw_ttl *src, VALUE r_action_ary ) {
+  VALUE r_attributes = rb_hash_new();
+  HASH_SET( r_attributes, "ip_ttl", UINT2NUM( src->nw_ttl ) );
+  push_basic_action( src->type, r_action_ary, r_attributes );
+}
+
+
+static void
+unpack_experimenter_action( const struct ofp_action_experimenter_header *src, VALUE r_action_ary ) {
+  VALUE r_attributes = rb_hash_new();
+  HASH_SET( r_attributes, "experimenter", UINT2NUM( src->experimenter ) );
+  push_basic_action( src->type, r_action_ary, r_attributes );
+}
+
+
+void
+unpack_action( const struct ofp_action_header *ac_hdr, VALUE r_action_ary ) {
+  switch ( ac_hdr->type ) {
+    case OFPAT_OUTPUT: {
+      unpack_output_action( ( const struct ofp_action_output * ) ac_hdr, r_action_ary );
+    }
+    break;
+    case OFPAT_COPY_TTL_OUT:
+    case OFPAT_COPY_TTL_IN:
+    case OFPAT_DEC_MPLS_TTL:
+    case OFPAT_POP_VLAN:
+    case OFPAT_POP_PBB:
+    case OFPAT_DEC_NW_TTL: {
+      unpack_action_header( ac_hdr, r_action_ary );
+    }
+    break;
+    case OFPAT_SET_FIELD: {
+      unpack_action_set_field( ( const struct ofp_action_set_field * ) ac_hdr, r_action_ary );
+    }
+    break;
+    case OFPAT_SET_MPLS_TTL: {
+      unpack_set_mpls_ttl_action( ( const struct ofp_action_mpls_ttl * ) ac_hdr, r_action_ary );
+    }
+    break;
+    case OFPAT_PUSH_VLAN:
+    case OFPAT_PUSH_MPLS:
+    case OFPAT_PUSH_PBB: {
+      unpack_push_action( ( const struct ofp_action_push  * ) ac_hdr, r_action_ary );
+    }
+    break;
+    case OFPAT_POP_MPLS: {
+      unpack_pop_mpls_action( ( const struct ofp_action_pop_mpls * ) ac_hdr, r_action_ary );
+    }
+    break;
+    case OFPAT_SET_QUEUE: {
+      unpack_set_queue_action( ( const struct ofp_action_set_queue * ) ac_hdr, r_action_ary );
+    }
+    break;
+    case OFPAT_GROUP: {
+      unpack_group_action( ( const struct ofp_action_group * ) ac_hdr, r_action_ary );
+    }
+    break;
+    case OFPAT_SET_NW_TTL: {
+      unpack_set_nw_ttl_action( ( const struct ofp_action_nw_ttl * ) ac_hdr, r_action_ary );
+    }
+    break;
+    case OFPAT_EXPERIMENTER: {
+      unpack_experimenter_action( ( const struct ofp_action_experimenter_header * ) ac_hdr, r_action_ary );
+    }
+    break;
+    default: {
+      error( "Undefined action type %u", ac_hdr->type );
+    }
+    break;
+  }
+}
+
+
+static void
+unpack_instruction_actions( const struct ofp_instruction_actions *instruction_actions, VALUE r_options ) {
+  size_t offset = offsetof( struct ofp_instruction_actions, actions );
+  size_t actions_length = instruction_actions->len - offset;
+  VALUE r_action_ary = rb_ary_new();
+
+  while ( actions_length >= sizeof( struct ofp_action_header ) ) {
+    const struct ofp_action_header *ah_src = ( const struct ofp_action_header * ) ( ( const char * ) instruction_actions + offset );
+    uint16_t part_length = ah_src->len;
+    if ( actions_length < part_length ) {
+       break;
+    }
+    unpack_action( ah_src, r_action_ary );
+    actions_length -= part_length;
+    offset += part_length;
+  }
+  HASH_SET( r_options, "actions", r_action_ary );
+}
+
+
+void
+unpack_instruction( const struct ofp_instruction *instruction, VALUE r_instruction_ary ) {
+  assert( instruction );
+
+  assert( instruction->type <= OFPIT_METER || instruction->type == OFPIT_EXPERIMENTER );
+
+  VALUE r_instruction = Qnil;
+  VALUE r_options = rb_hash_new();
+  switch ( instruction->type ) {
+    case OFPIT_GOTO_TABLE: {
+      const struct ofp_instruction_goto_table *instruction_goto_table = ( const struct ofp_instruction_goto_table * ) instruction;
+      HASH_SET( r_options, "table_id", UINT2NUM( instruction_goto_table->table_id ) );
+      r_instruction = rb_funcall( rb_eval_string( "GotoTable" ), rb_intern( "new" ), 1, r_options );
+    }
+    break;
+    case OFPIT_WRITE_METADATA: {
+      const struct ofp_instruction_write_metadata *instruction_write_metadata = ( const struct ofp_instruction_write_metadata * ) instruction;
+      HASH_SET( r_options, "metadata", ULL2NUM( instruction_write_metadata->metadata ) );
+      HASH_SET( r_options, "metadata_mask", ULL2NUM( instruction_write_metadata->metadata_mask ) );
+      r_instruction = rb_funcall( rb_eval_string( "WriteMetadata" ), rb_intern( "new" ), 1, r_options );
+    }
+    break;
+    case OFPIT_WRITE_ACTIONS: {
+      const struct ofp_instruction_actions *instruction_actions = ( const struct ofp_instruction_actions * ) instruction;
+      unpack_instruction_actions( instruction_actions, r_options );
+      r_instruction = rb_funcall( rb_eval_string( "WriteAction" ), rb_intern( "new" ), 1, r_options );
+    }
+    break;
+    case OFPIT_APPLY_ACTIONS: {
+      const struct ofp_instruction_actions *instruction_actions = ( const struct ofp_instruction_actions * ) instruction;
+      unpack_instruction_actions( instruction_actions, r_options );
+      r_instruction = rb_funcall( rb_eval_string( "ApplyAction" ), rb_intern( "new" ), 1, r_options );
+    }
+    break;
+    case OFPIT_CLEAR_ACTIONS: {
+      r_instruction = rb_funcall( rb_eval_string( "ClearAction" ), rb_intern( "new" ), 0 );
+    }
+    break;
+    case OFPIT_METER: {
+      const struct ofp_instruction_meter *instruction_meter = ( const struct ofp_instruction_meter * ) instruction;
+      HASH_SET( r_options, "meter_id", UINT2NUM( instruction_meter->meter_id ) );
+      r_instruction = rb_funcall( rb_eval_string( "Meter" ), rb_intern( "new" ), 1, r_options );
+    }
+    break;
+    case OFPIT_EXPERIMENTER: {
+      const struct ofp_instruction_experimenter *instruction_experimenter = ( const struct ofp_instruction_experimenter * ) instruction;
+      HASH_SET( r_options, "experimenter", UINT2NUM( instruction_experimenter->experimenter ) );
+      uint16_t offset = sizeof( *instruction_experimenter );
+      if ( instruction_experimenter->len > offset ) {
+        size_t data_len = ( size_t ) ( instruction_experimenter->len - offset );
+        buffer *body = alloc_buffer_with_length( data_len );
+        append_back_buffer( body, data_len );
+        memcpy( body->data, ( const char * ) instruction_experimenter + offset, data_len );
+        HASH_SET( r_options, "user_data", buffer_to_r_array( body ) );
+        free_buffer( body );
+      }
+      r_instruction = rb_funcall( rb_eval_string( "Experimenter" ), rb_intern( "new" ), 1, r_options );
+      
+    }
+    break;
+    default:
+      error( "Invalid instruction type %u", instruction->type );
+    break;
+  }
+  if ( !NIL_P( r_instruction ) ) {
+    rb_ary_push( r_instruction_ary, r_instruction );
   }
 }
 

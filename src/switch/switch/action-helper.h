@@ -30,6 +30,7 @@ extern "C" {
 
 action_list * ( *assign_actions )( action_list *action_list, const struct ofp_action_header *action, uint16_t action_length );
 void ( *action_pack )( void *dest, action_list **list );
+uint16_t ( *action_list_length )( action_list **list );
 
 
 #ifdef __cplusplus

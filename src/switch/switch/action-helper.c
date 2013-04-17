@@ -19,6 +19,7 @@
 #include "trema.h"
 #include "ofdp.h"
 #include "action-tlv-interface.h"
+#include "oxm.h"
 #include "oxm-helper.h"
 
 
@@ -136,6 +137,31 @@ _action_pack( void *dest, action_list **list  ) {
   }
 }
 void ( *action_pack )( void *dest, action_list **list ) = _action_pack;
+
+
+uint16_t
+_action_list_length( action_list **list ) {
+  if ( *list == NULL ) {
+    return 0;
+  }
+  uint16_t length = 0;
+  dlist_element *item = get_first_element( *list );
+  action *action;
+  while ( item != NULL ) {
+    action = item->data;
+    if ( action != NULL ) {
+      length = ( uint16_t ) ( length + action_tlv_length_by_type( action->type ) );
+      if ( action->type == OFPAT_SET_FIELD && action->match ) {
+        uint16_t m_len = match_length( action->match );
+        length = ( uint16_t ) ( length + m_len );
+        length = ( uint16_t ) ( length + PADLEN_TO_64( length ) );
+      }
+    }
+    item = item->next;
+  }
+  return length;
+}
+uint16_t ( *action_list_length )( action_list **list ) = _action_list_length;
 
 
 /*

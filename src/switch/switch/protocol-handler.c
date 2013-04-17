@@ -188,7 +188,7 @@ handle_flow_mod_add( const uint32_t transaction_id, const uint64_t cookie,
 
   instruction_set *instruction_set = create_instruction_set();
   if ( instructions != NULL ) {
-    OFDPE ret = assign_instructions( instruction_set, instructions->list, table_id );
+    OFDPE ret = assign_instructions( instruction_set, instructions->list );
     if ( ret != OFDPE_SUCCESS ) {
       send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPBIC_UNSUP_INST );
       delete_instruction_set( instruction_set );
@@ -312,7 +312,7 @@ handle_flow_mod_mod( const uint32_t transaction_id, const uint64_t cookie,
 
   instruction_set *ins_set = create_instruction_set();
   if ( instructions != NULL ) {
-    OFDPE ret = assign_instructions( ins_set, instructions->list, table_id );
+    OFDPE ret = assign_instructions( ins_set, instructions->list );
     if ( ret != OFDPE_SUCCESS ) {
       send_error_message( transaction_id, OFPET_FLOW_MOD_FAILED, OFPBIC_UNSUP_INST );
       delete_instruction_set( ins_set );

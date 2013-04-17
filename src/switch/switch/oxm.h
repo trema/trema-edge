@@ -35,6 +35,7 @@ struct oxm {
 
 void init_oxm( void );
 void register_oxm( struct oxm *oxm_subclass );
+uint16_t match_length( const match *match );
 
 
 #ifdef __cplusplus

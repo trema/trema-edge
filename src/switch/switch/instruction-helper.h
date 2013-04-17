@@ -25,7 +25,9 @@ extern "C" {
 #endif
 
 
-int ( *assign_instructions )( instruction_set *ins_set, list_element *element, const uint8_t table_id );
+size_t ( *instructions_len ) ( const instruction_set *ins_set );
+int ( *assign_instructions )( instruction_set *ins_set, list_element *element );
+void ( *pack_ofp_instruction )( const instruction_set *ins_set, struct ofp_instruction *ins );
 
 
 #ifdef __cplusplus

@@ -84,6 +84,7 @@ typedef struct {
   uint64_t packet_count;
   uint64_t byte_count;
   match match;
+  instruction_set instructions;
 } flow_stats;
 
 

@@ -28,6 +28,7 @@ module Trema
       unsigned_int64 :cookie, presence: true
       unsigned_int64 :packet_count, :byte_count, presence: true
       match :match
+      array :instructions
     end
   end
 end

@@ -27,6 +27,8 @@
 #include "action_executor.h"
 #include "oxm-helper.h"
 #include "oxm-interface.h"
+#include "action-helper.h"
+#include "instruction-helper.h"
 #include "stats-helper.h"
 
 
@@ -103,30 +105,6 @@ retrieve_flow_stats( uint32_t *nr_stats, const uint8_t table_id, const uint32_t 
   delete_match( flow_match );
 
   return stats;
-}
-
-
-static uint16_t
-action_list_length( action_list **list ) {
-  if ( *list == NULL ) {
-    return 0;
-  }
-  uint16_t length = 0;
-  dlist_element *item = get_first_element( *list );
-  action *action;
-  while ( item != NULL ) {
-    action = item->data;
-    if ( action != NULL ) {
-      length = ( uint16_t ) ( length + action_tlv_length_by_type( action->type ) );
-      if ( action->type == OFPAT_SET_FIELD && action->match ) {
-        uint16_t m_len = match_length( action->match );
-        length = ( uint16_t ) ( length + m_len );
-        length = ( uint16_t ) ( length + PADLEN_TO_64( length ) );
-      }
-    }
-    item = item->next;
-  }
-  return length;
 }
 
 
@@ -711,14 +689,17 @@ _request_send_flow_stats( const struct ofp_flow_stats_request *req, const uint32
 
       uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( oxm_matches ) );
       match_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
-      uint16_t length = ( uint16_t ) ( offsetof( struct ofp_flow_stats, match ) + match_len );
+      uint16_t ins_len = ( uint16_t ) instructions_len( &stats[ i ].instructions );
+      ins_len = ( uint16_t ) ( ins_len + PADLEN_TO_64( ins_len ) );
+      uint16_t length = ( uint16_t ) ( offsetof( struct ofp_flow_stats, match ) + match_len + ins_len );
 
       struct ofp_flow_stats *fs = xmalloc( length );
       assign_ofp_flow_stats( fs, &stats[ i ] );
 
       pack_ofp_match( &fs->match, oxm_matches );
 
-      // TODO: implement here to include the instruction set.
+      // add the instruction set.
+      pack_ofp_instruction( &stats[ i ].instructions, ( struct ofp_instruction * ) ( ( char * ) fs + offsetof( struct ofp_flow_stats, match ) + match_len ) );
 
       // finally update the length construct_ofp_match performs htons on the length and type
       fs->length = length;

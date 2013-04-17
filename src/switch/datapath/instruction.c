@@ -503,7 +503,7 @@ validate_instruction_set( const instruction_set *instructions, const uint64_t me
     ret = validate_instruction_apply_actions( instructions->apply_actions );
   }
   if ( instructions->clear_actions != NULL ) {
-    ret = validate_instruction_apply_actions( instructions->clear_actions );
+    ret = validate_instruction_clear_actions( instructions->clear_actions );
   }
   if ( instructions->meter != NULL ) {
     ret = validate_instruction_meter( instructions->meter );

@@ -1175,8 +1175,7 @@ get_flow_stats( const uint8_t table_id, const match *match, const uint64_t cooki
     stat->packet_count = entry->packet_count;
     stat->byte_count = entry->byte_count;
     stat->match = *entry->match;
-
-    // TODO: implement here to include the instruction set.
+    stat->instructions = *entry->instructions;
 
     stat++;
   }

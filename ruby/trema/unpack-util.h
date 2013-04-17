@@ -22,6 +22,8 @@
 
 void unpack_port( const struct ofp_port *port_desc, VALUE r_attributes );
 void unpack_r_match( const oxm_match_header *hdr, VALUE r_attributes );
+void unpack_instruction( const struct ofp_instruction *instruction, VALUE r_instruction_ary );
+void unpack_action( const struct ofp_action_header *ac_hdr, VALUE r_action_ary );
 
 
 #endif // UNPACK_UTIL_H
