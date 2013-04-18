@@ -16,7 +16,7 @@
 #
 
 
-require "trema/hardware-switch"
+require_relative "hardware-switch"
 
 
 module Trema

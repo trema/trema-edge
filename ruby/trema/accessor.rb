@@ -16,7 +16,7 @@
 #
 
 
-require "trema/mapping"
+require_relative "mapping"
 
 
 module Trema

@@ -18,10 +18,10 @@
 #
 
 
-require "trema/dsl"
-require "trema/executables"
-require "trema/path"
-require "trema/process"
+require_relative "dsl"
+require_relative "executables"
+require_relative "path"
+require_relative "process"
 
 
 module Trema::Util

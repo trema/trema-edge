@@ -16,15 +16,15 @@
 #
 
 
-require "trema/instruction"
-require "trema/instructions/instruction-action"
-require "trema/instructions/goto-table"
-require "trema/instructions/write-metadata"
-require "trema/instructions/write-action"
-require "trema/instructions/apply-action"
-require "trema/instructions/clear-action"
-require "trema/instructions/meter"
-require "trema/instructions/experimenter"
+require_relative "instruction"
+require_relative "instructions/instruction-action"
+require_relative "instructions/goto-table"
+require_relative "instructions/write-metadata"
+require_relative "instructions/write-action"
+require_relative "instructions/apply-action"
+require_relative "instructions/clear-action"
+require_relative "instructions/meter"
+require_relative "instructions/experimenter"
 
 
 ### Local variables:

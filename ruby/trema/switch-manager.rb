@@ -16,10 +16,10 @@
 #
 
 
-require "trema/daemon"
-require "trema/executables"
-require "trema/network-component"
-require "trema/switch-daemon"
+require_relative "daemon"
+require_relative "executables"
+require_relative "network-component"
+require_relative "switch-daemon"
 
 
 module Trema

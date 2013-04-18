@@ -16,7 +16,7 @@
 #
 
 
-require "trema/accessor"
+require_relative "accessor"
 
 
 module Trema

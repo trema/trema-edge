@@ -16,7 +16,7 @@
 #
 
 
-require "trema/network-component"
+require_relative "network-component"
 
 
 module Trema

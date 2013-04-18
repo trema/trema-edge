@@ -18,17 +18,17 @@
 #
 
 
-require "trema/command/kill"
-require "trema/command/killall"
-require "trema/command/netns"
-require "trema/command/reset_stats"
-require "trema/command/ruby"
-require "trema/command/run"
-require "trema/command/send_packets"
-require "trema/command/shell"
-require "trema/command/show_stats"
-require "trema/command/up"
-require "trema/command/version"
+require_relative "command/kill"
+require_relative "command/killall"
+require_relative "command/netns"
+require_relative "command/reset_stats"
+require_relative "command/ruby"
+require_relative "command/run"
+require_relative "command/send_packets"
+require_relative "command/shell"
+require_relative "command/show_stats"
+require_relative "command/up"
+require_relative "command/version"
 
 
 ### Local variables:
