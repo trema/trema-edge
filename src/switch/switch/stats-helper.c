@@ -713,6 +713,8 @@ _request_send_flow_stats( const struct ofp_flow_stats_request *req, const uint32
     }
     xfree( stats );
     delete_oxm_matches( oxm_matches );
+  } else {
+      SEND_STATS( flow, transaction_id, 0, NULL );
   }
   delete_list( list );
 }
