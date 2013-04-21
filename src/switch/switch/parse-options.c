@@ -54,7 +54,7 @@ static void
 set_default_opts( struct switch_arguments *args, const struct option long_options[] ) {
   args->progname = "switch",
   args->log_level = "info",
-  args->datapath_ports = "lo:1",
+  args->datapath_ports = "",
   args->datapath_id = 1,
   args->server_ip = 0x7f000001,
   args->server_port = 6633,
@@ -73,7 +73,7 @@ _parse_options( struct switch_arguments *args, int argc, char **argv ) {
     { "max_flow_entries", required_argument, 0, 'm' },
     { "server_ip", required_argument, 0, 'c' },
     { "server_port", required_argument, 0, 'p' },
-    { "switch_ports", required_argument, 0, 'e' },
+    { "switch_ports", optional_argument, 0, 'e' },
     { "help", no_argument, 0, 'h' },
     { 0, 0, 0, 0 },
   };
