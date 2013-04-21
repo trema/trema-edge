@@ -60,7 +60,16 @@ module Trema
         end
         ports = ports.join( ',' )
       end
-      "sudo -E #{ Executables.switch } -i #{ dpid_short } -e #{ ports } > #{ log_file } &"
+      "sudo -E #{ Executables.switch } -i #{ dpid_short } #{ option_ports( ports ) } > #{ log_file } &"
+    end
+
+
+    private
+
+
+    def option_ports ports 
+      option = ""
+      option << "-e #{ ports }" if ports.length > 0
     end
   end
 end
