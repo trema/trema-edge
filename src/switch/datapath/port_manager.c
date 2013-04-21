@@ -447,10 +447,15 @@ get_port_stats( const uint32_t port_no, port_stats **stats, uint32_t *n_ports ) 
   }
 
   list_element *ports = NULL;
+  *n_ports = 0;
+  *stats = NULL;
   if ( port_no != OFPP_ANY ) {
     switch_port *port = lookup_switch_port( port_no );
     if ( port == NULL ) {
-      return unlock_mutex( &mutex ) ? OFDPE_SUCCESS : ERROR_UNLOCK;
+      if ( unlock_mutex( &mutex ) !=  OFDPE_SUCCESS ) {
+        return ERROR_UNLOCK;
+      }
+      return ERROR_OFDPE_BAD_REQUEST_BAD_PORT;
     }
     create_list( &ports );
     append_to_tail( &ports, port );
@@ -462,8 +467,6 @@ get_port_stats( const uint32_t port_no, port_stats **stats, uint32_t *n_ports ) 
     }
   }
 
-  *n_ports = 0;
-  *stats = NULL;
 
   *n_ports = ( uint32_t ) list_length_of( ports );
   size_t length = ( *n_ports ) * sizeof( port_stats );
