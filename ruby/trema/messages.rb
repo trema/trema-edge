@@ -54,8 +54,15 @@ require_relative "messages/group-multipart-request"
 require_relative "messages/group-multipart-reply"
 require_relative "messages/group-desc-multipart-request"
 require_relative "messages/group-desc-multipart-reply"
+require_relative "messages/group-features-multipart-request"
+require_relative "messages/group-features-multipart-reply"
 require_relative "messages/port-desc-multipart-request"
 require_relative "messages/port-desc-multipart-reply"
+require_relative "messages/queue-multipart-request"
+require_relative "messages/meter-multipart-request"
+require_relative "messages/meter-config-multipart-request"
+require_relative "messages/meter-features-multipart-request"
+require_relative "messages/experimenter-multipart-request"
 
 
 ### Local variables:

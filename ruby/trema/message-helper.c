@@ -241,11 +241,65 @@ send_group_desc_multipart_request( int argc, VALUE *argv, VALUE self ) {
 
 
 static VALUE
+send_group_features_multipart_request( int argc, VALUE *argv, VALUE self ) {
+  VALUE datapath_id = Qnil;
+  VALUE options = Qnil;
+  rb_scan_args( argc, argv, "11", &datapath_id, &options );
+  SEND_MULTIPART_REQUEST( group_features, "Messages::GroupFeaturesMultipartRequest", self, datapath_id, options );
+}
+
+
+static VALUE
 send_port_desc_multipart_request( int argc, VALUE *argv, VALUE self ) {
   VALUE datapath_id = Qnil;
   VALUE options = Qnil;
   rb_scan_args( argc, argv, "11", &datapath_id, &options );
   SEND_MULTIPART_REQUEST( port_desc, "Messages::PortDescMultipartRequest", self, datapath_id, options );
+}
+
+
+static VALUE
+send_queue_multipart_request( int argc, VALUE *argv, VALUE self ) {
+  VALUE datapath_id = Qnil;
+  VALUE options = Qnil;
+  rb_scan_args( argc, argv, "11", &datapath_id, &options );
+  SEND_MULTIPART_REQUEST( queue, "Messages::QueueMultipartRequest", self, datapath_id, options );
+}
+
+
+static VALUE
+send_meter_multipart_request( int argc, VALUE *argv, VALUE self ) {
+  VALUE datapath_id = Qnil;
+  VALUE options = Qnil;
+  rb_scan_args( argc, argv, "11", &datapath_id, &options );
+  SEND_MULTIPART_REQUEST( meter, "Messages::MeterMultipartRequest", self, datapath_id, options );
+}
+
+
+static VALUE
+send_meter_config_multipart_request( int argc, VALUE *argv, VALUE self ) {
+  VALUE datapath_id = Qnil;
+  VALUE options = Qnil;
+  rb_scan_args( argc, argv, "11", &datapath_id, &options );
+  SEND_MULTIPART_REQUEST( meter_config, "Messages::MeterConfigMultipartRequest", self, datapath_id, options );
+}
+
+
+static VALUE
+send_meter_features_multipart_request( int argc, VALUE *argv, VALUE self ) {
+  VALUE datapath_id = Qnil;
+  VALUE options = Qnil;
+  rb_scan_args( argc, argv, "11", &datapath_id, &options );
+  SEND_MULTIPART_REQUEST( meter_features, "Messages::MeterFeaturesMultipartRequest", self, datapath_id, options );
+}
+
+
+static VALUE
+send_experimenter_multipart_request( int argc, VALUE *argv, VALUE self ) {
+  VALUE datapath_id = Qnil;
+  VALUE options = Qnil;
+  rb_scan_args( argc, argv, "11", &datapath_id, &options );
+  SEND_MULTIPART_REQUEST( experimenter, "Messages::ExperimenterMultipartRequest", self, datapath_id, options );
 }
 
 
@@ -276,7 +330,13 @@ Init_message_helper( void ) {
   rb_define_module_function( mMessageHelper, "send_table_features_multipart_request", send_table_features_multipart_request, -1 );
   rb_define_module_function( mMessageHelper, "send_group_multipart_request", send_group_multipart_request, -1 );
   rb_define_module_function( mMessageHelper, "send_group_desc_multipart_request", send_group_desc_multipart_request, -1 );
+  rb_define_module_function( mMessageHelper, "send_group_features_multipart_request", send_group_features_multipart_request, -1 );
   rb_define_module_function( mMessageHelper, "send_port_desc_multipart_request", send_port_desc_multipart_request, -1 );
+  rb_define_module_function( mMessageHelper, "send_queue_multipart_request", send_queue_multipart_request, -1 );
+  rb_define_module_function( mMessageHelper, "send_meter_multipart_request", send_meter_multipart_request, -1 );
+  rb_define_module_function( mMessageHelper, "send_meter_config_multipart_request", send_meter_config_multipart_request, -1 );
+  rb_define_module_function( mMessageHelper, "send_meter_features_multipart_request", send_meter_features_multipart_request, -1 );
+  rb_define_module_function( mMessageHelper, "send_experimenter_multipart_request", send_experimenter_multipart_request, -1 );
   rb_define_module_function( mMessageHelper, "send_barrier_request", send_barrier_request, - 1 );
 }
 

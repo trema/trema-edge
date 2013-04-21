@@ -1,0 +1,53 @@
+/*
+ * Copyright (C) 2008-2013 NEC Corporation
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+
+#include "trema.h"
+#include "ruby.h"
+#include "hash-util.h"
+
+
+buffer *
+pack_meter_multipart_request( VALUE options ) {
+  uint32_t xid = get_transaction_id();
+  VALUE r_xid = HASH_REF( options, transaction_id );
+  if ( !NIL_P( r_xid ) ) {
+    xid = NUM2UINT( r_xid );
+  }
+
+  uint16_t flags = 0;
+  VALUE r_flags = HASH_REF( options, flags );
+  if ( !NIL_P( r_flags ) ) {
+    flags = ( uint16_t ) NUM2UINT( r_flags );
+  }
+
+  uint32_t meter_id = OFPM_ALL;
+  VALUE r_meter_id = HASH_REF( options, meter_id );
+  if ( !NIL_P( r_meter_id ) ) {
+    meter_id = NUM2UINT( r_meter_id );
+  }
+  buffer *meter_multipart_request = create_meter_multipart_request( xid, flags, meter_id );
+  return meter_multipart_request;
+}
+
+
+/*
+ * Local variables:
+ * c-basic-offset: 2
+ * indent-tabs-mode: nil
+ * End:
+ */

@@ -18,13 +18,14 @@
 
 module Trema
   module Messages
-    class TableMultipartReply < Message
-      unsigned_int8 :table_id, presence: true
-      unsigned_int32 :active_count
-      unsigned_int64 :lookup_count, :matched_count
+    class MeterConfigMultipartRequest < MultipartRequest
+      unsigned_int32 :meter_id
     end
   end
 end
+
+
+MeterConfigMultipartRequest = Trema::Messages::MeterConfigMultipartRequest
 
 
 ### Local variables:

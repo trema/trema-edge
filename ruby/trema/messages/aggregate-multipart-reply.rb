@@ -18,7 +18,7 @@
 
 module Trema
   module Messages
-    class AggregateMultipartReply < MultipartReply
+    class AggregateMultipartReply < Message
       unsigned_int64 :packet_count, :byte_count, presence: true
       unsigned_int32 :flow_count, presence: true
     end

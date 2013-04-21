@@ -35,7 +35,13 @@
 #include "messages/table-features-multipart-request.h"
 #include "messages/group-multipart-request.h"
 #include "messages/group-desc-multipart-request.h"
+#include "messages/group-features-multipart-request.h"
 #include "messages/port-desc-multipart-request.h"
+#include "messages/queue-multipart-request.h"
+#include "messages/meter-multipart-request.h"
+#include "messages/meter-config-multipart-request.h"
+#include "messages/meter-features-multipart-request.h"
+#include "messages/experimenter-multipart-request.h"
 #include "messages/barrier-request.h"
 
 
@@ -163,6 +169,42 @@ pack_group_desc_multipart_request_msg( VALUE self, VALUE options ) {
 
 
 static VALUE
+pack_group_features_multipart_request_msg( VALUE self, VALUE options ) {
+  PACK_MSG( group_features_multipart_request, self, options );
+}
+
+
+static VALUE
+pack_queue_multipart_request_msg( VALUE self, VALUE options ) {
+  PACK_MSG( queue_multipart_request, self, options );
+}
+
+
+static VALUE
+pack_meter_multipart_request_msg( VALUE self, VALUE options ) {
+  PACK_MSG( meter_multipart_request, self, options );
+}
+
+
+static VALUE
+pack_meter_config_multipart_request_msg( VALUE self, VALUE options ) {
+  PACK_MSG( meter_config_multipart_request, self, options );
+}
+
+
+static VALUE
+pack_meter_features_multipart_request_msg( VALUE self, VALUE options ) {
+  PACK_MSG( meter_features_multipart_request, self, options );
+}
+
+
+static VALUE
+pack_experimenter_multipart_request_msg( VALUE self, VALUE options ) {
+  PACK_MSG( experimenter_multipart_request, self, options );
+}
+
+
+static VALUE
 pack_barrier_request_msg( VALUE self, VALUE options ) {
   PACK_MSG( barrier_request, self, options );
 }
@@ -187,6 +229,12 @@ Init_messages( void ) {
   rb_define_module_function( mMessages, "pack_table_features_multipart_request_msg", pack_table_features_multipart_request_msg, 1 );
   rb_define_module_function( mMessages, "pack_group_multipart_request_msg", pack_group_multipart_request_msg, 1 );
   rb_define_module_function( mMessages, "pack_group_desc_multipart_request_msg", pack_group_desc_multipart_request_msg, 1 );
+  rb_define_module_function( mMessages, "pack_group_features_multipart_request_msg", pack_group_features_multipart_request_msg, 1 );
+  rb_define_module_function( mMessages, "pack_queue_multipart_request_msg", pack_queue_multipart_request_msg, 1 );
+  rb_define_module_function( mMessages, "pack_meter_multipart_request_msg", pack_meter_multipart_request_msg, 1 );
+  rb_define_module_function( mMessages, "pack_meter_config_multipart_request_msg", pack_meter_config_multipart_request_msg, 1 );
+  rb_define_module_function( mMessages, "pack_meter_features_multipart_request_msg", pack_meter_features_multipart_request_msg, 1 );
+  rb_define_module_function( mMessages, "pack_experimenter_multipart_request_msg", pack_experimenter_multipart_request_msg, 1 );
   rb_define_module_function( mMessages, "pack_barrier_request_msg", pack_barrier_request_msg, 1 );
 
   rb_require( "trema/messages" );

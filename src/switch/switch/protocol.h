@@ -41,6 +41,7 @@ struct outstanding_request {
 struct protocol_ctrl {
   struct outstanding_request outstanding_requests[ MAX_OUTSTANDING_REQUESTS ];
   uint32_t nr_requests;
+  uint32_t capabilities;
   bool controller_connected;
 };
 
