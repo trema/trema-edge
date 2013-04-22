@@ -24,14 +24,14 @@ module Trema
 
 
       def check_version version, name
-        raise ArgumentError, "Invalid #{ name } specified" if version.length > 1 
+        raise ArgumentError, "Invalid #{ name } specified" if version.length > 1
       end
     end
   end
+
+
+  Hello = Messages::Hello
 end
-
-
-Hello = Trema::Messages::Hello
 
 
 ### Local variables:

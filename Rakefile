@@ -319,7 +319,7 @@ end
 task :spec => :libruby
 RSpec::Core::RakeTask.new do | task |
   task.verbose = $trace
-  task.pattern = FileList[ "spec/trema_spec.rb", "spec/trema/hello_spec.rb" ]
+  task.pattern = FileList[ "spec/trema_spec.rb", "spec/trema/messages/hello_spec.rb" ]
   task.rspec_opts = "--format documentation --color"
 end
 
