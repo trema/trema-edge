@@ -31,14 +31,20 @@ pack_hello( VALUE options ) {
 
   VALUE r_version = HASH_REF( options, version );
   uint32_t ofp_version[ 1 ];
-  if ( rb_obj_is_kind_of( r_version, rb_cArray ) )  {
-    if ( RARRAY_LEN( r_version ) > 1 ) {
-      rb_raise(rb_eArgError, "Currently only a single version is supported" );
-    }
-    else {
-      ofp_version[ 0 ] = ( uint32_t ) NUM2UINT( RARRAY_PTR( r_version )[ 0 ] );
+  if ( !NIL_P( r_version ) ) {
+    if ( rb_obj_is_kind_of( r_version, rb_cArray ) )  {
+      if ( RARRAY_LEN( r_version ) > 1 ) {
+        rb_raise(rb_eArgError, "Currently only a single version is supported" );
+      }
+      else {
+        ofp_version[ 0 ] = ( uint32_t ) NUM2UINT( RARRAY_PTR( r_version )[ 0 ] );
+      }
     }
   }
+  else {
+    ofp_version[ 0 ] = OFP_VERSION;
+  }
+
   return create_hello_elem_versionbitmap( xid, ofp_version, sizeof( ofp_version ) / sizeof( ofp_version[ 0 ] ) );
 }
 
