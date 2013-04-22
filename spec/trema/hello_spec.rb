@@ -22,31 +22,41 @@ require "trema"
 
 module Trema
   describe Hello, ".new", :nosudo => true do
-    it_should_behave_like "any Openflow message with default transaction ID"
+    pending do
+      it_should_behave_like "any Openflow message with default transaction ID"
+    end
   end
 
 
   describe Hello, ".new(nil)", :nosudo => true do
     subject { Hello.new( nil ) }
-    it_should_behave_like "any Openflow message with default transaction ID"
+    pending do
+      it_should_behave_like "any Openflow message with default transaction ID"
+    end
   end
 
 
   describe Hello, ".new(transaction_id)", :nosudo => true do
     subject { Hello.new( transaction_id ) }
-    it_should_behave_like "any Openflow message with transaction ID"
+    pending do
+      it_should_behave_like "any Openflow message with transaction ID"
+    end
   end
 
 
   describe Hello, ".new(:transaction_id => value)", :nosudo => true do
     subject { Hello.new( :transaction_id => transaction_id ) }
-    it_should_behave_like "any Openflow message with transaction ID"
+    pending do
+      it_should_behave_like "any Openflow message with transaction ID"
+    end
   end
 
 
   describe Hello, ".new(:xid => value)", :nosudo => true do
     subject { Hello.new( :xid => xid ) }
-    it_should_behave_like "any Openflow message with xid"
+    pending do
+      it_should_behave_like "any Openflow message with xid"
+    end
   end
 
 

@@ -48,8 +48,12 @@ module Trema
         primitive_sizes.each do | each |
           define_accessor_meth :"unsigned_int#{ each }"
           define_method :"check_unsigned_int#{ each }" do | number, name |
-            unless number.send( "unsigned_#{ each }bit?" )
-              raise ArgumentError, "#{ name } must be an unsigned #{ each }-bit integer."
+            begin
+              unless number.send( "unsigned_#{ each }bit?" )
+                raise ArgumentError, "#{ name } must be an unsigned #{ each }-bit integer."
+              end
+            rescue NoMethodError
+              raise TypeError, "#{ name } must be a Number."
             end
           end
         end
