@@ -25,6 +25,11 @@ module Trema
     include MessageConst
 
 
+    def self.next_transaction_id
+      Messages::next_xid
+    end
+
+
     def pack_msg datapath_id
       params = { :datapath_id => datapath_id }
       instance_variables.each do | each |
@@ -33,6 +38,7 @@ module Trema
       method = "pack_#{ self.class.name.demodulize.underscore }_msg"
       __send__ method, params
     end
+    protected :pack_msg
   end
 end
 

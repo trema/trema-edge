@@ -72,6 +72,13 @@ send_msg( uint64_t datapath_id, buffer *msg ) {
 
 
 static VALUE
+next_xid( VALUE self ) {
+  UNUSED( self );
+  return UINT2NUM( get_transaction_id() );
+}
+
+
+static VALUE
 pack_hello_msg( VALUE self, VALUE options ) {
   PACK_MSG( hello, self, options );
 }
@@ -213,6 +220,7 @@ pack_barrier_request_msg( VALUE self, VALUE options ) {
 void
 Init_messages( void ) {
   mMessages = rb_define_module_under( mTrema, "Messages" );
+  rb_define_module_function( mMessages, "next_xid", next_xid, 0 );
   rb_define_module_function( mMessages, "pack_hello_msg", pack_hello_msg, 1 );
   rb_define_module_function( mMessages, "pack_echo_request_msg", pack_echo_request_msg, 1 );
   rb_define_module_function( mMessages, "pack_features_request_msg", pack_features_request_msg, 1 );

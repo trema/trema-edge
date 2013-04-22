@@ -32,6 +32,11 @@ module Trema
     attr_accessor :required_attributes
 
     class << self
+      def default_attributes
+        @default_attributes ||= {}
+      end
+
+
       def required_attributes
         @required_attributes ||= []
       end
@@ -83,6 +88,7 @@ module Trema
             attrs.each do | attr_name |
               define_accessor attr_name, opts
               self.required_attributes << attr_name if opts.has_key? :presence
+              self.default_attributes[ attr_name ] = opts[ :default ] if opts.has_key? :default
             end
           end
         end
@@ -133,6 +139,7 @@ module Trema
         required_attributes = self.class.superclass.required_attributes
       end
 
+      set_default setters
       case options
       when Hash
         setters.each do | each |
@@ -152,16 +159,19 @@ module Trema
       else
         raise ArgumentError, "Required option #{ required_attributes.first } missing for #{ self.class.name }" unless required_attributes.empty?
       end
-      set_default setters
     end
 
 
     def set_default setters
+      default_attributes = self.class.default_attributes
       setters.each do | each |
         opt_key = each.to_s.sub( '=', '' ).to_sym
-        default_opt_key = ( 'DEFAULT_' + opt_key.to_s.upcase ).to_sym
-        if self.class.constants.include? default_opt_key and instance_variable_get( "@#{ opt_key }" ).nil?
-          public_send each, self.class.const_get( default_opt_key )
+        if default_attributes.has_key? opt_key
+          if default_attributes[ opt_key ].respond_to? :call
+            public_send each, default_attributes[ opt_key ].call
+          else
+            public_send each, default_attributes[ opt_key ]
+          end
         end
       end
     end
