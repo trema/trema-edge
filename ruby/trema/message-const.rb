@@ -31,6 +31,8 @@ module Trema
     CONFIG_FLAGS = config_flags_hash.values.freeze
     
 
+    enum_hash( ofp_version: ofp_version )
+
     enum_step %w( ofpfc_add
                   ofpfc_modify
                   ofpfc_modify_strict
