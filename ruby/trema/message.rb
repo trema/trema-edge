@@ -38,7 +38,6 @@ module Trema
       method = "pack_#{ self.class.name.demodulize.underscore }_msg"
       __send__ method, params
     end
-    protected :pack_msg
   end
 end
 

@@ -47,8 +47,8 @@ module Trema
   
   
       ofp_type OFPAT_OUTPUT
-      unsigned_int32 :port_number, :presence => true
-      unsigned_int16 :max_len
+      unsigned_int32 :port_number, presence: true
+      unsigned_int16 :max_len, default: DEFAULT_MAX_LEN
       alias :port :port_number
 
 
