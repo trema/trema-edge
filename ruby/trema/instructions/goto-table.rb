@@ -19,13 +19,13 @@
 module Trema
   module Instructions
     class GotoTable < Instruction
-      unsigned_int8 :table_id, :presence => true
+      unsigned_int8 :table_id, presence: true
     end
   end
+
+
+  GotoTable = Instructions::GotoTable
 end
-
-
-GotoTable = Trema::Instructions::GotoTable
 
 
 ### Local variables:

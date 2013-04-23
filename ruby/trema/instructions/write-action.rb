@@ -22,10 +22,10 @@ module Trema
       ofp_type OFPIT_WRITE_ACTIONS
     end
   end
+
+
+  WriteAction = Instructions::WriteAction
 end
-
-
-WriteAction = Trema::Instructions::WriteAction
 
 
 ### Local variables:

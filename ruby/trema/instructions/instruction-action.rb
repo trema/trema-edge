@@ -19,7 +19,7 @@
 module Trema
   module Instructions
     class InstructionAction < Instruction
-      array :actions, :presence => true, :validate_with => :check_actions
+      array :actions, presence: true, validate_with: :check_actions
     end
 
 

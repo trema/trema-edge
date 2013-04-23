@@ -22,10 +22,10 @@ module Trema
       ofp_type OFPIT_CLEAR_ACTIONS
     end
   end
+
+
+  ClearAction = Instructions::ClearAction
 end
-
-
-ClearAction = Trema::Instructions::ClearAction
 
 
 ### Local variables:
