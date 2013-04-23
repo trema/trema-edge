@@ -25,6 +25,9 @@ module Trema
       array :parts
     end
   end
+
+
+  MultipartReply = Messages::MultipartReply
 end
 
 

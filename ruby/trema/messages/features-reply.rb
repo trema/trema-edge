@@ -23,10 +23,10 @@ module Trema
       unsigned_int8 :n_tables, :auxiliary_id
     end
   end
+
+
+  FeaturesReply = Messages::FeaturesReply
 end
-
-
-FeaturesReply = Trema::Messages::FeaturesReply
 
 
 ### Local variables:

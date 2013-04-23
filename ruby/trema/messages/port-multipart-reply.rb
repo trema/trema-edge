@@ -28,6 +28,9 @@ module Trema
       unsigned_int32 :duration_sec, :duration_nsec
     end
   end
+
+
+  PortMultipartReply = Messages::PortMultipartReply
 end
 
 

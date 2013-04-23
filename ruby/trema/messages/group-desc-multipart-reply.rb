@@ -24,6 +24,9 @@ module Trema
       array :buckets
     end
   end
+
+
+  GroupDescMultipartReply = Messages::GroupDescMultipartReply
 end
 
 

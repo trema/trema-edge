@@ -22,6 +22,9 @@ module Trema
       array :ports
     end
   end
+
+
+  PortDescMultipartReply = Messages::PortDescMultipartReply
 end
 
 

@@ -22,10 +22,10 @@ module Trema
       unsigned_int32 :port_no, :queue_id
     end
   end
+
+
+  QueueMultipartRequest = Messages::QueueMultipartRequest
 end
-
-
-QueueMultipartRequest = Trema::Messages::QueueMultipartRequest
 
 
 ### Local variables:

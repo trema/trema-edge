@@ -23,6 +23,9 @@ module Trema
       unsigned_int32 :flow_count, presence: true
     end
   end
+
+
+  AggregateMultipartReply = Messages::AggregateMultipartReply
 end
 
 

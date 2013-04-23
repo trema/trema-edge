@@ -22,10 +22,10 @@ module Trema
       unsigned_int32 :meter_id
     end
   end
+
+
+  MeterConfigMultipartRequest = Messages::MeterConfigMultipartRequest
 end
-
-
-MeterConfigMultipartRequest = Trema::Messages::MeterConfigMultipartRequest
 
 
 ### Local variables:

@@ -21,10 +21,10 @@ module Trema
     class GroupDescMultipartRequest < MultipartRequest
     end
   end
+
+
+  GroupDescMultipartRequest = Messages::GroupDescMultipartRequest
 end
-
-
-GroupDescMultipartRequest = Trema::Messages::GroupDescMultipartRequest
 
 
 ### Local variables:

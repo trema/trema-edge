@@ -31,10 +31,12 @@ module Trema
       end
     end
   end
+
+
+  SetConfig = Messages::SetConfig
 end
 
 
-SetConfig = Trema::Messages::SetConfig
 ### Local variables:
 ### mode: Ruby
 ### coding: utf-8-unix

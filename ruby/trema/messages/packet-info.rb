@@ -105,6 +105,9 @@ module Trema
       alias_method :pbb?, :pbb
     end
   end
+
+
+  PacketInfo = Messages::PacketInfo
 end
 
 

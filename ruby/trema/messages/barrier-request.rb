@@ -22,10 +22,10 @@ module Trema
       unsigned_int32 :transaction_id
     end
   end
+
+
+  BarrierRequest = Messages::BarrierRequest
 end
-
-
-BarrierRequest = Trema::Messages::BarrierRequest
 
 
 ### Local variables:

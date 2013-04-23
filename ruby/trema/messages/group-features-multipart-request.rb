@@ -21,10 +21,12 @@ module Trema
     class GroupFeaturesMultipartRequest < MultipartRequest
     end
   end
+
+
+  GroupFeaturesMultipartRequest = Messages::GroupFeaturesMultipartRequest
 end
 
 
-GroupFeaturesMultipartRequest = Trema::Messages::GroupFeaturesMultipartRequest
 
 
 ### Local variables:

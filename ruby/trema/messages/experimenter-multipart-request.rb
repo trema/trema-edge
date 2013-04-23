@@ -23,10 +23,12 @@ module Trema
       array :user_data
     end
   end
+
+
+  ExperimenterMultipartRequest = Messages::ExperimenterMultipartRequest
 end
 
 
-ExperimenterMultipartRequest = Trema::Messages::ExperimenterMultipartRequest
 
 
 ### Local variables:

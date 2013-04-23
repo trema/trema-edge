@@ -23,10 +23,10 @@ module Trema
       array :max_groups, :actions
     end
   end
+
+
+  GroupFeaturesMultipartReply = Messages::GroupFeaturesMultipartReply
 end
-
-
-GroupFeaturesMultipartReply = Trema::Messages::GroupFeaturesMultipartReply
 
 
 ### Local variables:

@@ -26,6 +26,9 @@ module Trema
       array :bucket_stats
     end
   end
+
+
+  GroupMultipartReply = Messages::GroupMultipartReply
 end
 
 

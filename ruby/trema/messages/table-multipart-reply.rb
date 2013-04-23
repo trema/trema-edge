@@ -24,6 +24,9 @@ module Trema
       unsigned_int64 :lookup_count, :matched_count
     end
   end
+
+
+  TableMultipartReply = Messages::TableMultipartReply
 end
 
 

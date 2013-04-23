@@ -21,10 +21,10 @@ module Trema
     class DescMultipartRequest < MultipartRequest
     end
   end
+
+
+  DescMultipartRequest = Messages::DescMultipartRequest
 end
-
-
-DescMultipartRequest = Trema::Messages::DescMultipartRequest
 
 
 ### Local variables:

@@ -21,10 +21,10 @@ module Trema
     class MeterFeaturesMultipartRequest < MultipartRequest
     end
   end
+
+
+  MeterFeaturesMultipartRequest = Messages::MeterFeaturesMultipartRequest
 end
-
-
-MeterFeaturesMultipartRequest = Trema::Messages::MeterFeaturesMultipartRequest
 
 
 ### Local variables:

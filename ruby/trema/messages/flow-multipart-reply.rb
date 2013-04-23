@@ -31,6 +31,9 @@ module Trema
       array :instructions
     end
   end
+
+
+  FlowMultipartReply = Messages::FlowMultipartReply
 end
 
 

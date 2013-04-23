@@ -25,10 +25,10 @@ module Trema
       array :buckets
     end
   end
+
+
+  GroupMod = Messages::GroupMod
 end
-
-
-GroupMod = Trema::Messages::GroupMod
 
 
 ### Local variables:
