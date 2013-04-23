@@ -1,5 +1,5 @@
 /*
- * Ruby wrapper around libtrema.
+ * Tasks class.
  *
  * Copyright (C) 2008-2013 NEC Corporation
  *
@@ -18,39 +18,20 @@
  */
 
 
-#include "controller.h"
-#include "logger.h"
-#include "message-handler.h"
-#include "actions.h"
-#include "instructions.h"
-#include "match.h"
-#include "message-const.h"
-#include "messages.h"
-#include "message-handler.h"
-#include "message-helper.h"
+#ifndef TASKS_H
+#define TASKS_H
 
 
-VALUE mTrema;
+#include "ruby.h"
 
 
-void
-Init_trema( void ) {
-  mTrema = rb_define_module( "Trema" );
-  rb_require( "trema/host" );
-  rb_require( "trema/path" );
+extern VALUE cTasks;
 
-  Init_controller();
-  Init_logger();
-  Init_message_const();
-  Init_actions();
-  Init_instructions();
-  Init_messages();
-  Init_message_handler();
-  Init_message_helper();
-  Init_match();
-  Init_tasks();
-  rb_require( "trema/exact-match" );  
-}
+
+void Init_tasks( void );
+
+
+#endif // TASKS_H
 
 
 /*
