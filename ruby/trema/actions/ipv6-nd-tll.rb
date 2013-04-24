@@ -27,10 +27,10 @@ module Trema
     class Ipv6NdTll < EthAddr
     end
   end
+
+
+  Ipv6NdTll = Actions::Ipv6NdTll
 end
-
-
-Ipv6NdTll = Trema::Actions::Ipv6NdTll
 
 
 ### Local variables:

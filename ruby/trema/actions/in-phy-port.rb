@@ -22,13 +22,13 @@ module Trema
     # A field to match an input physical port
     #
     class InPhyPort < FlexibleAction
-      unsigned_int32 :in_phy_port, :presence => true
+      unsigned_int32 :in_phy_port, presence: true
     end
   end
+
+
+  InPhyPort = Actions::InPhyPort
 end
-
-
-InPhyPort = Trema::Actions::InPhyPort
 
 
 ### Local variables:

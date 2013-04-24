@@ -33,13 +33,13 @@ module Trema
       DEFAULT_ETHER_TYPE = 0x88e7
   
   
-      unsigned_int16 :ether_type, presence: true
+      unsigned_int16 :ether_type, presence: true, default: DEFAULT_ETHER_TYPE
     end
   end
+
+
+  PushPbb = Actions::PushPbb
 end
-
-
-PushPbb = Trema::Actions::PushPbb
 
 
 ### Local variables:

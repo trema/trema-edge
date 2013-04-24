@@ -25,10 +25,10 @@ module Trema
       ofp_type OFPXMT_OFB_IPV4_DST
     end
   end
+
+
+  Ipv4DstAddr = Actions::Ipv4DstAddr
 end
-
-
-Ipv4DstAddr = Trema::Actions::Ipv4DstAddr
 
 
 ### Local variables:

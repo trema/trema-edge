@@ -20,7 +20,7 @@ module Trema
   module Actions
     class SetMplsTtl < BasicAction
       # @return [Fixnum] the value of attribute {#mpls_ttl}
-      unsigned_int8 :mpls_ttl, :presence => true
+      unsigned_int8 :mpls_ttl, presence: true
       #
       # An action that replaces an existing MPLS TTL. This action applies to
       # packets with an existing MPLS shim header.
@@ -36,10 +36,10 @@ module Trema
       #
     end
   end
+
+
+  SetMplsTtl = Actions::SetMplsTtl
 end
-
-
-SetMplsTtl = Trema::Actions::SetMplsTtl
 
 
 ### Local variables:

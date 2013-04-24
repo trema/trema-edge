@@ -57,10 +57,10 @@ module Trema
       end
     end
   end
+
+
+  SendOutPort = Actions::SendOutPort
 end
-
-
-SendOutPort = Trema::Actions::SendOutPort
 
 
 ### Local variables:

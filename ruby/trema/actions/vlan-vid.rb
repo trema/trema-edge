@@ -22,13 +22,13 @@ module Trema
     # A match field to match a VLAN ID
     #
     class VlanVid < FlexibleAction
-      unsigned_int16 :vlan_vid, :presence => true
+      unsigned_int16 :vlan_vid, presence: true
     end
   end
+
+
+  VlanVid = Actions::VlanVid
 end
-
-
-VlanVid = Trema::Actions::VlanVid
 
 
 ### Local variables:

@@ -26,10 +26,10 @@ module Trema
       unsigned_int8 :icmpv6_code, presence: true
     end
   end
+
+
+  Icmpv6Code = Actions::Icmpv6Code
 end
-
-
-Icmpv6Code = Trema::Actions::Icmpv6Code
 
 
 ### Local variables:

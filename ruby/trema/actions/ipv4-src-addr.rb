@@ -25,10 +25,10 @@ module Trema
       ofp_type OFPXMT_OFB_IPV4_SRC
     end
   end
+
+
+  Ipv4SrcAddr = Actions::Ipv4SrcAddr
 end
-
-
-Ipv4SrcAddr = Trema::Actions::Ipv4SrcAddr
 
 
 ### Local variables:

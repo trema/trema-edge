@@ -42,10 +42,10 @@ module Trema
       unsigned_int32 :group_id, presence: true
     end
   end
+
+
+  GroupAction = Actions::GroupAction
 end
-
-
-GroupAction = Trema::Actions::GroupAction
 
 
 ### Local variables:

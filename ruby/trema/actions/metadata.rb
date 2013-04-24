@@ -22,13 +22,13 @@ module Trema
     # A match field to match any arbitrary 64-bit data
     #
     class Metadata < FlexibleAction
-      unsigned_int64 :metadata, :presence => true
+      unsigned_int64 :metadata, presence: true
     end
   end
+
+
+  Metadata = Actions::Metadata
 end
-
-
-Metadata = Trema::Actions::Metadata
 
 
 ### Local variables:

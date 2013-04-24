@@ -28,10 +28,10 @@ module Trema
       ofp_type OFPXMT_OFB_TCP_SRC
     end
   end
+
+
+  TcpSrcPort = Actions::TcpSrcPort
 end
-
-
-TcpSrcPort = Trema::Actions::TcpSrcPort
 
 
 ### Local variables:

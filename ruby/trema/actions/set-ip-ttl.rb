@@ -37,13 +37,13 @@ module Trema
       # @raise [ArgumentError] if ip_ttl is not specified.
       # @raise [ArgumentError] if ip_ttl is not an unsigned 8-bit integer.
       #
-      unsigned_int8 :ip_ttl, :presence => true
+      unsigned_int8 :ip_ttl, presence: true
     end
   end
+
+
+  SetIpTtl = Actions::SetIpTtl
 end
-
-
-SetIpTtl = Trema::Actions::SetIpTtl
 
 
 ### Local variables:

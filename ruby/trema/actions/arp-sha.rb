@@ -25,10 +25,10 @@ module Trema
     class ArpSha < EthAddr
     end
   end
+
+
+  ArpSha = Actions::ArpSha
 end
-
-
-ArpSha = Trema::Actions::ArpSha
 
 
 ### Local variables:
