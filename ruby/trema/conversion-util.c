@@ -98,7 +98,7 @@ ofp_match_to_r_match( const struct ofp_match *match ) {
     oxms_len = ( uint16_t ) ( oxms_len - offset );
     src = ( const oxm_match_header * ) ( ( const char * ) src + offset );
   }
-  return rb_funcall( rb_eval_string( "Match" ), rb_intern( "new" ), 1, r_attributes );
+  return rb_funcall( rb_eval_string( "Trema::Match" ), rb_intern( "new" ), 1, r_attributes );
 }
 
 
@@ -306,7 +306,7 @@ oxm_match_to_r_match( const oxm_matches *match ) {
     const oxm_match_header *oxm = list->data;
     unpack_r_match( oxm, r_options );
   }
-  return rb_funcall( rb_eval_string( "Match" ), rb_intern( "new" ), 1, r_options );
+  return rb_funcall( rb_eval_string( "Trema::Match" ), rb_intern( "new" ), 1, r_options );
 }
 
 
