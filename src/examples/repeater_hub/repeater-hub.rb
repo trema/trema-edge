@@ -25,10 +25,10 @@ class RepeaterHub < Controller
     action = SendOutPort.new( port_number: OFPP_CONTROLLER, max_len: OFPCML_NO_BUFFER )
     ins = ApplyAction.new( actions:  [ action ] )
     send_flow_mod_add( datapath_id,
-                       :priority => OFP_LOW_PRIORITY,
-                       :buffer_id => OFP_NO_BUFFER,
-                       :flags => OFPFF_SEND_FLOW_REM,
-                       :instructions => [ ins ]
+                       priority: OFP_LOW_PRIORITY,
+                       buffer_id: OFP_NO_BUFFER,
+                       flags: OFPFF_SEND_FLOW_REM,
+                       instructions: [ ins ]
     )
   end
 
