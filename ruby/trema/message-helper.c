@@ -79,7 +79,7 @@ send_flow_mod( int argc, VALUE *argv, VALUE self ) {
   rb_scan_args( argc, argv, "11", &datapath_id, &options );
 
   if ( !NIL_P( options ) ) {
-    VALUE flow_mod = rb_funcall( rb_eval_string( "Messages::FlowMod" ), rb_intern( "new" ), 1, options );
+    VALUE flow_mod = rb_funcall( rb_eval_string( "Trema::Messages::FlowMod" ), rb_intern( "new" ), 1, options );
 
     send_controller_message( self, datapath_id, flow_mod );
   }
@@ -159,7 +159,7 @@ send_group_mod( int argc, VALUE *argv, VALUE self ) {
   rb_scan_args( argc, argv, "11", &datapath_id, &options );
 
   if ( !NIL_P( options ) ) {
-    VALUE group_mod = rb_funcall( rb_eval_string( "Messages::GroupMod" ), rb_intern( "new" ), 1, options );
+    VALUE group_mod = rb_funcall( rb_eval_string( "Trema::Messages::GroupMod" ), rb_intern( "new" ), 1, options );
 
     send_controller_message( self, datapath_id, group_mod );
   }
@@ -254,7 +254,7 @@ send_barrier_request( int argc, VALUE *argv, VALUE self ) {
   VALUE datapath_id = Qnil;
   VALUE options = Qnil;
   rb_scan_args( argc, argv, "11", &datapath_id, &options );
-  VALUE r_barrier_request = rb_funcall( rb_eval_string( "Messages::BarrierRequest" ), rb_intern( "new" ), 1, options );
+  VALUE r_barrier_request = rb_funcall( rb_eval_string( "Trema::Messages::BarrierRequest" ), rb_intern( "new" ), 1, options );
   send_controller_message( self, datapath_id, r_barrier_request );
   return self;
 }
