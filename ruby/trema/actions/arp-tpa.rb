@@ -25,10 +25,10 @@ module Trema
     class ArpTpa < ActionIpAddr
     end
   end
+
+
+  ArpTpa = Actions::ArpTpa
 end
-
-
-ArpTpa = Trema::Actions::ArpTpa
 
 
 ### Local variables:

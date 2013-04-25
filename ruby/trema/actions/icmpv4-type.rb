@@ -26,10 +26,10 @@ module Trema
       unsigned_int8 :icmpv4_type, presence: true
     end
   end
+
+
+  Icmpv4Type = Actions::Icmpv4Type
 end
-
-
-Icmpv4Type = Trema::Actions::Icmpv4Type
 
 
 ### Local variables:

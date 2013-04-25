@@ -18,12 +18,15 @@
 
 module Trema
   module Messages
-    class GroupDescMultipartReply < MultipartReply
+    class GroupDescMultipartReply < Message
       unsigned_int16 :length, presence: true
       unsigned_int32 :group_id, presence: true
       array :buckets
     end
   end
+
+
+  GroupDescMultipartReply = Messages::GroupDescMultipartReply
 end
 
 

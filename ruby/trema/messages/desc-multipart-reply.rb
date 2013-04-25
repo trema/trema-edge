@@ -18,10 +18,13 @@
 
 module Trema
   module Messages
-    class DescMultipartReply < MultipartReply
+    class DescMultipartReply < Message
       string :mfr_desc, :hw_desc, :sw_desc, :serial_num, :dp_desc
     end
   end
+
+
+  DescMultipartReply = Messages::DescMultipartReply
 end
 
 

@@ -16,9 +16,9 @@
 #
 
 
-require "trema/cli"
-require "trema/phost"
-require "trema/network-component"
+require_relative "cli"
+require_relative "phost"
+require_relative "network-component"
 
 
 module Trema

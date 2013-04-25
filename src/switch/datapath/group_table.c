@@ -298,7 +298,7 @@ get_group_stats( const uint32_t group_id, group_stats **stats, uint32_t *n_group
     group_entry *entry = lookup_group_entry( group_id );
     if ( entry == NULL ) {
       unlock_pipeline();
-      ret = ERROR_OFDPE_BAD_REQUEST_BAD_TABLE_ID;
+      return ERROR_OFDPE_BAD_REQUEST_BAD_TABLE_ID;
     }
     append_to_tail( &groups, entry );
     ( *n_groups )++;

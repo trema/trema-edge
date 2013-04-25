@@ -22,10 +22,10 @@ module Trema
       ofp_type OFPIT_APPLY_ACTIONS
     end
   end
+
+
+  ApplyAction = Instructions::ApplyAction
 end
-
-
-ApplyAction = Trema::Instructions::ApplyAction
 
 
 ### Local variables:

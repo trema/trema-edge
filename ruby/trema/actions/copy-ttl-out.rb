@@ -29,10 +29,10 @@ module Trema
     #
     end
   end
+
+
+  CopyTtlOut = Actions::CopyTtlOut
 end
-
-
-CopyTtlOut = Trema::Actions::CopyTtlOut
 
 
 ### Local variables:

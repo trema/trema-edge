@@ -25,7 +25,7 @@ module Trema
     MPLS_ETHER_TAGS = [ 0x8847, 0x8848 ]
 
 
-    unsigned_int16 :ether_type, :presence => true, :within => :check_mpls_ether_type
+    unsigned_int16 :ether_type, presence: true, within: :check_mpls_ether_type
 
 
     def check_mpls_ether_type ether_type, name 

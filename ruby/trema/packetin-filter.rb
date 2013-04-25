@@ -16,8 +16,8 @@
 #
 
 
-require "trema/executables"
-require "trema/network-component"
+require_relative "executables"
+require_relative "network-component"
 
 
 module Trema

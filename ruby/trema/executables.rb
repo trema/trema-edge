@@ -16,9 +16,9 @@
 #
 
 
-require "trema/monkey-patch/module"
-require "trema/monkey-patch/string"
-require "trema/path"
+require_relative "monkey-patch/module"
+require_relative "monkey-patch/string"
+require_relative "path"
 
 
 #

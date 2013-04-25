@@ -26,10 +26,10 @@ module Trema
       unsigned_int16 :ether_type, presence: true
     end
   end
+
+
+  EtherType = Actions::EtherType
 end
-
-
-EtherType = Trema::Actions::EtherType
 
 
 ### Local variables:

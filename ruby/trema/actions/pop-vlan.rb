@@ -24,10 +24,10 @@ module Trema
     class PopVlan < BasicAction
     end
   end
+
+
+  PopVlan = Actions::PopVlan
 end
-
-
-PopVlan = Trema::Actions::PopVlan
 
 
 ### Local variables:

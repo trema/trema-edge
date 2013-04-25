@@ -23,13 +23,13 @@ module Trema
     # zero one or more extension headers
     #
     class Ipv6Exthdr < FlexibleAction
-      unsigned_int16 :ipv6_exthdr, :presence => true
+      unsigned_int16 :ipv6_exthdr, presence: true
     end
   end
+
+
+  Ipv6Exthdr = Actions::Ipv6Exthdr
 end
-
-
-Ipv6Exthdr = Trema::Actions::Ipv6Exthdr
 
 
 ### Local variables:

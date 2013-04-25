@@ -24,13 +24,13 @@ module Trema
     # value is 20-bits.
     #
     class MplsLabel < FlexibleAction
-      unsigned_int32 :mpls_label, :presence => true
+      unsigned_int32 :mpls_label, presence: true
     end
   end
+
+
+  MplsLabel = Actions::MplsLabel
 end
-
-
-MplsLabel = Trema::Actions::MplsLabel
 
 
 ### Local variables:

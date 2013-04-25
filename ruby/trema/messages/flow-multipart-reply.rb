@@ -18,7 +18,7 @@
 
 module Trema
   module Messages
-    class FlowMultipartReply < MultipartReply
+    class FlowMultipartReply < Message
       unsigned_int16 :length, presence: true
       unsigned_int8 :table_id, presence: true
       unsigned_int32 :duration_sec, :duration_nsec, presence: true
@@ -31,6 +31,9 @@ module Trema
       array :instructions
     end
   end
+
+
+  FlowMultipartReply = Messages::FlowMultipartReply
 end
 
 

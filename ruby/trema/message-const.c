@@ -25,6 +25,13 @@ VALUE mMessageConst;
 
 
 static VALUE
+ofp_version( VALUE self ) {
+  UNUSED( self );
+  return UINT2NUM( OFP_VERSION );
+}
+
+
+static VALUE
 frag_normal( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFPC_FRAG_NORMAL );
@@ -321,6 +328,9 @@ it_experimenter( VALUE self ) {
 void
 Init_message_const( void ) {
   mMessageConst = rb_define_module_under( mTrema, "MessageConst" );
+
+  // openflow version
+  rb_define_module_function( mMessageConst, "ofp_version", ofp_version, 0 );
 
   rb_define_module_function( mMessageConst, "frag_normal", frag_normal, 0 );
   rb_define_module_function( mMessageConst, "frag_drop", frag_drop, 0 );

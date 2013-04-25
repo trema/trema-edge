@@ -28,10 +28,10 @@ module Trema
       ofp_type OFPXMT_OFB_SCTP_SRC
     end
   end
+
+
+  SctpSrcPort = Actions::SctpSrcPort
 end
-
-
-SctpSrcPort = Trema::Actions::SctpSrcPort
 
 
 ### Local variables:

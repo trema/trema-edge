@@ -25,10 +25,10 @@ module Trema
       ofp_type OFPXMT_OFB_IPV6_SRC
     end
   end
+
+
+  Ipv6SrcAddr = Actions::Ipv6SrcAddr
 end
-
-
-Ipv6SrcAddr = Trema::Actions::Ipv6SrcAddr
 
 
 ### Local variables:

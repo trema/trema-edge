@@ -16,13 +16,13 @@
 #
 
 
-require "trema/app"
-require "trema/logger"
-require "trema/monkey-patch/integer"
-require "trema/monkey-patch/string"
-require "trema/timers"
-require "trema/message-helper"
-require "trema/message-handler"
+require_relative "app"
+require_relative "logger"
+require_relative "monkey-patch/integer"
+require_relative "monkey-patch/string"
+require_relative "timers"
+require_relative "message-helper"
+require_relative "message-handler"
 
 
 module Trema

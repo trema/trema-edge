@@ -18,10 +18,13 @@
 
 module Trema
   module Messages
-    class PortDescMultipartReply < MultipartReply
+    class PortDescMultipartReply < Message
       array :ports
     end
   end
+
+
+  PortDescMultipartReply = Messages::PortDescMultipartReply
 end
 
 

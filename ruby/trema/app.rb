@@ -16,8 +16,8 @@
 #
 
 
-require "trema/daemon"
-require "trema/network-component"
+require_relative "daemon"
+require_relative "network-component"
 
 
 module Trema

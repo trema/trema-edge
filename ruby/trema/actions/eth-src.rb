@@ -27,10 +27,10 @@ module Trema
     class EthSrc < EthAddr
     end
   end
+
+
+  EthSrc = Actions::EthSrc
 end
-
-
-EthSrc = Trema::Actions::EthSrc
 
 
 ### Local variables:

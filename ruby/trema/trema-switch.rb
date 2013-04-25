@@ -16,7 +16,7 @@
 #
 
 
-require "trema/network-component"
+require_relative "network-component"
 
 
 module Trema
@@ -56,19 +56,20 @@ module Trema
       if @stanza[ :ports ].nil?
         ports = []
         Trema::Link.instances.values.each_with_index do | each, i |
-          ports << "#{ each.name }/#{ i + 1 }" if match_switch( each.peers, @stanza[ :name ] ) != []
+           ports << "#{ each.name }/#{ i + 1 }" if each.peers.any? { | peer | peer.match( /\b#{ @stanza[ :name ] }\b/ ) }
         end
         ports = ports.join( ',' )
       end
-      "sudo -E #{ Executables.switch } -i #{ dpid_short } -e #{ ports } > #{ log_file } &"
+      "sudo -E #{ Executables.switch } -i #{ dpid_short } #{ option_ports( ports ) } > #{ log_file } &"
     end
 
 
     private
 
 
-    def match_switch peers, name
-      peers.each.select { | peer | peer.match( /\b#{ name }\b/ ) }
+    def option_ports ports 
+      option = ""
+      option << "-e #{ ports }" if ports.length > 0
     end
   end
 end

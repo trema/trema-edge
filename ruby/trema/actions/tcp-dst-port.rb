@@ -28,10 +28,10 @@ module Trema
       ofp_type OFPXMT_OFB_TCP_DST
     end
   end
+
+
+  TcpDstPort = Actions::TcpDstPort
 end
-
-
-TcpDstPort = Trema::Actions::TcpDstPort
 
 
 ### Local variables:

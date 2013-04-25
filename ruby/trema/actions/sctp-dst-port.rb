@@ -28,10 +28,10 @@ module Trema
       ofp_type OFPXMT_OFB_SCTP_DST
     end
   end
+
+
+  SctpDstPort = Actions::SctpDstPort
 end
-
-
-SctpDstPort = Trema::Actions::SctpDstPort
 
 
 ### Local variables:

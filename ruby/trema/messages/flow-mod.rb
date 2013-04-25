@@ -29,10 +29,10 @@ module Trema
       array :instructions
     end
   end
+
+
+  FlowMod = Messages::FlowMod
 end
-
-
-FlowMod = Trema::Messages::FlowMod
 
 
 ### Local variables:

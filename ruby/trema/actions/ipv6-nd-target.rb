@@ -24,10 +24,10 @@ module Trema
     class Ipv6NdTarget < ActionIpAddr
     end
   end
+
+
+  Ipv6NdTarget = Actions::Ipv6NdTarget
 end
-
-
-Ipv6NdTarget = Trema::Actions::Ipv6NdTarget
 
 
 ### Local variables:

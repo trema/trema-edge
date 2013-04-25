@@ -16,7 +16,7 @@
 #
 
 
-require "trema/ordered-hash"
+require_relative "ordered-hash"
 
 
 module Trema

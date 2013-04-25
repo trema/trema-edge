@@ -16,7 +16,7 @@
 #
 
 
-require "trema/monkey-patch/kernel"
+require_relative "monkey-patch/kernel"
 
 
 module Trema
@@ -30,6 +30,8 @@ module Trema
     enum_hash config_flags_hash
     CONFIG_FLAGS = config_flags_hash.values.freeze
     
+
+    enum_hash( ofp_version: ofp_version )
 
     enum_step %w( ofpfc_add
                   ofpfc_modify

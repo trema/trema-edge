@@ -36,7 +36,7 @@ module Trema
       VLAN_ETHER_TAGS = [ 0x8100, 0x88a8 ]
   
   
-      unsigned_int16 :ether_type, :presence => true, :within => :check_vlan_ether_type
+      unsigned_int16 :ether_type, presence: true, within: :check_vlan_ether_type
   
   
       def check_vlan_ether_type ether_type, name
@@ -46,10 +46,10 @@ module Trema
       end
     end
   end
+
+
+  PushVlan = Actions::PushVlan
 end
-
-
-PushVlan = Trema::Actions::PushVlan
 
 
 ### Local variables:

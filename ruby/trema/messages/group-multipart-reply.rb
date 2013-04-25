@@ -18,7 +18,7 @@
 
 module Trema
   module Messages
-    class GroupMultipartReply < MultipartReply
+    class GroupMultipartReply < Message
       unsigned_int16 :length, presence: true
       unsigned_int32 :group_id, :ref_count, presence: true
       unsigned_int64 :packet_count, :byte_count, presence: true
@@ -26,6 +26,9 @@ module Trema
       array :bucket_stats
     end
   end
+
+
+  GroupMultipartReply = Messages::GroupMultipartReply
 end
 
 

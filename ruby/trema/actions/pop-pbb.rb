@@ -24,10 +24,10 @@ module Trema
     class PopPbb < BasicAction
     end
   end
+
+
+  PopPbb = Actions::PopPbb
 end
-
-
-PopPbb = Trema::Actions::PopPbb
 
 
 ### Local variables:

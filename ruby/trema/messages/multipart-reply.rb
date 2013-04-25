@@ -22,8 +22,12 @@ module Trema
       unsigned_int64 :datapath_id
       unsigned_int32 :transaction_id
       unsigned_int16 :type, :flags
+      array :parts
     end
   end
+
+
+  MultipartReply = Messages::MultipartReply
 end
 
 

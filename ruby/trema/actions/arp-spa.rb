@@ -25,10 +25,10 @@ module Trema
     class ArpSpa < ActionIpAddr
     end
   end
+
+
+  ArpSpa = Actions::ArpSpa
 end
-
-
-ArpSpa = Trema::Actions::ArpSpa
 
 
 ### Local variables:

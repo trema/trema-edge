@@ -23,10 +23,10 @@ module Trema
       array :user_data
     end
   end
+
+
+  EchoReply = Messages::EchoReply
 end
-
-
-EchoReply = Trema::Messages::EchoReply
 
 
 ### Local variables:

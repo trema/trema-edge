@@ -21,6 +21,9 @@ module Trema
     class DescMultipartRequest < MultipartRequest
     end
   end
+
+
+  DescMultipartRequest = Messages::DescMultipartRequest
 end
 
 

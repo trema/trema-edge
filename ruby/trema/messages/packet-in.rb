@@ -66,6 +66,9 @@ module Trema
       def_delegators :@packet_info, :pbb?, :pbb_isid
     end
   end
+
+
+  PacketIn = Messages::PacketIn
 end
 
 

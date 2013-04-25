@@ -23,13 +23,13 @@ module Trema
     #
     class VlanPriority < FlexibleAction
       ofp_type OFPXMT_OFB_VLAN_PCP
-      unsigned_int8 :vlan_priority, :presence => true
+      unsigned_int8 :vlan_priority, presence: true
     end
   end
+
+
+  VlanPriority = Actions::VlanPriority
 end
-
-
-VlanPriority = Trema::Actions::VlanPriority
 
 
 ### Local variables:

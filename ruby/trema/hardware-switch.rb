@@ -16,7 +16,7 @@
 #
 
 
-require "trema/openflow-switch"
+require_relative "openflow-switch"
 
 
 module Trema

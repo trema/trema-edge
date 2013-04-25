@@ -35,13 +35,13 @@ module Trema
       # @raise [ArgumentError] if queue_id is not an unsigned 32-bit integer.
       #
       # @return [Fixnum] the value of attribute {#queue_id}
-      unsigned_int32 :queue_id, :presence => true
+      unsigned_int32 :queue_id, presence: true
     end
   end
+
+
+  SetQueue = Actions::SetQueue
 end
-
-
-SetQueue = Trema::Actions::SetQueue
 
 
 ### Local variables:

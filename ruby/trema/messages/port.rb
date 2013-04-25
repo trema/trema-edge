@@ -32,6 +32,9 @@ module Trema
       unsigned_int32 :max_speed, presence: true
     end
   end
+
+
+  Port = Messages::Port
 end
 
 

@@ -16,7 +16,7 @@
 #
 
 
-require "trema/mapping"
+require_relative "mapping"
 
 
 module Trema
@@ -29,11 +29,21 @@ module Trema
     USER_DEFINED_TYPES = %w( ip_addr mac match packet_info array string bool )
 
 
-    attr_accessor :required_attributes
+    class AttributeProperty
+      attr_reader :required_attributes, :default_attributes, :alias_attributes
+
+
+      def initialize
+        @required_attributes ||= []
+        @default_attributes ||= {}
+        @alias_attributes ||= {}
+      end
+    end
+
 
     class << self
-      def required_attributes
-        @required_attributes ||= []
+      def attributes
+        @attributes ||= AttributeProperty.new
       end
 
 
@@ -48,8 +58,12 @@ module Trema
         primitive_sizes.each do | each |
           define_accessor_meth :"unsigned_int#{ each }"
           define_method :"check_unsigned_int#{ each }" do | number, name |
-            unless number.send( "unsigned_#{ each }bit?" )
-              raise ArgumentError, "#{ name } must be an unsigned #{ each }-bit integer."
+            begin
+              unless number.send( "unsigned_#{ each }bit?" )
+                raise ArgumentError, "#{ name } must be an unsigned #{ each }-bit integer."
+              end
+            rescue NoMethodError
+              raise TypeError, "#{ name } must be a Number."
             end
           end
         end
@@ -78,7 +92,12 @@ module Trema
             opts.store :validate_with, "check_#{ meth }" if meth.to_s[ /unsigned_int\d\d/ ]
             attrs.each do | attr_name |
               define_accessor attr_name, opts
-              self.required_attributes << attr_name if opts.has_key? :presence
+              if opts.has_key? :alias
+                alias_method opts[ :alias ], attr_name
+                self.attributes.alias_attributes[ attr_name ] = opts[ :alias ] if opts.has_key? :alias
+              end
+              self.attributes.required_attributes << attr_name if opts.has_key? :presence
+              self.attributes.default_attributes[ attr_name ] = opts[ :default ] if opts.has_key? :default
             end
           end
         end
@@ -123,18 +142,21 @@ module Trema
 
 
     def initialize options=nil
-      setters = self.class.instance_methods.select{ | i | i.to_s =~ /[a-z].+=$/ }.delete_if{ | i | i.to_s =~ /required_attributes=/ }
-      required_attributes = self.class.required_attributes
+      setters = self.class.instance_methods.select{ | i | i.to_s =~ /[a-z].+=$/ }
+      required_attributes = self.class.attributes.required_attributes
       if required_attributes.empty?
-        required_attributes = self.class.superclass.required_attributes
+        required_attributes = self.class.superclass.attributes.required_attributes
       end
 
+      set_default setters
       case options
       when Hash
         setters.each do | each |
           opt_key = each.to_s.sub( '=', '' ).to_sym
           if options.has_key? opt_key
             public_send each, options[ opt_key ]
+          elsif options.has_key? self.class.attributes.alias_attributes[ opt_key ]
+            public_send each, options[ self.class.attributes.alias_attributes[ opt_key ] ]
           else
             raise ArgumentError, "Required option #{ opt_key } is missing for #{ self.class.name }" if required_attributes.include? opt_key
           end
@@ -148,16 +170,19 @@ module Trema
       else
         raise ArgumentError, "Required option #{ required_attributes.first } missing for #{ self.class.name }" unless required_attributes.empty?
       end
-      set_default setters
     end
 
 
     def set_default setters
+      default_attributes = self.class.attributes.default_attributes
       setters.each do | each |
         opt_key = each.to_s.sub( '=', '' ).to_sym
-        default_opt_key = ( 'DEFAULT_' + opt_key.to_s.upcase ).to_sym
-        if self.class.constants.include? default_opt_key and instance_variable_get( "@#{ opt_key }" ).nil?
-          public_send each, self.class.const_get( default_opt_key )
+        if default_attributes.has_key? opt_key
+          if default_attributes[ opt_key ].respond_to? :call
+            public_send each, default_attributes[ opt_key ].call
+          else
+            public_send each, default_attributes[ opt_key ]
+          end
         end
       end
     end

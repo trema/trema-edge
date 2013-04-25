@@ -28,10 +28,10 @@ module Trema
       ofp_type OFPXMT_OFB_UDP_SRC
     end
   end
+
+
+  UdpSrcPort = Actions::UdpSrcPort
 end
-
-
-UdpSrcPort = Trema::Actions::UdpSrcPort
 
 
 ### Local variables:

@@ -19,14 +19,14 @@
 module Trema
   module Instructions
     class WriteMetadata < Instruction
-      unsigned_int64 :metadata, :presence => true
+      unsigned_int64 :metadata, presence: true
       unsigned_int64 :metadata_mask
     end
   end
+
+
+  WriteMetadata = Instructions::WriteMetadata
 end
-
-
-WriteMetadata = Trema::Instructions::WriteMetadata
 
 
 ### Local variables:

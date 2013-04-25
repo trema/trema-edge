@@ -23,6 +23,9 @@ module Trema
       unsigned_int16 :flags
     end
   end
+
+
+  MultipartRequest = Messages::MultipartRequest
 end
 
 

@@ -22,13 +22,13 @@ module Trema
     # A match field to match an IP ECN value. Applicable only to IPv4 packets.
     #
     class IpEcn < FlexibleAction
-      unsigned_int8 :ip_ecn, :presence => true
+      unsigned_int8 :ip_ecn, presence: true
     end
   end
+
+
+  IpEcn = Actions::IpEcn
 end
-
-
-IpEcn = Trema::Actions::IpEcn
 
 
 ### Local variables:

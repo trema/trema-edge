@@ -25,10 +25,10 @@ module Trema
     class DecMplsTtl < BasicAction
     end
   end
+
+
+  DecMplsTtl = Actions::DecMplsTtl
 end
-
-
-DecMplsTtl = Trema::Actions::DecMplsTtl
 
 
 ### Local variables:

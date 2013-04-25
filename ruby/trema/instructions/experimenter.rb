@@ -19,8 +19,8 @@
 module Trema
   module Instructions
     class Experimenter < Instruction
-      unsigned_int32 :experimenter, :presence => true
-      array :user_data, :validate_with => :check_user_data
+      unsigned_int32 :experimenter, presence: true
+      array :user_data, validate_with: :check_user_data
 
 
       def check_user_data user_data, name
@@ -30,6 +30,11 @@ module Trema
       end
     end
   end
+  #
+  # Because there is also an experimenter action, experimenter instructions
+  # need to be referenced by the full name Trema::Instructions::Experimenter
+  # or we could create a different class name like ExperimenterIns
+  #
 end
 
 

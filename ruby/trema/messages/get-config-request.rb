@@ -22,10 +22,10 @@ module Trema
       unsigned_int32 :transaction_id
     end
   end
+
+
+  GetConfigRequest = Messages::GetConfigRequest
 end
-
-
-GetConfigRequest = Trema::Messages::GetConfigRequest
 
 
 ### Local variables:
