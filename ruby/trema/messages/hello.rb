@@ -19,8 +19,7 @@
 module Trema
   module Messages
     class Hello < Message
-      unsigned_int32 :transaction_id, default: lambda { next_transaction_id }
-      alias_method :xid, :transaction_id
+      unsigned_int32 :transaction_id, default: lambda { next_transaction_id }, alias: :xid
       array :version, validate_with: :check_version, default: [ OFP_VERSION ]
 
 

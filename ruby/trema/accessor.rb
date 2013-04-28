@@ -29,16 +29,21 @@ module Trema
     USER_DEFINED_TYPES = %w( ip_addr mac match packet_info array string bool )
 
 
-    attr_accessor :required_attributes
+    class AttributeProperty
+      attr_reader :required_attributes, :default_attributes, :alias_attributes
+
+
+      def initialize
+        @required_attributes ||= []
+        @default_attributes ||= {}
+        @alias_attributes ||= {}
+      end
+    end
+
 
     class << self
-      def default_attributes
-        @default_attributes ||= {}
-      end
-
-
-      def required_attributes
-        @required_attributes ||= []
+      def attributes
+        @attributes ||= AttributeProperty.new
       end
 
 
@@ -87,8 +92,12 @@ module Trema
             opts.store :validate_with, "check_#{ meth }" if meth.to_s[ /unsigned_int\d\d/ ]
             attrs.each do | attr_name |
               define_accessor attr_name, opts
-              self.required_attributes << attr_name if opts.has_key? :presence
-              self.default_attributes[ attr_name ] = opts[ :default ] if opts.has_key? :default
+              if opts.has_key? :alias
+                alias_method opts[ :alias ], attr_name
+                self.attributes.alias_attributes[ attr_name ] = opts[ :alias ] if opts.has_key? :alias
+              end
+              self.attributes.required_attributes << attr_name if opts.has_key? :presence
+              self.attributes.default_attributes[ attr_name ] = opts[ :default ] if opts.has_key? :default
             end
           end
         end
@@ -133,10 +142,10 @@ module Trema
 
 
     def initialize options=nil
-      setters = self.class.instance_methods.select{ | i | i.to_s =~ /[a-z].+=$/ }.delete_if{ | i | i.to_s =~ /required_attributes=/ }
-      required_attributes = self.class.required_attributes
+      setters = self.class.instance_methods.select{ | i | i.to_s =~ /[a-z].+=$/ }
+      required_attributes = self.class.attributes.required_attributes
       if required_attributes.empty?
-        required_attributes = self.class.superclass.required_attributes
+        required_attributes = self.class.superclass.attributes.required_attributes
       end
 
       set_default setters
@@ -146,6 +155,8 @@ module Trema
           opt_key = each.to_s.sub( '=', '' ).to_sym
           if options.has_key? opt_key
             public_send each, options[ opt_key ]
+          elsif options.has_key? self.class.attributes.alias_attributes[ opt_key ]
+            public_send each, options[ self.class.attributes.alias_attributes[ opt_key ] ]
           else
             raise ArgumentError, "Required option #{ opt_key } is missing for #{ self.class.name }" if required_attributes.include? opt_key
           end
@@ -163,7 +174,7 @@ module Trema
 
 
     def set_default setters
-      default_attributes = self.class.default_attributes
+      default_attributes = self.class.attributes.default_attributes
       setters.each do | each |
         opt_key = each.to_s.sub( '=', '' ).to_sym
         if default_attributes.has_key? opt_key

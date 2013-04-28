@@ -46,9 +46,7 @@ module Trema
 
   describe Hello, ".new(:xid => value)", :nosudo => true do
     subject { Hello.new( :xid => xid ) }
-    pending ":xid => value option is not supported yet." do
-      it_should_behave_like "any Openflow message with xid"
-    end
+    it_should_behave_like "any Openflow message with xid"
   end
 
 

@@ -62,7 +62,7 @@ end
 shared_examples_for "any Openflow message with xid" do
   context "xid: -123", :nosudo => true do
     let( :xid ) { -123 }
-    it { expect { subject }.to raise_error( ArgumentError, "Transaction ID must be an unsigned 32-bit integer" ) }
+    it { expect { subject }.to raise_error( ArgumentError, "transaction_id must be an unsigned 32-bit integer." ) }
   end
 
   context "xid: 0", :nosudo => true do
@@ -85,7 +85,7 @@ shared_examples_for "any Openflow message with xid" do
 
   context "xid: UINT32_MAX + 1", :nosudo => true do
     let( :xid ) { 2 ** 32 }
-    it { expect { subject }.to raise_error( ArgumentError, "Transaction ID must be an unsigned 32-bit integer" ) }
+    it { expect { subject }.to raise_error( ArgumentError, "transaction_id must be an unsigned 32-bit integer." ) }
   end
 end
 
