@@ -24,7 +24,12 @@ module Trema
 
 
       def check_version version, name
-        raise ArgumentError, "Invalid #{ name } specified" if version.length > 1
+        if version[ 0 ] != OFP_VERSION
+          raise ArgumentError, "Invalid #{ name } specified"
+        end
+        if version.length > 1
+          raise ArgumentError, "Multiple versions not supported"
+        end
       end
     end
   end
