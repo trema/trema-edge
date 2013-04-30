@@ -21,37 +21,47 @@ require "trema"
 
 
 module Trema
-  describe Hello, ".new", :nosudo => true do
+  describe Hello, ".new", nosudo: true do
     it_should_behave_like "any Openflow message with default transaction ID"
   end
 
 
-  describe Hello, ".new(nil)", :nosudo => true do
+  describe Hello, ".new(nil)", nosudo: true do
     subject { Hello.new( nil ) }
     it_should_behave_like "any Openflow message with default transaction ID"
   end
 
 
-  describe Hello, ".new(transaction_id)", :nosudo => true do
+  describe Hello, ".new(transaction_id)", nosudo: true do
     subject { Hello.new( transaction_id ) }
     it_should_behave_like "any Openflow message with transaction ID"
   end
 
 
-  describe Hello, ".new(:transaction_id => value)", :nosudo => true do
-    subject { Hello.new( :transaction_id => transaction_id ) }
+  describe Hello, ".new(transaction_id: value)", nosudo: true do
+    subject { Hello.new( transaction_id: transaction_id ) }
     it_should_behave_like "any Openflow message with transaction ID"
   end
 
 
-  describe Hello, ".new(:xid => value)", :nosudo => true do
+  describe Hello, ".new(xid: value)", nosudo: true do
     subject { Hello.new( :xid => xid ) }
     it_should_behave_like "any Openflow message with xid"
   end
 
 
-  describe Hello, '.new("INVALID OPTION")', :nosudo => true do
+  describe Hello, '.new("INVALID OPTION")', nosudo: true do
     it { expect { Hello.new "INVALID OPTION" }.to raise_error( TypeError ) }
+  end
+
+
+  describe Hello, '.new("INVALID VERSION")', nosudo: true do
+    it { expect { Hello.new( version: [ 0xabc ] ) }.to raise_error( ArgumentError ) }
+  end
+
+
+  describe Hello, '.new("MULTIPLE VERSIONS")', nosudo: true do
+    it { expect { Hello.new( version: [ 0x4, 0x5 ] ) }.to raise_error( ArgumentError ) }
   end
 end
 
