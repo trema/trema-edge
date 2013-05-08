@@ -69,7 +69,7 @@ describe Trema::ArpSha, ".new( VALID OPTIONS )" do
       end
       mc.should_receive( :packet_in ).at_least( :once ) do | datapath_id, message |
         mac = `ifconfig trema1-0`[/([0-9|a-f]{2}:[0-9|a-f]{2}:[0-9|a-f]{2}:[0-9|a-f]{2}:[0-9|a-f]{2}:[0-9|a-f]{2})/]
-        action = Trema::ArpSha.new( mac_address: mac )
+        action = Trema::ArpSha.new( mac_address: Mac.new( mac ) )
         expect( action.mac_address.to_s ).to  eq( message.packet_info.arp_sha.to_s )
       end
       mc.start_receiving
