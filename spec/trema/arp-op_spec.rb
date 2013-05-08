@@ -24,8 +24,8 @@ require "trema"
 
 
 describe Trema::ArpOp, "new( VALID OPTIONS )" do
-  subject { ArpOp.new arp_op: 1 }
-  let( :arp_op ) { 1 }
+  subject { ArpOp.new arp_op: value }
+  let( :value ) { 1 }
   its ( :arp_op ) { should == 1 }
 end
 
