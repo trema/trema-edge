@@ -1,6 +1,4 @@
 #
-# Author: Nick Karanatsios <nickkaranatsios@gmail.com>
-#
 # Copyright (C) 2008-2013 NEC Corporation
 #
 # This program is free software; you can redistribute it and/or modify
@@ -40,7 +38,7 @@ end
 
 describe Trema::ArpSha, ".new( VALID OPTIONS )" do
   context "when setting a flow with a match arp_sha field set" do
-    it "should match its arp_sha field when ARP packet received" do
+    it "should match its arp_sha field when an ARP packet received" do
       network_blk = Proc.new {
         trema_switch( "lsw" ) { datapath_id 0xabc }
         vhost( "host1" ) {
