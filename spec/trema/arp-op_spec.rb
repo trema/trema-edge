@@ -40,7 +40,7 @@ end
 
 describe Trema::ArpOp, ".new( VALID OPTIONS )" do
   context "when setting a flow with a match arp_op field to 1" do
-    it "should have its arp_op set to 1 when #packet-in" do
+    it "should match its arp_op field when ARP packet received" do
       network_blk = Proc.new {
         trema_switch( "lsw" ) { datapath_id 0xabc }
         vhost( "host1" ) {
@@ -71,7 +71,7 @@ describe Trema::ArpOp, ".new( VALID OPTIONS )" do
         expect( action.arp_op ).to  eq( message.packet_info.arp_op )
       end
       mc.start_receiving
-      system( "ping -I trema1-0 -c 1 192.168.0.1" )
+      system( "ping -I trema1-0 -c 1 192.168.0.1 >/dev/null 2>&1" )
       mc.time_sleep( 2 ) {
         mc.stop_receiving
       }
