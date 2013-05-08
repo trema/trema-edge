@@ -29,8 +29,8 @@ module Trema
 
 
       def check_ip_addr ip_addr, name
-        unless ip_addr.is_a? String
-          raise ArgumentError, "An IP(v4/v6) address must be a String"
+        unless ip_addr.is_a? IPAddr
+          raise ArgumentError, "An IP(v4/v6) address must be specified as an IPAddr object instance"
         end
       end
     end
