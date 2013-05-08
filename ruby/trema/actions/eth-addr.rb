@@ -25,7 +25,14 @@ module Trema
     # A base class for matching source and destination MAC addresses. 
     #
     class EthAddr < FlexibleAction
-      mac :mac_address, presence: true  
+      mac :mac_address, presence: true, validate_with: :check_mac_address
+
+
+      def check_mac_address mac_address, name
+        unless mac_address.is_a? Trema::Mac
+          raise ArgumentError, "A MAC address must be a Trema::Mac object instance"
+        end
+      end
     end
   end
 end
