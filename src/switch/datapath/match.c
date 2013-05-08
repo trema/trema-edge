@@ -473,10 +473,10 @@ compare_match_strict( const match *x, const match *y ) {
 
 static bool
 compare_match8( const match8 key, const match8 examinee ) {
-  if ( ( key.valid && !examinee.valid ) || ( !key.valid && !examinee.valid ) ) {
+  if ( !key.valid ) {
     return true;
   }
-  if ( !key.valid && examinee.valid ) {
+  if ( !examinee.valid ) {
     return false;
   }
 
@@ -491,10 +491,10 @@ compare_match8( const match8 key, const match8 examinee ) {
 
 static bool
 compare_match16( const match16 key, const match16 examinee ) {
-  if ( ( key.valid && !examinee.valid ) || ( !key.valid && !examinee.valid ) ) {
+  if ( !key.valid ) {
     return true;
   }
-  if ( !key.valid && examinee.valid ) {
+  if ( !examinee.valid ) {
     return false;
   }
 
@@ -509,10 +509,10 @@ compare_match16( const match16 key, const match16 examinee ) {
 
 static bool
 compare_match32( const match32 key, const match32 examinee ) {
-  if ( ( key.valid && !examinee.valid ) || ( !key.valid && !examinee.valid ) ) {
+  if ( !key.valid ) {
     return true;
   }
-  if ( !key.valid && examinee.valid ) {
+  if ( !examinee.valid ) {
     return false;
   }
 
@@ -527,10 +527,10 @@ compare_match32( const match32 key, const match32 examinee ) {
 
 static bool
 compare_match64( const match64 key, const match64 examinee ) {
-  if ( ( key.valid && !examinee.valid ) || ( !key.valid && !examinee.valid ) ) {
+  if ( !key.valid ) {
     return true;
   }
-  if ( !key.valid && examinee.valid ) {
+  if ( !examinee.valid ) {
     return false;
   }
 
