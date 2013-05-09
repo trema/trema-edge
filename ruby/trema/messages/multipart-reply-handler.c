@@ -435,7 +435,7 @@ unpack_port_desc_multipart_reply( VALUE r_attributes, void *data, size_t length 
     VALUE messages_port = rb_funcall( rb_eval_string( "Messages::Port" ), rb_intern( "new" ), 1, r_port_attrs );
     rb_ary_push( r_ports_ary, messages_port );
     length -= sizeof( struct ofp_port );
-    messages_port++;
+    port++;
   }
   HASH_SET( r_attributes, "ports", r_ports_ary );
 }
