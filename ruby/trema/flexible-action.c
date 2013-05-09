@@ -50,18 +50,6 @@ ip_addr_to_i( VALUE ip_addr ) {
 }
 
 
-static struct in6_addr
-ipv6_addr_to_in6_addr( VALUE ipv6_addr ) {
-  struct in6_addr in6_addr;
-
-  VALUE ipv6_addr_str = rb_funcall( ipv6_addr, rb_intern( "to_s" ), 0 );
-  const char *dst = rb_string_value_cstr( &ipv6_addr_str );
-  inet_pton( AF_INET6, dst, &in6_addr );
-
-  return in6_addr;
-}
-
-
 static VALUE
 pack_in_port( VALUE self, VALUE actions, VALUE options ) {
   VALUE r_in_port = HASH_REF( options, in_port );
@@ -98,13 +86,16 @@ pack_metadata( VALUE self, VALUE actions, VALUE options ) {
 static VALUE
 pack_eth_dst( VALUE self, VALUE actions, VALUE options ) {
   VALUE r_mac_address = HASH_REF( options, mac_address );
+  uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
+
   if ( rb_obj_is_kind_of( actions, basic_action_eval ) ) {
-    append_action_set_field_eth_dst( openflow_actions_ptr( actions ), mac_addr_to_cstr( r_mac_address ) );
+    append_action_set_field_eth_dst( openflow_actions_ptr( actions ), dl_addr_to_a( r_mac_address, dl_addr ) );
   }
   else if ( rb_obj_is_kind_of( actions, flexible_action_eval ) ) {
     uint8_t eth_dst_mask[ OFP_ETH_ALEN ] = { 0 };
-    append_oxm_match_eth_dst( oxm_match_ptr( actions ), mac_addr_to_cstr( r_mac_address ),  eth_dst_mask );
+    append_oxm_match_eth_dst( oxm_match_ptr( actions ), dl_addr_to_a( r_mac_address, dl_addr ), eth_dst_mask );
   }
+  xfree( dl_addr );
 
   return self;
 }
@@ -113,13 +104,16 @@ pack_eth_dst( VALUE self, VALUE actions, VALUE options ) {
 static VALUE
 pack_eth_src( VALUE self, VALUE actions, VALUE options ) {
   VALUE r_mac_address = HASH_REF( options, mac_address );
+  uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
+
   if ( rb_obj_is_kind_of( actions, basic_action_eval ) ) {
-    append_action_set_field_eth_src( openflow_actions_ptr( actions ), mac_addr_to_cstr( r_mac_address ) );
+    append_action_set_field_eth_src( openflow_actions_ptr( actions ), dl_addr_to_a( r_mac_address, dl_addr ) );
   }
   else if ( rb_obj_is_kind_of( actions, flexible_action_eval ) ) {
     uint8_t eth_src_mask[ OFP_ETH_ALEN ] = { 0 };
-    append_oxm_match_eth_src( oxm_match_ptr( actions ), mac_addr_to_cstr( r_mac_address ), eth_src_mask );
+    append_oxm_match_eth_src( oxm_match_ptr( actions ), dl_addr_to_a( r_mac_address, dl_addr ), eth_src_mask );
   }
+  xfree( dl_addr );
 
   return self;
 }
@@ -394,13 +388,16 @@ pack_arp_tpa( VALUE self, VALUE actions, VALUE options ) {
 static VALUE
 pack_arp_sha( VALUE self, VALUE actions, VALUE options ) {
   VALUE r_mac_address = HASH_REF( options, mac_address );
+  uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
+
   if ( rb_obj_is_kind_of( actions, basic_action_eval ) ) {
-    append_action_set_field_arp_sha( openflow_actions_ptr( actions ), mac_addr_to_cstr( r_mac_address ) );
+    append_action_set_field_arp_sha( openflow_actions_ptr( actions ), dl_addr_to_a( r_mac_address, dl_addr ) );
   }
   else if ( rb_obj_is_kind_of( actions, flexible_action_eval ) ) {
     uint8_t mask[ OFP_ETH_ALEN ] = { 0 };
-    append_oxm_match_arp_sha( oxm_match_ptr( actions ), mac_addr_to_cstr( r_mac_address ), mask );
+    append_oxm_match_arp_sha( oxm_match_ptr( actions ), dl_addr_to_a( r_mac_address, dl_addr ), mask );
   }
+  xfree( dl_addr );
 
   return self;
 }
@@ -409,13 +406,16 @@ pack_arp_sha( VALUE self, VALUE actions, VALUE options ) {
 static VALUE
 pack_arp_tha( VALUE self, VALUE actions, VALUE options ) {
   VALUE r_mac_address = HASH_REF( options, mac_address );
+  uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
+
   if ( rb_obj_is_kind_of( actions, basic_action_eval ) ) {
-    append_action_set_field_arp_tha( openflow_actions_ptr( actions ), mac_addr_to_cstr( r_mac_address ) );
+    append_action_set_field_arp_tha( openflow_actions_ptr( actions ), dl_addr_to_a( r_mac_address, dl_addr ) );
   }
   else if ( rb_obj_is_kind_of( actions, flexible_action_eval ) ) {
     uint8_t mask[ OFP_ETH_ALEN ] = { 0 };
-    append_oxm_match_arp_tha( oxm_match_ptr( actions ), mac_addr_to_cstr( r_mac_address ), mask );
+    append_oxm_match_arp_tha( oxm_match_ptr( actions ), dl_addr_to_a( r_mac_address, dl_addr ), mask );
   }
+  xfree( dl_addr );
 
   return self;
 }
@@ -424,14 +424,17 @@ pack_arp_tha( VALUE self, VALUE actions, VALUE options ) {
 static VALUE
 pack_ipv6_src_addr( VALUE self, VALUE actions, VALUE options ) {
   VALUE r_ip_addr = HASH_REF( options, ip_addr ); 
+  struct in6_addr *in6_addr = ( struct in6_addr * ) xmalloc( sizeof( struct in6_addr ) );
+
   if ( rb_obj_is_kind_of( actions, basic_action_eval ) ) {
-    append_action_set_field_ipv6_src( openflow_actions_ptr( actions ), ipv6_addr_to_in6_addr( r_ip_addr ) );
+    append_action_set_field_ipv6_src( openflow_actions_ptr( actions ), ipv6_addr_to_in6_addr( r_ip_addr, in6_addr ) );
   }
   else if ( rb_obj_is_kind_of( actions, flexible_action_eval ) ) {
     struct in6_addr in6_mask;
     memset( &in6_mask, 0, sizeof( struct in6_addr ) );
-    append_oxm_match_ipv6_src( oxm_match_ptr( actions ), ipv6_addr_to_in6_addr( r_ip_addr ), in6_mask );
+    append_oxm_match_ipv6_src( oxm_match_ptr( actions ), ipv6_addr_to_in6_addr( r_ip_addr, in6_addr ), in6_mask );
   }
+  xfree( in6_addr );
 
   return self;
 }
@@ -440,14 +443,17 @@ pack_ipv6_src_addr( VALUE self, VALUE actions, VALUE options ) {
 static VALUE
 pack_ipv6_dst_addr( VALUE self, VALUE actions, VALUE options ) {
   VALUE r_ip_addr = HASH_REF( options, ip_addr ); 
+  struct in6_addr *in6_addr = ( struct in6_addr * ) xmalloc( sizeof( struct in6_addr ) );
+
   if ( rb_obj_is_kind_of( actions, basic_action_eval ) ) {
-    append_action_set_field_ipv6_dst( openflow_actions_ptr( actions ), ipv6_addr_to_in6_addr( r_ip_addr ) );
+    append_action_set_field_ipv6_dst( openflow_actions_ptr( actions ), ipv6_addr_to_in6_addr( r_ip_addr, in6_addr ) );
   }
   else if ( rb_obj_is_kind_of( actions, flexible_action_eval ) ) {
     struct in6_addr in6_mask;
     memset( &in6_mask, 0, sizeof( struct in6_addr ) );
-    append_oxm_match_ipv6_dst( oxm_match_ptr( actions ), ipv6_addr_to_in6_addr( r_ip_addr ), in6_mask );
+    append_oxm_match_ipv6_dst( oxm_match_ptr( actions ), ipv6_addr_to_in6_addr( r_ip_addr, in6_addr ), in6_mask );
   }
+  xfree( in6_addr );
 
   return self;
 }
@@ -498,12 +504,15 @@ pack_icmpv6_code( VALUE self, VALUE actions, VALUE options ) {
 static VALUE
 pack_ipv6_nd_target( VALUE self, VALUE actions, VALUE options ) {
   VALUE r_ip_addr = HASH_REF( options, ip_addr );
+  struct in6_addr *in6_addr = ( struct in6_addr * ) xmalloc( sizeof( struct in6_addr ) );
+
   if ( rb_obj_is_kind_of( actions, basic_action_eval ) ) {
-    append_action_set_field_ipv6_nd_target( openflow_actions_ptr( actions ), ipv6_addr_to_in6_addr( r_ip_addr ) );
+    append_action_set_field_ipv6_nd_target( openflow_actions_ptr( actions ), ipv6_addr_to_in6_addr( r_ip_addr, in6_addr ) );
   }
   else if ( rb_obj_is_kind_of( actions, flexible_action_eval ) ) {
-    append_oxm_match_ipv6_nd_target( oxm_match_ptr( actions ), ipv6_addr_to_in6_addr( r_ip_addr ) );
+    append_oxm_match_ipv6_nd_target( oxm_match_ptr( actions ), ipv6_addr_to_in6_addr( r_ip_addr, in6_addr ) );
   }
+  xfree( in6_addr );
 
   return self;
 }
@@ -512,12 +521,15 @@ pack_ipv6_nd_target( VALUE self, VALUE actions, VALUE options ) {
 static VALUE
 pack_ipv6_nd_sll( VALUE self, VALUE actions, VALUE options ) {
   VALUE r_mac_address = HASH_REF( options, mac_address );
+  uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
+
   if ( rb_obj_is_kind_of( actions, basic_action_eval ) ) {
-    append_action_set_field_ipv6_nd_sll( openflow_actions_ptr( actions ), mac_addr_to_cstr( r_mac_address ) );
+    append_action_set_field_ipv6_nd_sll( openflow_actions_ptr( actions ), dl_addr_to_a( r_mac_address, dl_addr ) );
   }
   else if ( rb_obj_is_kind_of( actions, flexible_action_eval ) ) {
-    append_oxm_match_ipv6_nd_sll( oxm_match_ptr( actions ), mac_addr_to_cstr( r_mac_address ) );
+    append_oxm_match_ipv6_nd_sll( oxm_match_ptr( actions ), dl_addr_to_a( r_mac_address, dl_addr ) );
   }
+  xfree( dl_addr );
 
   return self;
 }
@@ -526,13 +538,16 @@ pack_ipv6_nd_sll( VALUE self, VALUE actions, VALUE options ) {
 static VALUE
 pack_ipv6_nd_tll( VALUE self, VALUE actions, VALUE options ) {
   VALUE r_mac_address = HASH_REF( options, mac_address );
+  uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
+
   if ( rb_obj_is_kind_of( actions, basic_action_eval ) ) {
-    append_action_set_field_ipv6_nd_tll( openflow_actions_ptr( actions ), mac_addr_to_cstr( r_mac_address ) );
+    append_action_set_field_ipv6_nd_tll( openflow_actions_ptr( actions ), dl_addr_to_a( r_mac_address, dl_addr ) );
 
   }
   else if ( rb_obj_is_kind_of( actions, flexible_action_eval ) ) {
-    append_oxm_match_ipv6_nd_tll( oxm_match_ptr( actions ), mac_addr_to_cstr( r_mac_address ) );
+    append_oxm_match_ipv6_nd_tll( oxm_match_ptr( actions ), dl_addr_to_a( r_mac_address, dl_addr ) );
   }
+  xfree( dl_addr );
 
   return self;
 }
