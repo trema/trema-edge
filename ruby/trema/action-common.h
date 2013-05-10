@@ -25,7 +25,7 @@
 
 uint32_t nw_addr_to_i( VALUE nw_addr );
 uint8_t *dl_addr_to_a( VALUE dl_addr, uint8_t *ret_dl_addr );
-uint8_t *mac_addr_to_cstr( VALUE mac_addr );
+struct in6_addr ipv6_addr_to_in6_addr( VALUE ipv6_addr, struct in6_addr *in6_addr );
 openflow_actions *pack_basic_action( VALUE r_action );
 oxm_matches *pack_flexible_action( VALUE r_action );
 openflow_instructions *pack_instruction( VALUE r_instruction );

@@ -114,6 +114,13 @@ init_parse_args( int argc, char **argv ) {
   args->to_protocol_queue = create_message_queue();
   assert( args->to_protocol_queue != NULL );
 
+  ignore_sigpipe();
+#ifdef NOT_TESTED
+  if ( args->run_as_daemon == true ) {
+    daemonize( get_switch_home() );
+  }
+#endif
+
   char *switch_pid_dir = get_switch_pid_dir();
   write_pid( switch_pid_dir, name );
   char cmd[ PATH_MAX ];
@@ -124,13 +131,6 @@ init_parse_args( int argc, char **argv ) {
   snprintf( cmd, PATH_MAX, "chmod 0666 %s/%s.pid", switch_pid_dir, name );
   system( cmd );
   xfree( switch_pid_dir );
-
-  ignore_sigpipe();
-#ifdef NOT_TESTED
-  if ( args->run_as_daemon == true ) {
-    daemonize( get_switch_home() );
-  }
-#endif
 
   return args;
 }

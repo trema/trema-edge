@@ -39,10 +39,14 @@ dl_addr_to_a( VALUE dl_addr, uint8_t *ret_dl_addr ) {
 }
 
 
-uint8_t *
-mac_addr_to_cstr( VALUE mac_addr ) {
-  static uint8_t dl_addr[ OFP_ETH_ALEN ];
-  return dl_addr_to_a( mac_addr, dl_addr );
+struct in6_addr
+ipv6_addr_to_in6_addr( VALUE ipv6_addr, struct in6_addr *in6_addr ) {
+
+  VALUE ipv6_addr_str = rb_funcall( ipv6_addr, rb_intern( "to_s" ), 0 );
+  const char *dst = rb_string_value_cstr( &ipv6_addr_str );
+  inet_pton( AF_INET6, dst, in6_addr );
+
+  return *in6_addr;
 }
 
 
