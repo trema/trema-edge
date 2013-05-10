@@ -24,7 +24,6 @@ module Trema
 
 
     def check_actions actions, name
-      raise ArgumentError, "At least one action object must be specified for #{ name }" if actions.empty?
     end
   end
 end
