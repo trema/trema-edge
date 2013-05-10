@@ -366,7 +366,6 @@ static list_element *
 lookup_flow_entries_with_table_id( const uint8_t table_id, const match *match_key, const uint16_t priority,
                                    const bool strict, const bool update_counters ) {
   assert( valid_table_id( table_id ) );
-  assert( strict == true || priority == 0 );
 
   if ( get_logging_level() >= LOG_DEBUG ) {
     debug( "Looking up flow entries ( table_id = %#x, match = %p, priority = %u, strict = %s, update_counters = %s ).",
