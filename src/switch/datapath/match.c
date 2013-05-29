@@ -472,16 +472,16 @@ compare_match_strict( const match *x, const match *y ) {
 
 
 static bool
-compare_match8( const match8 key, const match8 examinee ) {
-  if ( ( key.valid && !examinee.valid ) || ( !key.valid && !examinee.valid ) ) {
+compare_match8( const match8 narrow, const match8 wide ) {
+  if ( !wide.valid ) {
     return true;
   }
-  if ( !key.valid && examinee.valid ) {
+  if ( !narrow.valid ) {
     return false;
   }
 
-  uint8_t mask = key.mask & examinee.mask;
-  if ( ( key.value & mask ) == ( examinee.value & mask ) ) {
+  uint8_t mask = narrow.mask & wide.mask;
+  if ( ( narrow.value & mask ) == ( wide.value & wide.mask ) ) {
     return true;
   }
 
@@ -490,16 +490,16 @@ compare_match8( const match8 key, const match8 examinee ) {
 
 
 static bool
-compare_match16( const match16 key, const match16 examinee ) {
-  if ( ( key.valid && !examinee.valid ) || ( !key.valid && !examinee.valid ) ) {
+compare_match16( const match16 narrow, const match16 wide ) {
+  if ( !wide.valid ) {
     return true;
   }
-  if ( !key.valid && examinee.valid ) {
+  if ( !narrow.valid ) {
     return false;
   }
 
-  uint16_t mask = key.mask & examinee.mask;
-  if ( ( key.value & mask ) == ( examinee.value & mask ) ) {
+  uint16_t mask = narrow.mask & wide.mask;
+  if ( ( narrow.value & mask ) == ( wide.value & wide.mask ) ) {
     return true;
   }
 
@@ -508,16 +508,16 @@ compare_match16( const match16 key, const match16 examinee ) {
 
 
 static bool
-compare_match32( const match32 key, const match32 examinee ) {
-  if ( ( key.valid && !examinee.valid ) || ( !key.valid && !examinee.valid ) ) {
+compare_match32( const match32 narrow, const match32 wide ) {
+  if ( !wide.valid ) {
     return true;
   }
-  if ( !key.valid && examinee.valid ) {
+  if ( !narrow.valid ) {
     return false;
   }
 
-  uint32_t mask = key.mask & examinee.mask;
-  if ( ( key.value & mask ) == ( examinee.value & mask ) ) {
+  uint32_t mask = narrow.mask & wide.mask;
+  if ( ( narrow.value & mask ) == ( wide.value & wide.mask ) ) {
     return true;
   }
 
@@ -526,16 +526,16 @@ compare_match32( const match32 key, const match32 examinee ) {
 
 
 static bool
-compare_match64( const match64 key, const match64 examinee ) {
-  if ( ( key.valid && !examinee.valid ) || ( !key.valid && !examinee.valid ) ) {
+compare_match64( const match64 narrow, const match64 wide ) {
+  if ( !wide.valid ) {
     return true;
   }
-  if ( !key.valid && examinee.valid ) {
+  if ( !narrow.valid ) {
     return false;
   }
 
-  uint64_t mask = key.mask & examinee.mask;
-  if ( ( key.value & mask ) == ( examinee.value & mask ) ) {
+  uint64_t mask = narrow.mask & wide.mask;
+  if ( ( narrow.value & mask ) == ( wide.value & wide.mask ) ) {
     return true;
   }
 
@@ -544,151 +544,151 @@ compare_match64( const match64 key, const match64 examinee ) {
 
 
 bool
-compare_match( const match *key, const match *examinee ) {
-  assert( key != NULL );
-  assert( examinee != NULL );
+compare_match( const match *narrow, const match *wide ) {
+  assert( narrow != NULL );
+  assert( wide != NULL );
 
-  if ( !compare_match16( key->arp_op, examinee->arp_op ) ) {
+  if ( !compare_match16( narrow->arp_op, wide->arp_op ) ) {
     return false;
   }
   for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
-    if ( !compare_match8( key->arp_sha[ i ], examinee->arp_sha[ i ] ) ) {
+    if ( !compare_match8( narrow->arp_sha[ i ], wide->arp_sha[ i ] ) ) {
       return false;
     }
   }
-  if ( !compare_match32( key->arp_spa, examinee->arp_spa ) ) {
+  if ( !compare_match32( narrow->arp_spa, wide->arp_spa ) ) {
     return false;
   }
   for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
-    if ( !compare_match8( key->arp_tha[ i ], examinee->arp_tha[ i ] ) ) {
+    if ( !compare_match8( narrow->arp_tha[ i ], wide->arp_tha[ i ] ) ) {
       return false;
     }
   }
-  if ( !compare_match32( key->arp_tpa, examinee->arp_tpa ) ) {
+  if ( !compare_match32( narrow->arp_tpa, wide->arp_tpa ) ) {
     return false;
   }
-  if ( !compare_match32( key->in_phy_port, examinee->in_phy_port ) ) {
+  if ( !compare_match32( narrow->in_phy_port, wide->in_phy_port ) ) {
     return false;
   }
-  if ( !compare_match32( key->in_port, examinee->in_port ) ) {
+  if ( !compare_match32( narrow->in_port, wide->in_port ) ) {
     return false;
-  }
-
-  for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
-    if ( !compare_match8( key->eth_dst[ i ], examinee->eth_dst[ i ] ) ) {
-      return false;
-    }
-  }
-  for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
-    if ( !compare_match8( key->eth_src[ i ], examinee->eth_src[ i ] ) ) {
-      return false;
-    }
   }
 
-  if ( !compare_match16( key->eth_type, examinee->eth_type ) ) {
+  for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
+    if ( !compare_match8( narrow->eth_dst[ i ], wide->eth_dst[ i ] ) ) {
+      return false;
+    }
+  }
+  for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
+    if ( !compare_match8( narrow->eth_src[ i ], wide->eth_src[ i ] ) ) {
+      return false;
+    }
+  }
+
+  if ( !compare_match16( narrow->eth_type, wide->eth_type ) ) {
     return false;
   }
-  if ( !compare_match8( key->icmpv4_code, examinee->icmpv4_code ) ) {
+  if ( !compare_match8( narrow->icmpv4_code, wide->icmpv4_code ) ) {
     return false;
   }
-  if ( !compare_match8( key->icmpv4_type, examinee->icmpv4_type ) ) {
+  if ( !compare_match8( narrow->icmpv4_type, wide->icmpv4_type ) ) {
     return false;
   }
-  if ( !compare_match8( key->icmpv6_code, examinee->icmpv6_code ) ) {
+  if ( !compare_match8( narrow->icmpv6_code, wide->icmpv6_code ) ) {
     return false;
   }
-  if ( !compare_match8( key->icmpv6_type, examinee->icmpv6_type ) ) {
+  if ( !compare_match8( narrow->icmpv6_type, wide->icmpv6_type ) ) {
     return false;
   }
-  if ( !compare_match8( key->ip_dscp, examinee->ip_dscp ) ) {
+  if ( !compare_match8( narrow->ip_dscp, wide->ip_dscp ) ) {
     return false;
   }
-  if ( !compare_match8( key->ip_ecn, examinee->ip_ecn ) ) {
+  if ( !compare_match8( narrow->ip_ecn, wide->ip_ecn ) ) {
     return false;
   }
-  if ( !compare_match8( key->ip_proto, examinee->ip_proto ) ) {
+  if ( !compare_match8( narrow->ip_proto, wide->ip_proto ) ) {
     return false;
   }
-  if ( !compare_match32( key->ipv4_dst, examinee->ipv4_dst ) ) {
+  if ( !compare_match32( narrow->ipv4_dst, wide->ipv4_dst ) ) {
     return false;
   }
-  if ( !compare_match32( key->ipv4_src, examinee->ipv4_src ) ) {
+  if ( !compare_match32( narrow->ipv4_src, wide->ipv4_src ) ) {
     return false;
   }
 
   for ( int i = 0; i < IPV6_ADDRLEN; i++ ) {
-    if ( !compare_match8( key->ipv6_dst[ i ], examinee->ipv6_dst[ i ] ) ) {
+    if ( !compare_match8( narrow->ipv6_dst[ i ], wide->ipv6_dst[ i ] ) ) {
       return false;
     }
   }
-  if ( !compare_match16( key->ipv6_exthdr, examinee->ipv6_exthdr ) ) {
+  if ( !compare_match16( narrow->ipv6_exthdr, wide->ipv6_exthdr ) ) {
     return false;
   }
-  if ( !compare_match32( key->ipv6_flabel, examinee->ipv6_flabel ) ) {
+  if ( !compare_match32( narrow->ipv6_flabel, wide->ipv6_flabel ) ) {
     return false;
   }
 
   for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
-    if ( !compare_match8( key->ipv6_nd_sll[ i ], examinee->ipv6_nd_sll[ i ] ) ) {
+    if ( !compare_match8( narrow->ipv6_nd_sll[ i ], wide->ipv6_nd_sll[ i ] ) ) {
       return false;
     }
   }
   for ( int i = 0; i < IPV6_ADDRLEN; i++ ) {
-    if ( !compare_match8( key->ipv6_nd_target[ i ], examinee->ipv6_nd_target[ i ] ) ) {
+    if ( !compare_match8( narrow->ipv6_nd_target[ i ], wide->ipv6_nd_target[ i ] ) ) {
       return false;
     }
   }
   for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
-    if ( !compare_match8( key->ipv6_nd_tll[ i ], examinee->ipv6_nd_tll[ i ] ) ) {
+    if ( !compare_match8( narrow->ipv6_nd_tll[ i ], wide->ipv6_nd_tll[ i ] ) ) {
       return false;
     }
   }
   for ( int i = 0; i < IPV6_ADDRLEN; i++ ) {
-    if ( !compare_match8( key->ipv6_src[ i ], examinee->ipv6_src[ i ] ) ) {
+    if ( !compare_match8( narrow->ipv6_src[ i ], wide->ipv6_src[ i ] ) ) {
       return false;
     }
   }
 
-  if ( !compare_match64( key->metadata, examinee->metadata ) ) {
+  if ( !compare_match64( narrow->metadata, wide->metadata ) ) {
     return false;
   }
-  if ( !compare_match8( key->mpls_bos, examinee->mpls_bos ) ) {
+  if ( !compare_match8( narrow->mpls_bos, wide->mpls_bos ) ) {
     return false;
   }
-  if ( !compare_match32( key->mpls_label, examinee->mpls_label ) ) {
+  if ( !compare_match32( narrow->mpls_label, wide->mpls_label ) ) {
     return false;
   }
-  if ( !compare_match8( key->mpls_tc, examinee->mpls_tc ) ) {
+  if ( !compare_match8( narrow->mpls_tc, wide->mpls_tc ) ) {
     return false;
   }
-  if ( !compare_match16( key->sctp_dst, examinee->sctp_dst ) ) {
+  if ( !compare_match16( narrow->sctp_dst, wide->sctp_dst ) ) {
     return false;
   }
-  if ( !compare_match16( key->sctp_src, examinee->sctp_src ) ) {
+  if ( !compare_match16( narrow->sctp_src, wide->sctp_src ) ) {
     return false;
   }
-  if ( !compare_match16( key->tcp_dst, examinee->tcp_dst ) ) {
+  if ( !compare_match16( narrow->tcp_dst, wide->tcp_dst ) ) {
     return false;
   }
-  if ( !compare_match16( key->tcp_src, examinee->tcp_src ) ) {
+  if ( !compare_match16( narrow->tcp_src, wide->tcp_src ) ) {
     return false;
   }
-  if ( !compare_match64( key->tunnel_id, examinee->tunnel_id ) ) {
+  if ( !compare_match64( narrow->tunnel_id, wide->tunnel_id ) ) {
     return false;
   }
-  if ( !compare_match16( key->udp_dst, examinee->udp_dst ) ) {
+  if ( !compare_match16( narrow->udp_dst, wide->udp_dst ) ) {
     return false;
   }
-  if ( !compare_match16( key->udp_src, examinee->udp_src ) ) {
+  if ( !compare_match16( narrow->udp_src, wide->udp_src ) ) {
     return false;
   }
-  if ( !compare_match8( key->vlan_pcp, examinee->vlan_pcp ) ) {
+  if ( !compare_match8( narrow->vlan_pcp, wide->vlan_pcp ) ) {
     return false;
   }
-  if ( !compare_match16( key->vlan_vid, examinee->vlan_vid ) ) {
+  if ( !compare_match16( narrow->vlan_vid, wide->vlan_vid ) ) {
     return false;
   }
-  if ( !compare_match32( key->pbb_isid, examinee->pbb_isid ) ) {
+  if ( !compare_match32( narrow->pbb_isid, wide->pbb_isid ) ) {
     return false;
   }
 
