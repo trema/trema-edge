@@ -363,15 +363,15 @@ finalize_flow_table( const uint8_t table_id ) {
 
 
 static list_element *
-lookup_flow_entries_with_table_id( const uint8_t table_id, const match *match, const uint16_t priority,
+lookup_flow_entries_with_table_id( const uint8_t table_id, const match *match_key, const uint16_t priority,
                                    const bool strict, const bool update_counters ) {
   assert( valid_table_id( table_id ) );
 
   if ( get_logging_level() >= LOG_DEBUG ) {
     debug( "Looking up flow entries ( table_id = %#x, match = %p, priority = %u, strict = %s, update_counters = %s ).",
-           table_id, match, priority, strict ? "true" : "false", update_counters ? "true" : "false" );
-    if ( match != NULL ) {
-      dump_match( match, debug );
+           table_id, match_key, priority, strict ? "true" : "false", update_counters ? "true" : "false" );
+    if ( match_key != NULL ) {
+      dump_match( match_key, debug );
     }
   }
 
@@ -390,11 +390,21 @@ lookup_flow_entries_with_table_id( const uint8_t table_id, const match *match, c
   for ( list_element *e = table->entries; e != NULL; e = e->next ) {
     flow_entry *entry = e->data;
     assert( entry != NULL );
+    
+    const match *narrow, *wide;
+    if ( update_counters ) {
+      narrow = match_key;
+      wide = entry->match;
+    } else {
+      narrow = entry->match;
+      wide = match_key;
+    }
+    
     if ( strict ) {
       if ( entry->priority < priority ) {
         break;
       }
-      if ( priority == entry->priority && compare_match_strict( match, entry->match ) ) {
+      if ( priority == entry->priority && compare_match_strict( narrow, wide ) ) {
         if ( update_counters ) {
           increment_matched_count( table_id );
         }
@@ -403,7 +413,7 @@ lookup_flow_entries_with_table_id( const uint8_t table_id, const match *match, c
       }
     }
     else {
-      if ( compare_match( match, entry->match ) ) {
+      if ( compare_match( narrow, wide ) ) {
         if ( update_counters ) {
           increment_matched_count( table_id );
         }
