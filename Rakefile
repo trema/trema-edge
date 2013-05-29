@@ -270,7 +270,8 @@ def switch_tests
       "#{ Trema.src_unittests }/switch/switch/group-helper-test.c",
       "#{ Trema.src_unittests }/switch/switch/mocks.c",
       "#{ Trema.src_trema_switch }/group-helper.c",
-      "#{ Trema.src_trema_switch }/action*.c"
+      "#{ Trema.src_trema_switch }/action*.c",
+      "#{ Trema.src_trema_switch }/oxm*.c"
     ]
   }
 end
