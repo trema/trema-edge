@@ -175,13 +175,15 @@ update_device_status( ether_device *device ) {
       warn( "Failed to retrieve statuses of %s ( ret = %d, error = %s [%d] ).",
             device->name, ret, safe_strerror_r( errno, error_string, sizeof( error_string ) ), errno );
       warn( "Assuming 100Mbps/Full Duplex/Twisted Pair link ( device = %s ).", device->name );
-      ethtool_cmd_speed_set( &ec, SPEED_100 );
-      ec.duplex = DUPLEX_FULL;
-      ec.port = PORT_TP;
-      ec.advertising = SUPPORTED_100baseT_Full | SUPPORTED_TP;
-      ec.supported = ADVERTISED_100baseT_Full | ADVERTISED_TP;
       device->status.can_retrieve_link_status = false;
     }
+  }
+  if ( !device->status.can_retrieve_link_status ) {
+    ethtool_cmd_speed_set( &ec, SPEED_100 );
+    ec.duplex = DUPLEX_FULL;
+    ec.port = PORT_TP;
+    ec.advertising = SUPPORTED_100baseT_Full | SUPPORTED_TP;
+    ec.supported = ADVERTISED_100baseT_Full | ADVERTISED_TP;
   }
 
   struct ethtool_pauseparam ep;

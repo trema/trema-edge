@@ -1595,7 +1595,7 @@ void hton_group_stats( struct ofp_group_stats *dst, const struct ofp_group_stats
 }
 
 
-void ntoh_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_group_desc_stats *src ) {
+void ntoh_group_desc( struct ofp_group_desc *dst, const struct ofp_group_desc *src ) {
   assert( src != NULL );
   assert( dst != NULL );
   assert( ntohs( src->length ) != 0 );
@@ -1605,7 +1605,7 @@ void ntoh_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_g
   dst->pad = 0;
   dst->group_id = ntohl( src->group_id );
 
-  size_t offset = offsetof( struct ofp_group_desc_stats, buckets );
+  size_t offset = offsetof( struct ofp_group_desc, buckets );
   size_t buckets_length = dst->length - offset;
 
   while ( buckets_length >= sizeof( struct ofp_bucket ) ) {
@@ -1624,7 +1624,7 @@ void ntoh_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_g
 }
 
 
-void hton_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_group_desc_stats *src ) {
+void hton_group_desc( struct ofp_group_desc *dst, const struct ofp_group_desc *src ) {
   assert( src != NULL );
   assert( dst != NULL );
   assert( src->length != 0 );
@@ -1634,7 +1634,7 @@ void hton_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_g
   dst->pad = 0;
   dst->group_id = htonl( src->group_id );
 
-  size_t offset = offsetof( struct ofp_group_desc_stats, buckets );
+  size_t offset = offsetof( struct ofp_group_desc, buckets );
   size_t buckets_length = ntohs( dst->length ) - offset;
 
   while ( buckets_length >= sizeof( struct ofp_bucket ) ) {

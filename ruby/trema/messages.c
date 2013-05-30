@@ -93,7 +93,6 @@ pack_echo_request_msg( VALUE self, VALUE options ) {
 static VALUE
 pack_features_request_msg( VALUE self, VALUE options ) {
   PACK_MSG( features_request, self, options );
-  return self;
 }
 
 

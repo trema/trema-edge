@@ -24,17 +24,6 @@
 #include "unpack-util.h"
 
 
-struct in6_addr
-ipv6_addr_to_in6_addr( VALUE ipv6_addr ) {
-  struct in6_addr in6_addr;
-
-  VALUE ipv6_addr_str = rb_funcall( ipv6_addr, rb_intern( "to_s" ), 0 );
-  const char *dst = rb_string_value_cstr( &ipv6_addr_str );
-  inet_pton( AF_INET6, dst, &in6_addr );
-  return in6_addr;
-}
-
-
 buffer *
 r_array_to_buffer( VALUE r_array ) {
   buffer *data = NULL;
@@ -114,11 +103,15 @@ r_match_to_oxm_match( VALUE r_match, oxm_matches *match ) {
 
   VALUE r_eth_src = rb_iv_get( r_match, "@eth_src" );
   if ( !NIL_P( r_eth_src ) ) {
-    append_oxm_match_eth_src( match, mac_addr_to_cstr( r_eth_src ), tmp_mac_mask );
+    uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
+    append_oxm_match_eth_src( match, dl_addr_to_a( r_eth_src, dl_addr ), tmp_mac_mask );
+    xfree( dl_addr );
   }
   VALUE r_eth_dst = rb_iv_get( r_match, "@eth_dst" );
   if ( !NIL_P( r_eth_dst ) ) {
-    append_oxm_match_eth_dst( match, mac_addr_to_cstr( r_eth_dst ), tmp_mac_mask );
+    uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
+    append_oxm_match_eth_dst( match, dl_addr_to_a( r_eth_dst, dl_addr ), tmp_mac_mask );
+    xfree( dl_addr );
   }
 
   VALUE r_vlan_vid = rb_iv_get( r_match, "@vlan_vid" );
@@ -164,15 +157,16 @@ r_match_to_oxm_match( VALUE r_match, oxm_matches *match ) {
 
   struct in6_addr tmp_ipv6_mask;
   memset( &tmp_ipv6_mask, 0, sizeof( tmp_ipv6_mask ) );
+  struct in6_addr *in6_addr = ( struct in6_addr * ) xmalloc( sizeof( struct in6_addr ) );
 
   VALUE r_ipv6_src = rb_iv_get( r_match, "@ipv6_src" );
   if ( !NIL_P( r_ipv6_src ) ) {
-    append_oxm_match_ipv6_src( match, ipv6_addr_to_in6_addr( r_ipv6_src ), tmp_ipv6_mask );
+    append_oxm_match_ipv6_src( match, ipv6_addr_to_in6_addr( r_ipv6_src, in6_addr ), tmp_ipv6_mask );
   }
 
   VALUE r_ipv6_dst = rb_iv_get( r_match, "@ipv6_dst" );
   if ( !NIL_P( r_ipv6_dst ) ) {
-    append_oxm_match_ipv6_dst( match, ipv6_addr_to_in6_addr( r_ipv6_dst ), tmp_ipv6_mask );
+    append_oxm_match_ipv6_dst( match, ipv6_addr_to_in6_addr( r_ipv6_dst, in6_addr ), tmp_ipv6_mask );
   }
 
   VALUE r_ipv6_flabel = rb_iv_get( r_match, "@ipv6_flabel" );
@@ -202,12 +196,16 @@ r_match_to_oxm_match( VALUE r_match, oxm_matches *match ) {
 
   VALUE r_arp_sha = rb_iv_get( r_match, "@arp_sha" );
   if ( !NIL_P( r_arp_sha ) ) {
-    append_oxm_match_arp_sha( match, mac_addr_to_cstr( r_arp_sha ), tmp_mac_mask );
+    uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
+    append_oxm_match_arp_sha( match, dl_addr_to_a( r_arp_sha, dl_addr ), tmp_mac_mask );
+    xfree( dl_addr );
   }
 
   VALUE r_arp_tha = rb_iv_get( r_match, "@arp_tha" );
   if ( !NIL_P( r_arp_tha ) ) {
-    append_oxm_match_arp_tha( match, mac_addr_to_cstr( r_arp_tha ), tmp_mac_mask );
+    uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
+    append_oxm_match_arp_tha( match, dl_addr_to_a( r_arp_tha, dl_addr ), tmp_mac_mask );
+    xfree( dl_addr );
   }
 
   VALUE r_mpls_label = rb_iv_get( r_match, "@mpls_label" );
@@ -279,20 +277,25 @@ r_match_to_oxm_match( VALUE r_match, oxm_matches *match ) {
     if ( icmpv6_type == 135 || icmpv6_type == 136 ) {
       VALUE r_ipv6_nd_target = rb_iv_get( r_match, "@ipv6_nd_target" );
       if ( !NIL_P( r_ipv6_nd_target ) ) {
-        append_oxm_match_ipv6_nd_target( match, ipv6_addr_to_in6_addr( r_ipv6_nd_target ) );
+        append_oxm_match_ipv6_nd_target( match, ipv6_addr_to_in6_addr( r_ipv6_nd_target, in6_addr ) );
       }
 
       VALUE r_ipv6_nd_sll = rb_iv_get( r_match, "@ipv6_nd_sll" );
       if ( !NIL_P( r_ipv6_nd_sll ) ) {
-        append_oxm_match_ipv6_nd_sll( match, mac_addr_to_cstr( r_ipv6_nd_sll ) );
+        uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
+        append_oxm_match_ipv6_nd_sll( match, dl_addr_to_a( r_ipv6_nd_sll, dl_addr ) );
+        xfree( dl_addr );
       }
 
       VALUE r_ipv6_nd_tll = rb_iv_get( r_match, "@ipv6_nd_tll" );
       if ( !NIL_P( r_ipv6_nd_tll ) ) {
-        append_oxm_match_ipv6_nd_tll( match, mac_addr_to_cstr( r_ipv6_nd_tll ) );
+        uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
+        append_oxm_match_ipv6_nd_tll( match, dl_addr_to_a( r_ipv6_nd_tll, dl_addr ) );
+        xfree( dl_addr );
       }
     }
   }
+  xfree( in6_addr );
 }
 
 

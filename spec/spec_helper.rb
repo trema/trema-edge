@@ -29,6 +29,7 @@ require "trema"
 require "trema/dsl/configuration"
 require "trema/dsl/context"
 require "trema/util"
+require "trema/shell/send_packets"
 
 
 require "coveralls"
@@ -76,29 +77,38 @@ end
 include Trema::Util
 
 
-class Network
-  def initialize &block
-    @context = Trema::DSL::Parser.new.eval( &block )
+class MockController < Controller
+  def initialize network_blk
+    @network_blk = network_blk
+    @context = Trema::DSL::Parser.new.eval( &network_blk )
   end
 
 
-  def run controller_class, &test
-    begin
-      trema_run controller_class
-      test.call
-    ensure
-      trema_kill
+  def start_receiving
+    if @network_blk.respond_to? :call
+      trema_run
+    else
+      raise ArgumentError, "Network configuration should a proc block"
     end
   end
 
 
-  ################################################################################
+  def stop_receiving
+    trema_kill
+  end
+
+
+  def time_sleep interval
+    sleep interval
+    yield
+  end
+
+
   private
-  ################################################################################
 
 
-  def trema_run controller_class
-    controller = controller_class.new
+  def trema_run
+    controller = self
     if not controller.is_a?( Trema::Controller )
       raise "#{ controller_class } is not a subclass of Trema::Controller"
     end
@@ -116,9 +126,8 @@ class Network
     @context.hosts.each do | name, each |
       each.run!
     end
-    @context.switches.each do | name, each |
+    @context.trema_switches.each do | name, each |
       each.run!
-      drop_packets_from_unknown_hosts each
     end
     @context.links.each do | name, each |
       each.up!
@@ -139,20 +148,6 @@ class Network
     @th_controller.join if @th_controller
     sleep 2  # FIXME: wait until switch_manager.down?
   end
-
-
-  def drop_packets_from_unknown_hosts switch
-    ofctl = Trema::Ofctl.new
-    ofctl.add_flow switch, :priority => 0, :actions => "drop"
-    @context.hosts.each do | name, each |
-      ofctl.add_flow switch, :dl_type => "0x0800", :nw_src => each.ip, :priority => 1, :actions => "controller"
-    end
-  end
-end
-
-
-def network &block
-  Network.new &block
 end
 
 

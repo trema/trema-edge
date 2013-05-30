@@ -1623,7 +1623,7 @@ create_group_desc_multipart_reply( const uint32_t transaction_id, const uint16_t
   list_element *q = NULL;
   list_element *queue = NULL;
   struct ofp_multipart_reply *stats_reply;
-  struct ofp_group_desc_stats *qs, *group_desc_stats;
+  struct ofp_group_desc *qs, *group_desc;
 
   debug( "Creating a group desc multipart reply ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
@@ -1635,8 +1635,8 @@ create_group_desc_multipart_reply( const uint32_t transaction_id, const uint16_t
   queue = q;
   while ( queue != NULL ) {
     n_queues++;
-    group_desc_stats = ( struct ofp_group_desc_stats * ) queue->data;
-    group_descs_len = ( uint16_t ) ( group_descs_len + group_desc_stats->length );
+    group_desc = ( struct ofp_group_desc * ) queue->data;
+    group_descs_len = ( uint16_t ) ( group_descs_len + group_desc->length );
     queue = queue->next;
   }
 
@@ -1648,14 +1648,14 @@ create_group_desc_multipart_reply( const uint32_t transaction_id, const uint16_t
   assert( buffer != NULL );
 
   stats_reply = ( struct ofp_multipart_reply * ) buffer->data;
-  group_desc_stats = ( struct ofp_group_desc_stats * ) stats_reply->body;
+  group_desc = ( struct ofp_group_desc * ) stats_reply->body;
 
   queue = q;
   while ( queue != NULL ) {
-    qs = ( struct ofp_group_desc_stats * ) queue->data;
-    hton_group_desc_stats( group_desc_stats, qs );
+    qs = ( struct ofp_group_desc * ) queue->data;
+    hton_group_desc( group_desc, qs );
     queue = queue->next;
-    group_desc_stats = ( struct ofp_group_desc_stats * ) ( ( char * ) group_desc_stats + qs->length );
+    group_desc = ( struct ofp_group_desc * ) ( ( char * ) group_desc + qs->length );
   }
 
   if ( q != NULL ) {
@@ -5764,7 +5764,7 @@ validate_group_desc_multipart_reply( const buffer *message ) {
   uint16_t group_length;
   uint16_t offset;
   struct ofp_multipart_reply *stats_reply;
-  struct ofp_group_desc_stats *group_desc_stats;
+  struct ofp_group_desc *group_desc;
 
   assert( message != NULL );
 
@@ -5784,22 +5784,22 @@ validate_group_desc_multipart_reply( const buffer *message ) {
                                 - offsetof( struct ofp_multipart_reply, body ) );
 
   offset = offsetof( struct ofp_multipart_reply, body );
-  group_desc_stats = ( struct ofp_group_desc_stats * ) ( ( char * ) message->data + offset );
+  group_desc = ( struct ofp_group_desc * ) ( ( char * ) message->data + offset );
 
   while ( group_length > 0 ) {
-    if ( group_length < ntohs( group_desc_stats->length ) ) {
+    if ( group_length < ntohs( group_desc->length ) ) {
       return ERROR_INVALID_LENGTH;
     }
 
-    if ( group_desc_stats->type > GROUP_TYPE_MAX ) {
+    if ( group_desc->type > GROUP_TYPE_MAX ) {
       return ERROR_INVALID_GROUP_TYPE;
     }
-    // group_desc_stats->group_id
+    // group_desc->group_id
 
-    if ( ntohs( group_desc_stats->length ) > offsetof( struct ofp_group_desc_stats, buckets ) ) {
-      uint16_t bucket_len = ( uint16_t ) ( ntohs( group_desc_stats->length ) - offsetof( struct ofp_group_desc_stats, buckets ) );
+    if ( ntohs( group_desc->length ) > offsetof( struct ofp_group_desc, buckets ) ) {
+      uint16_t bucket_len = ( uint16_t ) ( ntohs( group_desc->length ) - offsetof( struct ofp_group_desc, buckets ) );
       if ( bucket_len >= sizeof( struct ofp_bucket ) ) {
-        struct ofp_bucket *bucket = ( struct ofp_bucket * ) &group_desc_stats->buckets;
+        struct ofp_bucket *bucket = ( struct ofp_bucket * ) &group_desc->buckets;
         while ( bucket_len >= sizeof( struct ofp_bucket ) ) {
           ret = validate_bucket( bucket );
           if ( ret < 0 ) {
@@ -5811,8 +5811,8 @@ validate_group_desc_multipart_reply( const buffer *message ) {
       }
     }
 
-    group_length = ( uint16_t ) ( group_length - ntohs( group_desc_stats->length ) );
-    group_desc_stats = ( struct ofp_group_desc_stats * ) ( ( char * ) group_desc_stats + ntohs( group_desc_stats->length ) );
+    group_length = ( uint16_t ) ( group_length - ntohs( group_desc->length ) );
+    group_desc = ( struct ofp_group_desc * ) ( ( char * ) group_desc + ntohs( group_desc->length ) );
   }
 
   return 0;

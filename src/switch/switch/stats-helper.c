@@ -955,33 +955,33 @@ _handle_group_desc( const uint32_t transaction_id, const uint32_t capabilities )
     return;
   }
 
-  group_desc_stats *stats = NULL;
+  group_desc *stats = NULL;
   list_element *list = new_list();
-  uint16_t nr_group_desc_stats = 0;
+  uint16_t nr_group_desc = 0;
   uint16_t length = 0;
 
-  if ( get_group_desc_stats( &stats, &nr_group_desc_stats ) == OFDPE_SUCCESS ) {
-    void **alloc_ptrs = ( void ** )xmalloc( nr_group_desc_stats * sizeof( void * ) );
+  if ( get_group_desc( &stats, &nr_group_desc ) == OFDPE_SUCCESS ) {
+    void **alloc_ptrs = ( void ** )xmalloc( nr_group_desc * sizeof( void * ) );
 
-    for ( uint16_t i = 0; i < nr_group_desc_stats; i++ ) {
+    for ( uint16_t i = 0; i < nr_group_desc; i++ ) {
       length = bucket_list_length( &stats[ i ].buckets );
-      length = ( uint16_t ) ( length + sizeof( struct ofp_group_desc_stats ) );
+      length = ( uint16_t ) ( length + sizeof( struct ofp_group_desc ) );
       buffer *msg = alloc_buffer_with_length( length );
       append_back_buffer( msg, length );
-      struct ofp_group_desc_stats *stat = msg->data;
+      struct ofp_group_desc *stat = msg->data;
       stat->length = length;
       stat->group_id = stats[ i ].group_id;
       stat->type = stats[ i ].type;
-      void *p = ( ( char * ) stat + offsetof( struct ofp_group_desc_stats, buckets ) );
+      void *p = ( ( char * ) stat + offsetof( struct ofp_group_desc, buckets ) );
       pack_bucket( p, &stats[ i ].buckets );
       append_to_tail( &list, ( void * ) stat );
       alloc_ptrs[ i ] = msg;
     }
 
     SEND_STATS( group_desc, transaction_id, 0, list );
-    for ( uint16_t i = 0; i < nr_group_desc_stats; i++ ) {
+    for ( uint16_t i = 0; i < nr_group_desc; i++ ) {
       buffer *msg = alloc_ptrs[ i ];
-      struct ofp_group_desc_stats *stat = msg->data;
+      struct ofp_group_desc *stat = msg->data;
       delete_element( &list, ( void * ) stat );
       free_buffer( msg );
     }

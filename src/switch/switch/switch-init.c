@@ -89,9 +89,19 @@ init_parse_args( int argc, char **argv ) {
   struct switch_arguments *args = xmalloc( sizeof( struct switch_arguments ) );
 
   parse_options( args, argc, argv );
+
+  char *switch_log = get_switch_log();
+  logging_type log_output_type = LOGGING_TYPE_FILE;
+  if ( args->run_as_daemon == false ) {
+    log_output_type |= LOGGING_TYPE_STDOUT;
+  }
+  char name[ PATH_MAX ];
+  snprintf( name, PATH_MAX, "%s.%#" PRIx64, args->progname, args->datapath_id );
+  init_log( name, switch_log, log_output_type );
+  xfree( switch_log );
+
   int efd[ 2 ];
   uint32_t i;
-
   for ( i = 0; i < sizeof( efd ) / sizeof( efd[ 0 ] ); i++ ) {
     efd[ i ] = create_event_fd();
     if ( efd[ i ] == -1 ) {
@@ -103,15 +113,13 @@ init_parse_args( int argc, char **argv ) {
   memcpy( args->efd, &efd, sizeof( efd ) );
   args->to_protocol_queue = create_message_queue();
   assert( args->to_protocol_queue != NULL );
-  char *switch_log = get_switch_log();
-  logging_type log_output_type = LOGGING_TYPE_FILE;
-  if ( args->run_as_daemon == false ) {
-    log_output_type |= LOGGING_TYPE_STDOUT;
+
+  ignore_sigpipe();
+#ifdef NOT_TESTED
+  if ( args->run_as_daemon == true ) {
+    daemonize( get_switch_home() );
   }
-  char name[ PATH_MAX ];
-  snprintf( name, PATH_MAX, "%s.%#" PRIx64, args->progname, args->datapath_id );
-  init_log( name, switch_log, log_output_type );
-  xfree( switch_log );
+#endif
 
   char *switch_pid_dir = get_switch_pid_dir();
   write_pid( switch_pid_dir, name );
@@ -123,13 +131,6 @@ init_parse_args( int argc, char **argv ) {
   snprintf( cmd, PATH_MAX, "chmod 0666 %s/%s.pid", switch_pid_dir, name );
   system( cmd );
   xfree( switch_pid_dir );
-
-  ignore_sigpipe();
-#ifdef NOT_TESTED
-  if ( args->run_as_daemon == true ) {
-    daemonize( get_switch_home() );
-  }
-#endif
 
   return args;
 }

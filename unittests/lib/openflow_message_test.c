@@ -5776,21 +5776,21 @@ test_create_group_desc_multipart_reply() {
   uint16_t grpdsc_len[2];
   buffer *buffer;
   struct ofp_multipart_reply *stats_reply;
-  struct ofp_group_desc_stats *grpdsc;
+  struct ofp_group_desc *grpdsc;
   list_element *expected_list, *list;
-  struct ofp_group_desc_stats *dsc1, *dsc2;
+  struct ofp_group_desc *dsc1, *dsc2;
   uint16_t expected_msglen;
 
   create_bucket_testdata();
 
-  grpdsc_len[0] = ( uint16_t ) ( offsetof( struct ofp_group_desc_stats, buckets ) + bucket_testdata_len[0] );
+  grpdsc_len[0] = ( uint16_t ) ( offsetof( struct ofp_group_desc, buckets ) + bucket_testdata_len[0] );
   dsc1 = xcalloc( 1, grpdsc_len[0] );
   dsc1->length = grpdsc_len[0];
   dsc1->type = OFPGT_SELECT;
   dsc1->group_id = 0x11223344;
   memcpy( dsc1->buckets, bucket_testdata[0], bucket_testdata_len[0] );
 
-  grpdsc_len[1] = ( uint16_t ) ( offsetof( struct ofp_group_desc_stats, buckets ) + bucket_testdata_len[1] );
+  grpdsc_len[1] = ( uint16_t ) ( offsetof( struct ofp_group_desc, buckets ) + bucket_testdata_len[1] );
   dsc2 = xcalloc( 1, grpdsc_len[1] );
   dsc2->length = grpdsc_len[1];
   dsc2->type = OFPGT_INDIRECT;
@@ -5820,12 +5820,12 @@ test_create_group_desc_multipart_reply() {
   assert_int_equal( ntohs( stats_reply->flags ), NO_FLAGS );
 
   list = expected_list;
-  grpdsc = ( struct ofp_group_desc_stats * ) stats_reply->body;
+  grpdsc = ( struct ofp_group_desc * ) stats_reply->body;
   while ( list != NULL ) {
-    struct ofp_group_desc_stats *expected_group_desc = ( struct ofp_group_desc_stats * ) list->data;
+    struct ofp_group_desc *expected_group_desc = ( struct ofp_group_desc * ) list->data;
 
     void *next = ( char * ) grpdsc + expected_group_desc->length;
-    ntoh_group_desc_stats( grpdsc, grpdsc );
+    ntoh_group_desc( grpdsc, grpdsc );
     assert_memory_equal( grpdsc, expected_group_desc, expected_group_desc->length );
 
     list = list->next;
@@ -8138,19 +8138,19 @@ test_validate_group_desc_multipart_reply() {
   uint16_t grpdsc_len[2];
   buffer *buffer;
   list_element *expected_list;
-  struct ofp_group_desc_stats *dsc1, *dsc2;
+  struct ofp_group_desc *dsc1, *dsc2;
 
   {
     create_bucket_testdata();
 
-    grpdsc_len[0] = ( uint16_t ) ( offsetof( struct ofp_group_desc_stats, buckets ) + bucket_testdata_len[0] );
+    grpdsc_len[0] = ( uint16_t ) ( offsetof( struct ofp_group_desc, buckets ) + bucket_testdata_len[0] );
     dsc1 = xcalloc( 1, grpdsc_len[0] );
     dsc1->length = grpdsc_len[0];
     dsc1->type = OFPGT_SELECT;
     dsc1->group_id = 0x11223344;
     memcpy( dsc1->buckets, bucket_testdata[0], bucket_testdata_len[0] );
 
-    grpdsc_len[1] = ( uint16_t ) ( offsetof( struct ofp_group_desc_stats, buckets ) + bucket_testdata_len[1] );
+    grpdsc_len[1] = ( uint16_t ) ( offsetof( struct ofp_group_desc, buckets ) + bucket_testdata_len[1] );
     dsc2 = xcalloc( 1, grpdsc_len[1] );
     dsc2->length = grpdsc_len[1];
     dsc2->type = OFPGT_INDIRECT;
@@ -9378,18 +9378,18 @@ test_validate_multipart_reply_with_OFPMP_GROUP_DESC_message() {
   uint16_t grpdsc_len[2];
   buffer *buffer;
   list_element *expected_list;
-  struct ofp_group_desc_stats *dsc1, *dsc2;
+  struct ofp_group_desc *dsc1, *dsc2;
 
   create_bucket_testdata();
 
-  grpdsc_len[0] = ( uint16_t ) ( offsetof( struct ofp_group_desc_stats, buckets ) + bucket_testdata_len[0] );
+  grpdsc_len[0] = ( uint16_t ) ( offsetof( struct ofp_group_desc, buckets ) + bucket_testdata_len[0] );
   dsc1 = xcalloc( 1, grpdsc_len[0] );
   dsc1->length = grpdsc_len[0];
   dsc1->type = OFPGT_SELECT;
   dsc1->group_id = 0x11223344;
   memcpy( dsc1->buckets, bucket_testdata[0], bucket_testdata_len[0] );
 
-  grpdsc_len[1] = ( uint16_t ) ( offsetof( struct ofp_group_desc_stats, buckets ) + bucket_testdata_len[1] );
+  grpdsc_len[1] = ( uint16_t ) ( offsetof( struct ofp_group_desc, buckets ) + bucket_testdata_len[1] );
   dsc2 = xcalloc( 1, grpdsc_len[1] );
   dsc2->length = grpdsc_len[1];
   dsc2->type = OFPGT_INDIRECT;
