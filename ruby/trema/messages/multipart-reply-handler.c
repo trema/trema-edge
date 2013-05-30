@@ -379,16 +379,16 @@ unpack_bucket( const struct ofp_bucket *bucket ) {
 static void
 unpack_group_desc_multipart_reply( VALUE r_attributes, void *data ) {
   assert( data );
-  const struct ofp_group_desc_stats *group_desc_stats = data;
+  const struct ofp_group_desc *group_desc = data;
 
-  HASH_SET( r_attributes, "length", UINT2NUM( group_desc_stats->length ) );
-  HASH_SET( r_attributes, "group_id", UINT2NUM( group_desc_stats->group_id ) );
+  HASH_SET( r_attributes, "length", UINT2NUM( group_desc->length ) );
+  HASH_SET( r_attributes, "group_id", UINT2NUM( group_desc->group_id ) );
 
-  uint32_t offset = offsetof( struct ofp_group_desc_stats, buckets );
-  uint32_t buckets_len = group_desc_stats->length - offset;
+  uint32_t offset = offsetof( struct ofp_group_desc, buckets );
+  uint32_t buckets_len = group_desc->length - offset;
   VALUE r_bucket_ary = rb_ary_new();
   while ( buckets_len >= sizeof( struct ofp_bucket ) ) {
-    const struct ofp_bucket *bucket = ( const struct ofp_bucket * ) ( ( const char * ) group_desc_stats + offset );
+    const struct ofp_bucket *bucket = ( const struct ofp_bucket * ) ( ( const char * ) group_desc + offset );
 
     uint16_t part_length = bucket->len;
     if ( buckets_len < part_length ) {
@@ -579,16 +579,16 @@ unpack_multipart_reply( void *controller, VALUE r_attributes, const uint16_t sta
     case OFPMP_GROUP_DESC: {
       if ( frame != NULL ) {
         if ( frame->length ) {
-          size_t len = sizeof( struct ofp_group_desc_stats );
+          size_t len = sizeof( struct ofp_group_desc );
           size_t total_len = frame->length;
           size_t offset = 0;
           while ( total_len >= len ) {
             unpack_group_desc_multipart_reply( r_attributes, ( ( char * ) frame->data + offset ) );
             r_reply_obj = rb_funcall( rb_eval_string( "Messages::GroupDescMultipartReply" ), rb_intern( "new" ), 1, r_attributes );
             rb_ary_push( r_parts, r_reply_obj );
-            const struct ofp_group_desc_stats *group_desc_stats = ( const struct ofp_group_desc_stats * )( ( const char * ) frame->data + offset ); 
-            total_len -= group_desc_stats->length;
-            offset += group_desc_stats->length;
+            const struct ofp_group_desc *group_desc = ( const struct ofp_group_desc * )( ( const char * ) frame->data + offset ); 
+            total_len -= group_desc->length;
+            offset += group_desc->length;
           }
         }
       }

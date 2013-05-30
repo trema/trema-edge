@@ -6242,17 +6242,17 @@ test_hton_group_stats_nodata() {
 }
 
 /********************************************************************************
- * ntoh_group_desc_stats() test.
+ * ntoh_group_desc() test.
  ********************************************************************************/
 
 void
-test_ntoh_group_desc_stats() {
+test_ntoh_group_desc() {
   uint16_t grpdsc_len;
-  struct ofp_group_desc_stats *dsc1;
+  struct ofp_group_desc *dsc1;
 
   create_bucket_testdata();
 
-  grpdsc_len = ( uint16_t ) ( offsetof( struct ofp_group_desc_stats, buckets ) + bucket_testdata_len[0] );
+  grpdsc_len = ( uint16_t ) ( offsetof( struct ofp_group_desc, buckets ) + bucket_testdata_len[0] );
   dsc1 = xcalloc( 1, grpdsc_len );
   dsc1->length = grpdsc_len;
   dsc1->type = OFPGT_SELECT;
@@ -6261,8 +6261,8 @@ test_ntoh_group_desc_stats() {
 
   uint16_t length = grpdsc_len;
 
-  struct ofp_group_desc_stats *src = xmalloc( length );
-  struct ofp_group_desc_stats *dst = xmalloc( length );
+  struct ofp_group_desc *src = xmalloc( length );
+  struct ofp_group_desc *dst = xmalloc( length );
 
   memset( src, 0, length );
   memset( dst, 0, length );
@@ -6272,7 +6272,7 @@ test_ntoh_group_desc_stats() {
   src->group_id = htonl( dsc1->group_id );
   hton_bucket( src->buckets, dsc1->buckets );
 
-  ntoh_group_desc_stats( dst, src );
+  ntoh_group_desc( dst, src );
 
   assert_int_equal( htons( dst->length ), src->length );
   assert_int_equal( dst->type, src->type );
@@ -6286,11 +6286,11 @@ test_ntoh_group_desc_stats() {
 }
 
 void
-test_ntoh_group_desc_stats_nodata() {
-  uint16_t length = ( uint16_t ) ( sizeof( struct ofp_group_desc_stats ) );
+test_ntoh_group_desc_nodata() {
+  uint16_t length = ( uint16_t ) ( sizeof( struct ofp_group_desc ) );
 
-  struct ofp_group_desc_stats *src = xmalloc( length );
-  struct ofp_group_desc_stats *dst = xmalloc( length );
+  struct ofp_group_desc *src = xmalloc( length );
+  struct ofp_group_desc *dst = xmalloc( length );
 
   memset( src, 0, length );
   memset( dst, 0, length );
@@ -6299,7 +6299,7 @@ test_ntoh_group_desc_stats_nodata() {
   src->type = OFPGT_SELECT;
   src->group_id = htonl( 1 );
 
-  ntoh_group_desc_stats( dst, src );
+  ntoh_group_desc( dst, src );
 
   assert_int_equal( htons( dst->length ), src->length );
   assert_int_equal( dst->type, src->type );
@@ -6310,17 +6310,17 @@ test_ntoh_group_desc_stats_nodata() {
 }
 
 /********************************************************************************
- * hton_group_desc_stats() test.
+ * hton_group_desc() test.
  ********************************************************************************/
 
 void
-test_hton_group_desc_stats() {
+test_hton_group_desc() {
   uint16_t grpdsc_len;
-  struct ofp_group_desc_stats *dsc1;
+  struct ofp_group_desc *dsc1;
 
   create_bucket_testdata();
 
-  grpdsc_len = ( uint16_t ) ( offsetof( struct ofp_group_desc_stats, buckets ) + bucket_testdata_len[0] );
+  grpdsc_len = ( uint16_t ) ( offsetof( struct ofp_group_desc, buckets ) + bucket_testdata_len[0] );
   dsc1 = xcalloc( 1, grpdsc_len );
   dsc1->length = grpdsc_len;
   dsc1->type = OFPGT_SELECT;
@@ -6329,8 +6329,8 @@ test_hton_group_desc_stats() {
 
   uint16_t length = grpdsc_len;
 
-  struct ofp_group_desc_stats *src = xmalloc( length );
-  struct ofp_group_desc_stats *dst = xmalloc( length );
+  struct ofp_group_desc *src = xmalloc( length );
+  struct ofp_group_desc *dst = xmalloc( length );
 
   memset( src, 0, length );
   memset( dst, 0, length );
@@ -6344,7 +6344,7 @@ test_hton_group_desc_stats() {
   dsc1->group_id = htonl( dsc1->group_id );
   hton_bucket( dsc1->buckets, dsc1->buckets );
 
-  hton_group_desc_stats( dst, src );
+  hton_group_desc( dst, src );
 
   assert_int_equal( dst->length, htons( src->length ) );
   assert_int_equal( dst->type, src->type );
@@ -6358,11 +6358,11 @@ test_hton_group_desc_stats() {
 }
 
 void
-test_hton_group_desc_stats_nodata() {
-  uint16_t length = ( uint16_t ) ( sizeof( struct ofp_group_desc_stats ) );
+test_hton_group_desc_nodata() {
+  uint16_t length = ( uint16_t ) ( sizeof( struct ofp_group_desc ) );
 
-  struct ofp_group_desc_stats *src = xmalloc( length );
-  struct ofp_group_desc_stats *dst = xmalloc( length );
+  struct ofp_group_desc *src = xmalloc( length );
+  struct ofp_group_desc *dst = xmalloc( length );
 
   memset( src, 0, length );
   memset( dst, 0, length );
@@ -6371,7 +6371,7 @@ test_hton_group_desc_stats_nodata() {
   src->type = OFPGT_SELECT;
   src->group_id = 1;
 
-  hton_group_desc_stats( dst, src );
+  hton_group_desc( dst, src );
 
   assert_int_equal( dst->length, htons( src->length ) );
   assert_int_equal( dst->type, src->type );
@@ -7023,10 +7023,10 @@ main() {
     unit_test( test_ntoh_group_stats_nodata ),
     unit_test( test_hton_group_stats ),
     unit_test( test_hton_group_stats_nodata ),
-    unit_test( test_ntoh_group_desc_stats ),
-    unit_test( test_ntoh_group_desc_stats_nodata ),
-    unit_test( test_hton_group_desc_stats ),
-    unit_test( test_hton_group_desc_stats_nodata ),
+    unit_test( test_ntoh_group_desc ),
+    unit_test( test_ntoh_group_desc_nodata ),
+    unit_test( test_hton_group_desc ),
+    unit_test( test_hton_group_desc_nodata ),
     unit_test( test_ntoh_group_features_stats ),
     unit_test( test_hton_group_features_stats ),
     unit_test( test_ntoh_meter_band_stats ),

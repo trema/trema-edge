@@ -3050,19 +3050,19 @@ test_handle_multipart_reply_if_type_is_OFPMP_GROUP_DESC() {
   uint16_t grpdsc_len[2];
   buffer *buffer;
   list_element *expected_list;
-  struct ofp_group_desc_stats *dsc1, *dsc2;
+  struct ofp_group_desc *dsc1, *dsc2;
   struct ofp_multipart_reply *multipart_reply;
 
   create_bucket_testdata();
 
-  grpdsc_len[0] = ( uint16_t ) ( offsetof( struct ofp_group_desc_stats, buckets ) + bucket_testdata_len[0] );
+  grpdsc_len[0] = ( uint16_t ) ( offsetof( struct ofp_group_desc, buckets ) + bucket_testdata_len[0] );
   dsc1 = xcalloc( 1, grpdsc_len[0] );
   dsc1->length = grpdsc_len[0];
   dsc1->type = OFPGT_SELECT;
   dsc1->group_id = 0x11223344;
   memcpy( dsc1->buckets, bucket_testdata[0], bucket_testdata_len[0] );
 
-  grpdsc_len[1] = ( uint16_t ) ( offsetof( struct ofp_group_desc_stats, buckets ) + bucket_testdata_len[1] );
+  grpdsc_len[1] = ( uint16_t ) ( offsetof( struct ofp_group_desc, buckets ) + bucket_testdata_len[1] );
   dsc2 = xcalloc( 1, grpdsc_len[1] );
   dsc2->length = grpdsc_len[1];
   dsc2->type = OFPGT_INDIRECT;
@@ -4937,19 +4937,19 @@ test_handle_openflow_message() {
     uint16_t grpdsc_len[2];
     buffer *buffer;
     list_element *expected_list;
-    struct ofp_group_desc_stats *dsc1, *dsc2;
+    struct ofp_group_desc *dsc1, *dsc2;
     struct ofp_multipart_reply *multipart_reply;
 
     create_bucket_testdata();
 
-    grpdsc_len[0] = ( uint16_t ) ( offsetof( struct ofp_group_desc_stats, buckets ) + bucket_testdata_len[0] );
+    grpdsc_len[0] = ( uint16_t ) ( offsetof( struct ofp_group_desc, buckets ) + bucket_testdata_len[0] );
     dsc1 = xcalloc( 1, grpdsc_len[0] );
     dsc1->length = grpdsc_len[0];
     dsc1->type = OFPGT_SELECT;
     dsc1->group_id = 0x11223344;
     memcpy( dsc1->buckets, bucket_testdata[0], bucket_testdata_len[0] );
 
-    grpdsc_len[1] = ( uint16_t ) ( offsetof( struct ofp_group_desc_stats, buckets ) + bucket_testdata_len[1] );
+    grpdsc_len[1] = ( uint16_t ) ( offsetof( struct ofp_group_desc, buckets ) + bucket_testdata_len[1] );
     dsc2 = xcalloc( 1, grpdsc_len[1] );
     dsc2->length = grpdsc_len[1];
     dsc2->type = OFPGT_INDIRECT;

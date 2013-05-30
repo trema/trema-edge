@@ -156,8 +156,8 @@ void ntoh_bucket_counter( struct ofp_bucket_counter *dst, const struct ofp_bucke
 void ntoh_group_stats( struct ofp_group_stats *dst, const struct ofp_group_stats *src );
 void hton_group_stats( struct ofp_group_stats *dst, const struct ofp_group_stats *src );
 
-void ntoh_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_group_desc_stats *src );
-void hton_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_group_desc_stats *src );
+void ntoh_group_desc( struct ofp_group_desc *dst, const struct ofp_group_desc *src );
+void hton_group_desc( struct ofp_group_desc *dst, const struct ofp_group_desc *src );
 
 void ntoh_group_features_stats( struct ofp_group_features *dst, const struct ofp_group_features *src );
 #define hton_group_features_stats ntoh_group_features_stats
