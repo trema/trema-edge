@@ -61,6 +61,8 @@ pack_basic_action( VALUE r_action ) {
       case T_ARRAY: {
           VALUE *each = RARRAY_PTR( r_action );
 
+          r_action_ins = Data_Wrap_Struct( rb_obj_class( r_action ), NULL, NULL, actions );
+
           for ( int i = 0; i < RARRAY_LEN( r_action ); i++ ) {
             if ( rb_respond_to( each[ i ], r_id ) ) {
               r_action_ins = Data_Wrap_Struct( rb_obj_class( each[ i ] ), NULL, NULL, actions );
@@ -123,7 +125,7 @@ pack_flexible_action( VALUE r_action ) {
 openflow_instructions *
 pack_instruction( VALUE r_instruction ) {
   openflow_instructions *instructions = create_instructions();
-  VALUE r_ins_instance;
+  VALUE r_ins_instance = Qnil;
   VALUE r_id = rb_intern( "pack_instruction" );
 
   if ( !NIL_P( r_instruction ) ) {
