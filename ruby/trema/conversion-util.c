@@ -98,6 +98,12 @@ r_match_to_oxm_match( VALUE r_match, oxm_matches *match ) {
     append_oxm_match_in_port( match, ( uint32_t ) NUM2UINT( r_in_port ) );
   }
 
+  VALUE r_metadata = rb_iv_get( r_match, "@metadata" );
+  VALUE r_metadata_mask = rb_iv_get( r_match, "@metadata_mask" );
+  if ( !NIL_P( r_metadata ) && !NIL_P( r_metadata ) ) {
+    append_oxm_match_metadata( match, ( uint64_t ) NUM2ULL( r_metadata ), ( uint64_t ) NUM2ULL( r_metadata_mask ) );
+  }
+
   uint8_t tmp_mac_mask[ OFP_ETH_ALEN ];
   memset( tmp_mac_mask, 0, sizeof( tmp_mac_mask ) );
 
