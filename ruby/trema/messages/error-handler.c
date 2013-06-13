@@ -40,7 +40,7 @@ handle_error( uint64_t datapath_id,
   HASH_SET( r_attributes, "code", UINT2NUM( code ) );
   HASH_SET( r_attributes, "data", buffer_to_r_array( data ) );
 
-  VALUE r_error = rb_funcall( rb_eval_string( "Messages::Error" ), rb_intern( "new" ), 1, r_attributes );
+  VALUE r_error = rb_funcall( rb_eval_string( "Trema::Messages::Error" ), rb_intern( "new" ), 1, r_attributes );
   rb_funcall( ( VALUE ) controller, rb_intern( "error" ), 2, ULL2NUM( datapath_id ), r_error );
 }
 

@@ -58,7 +58,7 @@ handle_flow_removed( uint64_t datapath_id,
     VALUE r_match = oxm_match_to_r_match( match );
     HASH_SET( r_attributes, "match", r_match );
   }
-  VALUE r_flow_removed = rb_funcall( rb_eval_string( "Messages::FlowRemoved" ), rb_intern( "new" ), 1, r_attributes );
+  VALUE r_flow_removed = rb_funcall( rb_eval_string( "Trema::Messages::FlowRemoved" ), rb_intern( "new" ), 1, r_attributes );
   rb_funcall( ( VALUE ) controller, rb_intern( "flow_removed" ), 2, ULL2NUM( datapath_id ), r_flow_removed );
 }
 
