@@ -38,7 +38,7 @@ handle_features_reply( uint64_t datapath_id,
   HASH_SET( r_attributes, "n_tables", UINT2NUM( n_tables ) );
   HASH_SET( r_attributes, "auxiliary_id", UINT2NUM( auxiliary_id ) );
   HASH_SET( r_attributes, "capabilities", UINT2NUM( capabilities ) );
-  VALUE r_features_reply = rb_funcall( rb_eval_string( "Messages::FeaturesReply" ), rb_intern( "new" ), 1, r_attributes );
+  VALUE r_features_reply = rb_funcall( rb_eval_string( "Trema::Messages::FeaturesReply" ), rb_intern( "new" ), 1, r_attributes );
   rb_funcall( ( VALUE ) controller, rb_intern( "features_reply" ), 2, ULL2NUM( datapath_id ), r_features_reply );
 }
 
