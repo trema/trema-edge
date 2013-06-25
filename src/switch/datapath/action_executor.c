@@ -1731,7 +1731,7 @@ execute_action_output( buffer *frame, action *output ) {
         match->in_phy_port.value = info->eth_in_phy_port;
         match->in_phy_port.valid = true;
       }
-      if ( table_miss_flow_entry( output->entry ) ) {
+      if ( output->entry->table_miss ) {
         notify_packet_in( OFPR_NO_MATCH, output->entry->table_id, output->entry->cookie, match, frame, MISS_SEND_LEN );
       }
       else {

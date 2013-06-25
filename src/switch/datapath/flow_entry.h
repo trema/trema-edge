@@ -40,6 +40,7 @@ typedef struct _flow_entry {
   instruction_set *instructions;
   struct timespec created_at;
   struct timespec last_seen;
+  bool table_miss;
 } flow_entry;
 
 
@@ -47,7 +48,6 @@ flow_entry *alloc_flow_entry( match *match, instruction_set *instructions,
                               const uint16_t priority, const uint16_t idle_timeout, const uint16_t hard_timeout,
                               const uint16_t flags, const uint64_t cookie );
 void free_flow_entry( flow_entry *entry );
-bool table_miss_flow_entry( const flow_entry *entry );
 void dump_flow_entry( const flow_entry *entry, void dump_function( const char *format, ... ) );
 
 

@@ -562,6 +562,9 @@ insert_flow_entry( flow_table *table, flow_entry *entry, const uint16_t flags ) 
       break;
     }
     if ( e->priority == entry->priority ) {
+      if ( e->table_miss && !entry->table_miss ) {
+        break;
+      }
       if ( ( flags & OFPFF_CHECK_OVERLAP ) != 0 && compare_match( e->match, entry->match ) ) {
         return ERROR_OFDPE_FLOW_MOD_FAILED_OVERLAP;
       }
