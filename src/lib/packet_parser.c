@@ -127,9 +127,9 @@ parse_ether( buffer *buf ) {
 
   // TODO fix coding formatting and check source.
   // Parse MPLS Header
-  if ( packet_info -> eth_type == ETH_ETHTYPE_MPLS_UNI ) {
-    packet_info -> eth_type   = ETH_ETHTYPE_IPV4;
-    packet_info -> format    |= MPLS;
+  if ( packet_info->eth_type == ETH_ETHTYPE_MPLS_UNI ||
+       packet_info->eth_type == ETH_ETHTYPE_MPLS_MLT ) {
+    packet_info->format |= MPLS;
     packet_info->l2_mpls_header = ptr;
 
     for (;;) {
