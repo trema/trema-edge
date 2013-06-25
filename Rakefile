@@ -60,6 +60,7 @@ task :default => [
   :switch_daemon,
   :trema_switch,
   :packetin_filter,
+  :examples,
   "vendor:phost"
 ]
 
@@ -200,7 +201,59 @@ PaperHouse::ExecutableTask.new :packetin_filter do | task |
   task.sources = "src/packetin_filter/*.c"
   task.includes = Trema.include
   task.cflags = CFLAGS
-  task.ldflags = [ "-L#{ Trema.lib }", "-L#{ Trema.obj_datapath }" ]
+  task.ldflags = "-L#{ Trema.lib }"
+  task.library_dependencies = [
+    "trema",
+    "sqlite3",
+    "pthread",
+    "rt",
+    "dl",
+  ]
+end
+
+
+################################################################################
+# Examples.
+################################################################################
+
+def target_directory_of example
+  File.join Trema.objects, example
+end
+
+task :examples => [
+  :dumper,
+  :learning_switch
+]
+
+
+desc "Build Dumper."
+task :dumper => :libtrema
+
+PaperHouse::ExecutableTask.new :dumper do | task |
+  task.target_directory = target_directory_of "examples/dumper"
+  task.sources = "src/examples/dumper/*.c"
+  task.includes = Trema.include
+  task.cflags = CFLAGS
+  task.ldflags = "-L#{ Trema.lib }"
+  task.library_dependencies = [
+    "trema",
+    "sqlite3",
+    "pthread",
+    "rt",
+    "dl",
+  ]
+end
+
+
+desc "Build Learning switch."
+task :learning_switch => :libtrema
+
+PaperHouse::ExecutableTask.new :learning_switch do | task |
+  task.target_directory = target_directory_of "examples/learning_switch"
+  task.sources = "src/examples/learning_switch/*.c"
+  task.includes = Trema.include
+  task.cflags = CFLAGS
+  task.ldflags = "-L#{ Trema.lib }"
   task.library_dependencies = [
     "trema",
     "sqlite3",
