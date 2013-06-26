@@ -189,7 +189,7 @@ ofp_match_to_r_match( const struct ofp_match *match ) {
 { \
   VALUE r_value = rb_iv_get( r_match, at_value ); \
   if ( !NIL_P( r_value ) ) { \
-    uint32_t ipv4_mask = INADDR_ANY; \
+    uint32_t ipv4_mask = 0; \
     VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
     if ( !NIL_P( r_mask ) ) { \
       ipv4_mask = nw_addr_to_i( r_mask ); \
