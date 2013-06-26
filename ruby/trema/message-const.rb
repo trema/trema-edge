@@ -66,8 +66,6 @@ module Trema
 
     enum_hash( ofp_no_buffer: no_buffer )
 
-    enum_hash( ofptt_all: table_all )
-
     enum_hash( ofp_default_priority: default_priority,
                ofp_high_priority: high_priority,
                ofp_low_priority: low_priority )
