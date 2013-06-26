@@ -177,6 +177,27 @@ ofp_match_to_r_match( const struct ofp_match *match ) {
   } \
 }
 
+#define APPEND_OXM_MATCH_IPV4_ADDR( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    append_oxm_match_f( match, nw_addr_to_i( r_value ) ); \
+  } \
+}
+
+#define APPEND_OXM_MATCH_IPV4_ADDR_MASK( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    uint32_t ipv4_mask = 0; \
+    VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
+    if ( !NIL_P( r_mask ) ) { \
+      ipv4_mask = nw_addr_to_i( r_mask ); \
+    } \
+    append_oxm_match_f( match, nw_addr_to_i( r_value ), ipv4_mask ); \
+  } \
+}
+
 #define APPEND_OXM_MATCH_IPV6_ADDR( r_match, at_value, append_oxm_match_f, match ) \
 { \
   VALUE r_value = rb_iv_get( r_match, at_value ); \
@@ -218,8 +239,8 @@ r_match_to_oxm_match( VALUE r_match, oxm_matches *match ) {
   APPEND_OXM_MATCH_UINT8( r_match, "@ip_ecn", append_oxm_match_ip_ecn, match );
   APPEND_OXM_MATCH_UINT8( r_match, "@ip_proto", append_oxm_match_ip_proto, match );
 
-  APPEND_OXM_MATCH_UINT32_MASK( r_match, "@ipv4_src", append_oxm_match_ipv4_src, match );
-  APPEND_OXM_MATCH_UINT32_MASK( r_match, "@ipv4_dst", append_oxm_match_ipv4_dst, match );
+  APPEND_OXM_MATCH_IPV4_ADDR_MASK( r_match, "@ipv4_src", append_oxm_match_ipv4_src, match );
+  APPEND_OXM_MATCH_IPV4_ADDR_MASK( r_match, "@ipv4_dst", append_oxm_match_ipv4_dst, match );
 
   APPEND_OXM_MATCH_UINT16( r_match, "@tcp_src", append_oxm_match_tcp_src, match );
   APPEND_OXM_MATCH_UINT16( r_match, "@tcp_dst", append_oxm_match_tcp_dst, match );
@@ -233,8 +254,8 @@ r_match_to_oxm_match( VALUE r_match, oxm_matches *match ) {
 
   APPEND_OXM_MATCH_UINT16( r_match, "@arp_op", append_oxm_match_arp_op, match );
 
-  APPEND_OXM_MATCH_UINT32_MASK( r_match, "@arp_spa", append_oxm_match_arp_spa, match );
-  APPEND_OXM_MATCH_UINT32_MASK( r_match, "@arp_tpa", append_oxm_match_arp_tpa, match );
+  APPEND_OXM_MATCH_IPV4_ADDR_MASK( r_match, "@arp_spa", append_oxm_match_arp_spa, match );
+  APPEND_OXM_MATCH_IPV4_ADDR_MASK( r_match, "@arp_tpa", append_oxm_match_arp_tpa, match );
 
   APPEND_OXM_MATCH_DL_ADDR_MASK( r_match, "@arp_sha", append_oxm_match_arp_sha, match );
   APPEND_OXM_MATCH_DL_ADDR_MASK( r_match, "@arp_tha", append_oxm_match_arp_tha, match );
