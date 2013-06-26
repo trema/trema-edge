@@ -151,7 +151,7 @@ no_buffer( VALUE self ) {
 
 
 static VALUE
-table_all( VALUE self ) {
+all_tables( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFPTT_ALL );
 }
@@ -373,7 +373,7 @@ Init_message_const( void ) {
   rb_define_module_function( mMessageConst, "no_buffer", no_buffer, 0 );
 
   // OFP_TABLE values
-  rb_define_module_function( mMessageConst, "table_all", table_all, 0 );
+  rb_define_module_function( mMessageConst, "all_tables", all_tables, 0 );
 
   // OFP_PRIORITY values
   rb_define_module_function( mMessageConst, "default_priority", default_priority, 0 );
