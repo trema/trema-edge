@@ -57,6 +57,10 @@ module Trema
                ofpp_local: local_port,
                ofpp_any: any_port )
 
+    enum_hash( ofpg_any: any_group )
+
+    enum_hash( ofptt_all: all_tables )
+
     enum_hash( ofpcml_max: controller_max_len_max,
                ofpcml_no_buffer: controller_max_len_no_buffer )
 

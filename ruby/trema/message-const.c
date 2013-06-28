@@ -123,6 +123,13 @@ any_port( VALUE self ) {
 
 
 static VALUE
+any_group( VALUE self ) {
+  UNUSED( self );
+  return UINT2NUM( OFPG_ANY );
+}
+
+
+static VALUE
 controller_max_len_max( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFPCML_MAX );
@@ -140,6 +147,13 @@ static VALUE
 no_buffer( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFP_NO_BUFFER );
+}
+
+
+static VALUE
+all_tables( VALUE self ) {
+  UNUSED( self );
+  return UINT2NUM( OFPTT_ALL );
 }
 
 
@@ -348,12 +362,18 @@ Init_message_const( void ) {
   rb_define_module_function( mMessageConst, "local_port", local_port, 0 );
   rb_define_module_function( mMessageConst, "any_port", any_port, 0 );
 
+  // ofp_groups
+  rb_define_module_function( mMessageConst, "any_group", any_group, 0 );
+
   // controller_max_length
   rb_define_module_function( mMessageConst, "controller_max_len_max", controller_max_len_max, 0 );
   rb_define_module_function( mMessageConst, "controller_max_len_no_buffer", controller_max_len_no_buffer, 0 );
 
   // OFP_NO_BUFFER constant
   rb_define_module_function( mMessageConst, "no_buffer", no_buffer, 0 );
+
+  // OFP_TABLE values
+  rb_define_module_function( mMessageConst, "all_tables", all_tables, 0 );
 
   // OFP_PRIORITY values
   rb_define_module_function( mMessageConst, "default_priority", default_priority, 0 );
