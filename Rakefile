@@ -158,6 +158,7 @@ PaperHouse::ExecutableTask.new :switch_daemon do | task |
     "src/switch_manager/service_interface.c",
     "src/switch_manager/switch.c",
     "src/switch_manager/xid_table.c",
+    "src/switch_manager/tls.c",
   ]
   task.includes = Trema.include
   task.cflags = CFLAGS
@@ -168,6 +169,7 @@ PaperHouse::ExecutableTask.new :switch_daemon do | task |
     "pthread",
     "rt",
     "dl",
+    "ssl",
   ]
 end
 

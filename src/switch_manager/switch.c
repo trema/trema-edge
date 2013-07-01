@@ -27,6 +27,9 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <unistd.h>
 #include "trema.h"
 #include "cookie_table.h"
@@ -58,6 +61,9 @@ enum long_options_val {
   NO_FLOW_CLEANUP_LONG_OPTION_VALUE = 1,
   NO_COOKIE_TRANSLATION_LONG_OPTION_VALUE = 2,
   NO_PACKET_IN_LONG_OPTION_VALUE = 3,
+  TLS_OPTION_VALUE = 4,
+  TLS_CERT_FILE_OPTION_VALUE = 5,
+  TLS_KEY_FILE_OPTION_VALUE = 6,
 };
 
 static struct option long_options[] = {
@@ -65,6 +71,9 @@ static struct option long_options[] = {
   { "no-flow-cleanup", 0, NULL, NO_FLOW_CLEANUP_LONG_OPTION_VALUE },
   { "no-cookie-translation", 0, NULL, NO_COOKIE_TRANSLATION_LONG_OPTION_VALUE },
   { "no-packet_in", 0, NULL, NO_PACKET_IN_LONG_OPTION_VALUE },
+  { "tls", 0, NULL, TLS_OPTION_VALUE },
+  { "cert", 1, NULL, TLS_CERT_FILE_OPTION_VALUE },
+  { "key", 1, NULL, TLS_KEY_FILE_OPTION_VALUE },
   { NULL, 0, NULL, 0  },
 };
 
@@ -97,6 +106,9 @@ usage() {
     "      --no-flow-cleanup       do not cleanup flows on startup\n"
     "      --no-cookie-translation do not translate cookie values\n"
     "      --no-packet_in          do not allow packet-ins on startup\n"
+    "  --tls                       use TLS as transport protocol instead of TCP\n"
+    "  --cert=CERT_FILE            set TLS certificate file\n"
+    "  --key=KEY_FILE              set TLS key file\n"
     "  -h, --help                  display this help and exit\n"
     "\n"
     "DESTINATION-RULE:\n"
@@ -136,6 +148,10 @@ option_parser( int argc, char *argv[] ) {
   switch_info.flow_cleanup = true;
   switch_info.cookie_translation = true;
   switch_info.deny_packet_in_on_startup = false;
+  switch_info.tls = false;
+  switch_info.ssl = NULL;
+  memset( &switch_info.cert_file, '\0', sizeof( switch_info.cert_file ) );
+  memset( &switch_info.key_file, '\0', sizeof( switch_info.key_file ) );
   while ( ( c = getopt_long( argc, argv, short_options, long_options, NULL ) ) != -1 ) {
     switch ( c ) {
       case 's':
@@ -154,10 +170,48 @@ option_parser( int argc, char *argv[] ) {
         switch_info.deny_packet_in_on_startup = true;
         break;
 
+      case TLS_OPTION_VALUE:
+        switch_info.tls = true;
+        break;
+
+      case TLS_CERT_FILE_OPTION_VALUE:
+        if ( optarg != NULL ) {
+          strncpy( switch_info.cert_file, optarg, sizeof( switch_info.cert_file ) - 1 );
+        }
+        break;
+
+      case TLS_KEY_FILE_OPTION_VALUE:
+        if ( optarg != NULL ) {
+          strncpy( switch_info.key_file, optarg, sizeof( switch_info.key_file ) - 1 );
+        }
+        break;
+
       default:
         usage();
         exit( EXIT_SUCCESS );
         return;
+    }
+  }
+
+  if ( switch_info.tls ) {
+    struct stat st;
+    int ret = stat( switch_info.cert_file, &st );
+    if ( ret < 0 ) {
+      char buf[ 256 ];
+      memset( buf, '\0', sizeof( buf ) );
+      char *error_string = strerror_r( errno, buf, sizeof( buf ) );
+      error( "Failed to read certificate file ( file = %s, error = %s [%d] ).",
+             switch_info.cert_file, error_string, errno );
+      exit( EXIT_FAILURE );
+    }
+    ret = stat( switch_info.key_file, &st );
+    if ( ret < 0 ) {
+      char buf[ 256 ];
+      memset( buf, '\0', sizeof( buf ) );
+      char *error_string = strerror_r( errno, buf, sizeof( buf ) );
+      error( "Failed to read key file ( file = %s, error = %s [%d] ).",
+             switch_info.key_file, error_string, errno );
+      exit( EXIT_FAILURE );
     }
   }
 }
@@ -473,6 +527,11 @@ switch_event_disconnected( struct switch_info *sw_info ) {
     set_writable( switch_info.secure_channel_fd, false );
     delete_fd_handler( switch_info.secure_channel_fd );
 
+    if ( sw_info->tls && sw_info->ssl != NULL ) {
+      finalize_tls_session( sw_info->ssl );
+      sw_info->ssl = NULL;
+    }
+
     close( sw_info->secure_channel_fd );
     sw_info->secure_channel_fd = -1;
   }
@@ -625,8 +684,20 @@ main( int argc, char *argv[] ) {
   sigaction( SIGINT, &signal_exit, NULL );
   sigaction( SIGTERM, &signal_exit, NULL );
 
-  fcntl( switch_info.secure_channel_fd, F_SETFL, O_NONBLOCK );
+  if ( switch_info.tls ) {
+    bool ret = init_tls_server( switch_info.cert_file, switch_info.key_file );
+    if ( !ret ) {
+      error( "Failed to initialize TLS server." );
+      return -1;
+    }
+    switch_info.ssl = init_tls_session( switch_info.secure_channel_fd );
+    if ( switch_info.ssl == NULL ) {
+      error( "Failed to accept TLS session." );
+      return -1;
+    }
+  }
 
+  fcntl( switch_info.secure_channel_fd, F_SETFL, O_NONBLOCK );
   set_fd_handler( switch_info.secure_channel_fd, secure_channel_read, NULL, secure_channel_write, NULL );
   set_readable( switch_info.secure_channel_fd, true );
   set_writable( switch_info.secure_channel_fd, false );
@@ -669,6 +740,20 @@ main( int argc, char *argv[] ) {
 
   if ( switch_info.secure_channel_fd >= 0 ) {
     delete_fd_handler( switch_info.secure_channel_fd );
+
+    if ( switch_info.tls && switch_info.ssl != NULL ) {
+      finalize_tls_session( switch_info.ssl );
+    }
+
+    close( switch_info.secure_channel_fd );
+  }
+
+  if ( switch_info.tls ) {
+    bool ret = finalize_tls_server();
+    if ( !ret ) {
+      error( "Failed to finalize TLS server." );
+      return -1;
+    }
   }
 
   return 0;
