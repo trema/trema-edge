@@ -29,10 +29,10 @@ handle_error( uint64_t datapath_id,
               uint16_t code,
               const buffer *data,
               void *controller ) {
-  if ( !rb_respond_to( ( VALUE ) controller, rb_intern( "error" ) ) ) {
+  if ( !rb_respond_to( ( VALUE ) controller, rb_intern( "openflow_error" ) ) ) {
     return;
   }
-  
+
   VALUE r_attributes = rb_hash_new();
   HASH_SET( r_attributes, "datapath_id", ULL2NUM( datapath_id ) );
   HASH_SET( r_attributes, "transaction_id", UINT2NUM( transaction_id ) );
@@ -41,7 +41,7 @@ handle_error( uint64_t datapath_id,
   HASH_SET( r_attributes, "data", buffer_to_r_array( data ) );
 
   VALUE r_error = rb_funcall( rb_eval_string( "Trema::Messages::Error" ), rb_intern( "new" ), 1, r_attributes );
-  rb_funcall( ( VALUE ) controller, rb_intern( "error" ), 2, ULL2NUM( datapath_id ), r_error );
+  rb_funcall( ( VALUE ) controller, rb_intern( "openflow_error" ), 2, ULL2NUM( datapath_id ), r_error );
 }
 
 
