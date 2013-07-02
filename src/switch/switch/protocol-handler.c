@@ -696,6 +696,8 @@ _handle_barrier_request( uint32_t transaction_id, void *user_data ) {
   free_buffer( barrier_reply );
 }
 void ( *handle_barrier_request )( uint32_t transaction_id, void *user_data ) = _handle_barrier_request;
+
+
 /*
  * Local variables:
  * c-basic-offset: 2
