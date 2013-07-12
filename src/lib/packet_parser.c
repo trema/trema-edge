@@ -219,6 +219,8 @@ parse_ipv4( buffer *buf ) {
   packet_info->ipv4_version = ipv4_header->version;
   packet_info->ipv4_ihl = ipv4_header->ihl;
   packet_info->ipv4_tos = ipv4_header->tos;
+  packet_info->ipv4_dscp = ( IPTOS_DSCP_MASK & ipv4_header->tos ) >> IPTOS_DSCP_SHIFT;
+  packet_info->ipv4_ecn = IPTOS_ECN_MASK & ipv4_header->tos;
   packet_info->ipv4_tot_len = ntohs( ipv4_header->tot_len );
   packet_info->ipv4_id = ntohs( ipv4_header->id );
   packet_info->ipv4_frag_off = ntohs( ipv4_header->frag_off );
@@ -260,6 +262,8 @@ parse_ipv6( buffer *buf ) {
   uint32_t hdrctl = ntohl( ipv6_header->hdrctl );
   packet_info->ipv6_version = ( uint8_t )( hdrctl >> 28 );
   packet_info->ipv6_tc = ( uint8_t )( hdrctl >> 20 & 0xFF );
+  packet_info->ipv6_dscp = ( IPTOS_DSCP_MASK & packet_info->ipv6_tc ) >> IPTOS_DSCP_SHIFT;
+  packet_info->ipv6_ecn = IPTOS_ECN_MASK & packet_info->ipv6_tc;
   packet_info->ipv6_flowlabel = hdrctl & 0xFFFFF;
   packet_info->ipv6_plen = ntohs( ipv6_header->plen );
   packet_info->ipv6_nexthdr = ipv6_header->nexthdr;
@@ -726,9 +730,13 @@ parse_packet( buffer *buf ) {
       return true;
     }
     packet_info->ip_proto = packet_info->ipv4_protocol;
+    packet_info->ip_dscp = packet_info->ipv4_dscp;
+    packet_info->ip_ecn = packet_info->ipv4_ecn;
   }
   else if ( packet_info->format & NW_IPV6 ) {
     packet_info->ip_proto = packet_info->ipv6_protocol;
+    packet_info->ip_dscp = packet_info->ipv6_dscp;
+    packet_info->ip_ecn = packet_info->ipv6_ecn;
   }
   else {
     // Not IPv4/v6 type
