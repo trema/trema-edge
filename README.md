@@ -10,6 +10,7 @@ This is a temporary repository that we create in order to receive some
 valuable feedback from our users. In the future we are planning to
 merge this repository into the current trema repository.
 
+
 ## Trema for OpenFlow 1.3.X
 
 We have already developed source that implements the OpenFlow 1.3.0
@@ -54,9 +55,16 @@ It may also run on other GNU/Linux distributions but is not tested.
 
 ## Required Packages
 
+### Ruby
+
 This repository has only been tested with ruby 2.0.0 (maybe with
 1.9.3) and will not work with 1.8.x. We recommend installation of the
 rvm program for easy installation of ruby 2.0.0.
+
+
+### Other packages
+
+    % sudo apt-get install gcc make libsqlite3-0
 
 
 ## Build Trema
@@ -68,6 +76,7 @@ rvm program for easy installation of ruby 2.0.0.
 ## Run the Ruby learning switch
 
     % ./trema run src/examples/learning_switch/learning-switch.rb -c src/examples/learning_switch/learning_switch.conf
+
 
 ## How to build your own Ruby controller application
 
@@ -87,37 +96,37 @@ rvm program for easy installation of ruby 2.0.0.
                            buffer_id: OFP_NO_BUFFER,
                            match: match,
                            instructions: [ apply_ins ] )
-
+    
       end
       def packet_in datapath_id, message
         # print the packet-in message instance
         puts message.inspect
       end
     end
-
+    
     % cat sample.conf
     trema_switch( "lsw" ) {
       datapath_id "0xabc"
     }
-
+    
     vhost ("host1") {
       ip "192.168.0.1"
       netmask "255.255.0.0"
       mac "00:00:00:01:00:01"
     }
-
+    
     vhost ("host2") {
       ip "192.168.0.2"
       netmask "255.255.0.0"
       mac "00:00:00:01:00:02"
     }
-
+    
     link "host1", "lsw:1"
-    link "host2", "lsw:2" 
+    link "host2", "lsw:2"
 
-The above DSL would create 2 ports and link each port to learning trema switch. 
-Since trema switch doesn't depend on an existence of a virtual network to function 
-it is possible to define trema switch's ports explicitly by using the ports attribute 
+The above DSL would create 2 ports and link each port to learning trema switch.
+Since trema switch doesn't depend on an existence of a virtual network to function
+it is possible to define trema switch's ports explicitly by using the ports attribute
 in the trema_switch directive block.
 
     % cat sample.conf
@@ -126,9 +135,10 @@ in the trema_switch directive block.
       ports "eth0,eth1"
     }
 
-Define the above syntax only if you are not using a virtual network for your testing 
-otherwise use the link directive to define trema switch's virtual ports dynamically 
+Define the above syntax only if you are not using a virtual network for your testing
+otherwise use the link directive to define trema switch's virtual ports dynamically
 which is the effortless and easy way.
+
 
 ## To run the controller
 
@@ -164,37 +174,39 @@ which is the effortless and easy way.
       return 0;
     }
     % cc `../trema-config -c` -o sample sample.c `../trema-config -l`
-
+    
     % cat sample.conf
     trema_switch( "lsw" ) {
       datapath_id "0xabc"
     }
-
+    
     vhost ("host1") {
       ip "192.168.0.1"
       netmask "255.255.0.0"
       mac "00:00:00:01:00:01"
     }
-
+    
     vhost ("host2") {
       ip "192.168.0.2"
       netmask "255.255.0.0"
       mac "00:00:00:01:00:02"
     }
-
+    
     link "host1", "lsw:1"
-    link "host2", "lsw:2" 
-
+    link "host2", "lsw:2"
+    
     % cd ..
 
 ### To start the C controller
 
     % ./trema run work/sample -c work/sample.conf
     
-    If sucessfully run should observe the following:
+If sucessfully run should observe the following:
+
     Hello 0xabc from work/sample!
     
-    To stop the controller
+To stop the controller
+
     % Press Ctrl-c.
 
 
@@ -205,6 +217,7 @@ which is the effortless and easy way.
 + Multiple tables, groups support (Setting of multiple tables, groups).
 + Extensible match support. (Extensible match support applicable to MPLS and IPv6 match setting).
 + Extensible packet rewrite support. (Extensible packet rewrite support applicable to MPLS and IPv6).
+
 + Support for added packet-in contents. (Support for additional cookie and match fields).
 
 ## Frequently used packets expanded hence processing time increased.
@@ -212,10 +225,12 @@ which is the effortless and easy way.
 + The packet-in has been expanded to include the cookie and the match fields.
 + The `flow_mod` that had only match+actions has been expanded to match+instructions+actions.
 
+
 ## Unsupported
 
 + The cookie mask is to be used in `flow_mod` modify/delete and `flow_stats_request` and
   `aggregate_stats_request`. As currently trema does the cookie translation it is a problem.
+
 
 ## Differences seen by applications
 
@@ -224,29 +239,31 @@ which is the effortless and easy way.
 + It is necessary to search for the `in_port` included in the match of the packet-in.
 + Since the features reply doesn't include port information it is necessary to use a different method to retrieve. (`OFPT_MULTIPART_REQUEST`)
 
+
 ## Ambiguous specification items
 
-- undefined structure  
-    - p.44: `ofp_instruction_experimenter`  
-    - p.65,66: `ofp_table_feature_prop_header` and `ofp_table_feature_prop_experimenter`  
-    - p.66: `ofp_instruction`  
-- undefined macro  
-    - p.54: `OFPTC_*`  
-    - p.69: `OFPQ_ALL`  
-    - p.70: `OFPG_ANY` and `OFPG_ALL`  
-- typo  
-    - p.43: `OFPXMT_OFP_MPLS_BOS` -> `OFPXMT_OFB_MPLS_BOS`  
-    - p.83: `OFPQCFC_EPERM` -> `OFPSCFC_EPERM`  
-    - p.38: `OFPQT_MIN` -> `OFPQT_MIN_RATE` and `OFPQT_MAX` -> `OFPQT_MAX_RATE`  
-    - p.75: `NX_ROLE_` -> `OFPCR_ROLE_`  
-    - p.72: `/* All OFPMC_* that apply. */` -> `/* All OFPMF_* that apply. */`  
-- added macro  
-    - `OFP_DEFAULT_PRIORITY`  
-    - `OFP_DEFAULT_MISS_SEND_LEN`  
-- data length of the OXM TLV  
-    - `OXM_OF_IPV6_FLABEL` 20bits is 4bytes  
-    - `OXM_OF_MPLS_LABEL` 20bits is 4bytes  
-    - `OXM_OF_PBB_ISID` 24bits is 4bytes  
+- undefined structure
+    - p.44: `ofp_instruction_experimenter`
+    - p.65,66: `ofp_table_feature_prop_header` and `ofp_table_feature_prop_experimenter`
+    - p.66: `ofp_instruction`
+- undefined macro
+    - p.54: `OFPTC_*`
+    - p.69: `OFPQ_ALL`
+    - p.70: `OFPG_ANY` and `OFPG_ALL`
+- typo
+    - p.43: `OFPXMT_OFP_MPLS_BOS` -> `OFPXMT_OFB_MPLS_BOS`
+    - p.83: `OFPQCFC_EPERM` -> `OFPSCFC_EPERM`
+    - p.38: `OFPQT_MIN` -> `OFPQT_MIN_RATE` and `OFPQT_MAX` -> `OFPQT_MAX_RATE`
+    - p.75: `NX_ROLE_` -> `OFPCR_ROLE_`
+    - p.72: `/* All OFPMC_* that apply. */` -> `/* All OFPMF_* that apply. */`
+- added macro
+    - `OFP_DEFAULT_PRIORITY`
+    - `OFP_DEFAULT_MISS_SEND_LEN`
+- data length of the OXM TLV
+    - `OXM_OF_IPV6_FLABEL` 20bits is 4bytes
+    - `OXM_OF_MPLS_LABEL` 20bits is 4bytes
+    - `OXM_OF_PBB_ISID` 24bits is 4bytes
+
 
 License
 -------
