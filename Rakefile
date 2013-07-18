@@ -170,6 +170,7 @@ PaperHouse::ExecutableTask.new :switch_daemon do | task |
     "rt",
     "dl",
     "ssl",
+    "crypto",
   ]
 end
 
