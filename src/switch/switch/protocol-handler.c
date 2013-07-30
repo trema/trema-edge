@@ -45,7 +45,8 @@ bool mock_switch_send_openflow_message( buffer *message );
 
 static void
 _handle_hello( const uint32_t transaction_id, const uint8_t version, const buffer *version_data, void *user_data ) {
-  UNUSED( user_data );
+  assert( user_data );
+  struct protocol *protocol = user_data;
   debug( "Hello received ( transaction_id = %#x, version = %#x ).", transaction_id, version );
 
   struct ofp_hello_elem_versionbitmap *versionbitmap = ( struct ofp_hello_elem_versionbitmap * ) version_data->data;
@@ -55,7 +56,13 @@ _handle_hello( const uint32_t transaction_id, const uint8_t version, const buffe
   if ( ( bitmap & ( ( uint32_t ) 1 << ofp_versions[ 0 ] ) ) != ( ( uint32_t ) ofp_versions[ 0 ] ) ) {
     buffer *hello_buf = create_hello_elem_versionbitmap( transaction_id, ofp_versions,
       sizeof( ofp_versions ) / sizeof( ofp_versions[ 0 ] ) );
-    switch_send_openflow_message( hello_buf );
+    if ( switch_send_openflow_message( hello_buf ) ) {
+      switch_features features;
+      memset( &features, 0, sizeof( switch_features ) );
+      get_switch_features( &features );
+      protocol->ctrl.controller_connected = true;
+      protocol->ctrl.capabilities = features.capabilities;
+    }
     free_buffer( hello_buf );
   } else {
     send_error_message( transaction_id, OFPET_HELLO_FAILED, OFPHFC_INCOMPATIBLE );
@@ -81,13 +88,7 @@ _handle_features_request( const uint32_t transaction_id, void *user_data ) {
    */
   buffer *features_reply = create_features_reply( transaction_id, features.datapath_id, features.n_buffers,
                                                   features.n_tables, features.auxiliary_id, features.capabilities );
-  if ( switch_send_openflow_message( features_reply ) ) {
-    protocol->ctrl.controller_connected = true;
-    /*
-     * save datapath's capabilities
-     */
-    protocol->ctrl.capabilities = features.capabilities;
-  }
+  switch_send_openflow_message( features_reply );
   free_buffer( features_reply );
 }
 void ( *handle_features_request )( const uint32_t transaction_id, void *user_data ) = _handle_features_request;
