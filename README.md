@@ -64,11 +64,11 @@ rvm program for easy installation of ruby 2.0.0.
 
 ### Other packages
 
-    % sudo apt-get install gcc make libsqlite3-0
-
+    % sudo apt-get install gcc make libsqlite3-dev libpcap-dev libssl-dev
 
 ## Build Trema
 
+    % gem install bundler
     % bundle install
     % rake
 
