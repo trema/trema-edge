@@ -1721,21 +1721,29 @@ execute_action_output( buffer *frame, action *output ) {
     packet_info *info = ( packet_info * ) frame->user_data;
     uint32_t in_port = info->eth_in_port;
     switch_port *port = lookup_switch_port( in_port );
-    assert( port != NULL );
 
-    if ( ( port->config & OFPPC_NO_PACKET_IN ) == 0 ) {
-      match *match = duplicate_match( output->entry->match );
+    if ( port == NULL || ( port->config & OFPPC_NO_PACKET_IN ) == 0 ) {
+      match *match = NULL;
+      uint8_t table_id = 0;
+      uint64_t cookie = 0;
+      if ( output->entry != NULL ) {
+        match = duplicate_match( output->entry->match );
+        cookie = output->entry->cookie;
+        table_id = output->entry->table_id;
+      } else {
+        match = create_match();
+      }
       match->in_port.value = info->eth_in_port;
       match->in_port.valid = true;
       if ( info->eth_in_phy_port != match->in_port.value ) {
         match->in_phy_port.value = info->eth_in_phy_port;
         match->in_phy_port.valid = true;
       }
-      if ( output->entry->table_miss ) {
-        notify_packet_in( OFPR_NO_MATCH, output->entry->table_id, output->entry->cookie, match, frame, MISS_SEND_LEN );
+      if ( output->entry != NULL && output->entry->table_miss ) {
+        notify_packet_in( OFPR_NO_MATCH, table_id, cookie, match, frame, MISS_SEND_LEN );
       }
       else {
-        notify_packet_in( OFPR_ACTION, output->entry->table_id, output->entry->cookie, match, frame, output->max_len );
+        notify_packet_in( OFPR_ACTION, table_id, cookie, match, frame, output->max_len );
       }
       delete_match( match );
     }
