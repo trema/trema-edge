@@ -26,6 +26,7 @@
 #include "packet_buffer.h"
 #include "port_manager.h"
 #include "table_manager.h"
+#include "pipeline.h"
 
 
 OFDPE
@@ -1747,6 +1748,26 @@ execute_action_output( buffer *frame, action *output ) {
       notify_packet_in( OFPR_ACTION, table_id, cookie, match, frame, output->max_len );
     }
     delete_match( match );
+  }
+  else if ( output->port == OFPP_TABLE ) {
+    packet_info *info = ( packet_info * ) frame->user_data;
+    uint32_t in_port = info->eth_in_port;
+
+    // port is valid standard switch port or OFPP_CONTROLLER
+    switch_port *port = lookup_switch_port( in_port );
+    bool free_port = false;
+    if ( port == NULL ){
+      port = ( switch_port * ) xmalloc( sizeof( switch_port ) );
+      memset( port, 0, sizeof( switch_port ) );
+      port->port_no = OFPP_CONTROLLER;
+      free_port = true;
+    }
+
+    handle_received_frame( port, frame );
+
+    if ( free_port ) {
+      xfree( port );
+    }
   }
   else {
     if ( send_frame_from_switch_port( output->port, frame ) != OFDPE_SUCCESS ) {
