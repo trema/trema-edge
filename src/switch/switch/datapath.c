@@ -58,9 +58,13 @@ notify_protocol( int fd, void *user_data ) {
 
 static void
 push_datapath_message_to_peer( buffer *packet, struct datapath *datapath ) {
-  enqueue_message( datapath->peer_queue, packet );
-  datapath->send_count++;
-  set_writable_safe( datapath->peer_efd, true );
+  if ( is_datapath() ) {
+    enqueue_message( datapath->peer_queue, packet );
+    datapath->send_count++;
+    set_writable_safe( datapath->peer_efd, true );
+  } else if ( is_protocol() ) {
+    handle_datapath_packet( packet, get_protocol() );
+  }
 }
 
 
