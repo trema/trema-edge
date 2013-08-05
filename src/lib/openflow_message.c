@@ -8062,8 +8062,8 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
   struct in6_addr tmp_ipv6_mask;
   struct in6_addr no_ipv6_mask;
 
-  memset( no_mac_mask, 0, sizeof( no_mac_mask ) );
-  memset( &no_ipv6_mask, 0, sizeof( no_ipv6_mask ) );
+  memset( no_mac_mask, 0xff, sizeof( no_mac_mask ) );
+  memset( &no_ipv6_mask, 0xff, sizeof( no_ipv6_mask ) );
 
   if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_IN_PORT ) ) ) {
     append_oxm_match_in_port( match, in_port );
@@ -8099,7 +8099,7 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
     else {
       vlan_vid = OFPVID_NONE;
     }
-    append_oxm_match_vlan_vid( match, vlan_vid, ( uint16_t ) ( no_mask ? 0 : mask->mask_vlan_vid ) );
+    append_oxm_match_vlan_vid( match, vlan_vid, ( uint16_t ) ( no_mask ? UINT16_MAX : mask->mask_vlan_vid ) );
   }
   if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_VLAN_PCP ) ) ) {
     if ( packet_type_eth_vtag( packet ) ) {
@@ -8129,10 +8129,10 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
       append_oxm_match_ip_proto( match, ip_proto );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_IPV4_SRC ) ) ) {
-      append_oxm_match_ipv4_src( match, ( ( packet_info * ) packet->user_data )->ipv4_saddr, ( uint32_t ) ( no_mask ? 0 : mask->mask_ipv4_src ) );
+      append_oxm_match_ipv4_src( match, ( ( packet_info * ) packet->user_data )->ipv4_saddr, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_ipv4_src ) );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_IPV4_DST ) ) ) {
-      append_oxm_match_ipv4_dst( match, ( ( packet_info * ) packet->user_data )->ipv4_daddr, ( uint32_t ) ( no_mask ? 0 : mask->mask_ipv4_dst ) );
+      append_oxm_match_ipv4_dst( match, ( ( packet_info * ) packet->user_data )->ipv4_daddr, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_ipv4_dst ) );
     }
   }
   else if ( eth_type == ETH_ETHTYPE_IPV6 ) {
@@ -8163,10 +8163,10 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
       append_oxm_match_ipv6_dst( match, ( ( packet_info * ) packet->user_data )->ipv6_daddr, tmp_ipv6_mask );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_IPV6_FLABEL ) ) ) {
-      append_oxm_match_ipv6_flabel( match, ( ( packet_info * ) packet->user_data )->ipv6_flowlabel, ( uint32_t ) ( no_mask ? 0 : mask->mask_flabel ) );
+      append_oxm_match_ipv6_flabel( match, ( ( packet_info * ) packet->user_data )->ipv6_flowlabel, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_flabel ) );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_IPV6_EXTHDR ) ) ) {
-      append_oxm_match_ipv6_exthdr( match, ( ( packet_info * ) packet->user_data )->ipv6_exthdr, ( uint16_t ) ( no_mask ? 0 : mask->mask_ipv6_exthdr ) );
+      append_oxm_match_ipv6_exthdr( match, ( ( packet_info * ) packet->user_data )->ipv6_exthdr, ( uint16_t ) ( no_mask ? UINT32_MAX : mask->mask_ipv6_exthdr ) );
     }
   }
   else if ( eth_type == ETH_ETHTYPE_ARP ) {
@@ -8174,10 +8174,10 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
       append_oxm_match_arp_op( match, ( ( packet_info * ) packet->user_data )->arp_ar_op );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ARP_SPA ) ) ) {
-      append_oxm_match_arp_spa( match, ( ( packet_info * ) packet->user_data )->arp_spa, ( uint32_t ) ( no_mask ? 0 : mask->mask_arp_spa ) );
+      append_oxm_match_arp_spa( match, ( ( packet_info * ) packet->user_data )->arp_spa, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_arp_spa ) );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ARP_TPA ) ) ) {
-      append_oxm_match_arp_tpa( match, ( ( packet_info * ) packet->user_data )->arp_tpa, ( uint32_t ) ( no_mask ? 0 : mask->mask_arp_tpa ) );
+      append_oxm_match_arp_tpa( match, ( ( packet_info * ) packet->user_data )->arp_tpa, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_arp_tpa ) );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ARP_SHA ) ) ) {
       if ( no_mask ) {

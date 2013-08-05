@@ -132,7 +132,7 @@ ofp_match_to_r_match( const struct ofp_match *match ) {
 { \
   VALUE r_value = rb_iv_get( r_match, at_value ); \
   if ( !NIL_P( r_value ) ) { \
-    uint32_t mask = 0; \
+    uint32_t mask = UINT32_MAX; \
     VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
     if ( !NIL_P( r_mask ) ) { \
       mask = NUM2UINT( r_mask ); \
@@ -145,7 +145,7 @@ ofp_match_to_r_match( const struct ofp_match *match ) {
 { \
   VALUE r_value = rb_iv_get( r_match, at_value ); \
   if ( !NIL_P( r_value ) ) { \
-    uint64_t mask = 0; \
+    uint64_t mask = UINT64_MAX; \
     VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
     if ( !NIL_P( r_mask ) ) { \
       mask = ( uint64_t ) NUM2ULL( r_mask ); \
@@ -167,7 +167,7 @@ ofp_match_to_r_match( const struct ofp_match *match ) {
 { \
   VALUE r_value = rb_iv_get( r_match, at_value ); \
   if ( !NIL_P( r_value ) ) { \
-    uint8_t dl_mask[ OFP_ETH_ALEN ] = { 0, 0, 0, 0, 0, 0 }; \
+    uint8_t dl_mask[ OFP_ETH_ALEN ] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }; \
     VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
     if ( !NIL_P( r_mask ) ) { \
       dl_addr_to_a( r_mask, dl_mask ); \
@@ -189,7 +189,7 @@ ofp_match_to_r_match( const struct ofp_match *match ) {
 { \
   VALUE r_value = rb_iv_get( r_match, at_value ); \
   if ( !NIL_P( r_value ) ) { \
-    uint32_t ipv4_mask = 0; \
+    uint32_t ipv4_mask = UINT32_MAX; \
     VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
     if ( !NIL_P( r_mask ) ) { \
       ipv4_mask = nw_addr_to_i( r_mask ); \
@@ -211,7 +211,8 @@ ofp_match_to_r_match( const struct ofp_match *match ) {
 { \
   VALUE r_value = rb_iv_get( r_match, at_value ); \
   if ( !NIL_P( r_value ) ) { \
-    struct in6_addr ipv6_mask = in6addr_any; \
+    struct in6_addr ipv6_mask; \
+    memset( ipv6_mask.s6_addr, 0xff, sizeof( ipv6_mask.s6_addr ) ); \
     VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
     if ( !NIL_P( r_mask ) ) { \
       ipv6_addr_to_in6_addr( r_mask, &ipv6_mask ); \
