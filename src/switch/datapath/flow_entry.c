@@ -115,7 +115,6 @@ dump_flow_entry( const flow_entry *entry, void dump_function( const char *format
   if ( entry->match != NULL ) {
     dump_match( entry->match, dump_function );
   }
-
   else {
     ( *dump_function )( "NULL" );
   }
