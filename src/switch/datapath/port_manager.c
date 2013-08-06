@@ -316,7 +316,7 @@ append_switch_port_to_list( switch_port *port, void *user_data ) {
 static list_element *
 get_switch_ports_to_output( const uint32_t port_no, const uint32_t in_port ) {
   assert( port_no > 0 );
-  assert( in_port <= OFPP_MAX );
+  assert( in_port <= OFPP_MAX || in_port == OFPP_CONTROLLER );
 
   switch_port_list ports;
   create_list( &ports.list );
@@ -396,7 +396,11 @@ send_frame_from_switch_port( const uint32_t port_no, buffer *frame ) {
   }
 
   OFDPE ret = OFDPE_SUCCESS;
-  if ( port_no != OFPP_TABLE ) {
+  if ( port_no == OFPP_IN_PORT && in_port == OFPP_CONTROLLER ) {
+    warn( "Packet-out with in_port = OFPP_CONTROLLER is not supported." );
+    ret = OFDPE_FAILED;
+  }
+  else if ( port_no != OFPP_TABLE ) {
     list_element *ports = get_switch_ports_to_output( port_no, in_port );
     for ( list_element *e = ports; e != NULL;  e = e->next ) {
       assert( e->data != NULL );
