@@ -1226,6 +1226,10 @@ execute_action_dec_mpls_ttl( buffer *frame, action *dec_mpls_ttl ) {
       match->in_phy_port.value = info->eth_in_phy_port;
       match->in_phy_port.valid = true;
     }
+    if ( info->metadata != 0 ) {
+      match->metadata.value = info->metadata;
+      match->metadata.valid = true;
+    }
     notify_packet_in( OFPR_INVALID_TTL, dec_mpls_ttl->entry->table_id, dec_mpls_ttl->entry->cookie, match, frame, MISS_SEND_LEN );
     delete_match( match );
   }
@@ -1268,6 +1272,10 @@ execute_action_dec_nw_ttl( buffer *frame, action *dec_nw_ttl ) {
     if ( info->eth_in_phy_port != match->in_port.value ) {
       match->in_phy_port.value = info->eth_in_phy_port;
       match->in_phy_port.valid = true;
+    }
+    if ( info->metadata != 0 ) {
+      match->metadata.value = info->metadata;
+      match->metadata.valid = true;
     }
     notify_packet_in( OFPR_INVALID_TTL, dec_nw_ttl->entry->table_id, dec_nw_ttl->entry->cookie, match, frame, MISS_SEND_LEN );
     delete_match( match );
@@ -1730,6 +1738,10 @@ execute_action_output( buffer *frame, action *output ) {
       if ( info->eth_in_phy_port != match->in_port.value ) {
         match->in_phy_port.value = info->eth_in_phy_port;
         match->in_phy_port.valid = true;
+      }
+      if ( info->metadata != 0 ) {
+        match->metadata.value = info->metadata;
+        match->metadata.valid = true;
       }
       if ( output->entry->table_miss ) {
         notify_packet_in( OFPR_NO_MATCH, output->entry->table_id, output->entry->cookie, match, frame, MISS_SEND_LEN );
