@@ -163,10 +163,8 @@ save_packet( const buffer *packet ) {
   uint32_t buffer_id = get_buffer_id();
   if ( buffer_id != UINT32_MAX ) {
     packet_in_buffers[ buffer_id ].packet = duplicate_buffer( packet );
-    if ( packet->user_data != NULL ) {
-      calloc_packet_info( packet_in_buffers[ buffer_id ].packet );
-      memcpy( packet_in_buffers[ buffer_id ].packet->user_data, packet->user_data, sizeof( packet_info ) );
-    }
+    // duplicate_buffer() copy user_data, which points to old packet addresses
+    duplicate_buffer[ buffer_id ]->user_data = NULL;
     time_now( &packet_in_buffers[ buffer_id ].saved_at );
   }
 
