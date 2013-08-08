@@ -1158,7 +1158,7 @@ execute_action_push_vlan( buffer *frame, action *push_vlan ) {
     next_type = ETH_ETHTYPE_IPV6;
   }
   else {
-    info = get_packet_info_frame( frame ); // push_vlan_tag() may change the address to info
+    info = get_packet_info_data( frame ); // push_vlan_tag() may change the address to info
     warn( "Unsupported packet found (%#x) while pushing a vlan tag.", info->format );
     return true;
   }
