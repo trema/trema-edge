@@ -237,6 +237,7 @@ bool parse_packet( buffer *buf );
 
 void calloc_packet_info( buffer *frame );
 void free_packet_info( buffer *frame );
+void copy_packet_info( buffer *dst, const buffer *src );
 packet_info get_packet_info( const buffer *frame );
 
 bool packet_type_eth_dix( const buffer *frame );
