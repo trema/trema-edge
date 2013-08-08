@@ -85,6 +85,7 @@ parse_ether( buffer *buf ) {
     packet_info->eth_type = ntohs( vlantag_header->type );
 
     packet_info->format |= ETH_8021Q;
+    packet_info->l2_vlan_header = vlantag_header;
 
     ptr = ( void * ) ( vlantag_header + 1 );
   }
