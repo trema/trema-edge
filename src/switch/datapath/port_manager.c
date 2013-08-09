@@ -501,6 +501,8 @@ get_port_stats( const uint32_t port_no, port_stats **stats, uint32_t *n_ports ) 
     stat++;
   }
 
+  delete_list( ports );
+
   if ( !unlock_mutex( &mutex ) ) {
     return ERROR_UNLOCK;
   }
@@ -552,6 +554,8 @@ get_port_description( const uint32_t port_no, port_description **descriptions, u
     switch_port_to_ofp_port( description, port );
     description++;
   }
+
+  delete_list( ports );
 
   if ( !unlock_mutex( &mutex ) ) {
     return ERROR_UNLOCK;
