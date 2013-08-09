@@ -22,6 +22,8 @@ module Trema
   #
   class IPv6Address
     require "ipaddr"
+    require "forwardable"
+    extend Forwardable
 
 
     #
@@ -33,9 +35,9 @@ module Trema
     #
     # Creates a {IPv6Address} instance object as a proxy to IPAddr class.
     #
-    # @overload initialize(addr)
+    # @overload initialize(ipv6address)
     #
-    # @param [String] addr
+    # @param [String] ipv6address
     #   an IPv6 address specified either as a String or Number.
     #
     # @raise [ArgumentError] invalid address if supplied argument is invalid
@@ -44,11 +46,11 @@ module Trema
     # @return [IP] self
     #   a proxy to IPAddr.
     #
-    def initialize addr
-      if !addr.kind_of? String
-        @value = IPAddr.new( addr, Socket::AF_INET6 )
+    def initialize ipv6address
+      if !ipv6address.kind_of? String
+        @value = IPAddr.new( ipv6address, Socket::AF_INET6 )
       else
-        @value = IPAddr.new( addr )
+        @value = IPAddr.new( ipv6address )
       end
     end
 
@@ -56,17 +58,13 @@ module Trema
     #
     # @return [String] the IPv6 address in its text representation.
     #
-    def to_s
-      @value.to_s
-    end
+    def_delegator :value, :to_s
 
 
     #
     # @return [Number] the IPv6 address in its numeric representation.
     #
-    def to_i
-      @value.to_i
-    end
+    def_delegator :value, :to_i
 
 
     #
@@ -85,11 +83,11 @@ module Trema
     #
     def mask! masklen
       @value = @value.mask( masklen )
-      return self
+      self
     end
     alias :prefix! :mask!
 
-    
+
     #
     # @return [IPv6Address]
     #   Returns the IPv6 address masked with masklen.
@@ -98,6 +96,7 @@ module Trema
       self.clone.mask!( masklen )
     end
     alias :prefix :mask
+
 
     #
     # @return [bool]
@@ -116,7 +115,7 @@ module Trema
       to_s == "::1"
     end
 
-    
+
     #
     # @return [bool]
     #   Returns true if the address is multicast address (See rfc4291).
@@ -124,7 +123,7 @@ module Trema
     def multicast?
       mask( 8 ).to_s == "ff00::"
     end
-      
+
 
     #
     # @return [bool]
@@ -134,16 +133,16 @@ module Trema
       mask( 10 ).to_s == "fe80::"
     end
 
-    
+
     #
     # @return [bool]
     #   Returns true if the address is global unicast address (See rfc4291).
-    # 
+    #
     def global_unicast?
       not ( unspecified? or loopback? or multicast? or link_local_unicast? )
     end
 
-    
+
     #
     # @return [bool]
     #   Returns true if the address is unicast address.

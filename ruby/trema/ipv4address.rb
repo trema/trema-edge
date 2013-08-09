@@ -22,20 +22,22 @@ module Trema
   #
   class IPv4Address
     require "ipaddr"
+    require "forwardable"
+    extend Forwardable
 
-    
+
     #
     # @return [IPAddr] value object instance of proxied IPAddr.
     #
     attr_reader :value
-    
-    
+
+
     #
     # Creates a {IP} instance object as a proxy to IPAddr class.
     #
-    # @overload initialize(addr)
+    # @overload initialize(ipv4address)
     #
-    # @param [String] addr
+    # @param [String] ipv4address
     #   an IPv4 address specified either as a String or Number.
     #
     # @raise [ArgumentError] invalid address if supplied argument is invalid
@@ -44,30 +46,26 @@ module Trema
     # @return [IP] self
     #   a proxy to IPAddr.
     #
-    def initialize addr
-      if !addr.kind_of? String
-        @value = IPAddr.new( addr, Socket::AF_INET )
+    def initialize ipv4address
+      if !ipv4address.kind_of? String
+        @value = IPAddr.new( ipv4address, Socket::AF_INET )
       else
-        @value = IPAddr.new( addr )
+        @value = IPAddr.new( ipv4address )
       end
     end
-    
-    
+
+
     #
     # @return [String] the IPv4 address in its text representation.
     #
-    def to_s
-      @value.to_s
-    end
-    
+    def_delegator :value, :to_s
+
 
     #
     # @return [Number] the IPv4 address in its numeric representation.
     #
-    def to_i
-      @value.to_i
-    end
-    
+    def_delegator :value, :to_i
+
 
     #
     # @return [Array]
@@ -79,12 +77,12 @@ module Trema
       end
     end
     alias :to_array :to_a
-    
+
 
     #
     # @return [IPv4Address]
     #   Returns the IPv4 address masked with masklen.
-    # 
+    #
     def mask! masklen
       @value = @value.mask( masklen )
       return self
@@ -95,7 +93,7 @@ module Trema
     #
     # @return [IPv4Address]
     #   Returns the IPv4 address masked with masklen.
-    # 
+    #
     def mask masklen
       self.clone.mask!( masklen )
     end
@@ -103,7 +101,7 @@ module Trema
 
 
     #
-    # @return [bool] 
+    # @return [bool]
     #   Returns true if the address belongs to class A.
     #
     def class_a?
@@ -112,7 +110,7 @@ module Trema
 
 
     #
-    # @return [bool] 
+    # @return [bool]
     #   Returns true if the address belongs to class B.
     #
     def class_b?
@@ -121,7 +119,7 @@ module Trema
 
 
     #
-    # @return [bool] 
+    # @return [bool]
     #   Returns true if the address belongs to class C.
     #
     def class_c?
@@ -130,7 +128,7 @@ module Trema
 
 
     #
-    # @return [bool] 
+    # @return [bool]
     #   Returns true if the address belongs to class D.
     #
     def class_d?
@@ -140,7 +138,7 @@ module Trema
 
 
     #
-    # @return [bool] 
+    # @return [bool]
     #   Returns true if the address belongs to class E.
     #
     def class_e?
@@ -149,7 +147,7 @@ module Trema
 
 
     #
-    # @return [bool] 
+    # @return [bool]
     #   Returns true if the address is unicast address.
     #
     def unicast?
