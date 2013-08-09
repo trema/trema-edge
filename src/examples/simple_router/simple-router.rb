@@ -182,8 +182,8 @@ class SimpleRouter < Controller
       SetField.new( action_set: [
         DecIpTtl.new,
         EthSrc.new( mac_address: eth_src ),
-	EthDst.new( mac_address: eth_dst )
-    ] ),
+        EthDst.new( mac_address: eth_dst )
+      ] ),
       SendOutPort.new( port_number: port )
     ]
     [
