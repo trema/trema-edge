@@ -60,13 +60,6 @@ frag_mask( VALUE self ) {
 
 
 static VALUE
-controller_port( VALUE self ) {
-  UNUSED( self );
-  return UINT2NUM( OFPP_CONTROLLER );
-}
-
-
-static VALUE
 max_port( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFPP_MAX );
@@ -105,6 +98,13 @@ static VALUE
 all_ports( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFPP_ALL );
+}
+
+
+static VALUE
+controller_port( VALUE self ) {
+  UNUSED( self );
+  return UINT2NUM( OFPP_CONTROLLER );
 }
 
 
@@ -175,27 +175,6 @@ static VALUE
 low_priority( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFP_LOW_PRIORITY );
-}
-
-
-static VALUE
-port_add( VALUE self ) {
-  UNUSED( self );
-  return UINT2NUM( OFPPR_ADD );
-}
-
-
-static VALUE
-port_delete( VALUE self ) {
-  UNUSED( self );
-  return UINT2NUM( OFPPR_DELETE );
-}
-
-
-static VALUE
-port_modify( VALUE self ) {
-  UNUSED( self );
-  return UINT2NUM( OFPPR_MODIFY );
 }
 
 
@@ -379,11 +358,6 @@ Init_message_const( void ) {
   rb_define_module_function( mMessageConst, "default_priority", default_priority, 0 );
   rb_define_module_function( mMessageConst, "high_priority", high_priority, 0 );
   rb_define_module_function( mMessageConst, "low_priority", low_priority, 0 );
-
-  // ofp_port_reason
-  rb_define_module_function( mMessageConst, "port_add" , port_add, 0 );
-  rb_define_module_function( mMessageConst, "port_delete" , port_delete, 0 );
-  rb_define_module_function( mMessageConst, "port_modify" , port_modify, 0 );
 
   // experimental error code
   rb_define_module_function( mMessageConst, "experimenter_error", experimenter_error, 0 );
