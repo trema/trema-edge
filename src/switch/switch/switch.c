@@ -95,6 +95,7 @@ sigint_handler( int signum ) {
 int
 main( int argc, char **argv ) {
   signal( SIGINT, sigint_handler );
+  signal( SIGTERM, sigint_handler );
   set_signal_mask();
 
   if ( ( args = init_switch( argc, argv ) ) != NULL ) {
