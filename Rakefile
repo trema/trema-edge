@@ -40,8 +40,7 @@ CFLAGS = [
   "-std=gnu99",
   "-D_GNU_SOURCE",
   "-fno-strict-aliasing",
-  # FIXME
-  # "-Werror",
+  "-Werror",
   "-Wall",
   "-Wextra",
   "-Wformat=2",
@@ -85,6 +84,7 @@ PaperHouse::RubyLibraryTask.new :libruby do | task |
   ]
   task.includes = Trema.include
   task.cflags = CFLAGS
+  task.cflags << "-Wno-error=sign-conversion" # FIXME
   task.ldflags = [ "-Wl,-Bsymbolic", "-L#{ Trema.lib }" ]
   task.library_dependencies = [
     "trema",
