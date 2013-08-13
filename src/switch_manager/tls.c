@@ -124,7 +124,7 @@ init_tls_server( const char *cert_file, const char *key_file ) {
   SSL_library_init();
   SSL_load_error_strings();
 
-  SSL_METHOD *method = TLSv1_server_method();
+  const SSL_METHOD *method = TLSv1_server_method();
   ctx = SSL_CTX_new( method );
   if ( ctx == NULL ) {
     unsigned long error_no = ERR_get_error();

@@ -47,6 +47,7 @@ VALUE cMatch;
  */
 static VALUE
 match_from( VALUE self, VALUE message ) {
+  UNUSED( self );
   uint32_t in_port = OFPP_CONTROLLER;
   VALUE r_match = rb_iv_get( message, "@match" );
   if ( !NIL_P( r_match ) ) {

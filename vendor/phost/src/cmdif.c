@@ -255,7 +255,7 @@ int cmdif_send_packets(cmdif_request_send_packets *request)
         reply.duration_sec = 0;
         reply.duration_usec = 0;
         length = sizeof(reply);
-        cmdif_send((void*)&reply, &length);
+        cmdif_send((void*)&reply, (uint32_t*)&length);
     }
 
     return ret;

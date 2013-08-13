@@ -548,7 +548,7 @@ static void
 unpack_action_set_field( const struct ofp_action_set_field *src, VALUE r_action_ary ) {
   VALUE r_attributes = rb_hash_new();
   VALUE r_flexible_action = Qnil;
-  uint32_t field_length = src->len - offsetof( struct ofp_action_set_field, field );
+  uint16_t field_length = ( uint16_t ) ( src->len - offsetof( struct ofp_action_set_field, field ) );
 
   if ( field_length > sizeof( oxm_match_header ) ) {
     const oxm_match_header *oxm_src = ( const oxm_match_header * ) src->field;
