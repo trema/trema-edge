@@ -164,7 +164,7 @@ save_packet( const buffer *packet ) {
   if ( buffer_id != UINT32_MAX ) {
     packet_in_buffers[ buffer_id ].packet = duplicate_buffer( packet );
     // duplicate_buffer() copies user_data, which points to old packet addresses
-    copy_packet_info( duplicate_buffer[ buffer_id ]->user_data, packet );
+    copy_packet_info( packet_in_buffers[ buffer_id ].packet, packet );
     time_now( &packet_in_buffers[ buffer_id ].saved_at );
   }
 
