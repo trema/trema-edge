@@ -83,8 +83,7 @@ PaperHouse::RubyLibraryTask.new :libruby do | task |
     "#{ Trema.ruby }/trema/messages/*.c"
   ]
   task.includes = Trema.include
-  task.cflags = CFLAGS
-  task.cflags << "-Wno-error=sign-conversion" # FIXME
+  task.cflags = CFLAGS + [ "-Wno-error=sign-conversion" ] # FIXME
   task.ldflags = [ "-Wl,-Bsymbolic", "-L#{ Trema.lib }" ]
   task.library_dependencies = [
     "trema",
