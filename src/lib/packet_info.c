@@ -37,6 +37,12 @@ void
 calloc_packet_info( buffer *buf ) {
   die_if_NULL( buf );
 
+  if ( buf->user_data != NULL && buf->user_data_free_function != NULL ) {
+    ( *buf->user_data_free_function )( buf );
+    assert( buf->user_data == NULL );
+    assert( buf->user_data_free_function == NULL );
+  }
+
   void *user_data = xcalloc( 1, sizeof( packet_info ) );
   assert( user_data != NULL );
 
