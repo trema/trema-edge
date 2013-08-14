@@ -942,13 +942,11 @@ push_linklayer_tag( buffer *frame, void *head, size_t tag_size ) {
   assert( head != NULL );
 
   size_t insert_offset = ( size_t ) ( ( char * ) head - ( char * ) frame->data );
-   append_back_buffer( frame, tag_size );
+  append_back_buffer( frame, tag_size );
   // head would be moved because append_back_buffer() may reallocate memory
   head = ( char * ) frame->data + insert_offset;
   memmove( ( char * ) head + tag_size, head, frame->length - insert_offset - tag_size );
   memset( head, 0, tag_size );
-
-  assert( parse_packet( frame ) == true );
 }
 
 
