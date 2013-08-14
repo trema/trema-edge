@@ -940,12 +940,14 @@ push_linklayer_tag( buffer *frame, void *head, size_t tag_size ) {
   assert( frame != NULL );
   assert( head != NULL );
 
-  char *tail = ( char * ) head + tag_size;
-  size_t length = frame->length - ( size_t ) ( ( char * ) head - ( char * ) frame->data );
-  // FIXME: this is not safe since append_back_buffer() may reallocate memory
-  append_back_buffer( frame, tag_size );
-  memmove( tail, head, length );
+  size_t insert_offset = ( size_t ) ( ( char * ) head - ( char * ) frame->data );
+   append_back_buffer( frame, tag_size );
+  // head would be moved because append_back_buffer() may reallocate memory
+  head = frame->data + insert_offset;
+  memmove( head + tag_size, head, frame->length - insert_offset - tag_size );
   memset( head, 0, tag_size );
+
+  assert( parse_packet( frame ) == true );
 }
 
 
@@ -1122,12 +1124,13 @@ execute_action_push_mpls( buffer *frame, action *push_mpls ) {
   if ( start == NULL ) {
     start = info->l2_payload;
   }
+  size_t mpls_offset = start - frame->data;
 
   push_mpls_tag( frame, start );
   ether_header_t *ether_header = frame->data;
   ether_header->type = htons( push_mpls->ethertype );
 
-  uint32_t *mpls = ( uint32_t * ) start;
+  uint32_t *mpls = ( uint32_t * )( frame->data + mpls_offset );
   *mpls = *mpls | htonl( 0x00000100 );
 
   return parse_frame( frame );
@@ -1145,11 +1148,12 @@ execute_action_push_vlan( buffer *frame, action *push_vlan ) {
   if ( start == NULL ) {
     start = info->l2_payload;
   }
+  size_t vlan_offset = start - frame->data;
 
   push_vlan_tag( frame, start );
   ether_header_t *ether_header = ( ether_header_t * ) frame->data;
   ether_header->type = htons( push_vlan->ethertype );
-  vlantag_header_t *vlan_header = ( vlantag_header_t * ) start;
+  vlantag_header_t *vlan_header = ( vlantag_header_t * )( frame->data + vlan_offset );
 
   uint16_t next_type = 0;
   if ( packet_type_ipv4( frame ) ) {
