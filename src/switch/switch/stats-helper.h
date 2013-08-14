@@ -26,11 +26,14 @@ extern "C" {
 
 
 #define SEND_STATS( stats_type, transaction_id, flags, list ) \
+  int offset = 0; \
   do {                                                        \
-    buffer *msg = create_##stats_type##_multipart_reply( transaction_id, flags, list ); \
+    int more = 0; \
+    buffer *msg = create_##stats_type##_multipart_reply( transaction_id, flags, list, &more, &offset ); \
     switch_send_openflow_message( msg ); \
     free_buffer( msg );                  \
-  } while( 0 )
+    if ( more == 0) break; \
+  } while( 1 )
 
 
 void ( *handle_desc )( const uint32_t transaction_id, const char *progname );

@@ -161,36 +161,46 @@ buffer *create_desc_multipart_reply( const uint32_t transaction_id, const uint16
                                      const char serial_num[ SERIAL_NUM_LEN ],
                                      const char dp_desc[ DESC_STR_LEN ] );
 buffer *create_flow_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                     const list_element *flow_multipart_head );
+                                     const list_element *flow_multipart_head,
+                                     int *more, int *offset );
 buffer *create_aggregate_multipart_reply( const uint32_t transaction_id,
                                           const uint16_t flags,
                                           const uint64_t packet_count, const uint64_t byte_count,
                                           const uint32_t flow_count );
 buffer *create_table_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                      const list_element *table_multipart_head );
+                                      const list_element *table_multipart_head,
+                                      int *more, int *offset );
 buffer *create_port_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                     const list_element *port_multipart_head );
+                                     const list_element *port_multipart_head,
+                                     int *more, int *offset );
 buffer *create_queue_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                      const list_element *queue_multipart_head );
+                                      const list_element *queue_multipart_head,
+                                      int *more, int *offset );
 buffer *create_group_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                      const list_element *group_multipart_head );
+                                      const list_element *group_multipart_head,
+                                      int *more, int *offset );
 buffer *create_group_desc_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                           const list_element *group_desc_multipart_head );
+                                           const list_element *group_desc_multipart_head,
+                                           int *more, int *offset );
 buffer *create_group_features_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
                                                const uint32_t types, const uint32_t capabilities,
                                                const uint32_t max_groups[ 4 ], const uint32_t actions[ 4 ] );
 buffer *create_meter_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                      const list_element *meter_multipart_head );
+                                      const list_element *meter_multipart_head,
+                                      int *more, int *offset );
 buffer *create_meter_config_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                             const list_element *meter_config_multipart_head );
+                                             const list_element *meter_config_multipart_head,
+                                             int *more, int *offset );
 buffer *create_meter_features_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
                                                const uint32_t max_meter, const uint32_t band_types,
                                                const uint32_t capabilities, const uint8_t max_bands,
                                                const uint8_t max_color );
 buffer *create_table_features_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                               const list_element *table_features_multipart_head );
+                                               const list_element *table_features_multipart_head,
+                                               int *more, int *offset );
 buffer *create_port_desc_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                          const list_element *port_desc_multipart_head  );
+                                          const list_element *port_desc_multipart_head,
+                                          int *more, int *offset );
 buffer *create_experimenter_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
                                              const uint32_t experimenter, const uint32_t exp_type, const buffer *body );
 buffer *create_barrier_request( const uint32_t transaction_id );
