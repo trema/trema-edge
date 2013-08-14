@@ -65,16 +65,16 @@ copy_packet_info( buffer *dst, const buffer *src ) {
   memcpy( dst->user_data, src->user_data, sizeof( packet_info ) );
 
   packet_info *info = ( packet_info* ) dst->user_data;
-  ssize_t offset = (dst->data - src->data);
+  ssize_t offset = ( ( char * ) dst->data - ( char * ) src->data);
 
-  if(info->l2_header      != NULL) ( char * ) info->l2_header      += offset;
-  if(info->l2_payload     != NULL) ( char * ) info->l2_payload     += offset;
-  if(info->l3_header      != NULL) ( char * ) info->l3_header      += offset;
-  if(info->l3_payload     != NULL) ( char * ) info->l3_payload     += offset;
-  if(info->l4_header      != NULL) ( char * ) info->l4_header      += offset;
-  if(info->l4_payload     != NULL) ( char * ) info->l4_payload     += offset;
-  if(info->l2_vlan_header != NULL) ( char * ) info->l2_vlan_header += offset;
-  if(info->l2_mpls_header != NULL) ( char * ) info->l2_mpls_header += offset;
+  if(info->l2_header      != NULL) info->l2_header      = ( char * ) info->l2_header      + offset;
+  if(info->l2_payload     != NULL) info->l2_payload     = ( char * ) info->l2_payload     + offset;
+  if(info->l3_header      != NULL) info->l3_header      = ( char * ) info->l3_header      + offset;
+  if(info->l3_payload     != NULL) info->l3_payload     = ( char * ) info->l3_payload     + offset;
+  if(info->l4_header      != NULL) info->l4_header      = ( char * ) info->l4_header      + offset;
+  if(info->l4_payload     != NULL) info->l4_payload     = ( char * ) info->l4_payload     + offset;
+  if(info->l2_vlan_header != NULL) info->l2_vlan_header = ( char * ) info->l2_vlan_header + offset;
+  if(info->l2_mpls_header != NULL) info->l2_mpls_header = ( char * ) info->l2_mpls_header + offset;
 }
 
 
