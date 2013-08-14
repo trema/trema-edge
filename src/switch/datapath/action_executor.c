@@ -1756,6 +1756,10 @@ execute_action_output( buffer *frame, action *output ) {
       match->in_phy_port.value = info->eth_in_phy_port;
       match->in_phy_port.valid = true;
     }
+    if ( info->metadata != 0 ) {
+      match->metadata.value = info->metadata;
+      match->metadata.valid = true;
+    }
     if ( output->entry != NULL && output->entry->table_miss ) {
       if ( port == NULL || ( port->config & OFPPC_NO_PACKET_IN ) == 0 ){
         notify_packet_in( OFPR_NO_MATCH, table_id, cookie, match, frame, MISS_SEND_LEN );
