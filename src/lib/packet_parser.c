@@ -67,7 +67,11 @@ parse_ether( buffer *buf ) {
   }
 
   // vlan tag
-  if ( packet_info->eth_type == ETH_ETHTYPE_TPID ) {
+  if ( packet_info->eth_type == ETH_ETHTYPE_TPID ||
+       packet_info->eth_type == ETH_ETHTYPE_TPID1 ||
+       packet_info->eth_type == ETH_ETHTYPE_TPID2 ||
+       packet_info->eth_type == ETH_ETHTYPE_TPID3 ||
+       packet_info->eth_type == ETH_ETHTYPE_TPID4 ) {
     // Check the length of remained buffer
     length = REMAINED_BUFFER_LENGTH( buf, ptr );
     if ( length < sizeof( vlantag_header_t ) ) {
@@ -90,7 +94,11 @@ parse_ether( buffer *buf ) {
   }
 
   // Skip nested vlan headers.
-  while (  packet_info->eth_type == ETH_ETHTYPE_TPID ) {
+  while ( packet_info->eth_type == ETH_ETHTYPE_TPID ||
+          packet_info->eth_type == ETH_ETHTYPE_TPID1 ||
+          packet_info->eth_type == ETH_ETHTYPE_TPID2 ||
+          packet_info->eth_type == ETH_ETHTYPE_TPID3 ||
+          packet_info->eth_type == ETH_ETHTYPE_TPID4 ) {
     // Check the length of remained buffer
     length = REMAINED_BUFFER_LENGTH( buf, ptr );
     if ( length < sizeof( vlantag_header_t ) ) {
