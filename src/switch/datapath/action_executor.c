@@ -1157,6 +1157,9 @@ execute_action_push_vlan( buffer *frame, action *push_vlan ) {
   else if ( packet_type_ipv6( frame ) ) {
     next_type = ETH_ETHTYPE_IPV6;
   }
+  else if ( packet_type_arp( frame ) ) {
+    next_type = ETH_ETHTYPE_ARP;
+  }
   else {
     warn( "Unsupported packet found (%#x) while pushing a vlan tag.", info->format );
     return true;
