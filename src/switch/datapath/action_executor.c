@@ -365,7 +365,8 @@ set_vlan_pcp( buffer *frame, uint8_t value ) {
   }
 
   vlantag_header_t *header = info->l2_vlan_header;
-  header->tci = ( uint16_t ) ( ( header->tci & htons( 0x1fff ) ) | htons( ( value & 0x07 ) << 13 ) );
+  uint16_t tci = ( uint16_t ) ( ( value & 0x07 ) << 13 );
+  header->tci = ( uint16_t ) ( ( header->tci & htons( 0x1fff ) ) | htons( tci ) );
 
   return parse_frame( frame );
 }
