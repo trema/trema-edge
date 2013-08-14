@@ -32,7 +32,6 @@
 #include "wrapper.h"
 #include "log.h"
 
-#define UINT16_T_MAX 0xffff
 
 #ifdef UNIT_TESTING
 
@@ -1359,7 +1358,7 @@ create_flow_multipart_reply( const uint32_t transaction_id, const uint16_t flags
   while ( flow != NULL ) {
     flow_stats = flow->data;
     if ( offsetof( struct ofp_multipart_reply, body )
-         + length + flow_stats->length > UINT16_T_MAX ) {
+         + length + flow_stats->length > ( size_t ) UINT16_MAX ) {
       *more = 1;
       msg_flags |= OFPMPF_REPLY_MORE;
       break;
@@ -1455,7 +1454,7 @@ create_table_multipart_reply( const uint32_t transaction_id, const uint16_t flag
   *more = 0;
   while ( table != NULL ) {
     if ( offsetof( struct ofp_multipart_reply, body )
-         + sizeof( struct ofp_table_stats ) * ( n_tables + 1 ) > UINT16_T_MAX ) {
+         + sizeof( struct ofp_table_stats ) * ( ( size_t ) n_tables + 1 ) > ( size_t ) UINT16_MAX ) {
       *more = 1;
       msg_flags |= OFPMPF_REPLY_MORE;
       break;
@@ -1521,7 +1520,7 @@ create_port_multipart_reply( const uint32_t transaction_id, const uint16_t flags
   *more = 0;
   while ( port != NULL ) {
     if ( offsetof( struct ofp_multipart_reply, body )
-         + sizeof( struct ofp_port_stats ) * ( n_ports + 1 ) > UINT16_T_MAX ) {
+         + sizeof( struct ofp_port_stats ) * ( ( size_t ) n_ports + 1 ) > ( size_t ) UINT16_MAX ) {
       *more = 1;
       msg_flags |= OFPMPF_REPLY_MORE;
       break;
@@ -1587,7 +1586,7 @@ create_queue_multipart_reply( const uint32_t transaction_id, const uint16_t flag
   *more = 0;
   while ( queue != NULL ) {
     if ( offsetof( struct ofp_multipart_reply, body )
-         + sizeof( struct ofp_queue_stats ) * ( n_queues + 1 ) > UINT16_T_MAX ) {
+         + sizeof( struct ofp_queue_stats ) * ( ( size_t ) n_queues + 1 ) > ( size_t ) UINT16_MAX ) {
       *more = 1;
       msg_flags |= OFPMPF_REPLY_MORE;
       break;
@@ -1655,7 +1654,7 @@ create_group_multipart_reply( const uint32_t transaction_id, const uint16_t flag
   while ( queue != NULL ) {
     group_stats = ( struct ofp_group_stats * ) queue->data;
     if ( offsetof( struct ofp_multipart_reply, body )
-         + queues_len + group_stats->length > UINT16_T_MAX ) {
+         + queues_len + group_stats->length > UINT16_MAX ) {
       *more = 1;
       msg_flags |= OFPMPF_REPLY_MORE;
       break;
@@ -1724,7 +1723,7 @@ create_group_desc_multipart_reply( const uint32_t transaction_id, const uint16_t
   while ( queue != NULL ) {
     group_desc = ( struct ofp_group_desc * ) queue->data;
     if ( offsetof( struct ofp_multipart_reply, body )
-         + group_descs_len + group_desc->length > UINT16_T_MAX ) {
+         + group_descs_len + group_desc->length > UINT16_MAX ) {
       *more = 1;
       msg_flags |= OFPMPF_REPLY_MORE;
       break;
@@ -1826,7 +1825,7 @@ create_meter_multipart_reply( const uint32_t transaction_id, const uint16_t flag
   while ( queue != NULL ) {
     meter_stats = ( struct ofp_meter_stats * ) queue->data;
     if ( offsetof( struct ofp_multipart_reply, body )
-         + meter_len + meter_stats->len > UINT16_T_MAX ) {
+         + meter_len + meter_stats->len > UINT16_MAX ) {
       *more = 1;
       msg_flags |= OFPMPF_REPLY_MORE;
       break;
@@ -1895,7 +1894,7 @@ create_meter_config_multipart_reply( const uint32_t transaction_id, const uint16
   while ( queue != NULL ) {
     meter_config = ( struct ofp_meter_config * ) queue->data;
     if ( offsetof( struct ofp_multipart_reply, body )
-         + meter_len + meter_config->length > UINT16_T_MAX ) {
+         + meter_len + meter_config->length > UINT16_MAX ) {
       *more = 1;
       msg_flags |= OFPMPF_REPLY_MORE;
       break;
@@ -1994,7 +1993,7 @@ create_table_features_multipart_reply( const uint32_t transaction_id, const uint
   while ( list != NULL ) {
     table_features = ( struct ofp_table_features * ) list->data;
     if ( offsetof( struct ofp_multipart_reply, body )
-         + tblftrs_len + table_features->length > UINT16_T_MAX ) {
+         + tblftrs_len + table_features->length > UINT16_MAX ) {
       *more = 1;
       msg_flags |= OFPMPF_REPLY_MORE;
       break;
@@ -2060,7 +2059,7 @@ create_port_desc_multipart_reply( const uint32_t transaction_id, const uint16_t 
   *more = 0;
   while ( queue != NULL ) {
     if ( offsetof( struct ofp_multipart_reply, body )
-         + sizeof( struct ofp_port ) * ( n_queues + 1 ) > UINT16_T_MAX ) {
+         + sizeof( struct ofp_port ) * ( ( size_t ) n_queues + 1 ) > ( size_t ) UINT16_MAX ) {
       *more = 1;
       msg_flags |= OFPMPF_REPLY_MORE;
       break;
