@@ -76,8 +76,7 @@ void ( *handle_hello )( const uint32_t transaction_id,
 
 static void
 _handle_features_request( const uint32_t transaction_id, void *user_data ) {
-  assert( user_data );
-  struct protocol *protocol = user_data;
+  UNUSED( user_data );
 
   switch_features features;
   memset( &features, 0, sizeof( switch_features ) );
