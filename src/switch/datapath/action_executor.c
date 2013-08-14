@@ -942,13 +942,11 @@ push_linklayer_tag( buffer *frame, void *head, size_t tag_size ) {
   assert( head != NULL );
 
   size_t insert_offset = ( size_t ) ( ( char * ) head - ( char * ) frame->data );
-   append_back_buffer( frame, tag_size );
+  append_back_buffer( frame, tag_size );
   // head would be moved because append_back_buffer() may reallocate memory
   head = ( char * ) frame->data + insert_offset;
   memmove( ( char * ) head + tag_size, head, frame->length - insert_offset - tag_size );
   memset( head, 0, tag_size );
-
-  assert( parse_packet( frame ) == true );
 }
 
 
@@ -1093,22 +1091,7 @@ execute_action_pop_vlan( buffer *frame, action *pop_vlan ) {
     return true;
   }
 
-  pop_vlan_tag( frame, info->l2_vlan_header );
-
-  uint16_t next_type = 0;
-  if ( packet_type_ipv4( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV4;
-  }
-  else if ( packet_type_ipv6( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV6;
-  }
-  else {
-    warn( "Unsupported packet found (%#x) while popping a vlan tag.", info->format );
-    return true;
-  }
-
-  ether_header_t *ether_header = frame->data;
-  ether_header->type = htons( next_type );
+  pop_vlan_tag( frame, ( char * ) info->l2_vlan_header - 2 ); // remove TPID ethertype and tci
 
   return parse_frame( frame );
 }
@@ -1149,30 +1132,11 @@ execute_action_push_vlan( buffer *frame, action *push_vlan ) {
   if ( start == NULL ) {
     start = info->l2_payload;
   }
-  size_t vlan_offset = ( size_t ) ( ( char * ) start - ( char * ) frame->data );
 
-  push_vlan_tag( frame, start );
+  push_vlan_tag( frame, ( char * ) start - 2); // push vlan tag between source mac and ethertype
+
   ether_header_t *ether_header = ( ether_header_t * ) frame->data;
   ether_header->type = htons( push_vlan->ethertype );
-  vlantag_header_t *vlan_header = ( vlantag_header_t * )( ( char * ) frame->data + vlan_offset );
-
-  uint16_t next_type = 0;
-  if ( packet_type_ipv4( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV4;
-  }
-  else if ( packet_type_ipv6( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV6;
-  }
-  else if ( packet_type_arp( frame ) ) {
-    next_type = ETH_ETHTYPE_ARP;
-  }
-  else {
-    info = get_packet_info_data( frame ); // push_vlan_tag() may change the address to info
-    warn( "Unsupported packet found (%#x) while pushing a vlan tag.", info->format );
-    return true;
-  }
-
-  vlan_header->type = htons( next_type );
 
   return parse_frame( frame );
 }
