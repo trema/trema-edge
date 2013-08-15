@@ -936,7 +936,7 @@ set_mpls_bos( buffer *frame, uint8_t value ) {
 }
 
 
-static void
+static void*
 push_linklayer_tag( buffer *frame, void *head, size_t tag_size ) {
   assert( frame != NULL );
   assert( head != NULL );
@@ -947,6 +947,8 @@ push_linklayer_tag( buffer *frame, void *head, size_t tag_size ) {
   head = ( char * ) frame->data + insert_offset;
   memmove( ( char * ) head + tag_size, head, frame->length - insert_offset - tag_size );
   memset( head, 0, tag_size );
+
+  return head;
 }
 
 
@@ -962,12 +964,12 @@ pop_linklayer_tag( buffer *frame, void *head, size_t tag_size ) {
 }
 
 
-static void
+static void*
 push_vlan_tag( buffer *frame, void *head ) {
   assert( frame != NULL );
   assert( head != NULL );
 
-  push_linklayer_tag( frame, head, sizeof( vlantag_header_t ) );
+  return push_linklayer_tag( frame, head, sizeof( vlantag_header_t ) );
 }
 
 
@@ -980,12 +982,12 @@ pop_vlan_tag( buffer *frame, void *head ) {
 }
 
 
-static void
+static void*
 push_mpls_tag( buffer *frame, void *head ) {
   assert( frame != NULL );
   assert( head != NULL );
 
-  push_linklayer_tag( frame, head, sizeof( uint32_t ) );
+  return push_linklayer_tag( frame, head, sizeof( uint32_t ) );
 }
 
 
@@ -1104,18 +1106,27 @@ execute_action_push_mpls( buffer *frame, action *push_mpls ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  void *start = info->l2_mpls_header;
-  if ( start == NULL ) {
-    start = info->l2_payload;
+  
+  void *start = info->l2_payload;
+  uint32_t default_mpls = htonl( 0x00000100 );
+  if ( info->l2_mpls_header != NULL ) {
+    start = info->l2_mpls_header;
+    default_mpls = htonl( 0xFFFFFEFF ) & *( uint32_t * ) info->l2_mpls_header;
   }
-  size_t mpls_offset = ( size_t ) ( ( char * ) start - ( char * ) frame->data );
+  else if ( packet_type_ipv4( frame ) ) {
+    ipv4_header_t *ipv4_header = info->l3_header;
+    default_mpls = htonl( 0x00000100 | ipv4_header->ttl );
+  }
+  else if ( packet_type_ipv6( frame ) ) {
+    ipv6_header_t *ipv6_header = info->l3_header;
+    default_mpls = htonl( 0x00000100 | ipv6_header->hoplimit );
+  }
 
-  push_mpls_tag( frame, start );
+  uint32_t *mpls = push_mpls_tag( frame, start );
+
   ether_header_t *ether_header = frame->data;
   ether_header->type = htons( push_mpls->ethertype );
-
-  uint32_t *mpls = ( uint32_t * )( ( char * ) frame->data + mpls_offset );
-  *mpls = *mpls | htonl( 0x00000100 );
+  *mpls = default_mpls;
 
   return parse_frame( frame );
 }
@@ -1128,15 +1139,17 @@ execute_action_push_vlan( buffer *frame, action *push_vlan ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  void *start = info->l2_vlan_header;
-  if ( start == NULL ) {
-    start = info->l2_payload;
+  
+  uint16_t default_tci = 0;
+  if ( info->l2_vlan_header != NULL ) {
+    default_tci = ( ( vlantag_header_t * ) ( info->l2_vlan_header ) )-> tci;
   }
 
-  push_vlan_tag( frame, ( char * ) start - 2); // push vlan tag between source mac and ethertype
+  void *vlan = push_vlan_tag( frame, ( char * ) info->l2_payload - 2); // push vlan tag between source mac and ethertype
 
   ether_header_t *ether_header = ( ether_header_t * ) frame->data;
   ether_header->type = htons( push_vlan->ethertype );
+  ( ( vlantag_header_t * )( ( char * ) vlan + 2 ) )->tci = default_tci;
 
   return parse_frame( frame );
 }
