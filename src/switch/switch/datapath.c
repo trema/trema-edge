@@ -213,7 +213,7 @@ void set_event_handlers( void *user_data ) {
 
 static void
 dump_flows_actually() {
-  dump_flow_table( 0, info );
+  dump_flow_tables( info );
 }
 
 

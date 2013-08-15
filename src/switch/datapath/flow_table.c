@@ -1259,12 +1259,40 @@ get_flow_table_config( const uint8_t table_id, uint32_t *config ) {
 }
 
 
+static void
+dump_next_table_ids( const bool *next_table_ids, const char *name, void dump_function( const char *format, ... ) ) {
+  char ids[ 1024 ], *cur = ids, *end = &ids[ sizeof( ids ) - 1 ];
+  ids[ 0 ] = '\0';
+  bool id_not_found = true;
+  for ( uint8_t i = 0; i < N_FLOW_TABLES; i++ ) {
+    if ( ( i % 32 ) == 0 ) {
+      if ( ids[ 0 ] != 0 ) {
+        ( *dump_function )( "%s:%s", name, ids );
+        ids[ 0 ] = 0, cur = ids;
+      }
+    }
+    else if ( next_table_ids[ i ] ) {
+      id_not_found = false;
+      snprintf( cur, ( size_t ) ( end - cur ), " %#x", i );
+      cur += strlen( cur );
+    }
+  }
+  if ( ids[ 0 ] != 0 ) {
+    ( *dump_function )( "%s:%s", name, ids );
+  }
+  if ( id_not_found ) {
+    ( *dump_function )( "%s: not found", name );
+  }
+}
+
+
 void
 dump_flow_table( const uint8_t table_id, void dump_function( const char *format, ... ) ) {
   assert( valid_table_id( table_id ) );
   assert( dump_function != NULL );
 
   if ( !lock_pipeline() ) {
+    ( *dump_function )( "Cannot lock table %#x", table_id );
     return;
   }
 
@@ -1291,17 +1319,8 @@ dump_flow_table( const uint8_t table_id, void dump_function( const char *format,
   ( *dump_function )( "write_setfield_miss: %#" PRIx64, table->features.write_setfield_miss );
   ( *dump_function )( "apply_setfield: %#" PRIx64, table->features.apply_setfield );
   ( *dump_function )( "apply_setfield_miss: %#" PRIx64, table->features.apply_setfield_miss );
-  for ( uint8_t i = 0; i < N_FLOW_TABLES; i++ ) {
-    if ( !table->features.next_table_ids[ i ] ) {
-      ( *dump_function )( "next_table_id: %#x - %s", i, table->features.next_table_ids[ i ] ? "true" : "false" ); 
-    }
-  }
-  for ( uint8_t i = 0; i < N_FLOW_TABLES; i++ ) {
-    if ( !table->features.next_table_ids_miss[ i ] ) {
-      ( *dump_function )( "next_table_id_miss: %#x - %s", i, table->features.next_table_ids_miss[ i ] ? "true" : "false" ); 
-    }
-  }
-
+  dump_next_table_ids( table->features.next_table_ids, "next_table_ids", dump_function );
+  dump_next_table_ids( table->features.next_table_ids_miss, "next_table_ids_miss", dump_function );
   ( *dump_function )( "[Stats]" );
   ( *dump_function )( "active_count: %u", table->counters.active_count );
   ( *dump_function )( "lookup_count: %" PRIu64, table->counters.lookup_count );
