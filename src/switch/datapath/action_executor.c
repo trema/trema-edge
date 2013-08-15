@@ -1115,11 +1115,11 @@ execute_action_push_mpls( buffer *frame, action *push_mpls ) {
   }
   else if ( packet_type_ipv4( frame ) ) {
     ipv4_header_t *ipv4_header = info->l3_header;
-    default_mpls = htonl( 0x00000100 | ipv4_header->ttl );
+    default_mpls = htonl( 0x00000100 | ( uint32_t ) ipv4_header->ttl );
   }
   else if ( packet_type_ipv6( frame ) ) {
     ipv6_header_t *ipv6_header = info->l3_header;
-    default_mpls = htonl( 0x00000100 | ipv6_header->hoplimit );
+    default_mpls = htonl( 0x00000100 | ( uint32_t ) ipv6_header->hoplimit );
   }
 
   uint32_t *mpls = push_mpls_tag( frame, start );
