@@ -342,6 +342,7 @@ receive_frame( int fd, void *user_data ) {
             get_packet_buffers_length( device->recv_queue ), max_queue_length );
       frame = device->recv_buffer; // Use recv_buffer as a trash.
     }
+    reset_buffer( frame );
     append_back_buffer( frame, device->mtu );
 
     ssize_t length = recv( device->fd, frame->data, frame->length, MSG_DONTWAIT );
@@ -361,9 +362,6 @@ receive_frame( int fd, void *user_data ) {
     if ( frame != device->recv_buffer ) {
       frame->length = ( size_t ) length;
       enqueue_packet_buffer( device->recv_queue, frame );
-    }
-    else {
-      reset_buffer( frame );
     }
     count++;
   }
