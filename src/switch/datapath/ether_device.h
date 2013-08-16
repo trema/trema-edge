@@ -22,6 +22,9 @@
 
 #include <net/if.h>
 #include <stdint.h>
+#if WITH_PCAP
+#include <pcap.h>
+#endif
 #include "ofdp_common.h"
 #include "packet_buffer.h"
 
@@ -59,6 +62,9 @@ typedef struct {
     uint64_t rx_crc_err;
     uint64_t collisions;
   } stats;
+#if WITH_PCAP
+  pcap_t *pcap;
+#endif
   int fd;
   packet_buffers *send_queue;
   packet_buffers *recv_queue;
