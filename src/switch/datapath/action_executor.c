@@ -1140,12 +1140,14 @@ execute_action_push_vlan( buffer *frame, action *push_vlan ) {
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
   
+  char *start = info->l2_payload;
   uint16_t default_tci = 0;
   if ( info->l2_vlan_header != NULL ) {
+    start = info->l2_vlan_header;
     default_tci = ( ( vlantag_header_t * ) ( info->l2_vlan_header ) )-> tci;
   }
 
-  void *vlan = push_vlan_tag( frame, ( char * ) info->l2_payload - 2); // push vlan tag between source mac and ethertype
+  void *vlan = push_vlan_tag( frame, start - 2 ); // push vlan tag between source mac and ethertype
 
   ether_header_t *ether_header = ( ether_header_t * ) frame->data;
   ether_header->type = htons( push_vlan->ethertype );
