@@ -416,7 +416,6 @@ flush_send_queue( int fd, void *user_data ) {
     if( pcap_sendpacket( device->pcap, buf->data, buf->length ) < 0 ){
       error( "Failed to send a message to ethernet device ( device = %s, pcap_err = %s ).",
         device->name, pcap_geterr( device->pcap ) );
-      return;
     }
     ssize_t length = buf->length;
 #else
