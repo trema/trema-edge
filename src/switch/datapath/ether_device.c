@@ -363,7 +363,7 @@ receive_frame( int fd, void *user_data ) {
       }
       if ( ret == -1 ) {
         error( "Receive error ( device = %s, pcap_err = %s ).",
-             device->name, pcap_geterr( device->pcap ) );
+               device->name, pcap_geterr( device->pcap ) );
       }
       break;
     }
@@ -415,7 +415,7 @@ flush_send_queue( int fd, void *user_data ) {
 #if WITH_PCAP
     if( pcap_sendpacket( device->pcap, buf->data, buf->length ) < 0 ){
       error( "Failed to send a message to ethernet device ( device = %s, pcap_err = %s ).",
-        device->name, pcap_geterr( device->pcap ) );
+             device->name, pcap_geterr( device->pcap ) );
     }
     ssize_t length = buf->length;
 #else
@@ -500,7 +500,7 @@ create_ether_device( const char *name, const size_t max_send_queue, const size_t
   char errbuf[ PCAP_ERRBUF_SIZE ];
   pcap_t *handle = pcap_open_live( name, BUFSIZ, 1, 100, errbuf );
   if( handle == NULL ){
-    error( "device %s open failed %s", name, errbuf );
+    error( "Failed to open %s ( %s ).", name, errbuf );
     return NULL;
   }
   int fd = pcap_get_selectable_fd( handle );
