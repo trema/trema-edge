@@ -346,7 +346,7 @@ receive_frame( int fd, void *user_data ) {
     append_back_buffer( frame, device->mtu );
 
 #if WITH_PCAP
-    ssize_t length = 0;
+    size_t length = 0;
     struct pcap_pkthdr *header = NULL;
     const u_char *packet = NULL;
     int ret = pcap_next_ex( device->pcap, &header, &packet );
@@ -413,11 +413,11 @@ flush_send_queue( int fd, void *user_data ) {
   buffer *buf = NULL;
   while ( ( buf = peek_packet_buffer( device->send_queue ) ) != NULL && count < 256 ) {
 #if WITH_PCAP
-    if( pcap_sendpacket( device->pcap, buf->data, buf->length ) < 0 ){
+    if( pcap_sendpacket( device->pcap, buf->data, ( int ) buf->length ) < 0 ){
       error( "Failed to send a message to ethernet device ( device = %s, pcap_err = %s ).",
              device->name, pcap_geterr( device->pcap ) );
     }
-    ssize_t length = buf->length;
+    size_t length = buf->length;
 #else
     ssize_t length = sendto( device->fd, buf->data, buf->length, MSG_DONTWAIT, ( struct sockaddr * ) &sll, sizeof( sll ) );
     if ( length < 0 ) {
