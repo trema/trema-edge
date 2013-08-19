@@ -97,7 +97,7 @@ test_parse_packet_snap_succeeds() {
   assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
   assert_true( packet_info->eth_type < ETH_MTU );
 
-  u_char llc[] = { 0xe0, 0xe0, 0x03 };
+  u_char llc[] = { 0xe0, 0xe0, 0x03 }; // XXX: This is not SNAP(0xAA), but Novell(=IPX, 0xE0)
   u_char oui[] = { 0xff, 0xff, 0x00 };
   assert_memory_equal( packet_info->snap_llc, llc, SNAP_LLC_LENGTH );
   assert_memory_equal( packet_info->snap_oui, oui, SNAP_OUI_LENGTH );
