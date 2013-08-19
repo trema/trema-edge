@@ -546,6 +546,9 @@ create_ether_device( const char *name, const size_t max_send_queue, const size_t
     error( "Failed to open %s ( %s ).", name, errbuf );
     return NULL;
   }
+  if ( pcap_setnonblock( handle, 1, errbuf ) == -1 ) {
+    warn( "Failed to setnonblock %s ( %s ).", name, errbuf );
+  }
   int fd = pcap_get_selectable_fd( handle );
 #else // WITH_PCAP
   int fd = socket( PF_PACKET, SOCK_RAW, htons( ETH_P_ALL ) );
