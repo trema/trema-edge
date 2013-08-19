@@ -893,8 +893,8 @@ set_mpls_label( buffer *frame, uint32_t value ) {
     return true;
   }
 
-  uint32_t *mpls = info->l2_mpls_header;
-  *mpls = ( *mpls & htonl( 0x00000fff ) ) | htonl( ( value & 0x000fffff ) << 12 );
+  mpls_header_t *mpls_header = info->l2_mpls_header;
+  mpls_header->label = ( mpls_header->label & htonl( 0x00000fff ) ) | htonl( ( value << 12 ) & 0xfffff000 );
 
   return parse_frame( frame );
 }
@@ -911,8 +911,8 @@ set_mpls_tc( buffer *frame, uint8_t value ) {
     return true;
   }
 
-  uint32_t *mpls = info->l2_mpls_header;
-  *mpls = ( *mpls & htonl( 0xfffff1ff ) ) | htonl( ( uint32_t ) ( value & 0x07 ) << 9 );
+  mpls_header_t *mpls_header = info->l2_mpls_header;
+  mpls_header->label = ( mpls_header->label & htonl( 0xfffff1ff ) ) | htonl( ( ( uint32_t ) value << 9 ) & 0x00000e00 );
 
   return parse_frame( frame );
 }
@@ -929,8 +929,8 @@ set_mpls_bos( buffer *frame, uint8_t value ) {
     return true;
   }
 
-  uint32_t *mpls = info->l2_mpls_header;
-  *mpls = ( *mpls & htonl( 0xfffffeff ) ) | htonl( ( uint32_t )( value & 0x01 ) << 8 );
+  mpls_header_t *mpls_header = info->l2_mpls_header;
+  mpls_header->label = ( mpls_header->label & htonl( 0xfffffeff ) ) | htonl( ( ( uint32_t ) value << 8 ) & 0x00000100 );
 
   return parse_frame( frame );
 }
@@ -1098,20 +1098,7 @@ execute_action_pop_mpls( buffer *frame, action *pop_mpls ) {
 
   pop_mpls_tag( frame, info->l2_mpls_header );
 
-  uint16_t next_type = 0;
-  if ( packet_type_ipv4( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV4;
-  }
-  else if ( packet_type_ipv6( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV6;
-  }
-  else {
-    warn( "Unsupported packet found (%#x) while popping a mpls label.", info->format );
-    return true;
-  }
-
-  ether_header_t *ether_header = frame->data;
-  ether_header->type = htons( next_type );
+  * ( uint16_t * ) ( ( char * ) info->l2_mpls_header - 2 ) = htons( pop_mpls->ethertype );
 
   return parse_frame( frame );
 }
@@ -1142,7 +1129,7 @@ execute_action_push_mpls( buffer *frame, action *push_mpls ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  
+
   void *start = info->l2_payload;
   uint32_t default_mpls = htonl( 0x00000100 );
   if ( info->l2_mpls_header != NULL ) {
@@ -1158,11 +1145,11 @@ execute_action_push_mpls( buffer *frame, action *push_mpls ) {
     default_mpls = htonl( 0x00000100 | ( uint32_t ) ipv6_header->hoplimit );
   }
 
-  uint32_t *mpls = push_mpls_tag( frame, start );
+  void *mpls = push_mpls_tag( frame, start );
 
-  ether_header_t *ether_header = frame->data;
-  ether_header->type = htons( push_mpls->ethertype );
-  *mpls = default_mpls;
+  * ( uint16_t * )( ( char * ) mpls - 2 ) = htons( push_mpls->ethertype );
+  mpls_header_t *mpls_header = mpls;
+  mpls_header->label = default_mpls;
 
   return parse_frame( frame );
 }

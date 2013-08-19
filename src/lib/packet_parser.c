@@ -349,16 +349,29 @@ parse_mpls( buffer *buf ) {
   void *ptr = packet_info->l3_header;
   assert( ptr != NULL );
 
-  // Check the length of remained buffer
-  size_t length = REMAINED_BUFFER_LENGTH( buf, ptr );
-  if ( length < sizeof( mpls_header_t ) ) {
-    return;
-  }
+  uint8_t mpls_bos = 0;
+  do {
+    // Check the length of remained buffer
+    size_t length = REMAINED_BUFFER_LENGTH( buf, ptr );
+    if ( length < sizeof( mpls_header_t ) ) {
+      debug("incomplete mpls");
+      return;
+    }
 
-  mpls_header_t *mpls_header = ptr;
-  packet_info->mpls_label = ntohl( mpls_header->label );
+    mpls_header_t *mpls_header = ptr;
+    uint32_t mpls = ntohl( mpls_header->label );
+    mpls_bos = ( uint8_t ) ( ( mpls & 0x00000100 ) >> 8 );
+    if ( packet_info->l2_mpls_header == NULL ) {
+      // capture the outermost information
+      packet_info->mpls_label =             ( ( mpls & 0xFFFFF000 ) >> 12 );
+      packet_info->mpls_tc    = ( uint8_t ) ( ( mpls & 0x00000E00 ) >>  9 );
+      packet_info->mpls_bos   = ( uint8_t ) ( ( mpls & 0x00000100 ) >>  8 );
+      packet_info->format |= MPLS;
+      packet_info->l2_mpls_header = ptr;
+    }
+    ptr = ( void * ) ( mpls_header + 1 );
+  } while ( mpls_bos == 0 );
 
-  ptr = ( void * ) ( mpls_header + 1 );
   size_t payload_length = REMAINED_BUFFER_LENGTH( buf, ptr );
   if ( payload_length > 0 ) {
     packet_info->l3_payload = ptr;
