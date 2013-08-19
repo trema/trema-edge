@@ -368,7 +368,24 @@ receive_frame( int fd, void *user_data ) {
       break;
     }
 #else // WITH_PCAP
-    ssize_t length = recv( device->fd, frame->data, frame->length, MSG_DONTWAIT );
+    struct msghdr msg;
+    msg.msg_name = NULL;
+    msg.msg_namelen = 0;
+
+    struct iovec iovec;
+    size_t headroom_length = sizeof( vlantag_header_t );
+    char *head = ( char * ) frame->data + headroom_length;
+    iovec.iov_base = head;
+    iovec.iov_len = frame->length - headroom_length;
+    msg.msg_iov = &iovec;
+    msg.msg_iovlen = 1;
+
+    char cmsg_buf[ CMSG_SPACE( sizeof( struct tpacket_auxdata ) ) ];
+    msg.msg_control = cmsg_buf;
+    msg.msg_controllen = sizeof( cmsg_buf );
+    msg.msg_flags = 0;
+
+    ssize_t length = recvmsg( device->fd, &msg, MSG_DONTWAIT );
     assert( length != 0 );
     if ( length < 0 ) {
       if ( frame != device->recv_buffer ) {
@@ -382,6 +399,31 @@ receive_frame( int fd, void *user_data ) {
              device->name, safe_strerror_r( errno, error_string, sizeof( error_string ) ), errno );
       break;
     }
+
+    for ( struct cmsghdr *cmsg = CMSG_FIRSTHDR( &msg ); cmsg != NULL; cmsg = CMSG_NXTHDR( &msg, cmsg ) ) {
+      if ( cmsg->cmsg_len < CMSG_LEN( sizeof( struct tpacket_auxdata ) ) ) {
+        continue;
+      }
+      if ( cmsg->cmsg_level != SOL_PACKET || cmsg->cmsg_type != PACKET_AUXDATA ) {
+        continue;
+      }
+      struct tpacket_auxdata *auxdata = ( struct tpacket_auxdata * ) CMSG_DATA( cmsg );
+      if ( auxdata->tp_vlan_tci == 0 ) {
+        continue;
+      }
+      head -= sizeof( vlantag_header_t );
+      if ( ( void * ) head < frame->data ) {
+        append_front_buffer( frame, sizeof( vlantag_header_t ) );
+        head = frame->data;
+      }
+      length += ( ssize_t ) sizeof( vlantag_header_t );
+      memmove( head, head + sizeof( vlantag_header_t ), ETH_ADDRLEN * 2 );
+      uint16_t *eth_type = ( uint16_t * ) ( head + ETH_ADDRLEN * 2 );
+      *eth_type = htons( ETH_ETHTYPE_TPID );
+      uint16_t *tci = ++eth_type;
+      *tci = htons( auxdata->tp_vlan_tci );
+    }
+    frame->data = head;
 #endif
     if ( frame != device->recv_buffer ) {
       frame->length = ( size_t ) length;
@@ -524,6 +566,26 @@ create_ether_device( const char *name, const size_t max_send_queue, const size_t
     char error_string[ ERROR_STRING_SIZE ];
     error( "Failed to bind ( fd = %d, ret = %d, errno = %s [%d] ).",
            fd, ret, safe_strerror_r( errno, error_string, sizeof( error_string ) ), errno );
+    close( fd );
+    return NULL;
+  }
+
+  int val = TPACKET_V2;
+  ret = setsockopt( fd, SOL_PACKET, PACKET_VERSION, &val, sizeof( val ) );
+  if ( ret < 0 ) {
+    char error_string[ ERROR_STRING_SIZE ];
+    error( "Failed to set PACKET_VERSION to %d ( fd = %d, ret = %d, errno = %s [%d] ).",
+           val, fd, ret, safe_strerror_r( errno, error_string, sizeof( error_string ) ), errno );
+    close( fd );
+    return NULL;
+  }
+
+  val = 1;
+  ret = setsockopt( fd, SOL_PACKET, PACKET_AUXDATA, &val, sizeof( val ) );
+  if ( ret < 0 ) {
+    char error_string[ ERROR_STRING_SIZE ];
+    error( "Failed to set PACKET_AUXDATA to %d ( fd = %d, ret = %d, errno = %s [%d] ).",
+           val, fd, ret, safe_strerror_r( errno, error_string, sizeof( error_string ) ), errno );
     close( fd );
     return NULL;
   }
