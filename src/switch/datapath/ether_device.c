@@ -496,9 +496,10 @@ create_ether_device( const char *name, const size_t max_send_queue, const size_t
 
   close( nfd );
 
+  size_t device_mtu = ( size_t ) mtu + MAX_L2_HEADER_LENGTH;
 #ifdef WITH_PCAP
   char errbuf[ PCAP_ERRBUF_SIZE ];
-  pcap_t *handle = pcap_open_live( name, BUFSIZ, 1, 100, errbuf );
+  pcap_t *handle = pcap_open_live( name, ( int ) device_mtu, 1, 100, errbuf );
   if( handle == NULL ){
     error( "Failed to open %s ( %s ).", name, errbuf );
     return NULL;
@@ -548,7 +549,7 @@ create_ether_device( const char *name, const size_t max_send_queue, const size_t
   memcpy( device->hw_addr, ifr.ifr_hwaddr.sa_data, ETH_ADDRLEN );
   device->status.can_retrieve_link_status = true;
   device->status.can_retrieve_pause = true;
-  device->mtu = ( size_t ) mtu + MAX_L2_HEADER_LENGTH;
+  device->mtu = device_mtu;
   device->recv_buffer = alloc_buffer_with_length( device->mtu );
   device->send_queue = create_packet_buffers( ( unsigned int ) max_send_queue, device->mtu );
   device->recv_queue = create_packet_buffers( ( unsigned int ) max_recv_queue, device->mtu );
