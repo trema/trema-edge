@@ -74,6 +74,7 @@ copy_packet_info( buffer *dst, const buffer *src ) {
   if(info->l4_header      != NULL) info->l4_header      = ( char * ) info->l4_header      + offset;
   if(info->l4_payload     != NULL) info->l4_payload     = ( char * ) info->l4_payload     + offset;
   if(info->l2_vlan_header != NULL) info->l2_vlan_header = ( char * ) info->l2_vlan_header + offset;
+  if(info->l2_pbb_header  != NULL) info->l2_pbb_header  = ( char * ) info->l2_pbb_header  + offset;
   if(info->l2_mpls_header != NULL) info->l2_mpls_header = ( char * ) info->l2_mpls_header + offset;
 }
 

@@ -893,8 +893,8 @@ set_mpls_label( buffer *frame, uint32_t value ) {
     return true;
   }
 
-  uint32_t *mpls = info->l2_mpls_header;
-  *mpls = ( *mpls & htonl( 0x00000fff ) ) | htonl( ( value & 0x000fffff ) << 12 );
+  mpls_header_t *mpls_header = info->l2_mpls_header;
+  mpls_header->label = ( mpls_header->label & htonl( 0x00000fff ) ) | htonl( ( value << 12 ) & 0xfffff000 );
 
   return parse_frame( frame );
 }
@@ -911,8 +911,8 @@ set_mpls_tc( buffer *frame, uint8_t value ) {
     return true;
   }
 
-  uint32_t *mpls = info->l2_mpls_header;
-  *mpls = ( *mpls & htonl( 0xfffff1ff ) ) | htonl( ( uint32_t ) ( value & 0x07 ) << 9 );
+  mpls_header_t *mpls_header = info->l2_mpls_header;
+  mpls_header->label = ( mpls_header->label & htonl( 0xfffff1ff ) ) | htonl( ( ( uint32_t ) value << 9 ) & 0x00000e00 );
 
   return parse_frame( frame );
 }
@@ -929,8 +929,26 @@ set_mpls_bos( buffer *frame, uint8_t value ) {
     return true;
   }
 
-  uint32_t *mpls = info->l2_mpls_header;
-  *mpls = ( *mpls & htonl( 0xfffffeff ) ) | htonl( ( uint32_t )( value & 0x01 ) << 8 );
+  mpls_header_t *mpls_header = info->l2_mpls_header;
+  mpls_header->label = ( mpls_header->label & htonl( 0xfffffeff ) ) | htonl( ( ( uint32_t ) value << 8 ) & 0x00000100 );
+
+  return parse_frame( frame );
+}
+
+
+static bool
+set_pbb_isid( buffer *frame, uint32_t value ) {
+  assert( frame != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+  if ( info->l2_pbb_header == NULL ) {
+    warn( "A non-pbb packet (%#x) found while setting pbb sid.", info->format );
+    return true;
+  }
+
+  pbb_header_t *pbb_header = info->l2_pbb_header;
+  pbb_header->isid = ( pbb_header->isid & htonl( 0xFF000000 ) ) | htonl( value & 0x00FFFFFF );
 
   return parse_frame( frame );
 }
@@ -1000,6 +1018,24 @@ pop_mpls_tag( buffer *frame, void *head ) {
 }
 
 
+static void*
+push_pbb_tag( buffer *frame, void *head ) {
+  assert( frame != NULL );
+  assert( head != NULL );
+
+  return push_linklayer_tag( frame, head, sizeof( pbb_header_t ) );
+}
+
+
+static void
+pop_pbb_tag( buffer *frame, void *head ) {
+  assert( frame != NULL );
+  assert( head != NULL );
+
+  pop_linklayer_tag( frame, head, sizeof( pbb_header_t ) );
+}
+
+
 static bool
 decrement_ttl( uint8_t *ttl ) {
   assert( ttl != NULL );
@@ -1062,20 +1098,7 @@ execute_action_pop_mpls( buffer *frame, action *pop_mpls ) {
 
   pop_mpls_tag( frame, info->l2_mpls_header );
 
-  uint16_t next_type = 0;
-  if ( packet_type_ipv4( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV4;
-  }
-  else if ( packet_type_ipv6( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV6;
-  }
-  else {
-    warn( "Unsupported packet found (%#x) while popping a mpls label.", info->format );
-    return true;
-  }
-
-  ether_header_t *ether_header = frame->data;
-  ether_header->type = htons( next_type );
+  * ( uint16_t * ) ( ( char * ) info->l2_mpls_header - 2 ) = htons( pop_mpls->ethertype );
 
   return parse_frame( frame );
 }
@@ -1106,7 +1129,7 @@ execute_action_push_mpls( buffer *frame, action *push_mpls ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  
+
   void *start = info->l2_payload;
   uint32_t default_mpls = htonl( 0x00000100 );
   if ( info->l2_mpls_header != NULL ) {
@@ -1122,11 +1145,11 @@ execute_action_push_mpls( buffer *frame, action *push_mpls ) {
     default_mpls = htonl( 0x00000100 | ( uint32_t ) ipv6_header->hoplimit );
   }
 
-  uint32_t *mpls = push_mpls_tag( frame, start );
+  void *mpls = push_mpls_tag( frame, start );
 
-  ether_header_t *ether_header = frame->data;
-  ether_header->type = htons( push_mpls->ethertype );
-  *mpls = default_mpls;
+  * ( uint16_t * )( ( char * ) mpls - 2 ) = htons( push_mpls->ethertype );
+  mpls_header_t *mpls_header = mpls;
+  mpls_header->label = default_mpls;
 
   return parse_frame( frame );
 }
@@ -1520,6 +1543,12 @@ execute_action_set_field( buffer *frame, action *set_field ) {
     }
   }
 
+  if ( match->pbb_isid.valid ) {
+    if ( !set_pbb_isid( frame, match->pbb_isid.value ) ) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -1543,6 +1572,65 @@ execute_group_all( buffer *frame, bucket_list *buckets ) {
   }
 
   return true;
+}
+
+
+static bool
+execute_action_push_pbb( buffer *frame, action *push_pbb ) {
+  assert( frame != NULL );
+  assert( push_pbb != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+
+  char *start = info->l2_payload;
+  uint32_t default_isid = 0;
+  if ( info->l2_pbb_header != NULL ) {
+    // PBB I-SID <- PBB I-SID
+    start = info->l2_pbb_header;
+    pbb_header_t *pbb = info->l2_pbb_header;
+    default_isid |= ntohl( pbb->isid ) & 0x00FFFFFF;
+  }
+  if ( info->l2_vlan_header != NULL ) {
+    // PBB I-PCP <- VLAN PCP
+    vlantag_header_t *vlan = info->l2_vlan_header;
+    default_isid |= ( ( ( uint32_t ) ntohs( vlan->tci ) >> 13 ) << 29 ) & 0xE0000000;
+  }
+
+  void *new = push_pbb_tag( frame, start - 2 ); // push pbb before ethertype
+
+  *( ( uint16_t * ) new ) = htons( push_pbb->ethertype );
+
+  ether_header_t *ether = ( ether_header_t * ) frame->data;
+  pbb_header_t *pbb = ( pbb_header_t * ) ( ( char * ) new + 2 );
+  pbb->isid = htonl( default_isid );
+  memcpy( pbb->cda, ether->macda, ETH_ADDRLEN );
+  memcpy( pbb->csa, ether->macsa, ETH_ADDRLEN );
+
+  return parse_frame( frame );
+}
+
+
+static bool
+execute_action_pop_pbb( buffer *frame, action *pop_pbb ) {
+  assert( frame != NULL );
+  assert( pop_pbb != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+  if ( info->l2_pbb_header == NULL ) {
+    warn( "A non-pbb frame (%#x) found while popping a pbb tag.", info->format );
+    return true;
+  }
+
+  pbb_header_t *pbb_header = info->l2_pbb_header;
+  ether_header_t *ether_header = frame->data;
+  memcpy( ether_header->macda, pbb_header->cda, ETH_ADDRLEN );
+  memcpy( ether_header->macsa, pbb_header->csa, ETH_ADDRLEN );
+
+  pop_pbb_tag( frame, ( char * ) info->l2_pbb_header - 2 ); // remove PBB ethertype and I-TAG
+
+  return parse_frame( frame );
 }
 
 
@@ -1896,16 +1984,14 @@ execute_action_list( action_list *list, buffer *frame ) {
       case OFPAT_PUSH_PBB:
       {
         debug( "Executing action (OFPAT_PUSH_PBB)." );
-        warn( "OFPAT_PUSH_PBB is not supported." );
-        ret = false;
+        ret = execute_action_push_pbb( frame, action );
       }
       break;
 
       case OFPAT_POP_PBB:
       {
         debug( "Executing action (OFPAT_POP_PBB)." );
-        warn( "OFPAT_POP_PBB is not supported." );
-        ret = false;
+        ret = execute_action_pop_pbb( frame, action );
       }
       break;
 
@@ -1948,22 +2034,23 @@ execute_action_set( action_set *set, buffer *frame ) {
     }
   }
 
-  if ( set->pop_mpls != NULL ) {
-    debug( "Executing action (OFPAT_POP_MPLS)." );
-    if ( !execute_action_pop_mpls( frame, set->pop_mpls ) ) {
+  if ( set->pop_vlan != NULL ) {
+    debug( "Executing action (OFPAT_POP_VLAN)." );
+    if ( !execute_action_pop_vlan( frame, set->pop_vlan ) ) {
       return OFDPE_FAILED;
     }
   }
 
   if ( set->pop_pbb != NULL ) {
     debug( "Executing action (OFPAT_POP_PBB)." );
-    warn( "OFPAT_POP_PBB is not supported" );
-    return OFDPE_FAILED;
+    if ( !execute_action_pop_pbb( frame, set->pop_pbb ) ) {
+      return OFDPE_FAILED;
+    }
   }
 
-  if ( set->pop_vlan != NULL ) {
-    debug( "Executing action (OFPAT_POP_VLAN)." );
-    if ( !execute_action_pop_vlan( frame, set->pop_vlan ) ) {
+  if ( set->pop_mpls != NULL ) {
+    debug( "Executing action (OFPAT_POP_MPLS)." );
+    if ( !execute_action_pop_mpls( frame, set->pop_mpls ) ) {
       return OFDPE_FAILED;
     }
   }
@@ -1977,8 +2064,9 @@ execute_action_set( action_set *set, buffer *frame ) {
 
   if ( set->push_pbb != NULL ) {
     debug( "Executing action (OFPAT_PUSH_PBB)." );
-    warn( "OFPAT_PUSH_PBB is not supported" );
-    return OFDPE_FAILED;
+    if ( !execute_action_push_pbb( frame, set->push_pbb ) ) {
+      return OFDPE_FAILED;
+    }
   }
 
   if ( set->push_vlan != NULL ) {
