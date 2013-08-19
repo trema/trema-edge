@@ -182,8 +182,8 @@ update_device_status( ether_device *device ) {
     ethtool_cmd_speed_set( &ec, SPEED_100 );
     ec.duplex = DUPLEX_FULL;
     ec.port = PORT_TP;
-    ec.advertising = SUPPORTED_100baseT_Full | SUPPORTED_TP;
-    ec.supported = ADVERTISED_100baseT_Full | ADVERTISED_TP;
+    ec.advertising = ADVERTISED_100baseT_Full | ADVERTISED_TP;
+    ec.supported = SUPPORTED_100baseT_Full | SUPPORTED_TP;
   }
 
   struct ethtool_pauseparam ep;
