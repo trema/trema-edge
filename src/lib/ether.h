@@ -68,6 +68,15 @@ typedef struct vlantag_header {
 } vlantag_header_t;
 
 
+// 802.1ah I-TAG TCI + payload ethertype
+typedef struct pbb_header {
+  uint32_t isid;
+  uint8_t cda[ ETH_ADDRLEN ];
+  uint8_t csa[ ETH_ADDRLEN ];
+  uint16_t type;
+} pbb_header_t;
+
+
 typedef struct snap_header {
   uint8_t llc[ 3 ];
   uint8_t oui[ 3 ];

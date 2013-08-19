@@ -229,6 +229,7 @@ typedef struct {
   void *l4_payload;
   size_t l4_payload_length;
   void *l2_vlan_header;
+  void *l2_pbb_header;
   void *l2_mpls_header;
 } packet_info;
 
