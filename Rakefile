@@ -223,46 +223,82 @@ def target_directory_of example
 end
 
 task :examples => [
-  :dumper,
-  :learning_switch
+  'examples:cbench_switch',
+  'examples:dumper',
+  'examples:hello_trema',
+  'examples:learning_switch',
+  'examples:list_switches',
+  'examples:multi_learning_switch',
+  'examples:openflow_message',
+  #'examples:packetin_filter_config',
+  'examples:packet_in',
+  'examples:repeater_hub',
+  'examples:switch_info',
+  'examples:switch_monitor',
+  'examples:traffic_monitor'
 ]
 
 
-desc "Build Dumper."
-task :dumper => :libtrema
+task 'examples:openflow_message' => [
+  'examples:openflow_message:echo_reply',
+  'examples:openflow_message:echo_request',
+  'examples:openflow_message:features_request',
+  'examples:openflow_message:hello',
+  'examples:openflow_message:set_config'
+]
 
-PaperHouse::ExecutableTask.new :dumper do | task |
-  task.target_directory = target_directory_of "examples/dumper"
-  task.sources = "src/examples/dumper/*.c"
-  task.includes = Trema.include
-  task.cflags = CFLAGS
-  task.ldflags = "-L#{ Trema.lib }"
-  task.library_dependencies = [
-    "trema",
-    "sqlite3",
-    "pthread",
-    "rt",
-    "dl",
-  ]
+
+Rake::Task[ :examples ].prerequisites.each do | example |
+  begin
+    Rake::Task[ example ]
+  rescue
+    desc "Build #{ example }."
+    task example => :libtrema
+
+    PaperHouse::ExecutableTask.new example do | task |
+      example_name = example.gsub(/:/,'/')
+      task.executable_name = File.basename example_name
+      task.target_directory = target_directory_of "#{ example_name }"
+      task.sources = "src/#{ example_name }/*.c"
+      task.includes = Trema.include
+      task.cflags = CFLAGS
+      task.ldflags = "-L#{ Trema.lib }"
+      task.library_dependencies = [
+        "trema",
+        "sqlite3",
+        "pthread",
+        "rt",
+        "dl",
+      ]
+    end
+  end
 end
 
 
-desc "Build Learning switch."
-task :learning_switch => :libtrema
+Rake::Task[ 'examples:openflow_message' ].prerequisites.each do | example |
+  begin
+    Rake::Task[ example ]
+  rescue
+    desc "Build #{ example }."
+    task example => :libtrema
 
-PaperHouse::ExecutableTask.new :learning_switch do | task |
-  task.target_directory = target_directory_of "examples/learning_switch"
-  task.sources = "src/examples/learning_switch/*.c"
-  task.includes = Trema.include
-  task.cflags = CFLAGS
-  task.ldflags = "-L#{ Trema.lib }"
-  task.library_dependencies = [
-    "trema",
-    "sqlite3",
-    "pthread",
-    "rt",
-    "dl",
-  ]
+    PaperHouse::ExecutableTask.new example do | task |
+      example_name = example.gsub(/:/,'/')
+      task.executable_name = File.basename example_name
+      task.target_directory = target_directory_of "#{ File.dirname example_name }"
+      task.sources = "src/#{ example_name }.c"
+      task.includes = Trema.include
+      task.cflags = CFLAGS
+      task.ldflags = "-L#{ Trema.lib }"
+      task.library_dependencies = [
+        "trema",
+        "sqlite3",
+        "pthread",
+        "rt",
+        "dl",
+      ]
+    end
+  end
 end
 
 

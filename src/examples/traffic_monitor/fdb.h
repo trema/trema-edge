@@ -26,16 +26,16 @@
 
 typedef struct {
   uint8_t mac[ ETH_ADDRLEN ];
-  uint16_t port_number;
+  uint32_t port_number;
 } fdb;
 
 
-#define ENTRY_NOT_FOUND_IN_FDB OFPP_NONE
+#define ENTRY_NOT_FOUND_IN_FDB 0
 
 
 hash_table *create_fdb( void );
-uint16_t lookup_fdb( hash_table *db, uint8_t *mac );
-void learn_fdb( hash_table *db, uint8_t *mac, uint16_t port_number );
+uint32_t lookup_fdb( hash_table *db, uint8_t *mac );
+void learn_fdb( hash_table *db, uint8_t *mac, uint32_t port_number );
 void delete_fdb( hash_table *db );
 
 

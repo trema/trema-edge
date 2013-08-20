@@ -27,8 +27,17 @@ Implementation status:
 * `switch_manager, switch daemon`: works
 * `tremashark`: not yet implemented
 * `src/examples/dumper`: works (C only)
+* `src/examples/hello_trema`: works (both C and Ruby)
+* `src/examples/list_switches`: works (C only)
 * `src/examples/learning_switch`: works (both C and Ruby)
-* `src/examples/repeater_hub`: works (Ruby only)
+* `src/examples/multi_learning_switch`: works (both C and Ruby)
+* `src/examples/openflow_message`: works (C only)
+* `src/examples/packet_in`: works (both C and Ruby)
+* `src/examples/repeater_hub`: works (both C and Ruby)
+* `src/examples/simple_router`: works (Ruby only)
+* `src/examples/switch_info`: works (both C and Ruby)
+* `src/examples/switch_monitor`: works (C only)
+* `src/examples/traffic_monitor`: works (both C and Ruby)
 * `trema apps`: not work
 * `features`: not work
 * `spec`: not work
