@@ -382,6 +382,7 @@ unpack_group_desc_multipart_reply( VALUE r_attributes, void *data ) {
   const struct ofp_group_desc *group_desc = data;
 
   HASH_SET( r_attributes, "length", UINT2NUM( group_desc->length ) );
+  HASH_SET( r_attributes, "type", UINT2NUM( group_desc->type ) );
   HASH_SET( r_attributes, "group_id", UINT2NUM( group_desc->group_id ) );
 
   uint32_t offset = offsetof( struct ofp_group_desc, buckets );

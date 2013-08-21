@@ -244,6 +244,8 @@ task 'examples:openflow_message' => [
   'examples:openflow_message:echo_request',
   'examples:openflow_message:features_request',
   'examples:openflow_message:hello',
+  'examples:openflow_message:group_mod',
+  'examples:openflow_message:port_desc_multipart_request',
   'examples:openflow_message:set_config'
 ]
 
