@@ -378,8 +378,6 @@ parse_mpls( buffer *buf ) {
     packet_info->l3_payload_length = payload_length;
   }
 
-  packet_info->format |= MPLS;
-
   return;
 }
 
