@@ -122,7 +122,7 @@ parse_argument_device_option( const char *datapath_ports ) {
     device_info *dev_info = ( device_info * ) xcalloc( 1, sizeof( device_info ) );
     strncpy( dev_info->device_name, p_dev, IFNAMSIZ - 1 );
     if ( p_port != NULL ) {
-      dev_info->port_no = ( uint32_t ) atoi( p_port );
+      dev_info->port_no = ( uint32_t ) strtoul( p_port, NULL, 0 );
     }
     else {
       dev_info->port_no = 0;
@@ -266,6 +266,10 @@ serve_datapath( void *data ) {
   list_element *datapath_ports = parse_argument_device_option( args->datapath_ports );
   for( list_element *e = datapath_ports; e != NULL; e = e->next ) {
     device_info *dev = e->data;
+    if ( dev->port_no > OFPP_MAX ) {
+      error( "Invalid port number ( port_no = %u ).", dev->port_no );
+      return -1;
+    }
     ret = add_port( dev->port_no, dev->device_name );
     if ( ret != OFDPE_SUCCESS ) {
       return -1;
