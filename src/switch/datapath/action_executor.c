@@ -1658,6 +1658,73 @@ check_bucket( action_list *actions ) {
 }
 
 
+#ifdef GROUP_SELECT_BY_HASH
+static inline uint32_t
+group_select_by_hash_core( uint32_t value, const void *key, int size ) {
+  // 32 bit FNV_prime
+  const uint32_t prime = 0x01000193UL;
+  const unsigned char *c = key;
+
+  for ( int i = 0; i < size; i++ ) {
+    value ^= ( const uint32_t ) c[ i ];
+    value *= prime;
+  }
+
+  return value;
+}
+
+
+static uint32_t
+group_select_by_hash( const buffer *frame ) {
+  assert( frame != NULL );
+  assert( frame->user_data != NULL );
+  const packet_info *info = ( packet_info * ) frame->user_data;
+
+  if ( ( info->format & ( ETH_DIX | ETH_8023_SNAP ) ) == 0 ) {
+    return ( uint32_t ) rand();
+  }
+
+  // 32 bit offset_basis
+  uint32_t value = 0x811c9dc5UL;
+
+  value = group_select_by_hash_core( value, info->eth_macda, sizeof( info->eth_macda ) );
+  value = group_select_by_hash_core( value, info->eth_macsa, sizeof( info->eth_macsa ) );
+  value = group_select_by_hash_core( value, &info->eth_type, sizeof( info->eth_type ) );
+  if ( ( info->format & ETH_8021Q ) == ETH_8021Q ) {
+    value = group_select_by_hash_core( value, &info->vlan_vid, sizeof( info->vlan_vid ) );
+  }
+  if ( ( info->format & MPLS ) == MPLS ) {
+    value = group_select_by_hash_core( value, &info->mpls_label, sizeof( info->mpls_label ) );
+  }
+
+  if ( ( info->format & NW_IPV4 ) == NW_IPV4 ) {
+    value = group_select_by_hash_core( value, &info->ipv4_protocol, sizeof( info->ipv4_protocol ) );
+    value = group_select_by_hash_core( value, &info->ipv4_saddr, sizeof( info->ipv4_saddr ) );
+    value = group_select_by_hash_core( value, &info->ipv4_daddr, sizeof( info->ipv4_daddr ) );
+  }
+  else if ( ( info->format & NW_IPV6 ) == NW_IPV6 ) {
+    value = group_select_by_hash_core( value, &info->ipv6_protocol, sizeof( info->ipv6_protocol ) );
+    value = group_select_by_hash_core( value, &info->ipv6_saddr, sizeof( info->ipv6_saddr ) );
+    value = group_select_by_hash_core( value, &info->ipv6_daddr, sizeof( info->ipv6_daddr ) );
+  }
+  else {
+    return value;
+  }
+
+  if ( ( info->format & TP_TCP ) == TP_TCP ) {
+    value = group_select_by_hash_core( value, &info->tcp_src_port, sizeof( info->tcp_src_port ) );
+    value = group_select_by_hash_core( value, &info->tcp_dst_port, sizeof( info->tcp_dst_port ) );
+  }
+  else if ( ( info->format & TP_UDP ) == TP_UDP ) {
+    value = group_select_by_hash_core( value, &info->udp_src_port, sizeof( info->udp_src_port ) );
+    value = group_select_by_hash_core( value, &info->udp_dst_port, sizeof( info->udp_dst_port ) );
+  }
+
+  return value;
+}
+#endif
+
+
 static bool
 execute_group_select( buffer *frame, bucket_list *buckets ) {
   assert( frame != NULL );
@@ -1685,7 +1752,11 @@ execute_group_select( buffer *frame, bucket_list *buckets ) {
     return true;
   }
 
+#ifdef GROUP_SELECT_BY_HASH
+  uint32_t candidate_index = group_select_by_hash( frame ) % length_of_candidates;
+#else
   uint32_t candidate_index = ( ( uint32_t ) rand() ) % length_of_candidates;
+#endif
   debug( "execute group select. bucket=%u(/%u)", candidate_index, length_of_candidates );
   list_element *target = candidates;
   for ( uint32_t i = 0; target != NULL && i < length_of_candidates; i++ ) {
