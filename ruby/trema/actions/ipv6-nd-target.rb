@@ -22,6 +22,7 @@ module Trema
     # A match field to match a neighbor target IPv6 address
     #
     class Ipv6NdTarget < ActionIpAddr
+      ip_addr :ip_addr, alias: :ipv6_nd_target
     end
   end
 

@@ -22,6 +22,7 @@ module Trema
     # A match field to match an IPv4 destination address
     #
     class Ipv4DstAddr < ActionIpAddr
+      ip_addr :ip_addr, alias: :ipv4_dst
       ofp_type OFPXMT_OFB_IPV4_DST
     end
   end

@@ -23,7 +23,8 @@ module Trema
     #
     class VlanPriority < FlexibleAction
       ofp_type OFPXMT_OFB_VLAN_PCP
-      unsigned_int8 :vlan_priority, presence: true
+      unsigned_int8 :vlan_priority, presence: true, alias: :vlan_pcp
+      alias :vlan_pcp :vlan_priority
     end
   end
 

@@ -23,6 +23,7 @@ module Trema
     # a 48-bit Ethernet address
     #
     class ArpSha < EthAddr
+      mac :mac_address, alias: :arp_sha
     end
   end
 

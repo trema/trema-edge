@@ -22,6 +22,7 @@ module Trema
     # A match field to match a 128-bit IPv6 source address
     #
     class Ipv6SrcAddr < ActionIpAddr
+      ip_addr :ip_addr, alias: :ipv6_dst
       ofp_type OFPXMT_OFB_IPV6_SRC
     end
   end
