@@ -24,7 +24,16 @@
 #define IPV4_H
 
 
+#include <netinet/ip.h>
 #include "buffer.h"
+#include "byteorder.h"
+
+
+#if !defined( IPTOS_DSCP_MASK )
+#define IPTOS_DSCP_MASK 0xfc
+#endif
+
+#define IPTOS_DSCP_SHIFT 2
 
 
 typedef struct  {

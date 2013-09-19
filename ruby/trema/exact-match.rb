@@ -21,7 +21,7 @@
 module Trema
   class ExactMatch
     def self.from message
-      message.match
+      Match.from message
     end
   end
 end

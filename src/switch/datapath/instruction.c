@@ -377,25 +377,25 @@ duplicate_instruction_set( const instruction_set *instructions ) {
 
   instruction_set *duplicated = create_instruction_set();
 
-  if ( duplicated->goto_table != NULL ) {
+  if ( instructions->goto_table != NULL ) {
     duplicated->goto_table = duplicate_instruction( instructions->goto_table );
   }
-  if ( duplicated->write_metadata != NULL ) {
+  if ( instructions->write_metadata != NULL ) {
     duplicated->write_metadata = duplicate_instruction( instructions->write_metadata );
   }
-  if ( duplicated->write_actions != NULL ) {
+  if ( instructions->write_actions != NULL ) {
     duplicated->write_actions = duplicate_instruction( instructions->write_actions );
   }
-  if ( duplicated->apply_actions != NULL ) {
+  if ( instructions->apply_actions != NULL ) {
     duplicated->apply_actions = duplicate_instruction( instructions->apply_actions );
   }
-  if ( duplicated->clear_actions != NULL ) {
+  if ( instructions->clear_actions != NULL ) {
     duplicated->clear_actions = duplicate_instruction( instructions->clear_actions );
   }
-  if ( duplicated->meter != NULL ) {
+  if ( instructions->meter != NULL ) {
     duplicated->meter = duplicate_instruction( instructions->meter );
   }
-  if ( duplicated->experimenter != NULL ) {
+  if ( instructions->experimenter != NULL ) {
     duplicated->experimenter = duplicate_instruction( instructions->experimenter );
   }
 

@@ -22,7 +22,6 @@
 #include <inttypes.h>
 #include <arpa/inet.h>
 #include <syslog.h>
-#include "chibach_private.h"
 #include "hash_table.h"
 #include "log.h"
 #include "messenger.h"
@@ -62,12 +61,6 @@ bool mock_init_secure_channel( uint32_t ip, uint16_t port,
 #endif
 #define add_periodic_event_callback mock_add_periodic_event_callback
 bool mock_add_periodic_event_callback( const time_t seconds, timer_callback callback, void *user_data );
-
-#ifdef get_chibach_name
-#undef get_chibach_name
-#endif
-#define get_chibach_name mock_get_chibach_name
-const char *mock_get_chibach_name( void );
 
 #ifdef finalize_secure_channel
 #undef finalize_secure_channel
@@ -223,7 +216,7 @@ static void
 init_context() {
   assert( contexts == NULL );
 
-  contexts = create_hash_with_size( compare_context, hash_context, 16 );
+  contexts = create_hash_with_size( compare_context, hash_context, 128 );
 }
 
 

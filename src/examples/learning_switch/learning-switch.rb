@@ -21,7 +21,7 @@
 
 
 require "trema/exact-match"
-require "fdb"
+require_relative "fdb"
 
 
 #
@@ -37,8 +37,6 @@ class LearningSwitch < Controller
 
 
   def switch_ready datapath_id
-    @fdb = FDB.new
-
     action = SendOutPort.new( port_number: OFPP_CONTROLLER, max_len: OFPCML_NO_BUFFER )
     ins = ApplyAction.new( actions: [ action ] )
     send_flow_mod_add( datapath_id,

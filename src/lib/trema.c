@@ -43,6 +43,8 @@
 #include "utility.h"
 #include "wrapper.h"
 
+const char DEFAULT_DUMP_SERVICE_NAME[] = "dump_service";
+
 
 #ifdef UNIT_TESTING
 

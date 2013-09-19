@@ -87,215 +87,203 @@ ofp_match_to_r_match( const struct ofp_match *match ) {
     oxms_len = ( uint16_t ) ( oxms_len - offset );
     src = ( const oxm_match_header * ) ( ( const char * ) src + offset );
   }
-  return rb_funcall( rb_eval_string( "Match" ), rb_intern( "new" ), 1, r_attributes );
+  return rb_funcall( rb_eval_string( "Trema::Match" ), rb_intern( "new" ), 1, r_attributes );
 }
 
 
+#define APPEND_OXM_MATCH_UINT8( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    append_oxm_match_f( match, ( uint8_t ) NUM2UINT( r_value ) ); \
+  } \
+}
+
+#define APPEND_OXM_MATCH_UINT16( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    append_oxm_match_f( match, ( uint16_t ) NUM2UINT( r_value ) ); \
+  } \
+}
+
+#define APPEND_OXM_MATCH_UINT16_MASK( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    uint16_t mask = 0; \
+    VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
+    if ( !NIL_P( r_mask ) ) { \
+      mask = ( uint16_t ) NUM2UINT( r_mask ); \
+    } \
+    append_oxm_match_f( match, ( uint16_t ) NUM2UINT( r_value ), mask ); \
+  } \
+}
+
+#define APPEND_OXM_MATCH_UINT32( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    append_oxm_match_f( match, NUM2UINT( r_value ) ); \
+  } \
+}
+
+#define APPEND_OXM_MATCH_UINT32_MASK( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    uint32_t mask = UINT32_MAX; \
+    VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
+    if ( !NIL_P( r_mask ) ) { \
+      mask = NUM2UINT( r_mask ); \
+    } \
+    append_oxm_match_f( match, NUM2UINT( r_value ), mask ); \
+  } \
+}
+
+#define APPEND_OXM_MATCH_UINT64_MASK( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    uint64_t mask = UINT64_MAX; \
+    VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
+    if ( !NIL_P( r_mask ) ) { \
+      mask = ( uint64_t ) NUM2ULL( r_mask ); \
+    } \
+    append_oxm_match_f( match, ( uint64_t ) NUM2ULL( r_value ), mask ); \
+  } \
+}
+
+#define APPEND_OXM_MATCH_DL_ADDR( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    uint8_t dl_addr[ OFP_ETH_ALEN ]; \
+    append_oxm_match_f( match, dl_addr_to_a( r_value, dl_addr ) ); \
+  } \
+}
+
+#define APPEND_OXM_MATCH_DL_ADDR_MASK( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    uint8_t dl_mask[ OFP_ETH_ALEN ] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }; \
+    VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
+    if ( !NIL_P( r_mask ) ) { \
+      dl_addr_to_a( r_mask, dl_mask ); \
+    } \
+    uint8_t dl_addr[ OFP_ETH_ALEN ]; \
+    append_oxm_match_f( match, dl_addr_to_a( r_value, dl_addr ), dl_mask ); \
+  } \
+}
+
+#define APPEND_OXM_MATCH_IPV4_ADDR( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    append_oxm_match_f( match, nw_addr_to_i( r_value ) ); \
+  } \
+}
+
+#define APPEND_OXM_MATCH_IPV4_ADDR_MASK( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    uint32_t ipv4_mask = UINT32_MAX; \
+    VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
+    if ( !NIL_P( r_mask ) ) { \
+      ipv4_mask = nw_addr_to_i( r_mask ); \
+    } \
+    append_oxm_match_f( match, nw_addr_to_i( r_value ), ipv4_mask ); \
+  } \
+}
+
+#define APPEND_OXM_MATCH_IPV6_ADDR( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    struct in6_addr ipv6_addr; \
+    append_oxm_match_f( match, ipv6_addr_to_in6_addr( r_value, &ipv6_addr ) ); \
+  } \
+}
+
+#define APPEND_OXM_MATCH_IPV6_ADDR_MASK( r_match, at_value, append_oxm_match_f, match ) \
+{ \
+  VALUE r_value = rb_iv_get( r_match, at_value ); \
+  if ( !NIL_P( r_value ) ) { \
+    struct in6_addr ipv6_mask; \
+    memset( ipv6_mask.s6_addr, 0xff, sizeof( ipv6_mask.s6_addr ) ); \
+    VALUE r_mask = rb_iv_get( r_match, at_value "_mask" ); \
+    if ( !NIL_P( r_mask ) ) { \
+      ipv6_addr_to_in6_addr( r_mask, &ipv6_mask ); \
+    } \
+    struct in6_addr ipv6_addr; \
+    append_oxm_match_f( match, ipv6_addr_to_in6_addr( r_value, &ipv6_addr ), ipv6_mask ); \
+  } \
+}
+
 void
 r_match_to_oxm_match( VALUE r_match, oxm_matches *match ) {
-  VALUE r_in_port = rb_iv_get( r_match, "@in_port" );
-  if ( !NIL_P( r_in_port ) ) {
-    append_oxm_match_in_port( match, ( uint32_t ) NUM2UINT( r_in_port ) );
-  }
+  APPEND_OXM_MATCH_UINT32( r_match, "@in_port", append_oxm_match_in_port, match );
+  APPEND_OXM_MATCH_UINT32( r_match, "@in_phy_port", append_oxm_match_in_phy_port, match );
 
-  uint8_t tmp_mac_mask[ OFP_ETH_ALEN ];
-  memset( tmp_mac_mask, 0, sizeof( tmp_mac_mask ) );
+  APPEND_OXM_MATCH_UINT64_MASK( r_match, "@metadata", append_oxm_match_metadata, match );
 
-  VALUE r_eth_src = rb_iv_get( r_match, "@eth_src" );
-  if ( !NIL_P( r_eth_src ) ) {
-    uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
-    append_oxm_match_eth_src( match, dl_addr_to_a( r_eth_src, dl_addr ), tmp_mac_mask );
-    xfree( dl_addr );
-  }
-  VALUE r_eth_dst = rb_iv_get( r_match, "@eth_dst" );
-  if ( !NIL_P( r_eth_dst ) ) {
-    uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
-    append_oxm_match_eth_dst( match, dl_addr_to_a( r_eth_dst, dl_addr ), tmp_mac_mask );
-    xfree( dl_addr );
-  }
+  APPEND_OXM_MATCH_DL_ADDR_MASK( r_match, "@eth_src", append_oxm_match_eth_src, match );
+  APPEND_OXM_MATCH_DL_ADDR_MASK( r_match, "@eth_dst", append_oxm_match_eth_dst, match );
 
-  VALUE r_vlan_vid = rb_iv_get( r_match, "@vlan_vid" );
-  if ( !NIL_P( r_vlan_vid ) ) {
-    uint16_t vlan_vid = ( uint16_t ) NUM2UINT( r_vlan_vid );
-    append_oxm_match_vlan_vid( match, vlan_vid, 0 );
-  }
+  APPEND_OXM_MATCH_UINT16( r_match, "@eth_type", append_oxm_match_eth_type, match );
+  APPEND_OXM_MATCH_UINT16_MASK( r_match, "@vlan_vid", append_oxm_match_vlan_vid, match );
 
-  VALUE r_vlan_pcp = rb_iv_get( r_match, "@vlan_pcp" );
-  if ( !NIL_P( r_vlan_pcp ) ) {
-    append_oxm_match_vlan_pcp( match, ( uint8_t ) NUM2UINT( r_vlan_pcp ) );
-  }
-  
-  VALUE r_eth_type = rb_iv_get( r_match, "@eth_type" );
-  if ( !NIL_P( r_eth_type ) ) {
-    append_oxm_match_eth_type( match, ( uint16_t ) NUM2UINT( r_eth_type ) );
-  }
-  
-  VALUE r_ip_dscp = rb_iv_get( r_match, "@ip_dscp" );
-  if ( !NIL_P( r_ip_dscp ) ) {
-    append_oxm_match_ip_dscp( match, ( uint8_t ) NUM2UINT( r_ip_dscp ) );
-  }
+  APPEND_OXM_MATCH_UINT8( r_match, "@vlan_pcp", append_oxm_match_vlan_pcp, match );
+  APPEND_OXM_MATCH_UINT8( r_match, "@ip_dscp", append_oxm_match_ip_dscp, match );
+  APPEND_OXM_MATCH_UINT8( r_match, "@ip_ecn", append_oxm_match_ip_ecn, match );
+  APPEND_OXM_MATCH_UINT8( r_match, "@ip_proto", append_oxm_match_ip_proto, match );
 
-  VALUE r_ip_ecn = rb_iv_get( r_match, "@ip_ecn" );
-  if ( !NIL_P( r_ip_ecn ) ) {
-    append_oxm_match_ip_ecn( match, ( uint8_t ) NUM2UINT( r_ip_ecn ) );
-  }
+  APPEND_OXM_MATCH_IPV4_ADDR_MASK( r_match, "@ipv4_src", append_oxm_match_ipv4_src, match );
+  APPEND_OXM_MATCH_IPV4_ADDR_MASK( r_match, "@ipv4_dst", append_oxm_match_ipv4_dst, match );
 
-  VALUE r_ip_proto = rb_iv_get( r_match, "@ip_proto" );
-  if ( !NIL_P( r_ip_proto ) ) {
-    append_oxm_match_ip_proto( match, ( uint8_t ) NUM2UINT( r_ip_proto ) );
-  }
+  APPEND_OXM_MATCH_UINT16( r_match, "@tcp_src", append_oxm_match_tcp_src, match );
+  APPEND_OXM_MATCH_UINT16( r_match, "@tcp_dst", append_oxm_match_tcp_dst, match );
+  APPEND_OXM_MATCH_UINT16( r_match, "@udp_src", append_oxm_match_udp_src, match );
+  APPEND_OXM_MATCH_UINT16( r_match, "@udp_dst", append_oxm_match_udp_dst, match );
+  APPEND_OXM_MATCH_UINT16( r_match, "@sctp_src", append_oxm_match_sctp_src, match );
+  APPEND_OXM_MATCH_UINT16( r_match, "@sctp_dst", append_oxm_match_sctp_dst, match );
 
-  VALUE r_ipv4_src = rb_iv_get( r_match, "@ipv4_src" );
-  if ( !NIL_P( r_ipv4_src ) ) {
-    append_oxm_match_ipv4_src( match, nw_addr_to_i( r_ipv4_src ), 0 );
-  }
+  APPEND_OXM_MATCH_UINT8( r_match, "@icmpv4_type", append_oxm_match_icmpv4_type, match );
+  APPEND_OXM_MATCH_UINT8( r_match, "@icmpv4_code", append_oxm_match_icmpv4_code, match );
 
-  VALUE r_ipv4_dst = rb_iv_get( r_match, "@ipv4_dst" );
-  if ( !NIL_P( r_ipv4_dst ) ) {
-    append_oxm_match_ipv4_dst( match, nw_addr_to_i( r_ipv4_dst ), 0 );
-  }
+  APPEND_OXM_MATCH_UINT16( r_match, "@arp_op", append_oxm_match_arp_op, match );
 
-  struct in6_addr tmp_ipv6_mask;
-  memset( &tmp_ipv6_mask, 0, sizeof( tmp_ipv6_mask ) );
-  struct in6_addr *in6_addr = ( struct in6_addr * ) xmalloc( sizeof( struct in6_addr ) );
+  APPEND_OXM_MATCH_IPV4_ADDR_MASK( r_match, "@arp_spa", append_oxm_match_arp_spa, match );
+  APPEND_OXM_MATCH_IPV4_ADDR_MASK( r_match, "@arp_tpa", append_oxm_match_arp_tpa, match );
 
-  VALUE r_ipv6_src = rb_iv_get( r_match, "@ipv6_src" );
-  if ( !NIL_P( r_ipv6_src ) ) {
-    append_oxm_match_ipv6_src( match, ipv6_addr_to_in6_addr( r_ipv6_src, in6_addr ), tmp_ipv6_mask );
-  }
+  APPEND_OXM_MATCH_DL_ADDR_MASK( r_match, "@arp_sha", append_oxm_match_arp_sha, match );
+  APPEND_OXM_MATCH_DL_ADDR_MASK( r_match, "@arp_tha", append_oxm_match_arp_tha, match );
 
-  VALUE r_ipv6_dst = rb_iv_get( r_match, "@ipv6_dst" );
-  if ( !NIL_P( r_ipv6_dst ) ) {
-    append_oxm_match_ipv6_dst( match, ipv6_addr_to_in6_addr( r_ipv6_dst, in6_addr ), tmp_ipv6_mask );
-  }
+  APPEND_OXM_MATCH_IPV6_ADDR_MASK( r_match, "@ipv6_src", append_oxm_match_ipv6_src, match );
+  APPEND_OXM_MATCH_IPV6_ADDR_MASK( r_match, "@ipv6_dst", append_oxm_match_ipv6_dst, match );
 
-  VALUE r_ipv6_flabel = rb_iv_get( r_match, "@ipv6_flabel" );
-  if ( !NIL_P( r_ipv6_flabel ) ) {
-    append_oxm_match_ipv6_flabel( match, NUM2UINT( r_ipv6_flabel ), 0 );
-  }
+  APPEND_OXM_MATCH_UINT32_MASK( r_match, "@ipv6_flable", append_oxm_match_ipv6_flabel, match );
 
-  VALUE r_ipv6_exthdr = rb_iv_get( r_match, "@ipv6_exthdr" );
-  if ( !NIL_P( r_ipv6_exthdr ) ) {
-    append_oxm_match_ipv6_exthdr( match , ( uint16_t ) NUM2UINT( r_ipv6_exthdr ), 0 );
-  }
+  APPEND_OXM_MATCH_UINT8( r_match, "@icmpv6_type", append_oxm_match_icmpv6_type, match );
+  APPEND_OXM_MATCH_UINT8( r_match, "@icmpv6_code", append_oxm_match_icmpv6_code, match );
 
-  VALUE r_arp_op = rb_iv_get( r_match, "@arp_op" );
-  if ( !NIL_P( r_arp_op ) ) {
-    append_oxm_match_arp_op( match, ( uint16_t ) NUM2UINT( r_arp_op ) );
-  }
+  APPEND_OXM_MATCH_IPV6_ADDR( r_match, "@ipv6_nd_target", append_oxm_match_ipv6_nd_target, match );
 
-  VALUE r_arp_spa = rb_iv_get( r_match, "@arp_spa" );
-  if ( !NIL_P( r_arp_spa ) ) {
-    append_oxm_match_arp_spa( match, nw_addr_to_i( r_arp_spa  ), 0 );
-  }
+  APPEND_OXM_MATCH_DL_ADDR( r_match, "@ipv6_nd_sll", append_oxm_match_ipv6_nd_sll, match );
+  APPEND_OXM_MATCH_DL_ADDR( r_match, "@ipv6_nd_tll", append_oxm_match_ipv6_nd_tll, match );
 
-  VALUE r_arp_tpa = rb_iv_get( r_match, "@arp_tpa" );
-  if ( !NIL_P( r_arp_tpa ) ) {
-    append_oxm_match_arp_tpa( match, nw_addr_to_i( r_arp_tpa ), 0 );
-  }
+  APPEND_OXM_MATCH_UINT32( r_match, "@mpls_label", append_oxm_match_mpls_label, match );
 
-  VALUE r_arp_sha = rb_iv_get( r_match, "@arp_sha" );
-  if ( !NIL_P( r_arp_sha ) ) {
-    uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
-    append_oxm_match_arp_sha( match, dl_addr_to_a( r_arp_sha, dl_addr ), tmp_mac_mask );
-    xfree( dl_addr );
-  }
+  APPEND_OXM_MATCH_UINT8( r_match, "@mpls_tc", append_oxm_match_mpls_tc, match );
+  APPEND_OXM_MATCH_UINT8( r_match, "@mpls_bos", append_oxm_match_mpls_bos, match );
 
-  VALUE r_arp_tha = rb_iv_get( r_match, "@arp_tha" );
-  if ( !NIL_P( r_arp_tha ) ) {
-    uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
-    append_oxm_match_arp_tha( match, dl_addr_to_a( r_arp_tha, dl_addr ), tmp_mac_mask );
-    xfree( dl_addr );
-  }
+  APPEND_OXM_MATCH_UINT32_MASK( r_match, "@pbb_isid", append_oxm_match_pbb_isid, match );
 
-  VALUE r_mpls_label = rb_iv_get( r_match, "@mpls_label" );
-  if ( !NIL_P( r_mpls_label ) ) {
-    append_oxm_match_mpls_label( match, NUM2UINT( r_mpls_label ) );
-  }
+  APPEND_OXM_MATCH_UINT64_MASK( r_match, "@tunnel_id", append_oxm_match_tunnel_id, match );
 
-  VALUE r_mpls_tc = rb_iv_get( r_match, "@mpls_tc" );
-  if ( !NIL_P( r_mpls_tc ) ) {
-    append_oxm_match_mpls_tc( match, ( uint8_t ) NUM2UINT( r_mpls_tc ) );
-  }
-
-  VALUE r_mpls_bos = rb_iv_get( r_match, "@mpls_bos" );
-  if ( !NIL_P( r_mpls_bos ) ) {
-    append_oxm_match_mpls_bos( match, ( uint8_t ) NUM2UINT( r_mpls_bos ) );
-  }
-
-  VALUE r_icmpv4_type = rb_iv_get( r_match, "@icmpv4_type" );
-  if ( !NIL_P( r_icmpv4_type ) ) {
-    append_oxm_match_icmpv4_type( match, ( uint8_t ) NUM2UINT( r_icmpv4_type ) );
-  }
-
-  VALUE r_icmpv4_code = rb_iv_get( r_match, "@icmpv4_code" );
-  if ( !NIL_P( r_icmpv4_code ) ) {
-    append_oxm_match_icmpv4_code( match, ( uint8_t ) NUM2UINT( r_icmpv4_code ) );
-  }
-
-  VALUE r_tcp_src = rb_iv_get( r_match, "@tcp_src" );
-  if ( !NIL_P( r_tcp_src ) ) {
-    append_oxm_match_tcp_src( match, ( uint16_t ) NUM2UINT( r_tcp_src ) );
-  }
-
-  VALUE r_tcp_dst = rb_iv_get( r_match, "@tcp_dst" );
-  if ( !NIL_P( r_tcp_dst ) ) {
-    append_oxm_match_tcp_dst( match, ( uint16_t ) NUM2UINT( r_tcp_dst ) );
-  }
-
-  VALUE r_udp_src = rb_iv_get( r_match, "@udp_src" );
-  if ( !NIL_P( r_udp_src ) ) {
-    append_oxm_match_udp_src( match, ( uint16_t ) NUM2UINT( r_udp_src ) );
-  }
-
-  VALUE r_udp_dst = rb_iv_get( r_match, "@udp_dst" );
-  if ( !NIL_P( r_udp_dst ) ) {
-    append_oxm_match_udp_dst( match, ( uint16_t ) NUM2UINT( r_udp_dst ) );
-  }
-
-  VALUE r_sctp_src = rb_iv_get( r_match, "@sctp_src" );
-  if ( !NIL_P( r_sctp_src ) ) {
-    append_oxm_match_sctp_src( match, ( uint16_t ) NUM2UINT( r_sctp_src ) );
-  }
-
-  VALUE r_sctp_dst = rb_iv_get( r_match, "@sctp_dst" );
-  if ( !NIL_P( r_sctp_dst ) ) {
-    append_oxm_match_sctp_dst( match, ( uint16_t ) NUM2UINT( r_sctp_dst ) );
-  }
-
-
-  VALUE r_icmpv6_type = rb_iv_get( r_match, "@icmpv6_type" );
-  if ( !NIL_P( r_icmpv6_type ) ) {
-    uint8_t icmpv6_type = ( uint8_t ) NUM2UINT( r_icmpv6_type );
-    append_oxm_match_icmpv6_type( match, icmpv6_type );
-
-    VALUE r_icmpv6_code = rb_iv_get( r_match, "@icmpv6_code" );
-    if ( !NIL_P( r_icmpv6_code ) ) {
-      append_oxm_match_icmpv6_code( match, ( uint8_t ) NUM2UINT( r_icmpv6_code ) );
-    }
-
-    if ( icmpv6_type == 135 || icmpv6_type == 136 ) {
-      VALUE r_ipv6_nd_target = rb_iv_get( r_match, "@ipv6_nd_target" );
-      if ( !NIL_P( r_ipv6_nd_target ) ) {
-        append_oxm_match_ipv6_nd_target( match, ipv6_addr_to_in6_addr( r_ipv6_nd_target, in6_addr ) );
-      }
-
-      VALUE r_ipv6_nd_sll = rb_iv_get( r_match, "@ipv6_nd_sll" );
-      if ( !NIL_P( r_ipv6_nd_sll ) ) {
-        uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
-        append_oxm_match_ipv6_nd_sll( match, dl_addr_to_a( r_ipv6_nd_sll, dl_addr ) );
-        xfree( dl_addr );
-      }
-
-      VALUE r_ipv6_nd_tll = rb_iv_get( r_match, "@ipv6_nd_tll" );
-      if ( !NIL_P( r_ipv6_nd_tll ) ) {
-        uint8_t *dl_addr = ( uint8_t * ) xmalloc( sizeof( uint8_t ) * OFP_ETH_ALEN );
-        append_oxm_match_ipv6_nd_tll( match, dl_addr_to_a( r_ipv6_nd_tll, dl_addr ) );
-        xfree( dl_addr );
-      }
-    }
-  }
-  xfree( in6_addr );
+  APPEND_OXM_MATCH_UINT16_MASK( r_match, "@ipv6_exthdr", append_oxm_match_ipv6_exthdr, match );
 }
 
 
@@ -309,7 +297,7 @@ oxm_match_to_r_match( const oxm_matches *match ) {
     const oxm_match_header *oxm = list->data;
     unpack_r_match( oxm, r_options );
   }
-  return rb_funcall( rb_eval_string( "Match" ), rb_intern( "new" ), 1, r_options );
+  return rb_funcall( rb_eval_string( "Trema::Match" ), rb_intern( "new" ), 1, r_options );
 }
 
 

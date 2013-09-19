@@ -301,6 +301,13 @@ void
 reset_buffer( buffer *buf ) {
   assert( buf != NULL );
 
+  if ( buf->user_data != NULL && buf->user_data_free_function != NULL ) {
+    ( *buf->user_data_free_function )( buf );
+    assert( buf->user_data == NULL );
+    assert( buf->user_data_free_function == NULL );
+  }
+  buf->user_data = NULL;
+
   pthread_mutex_lock( ( ( private_buffer * ) buf )->mutex );
 
   private_buffer *pbuf = ( private_buffer * ) buf;

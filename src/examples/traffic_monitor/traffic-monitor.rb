@@ -34,9 +34,21 @@ class TrafficMonitor < Controller
   end
 
 
+  def switch_ready datapath_id
+    action = SendOutPort.new( port_number: OFPP_CONTROLLER, max_len: OFPCML_NO_BUFFER )
+    ins = ApplyAction.new( actions: [ action ] )
+    send_flow_mod_add( datapath_id,
+                       priority: OFP_LOW_PRIORITY,
+                       buffer_id: OFP_NO_BUFFER,
+                       flags: OFPFF_SEND_FLOW_REM,
+                       instructions: [ ins ]
+    )
+  end
+
+
   def packet_in datapath_id, message
-    macsa = message.macsa
-    macda = message.macda
+    macsa = message.eth_src
+    macda = message.eth_dst
 
     @fdb.learn macsa, message.in_port
     @counter.add macsa, 1, message.total_len
@@ -51,7 +63,7 @@ class TrafficMonitor < Controller
 
 
   def flow_removed datapath_id, message
-    @counter.add message.match.dl_src, message.packet_count, message.byte_count
+    @counter.add message.match.eth_src, message.packet_count, message.byte_count
   end
 
 
@@ -69,20 +81,25 @@ class TrafficMonitor < Controller
 
 
   def flow_mod datapath_id, macsa, macda, out_port
+    action = SendOutPort.new( port_number: out_port )
+    ins = Instructions::ApplyAction.new( actions: [ action ] )
     send_flow_mod_add(
       datapath_id,
-      :hard_timeout => 10,
-      :match => Match.new( :dl_src => macsa, :dl_dst => macda ),
-      :actions => ActionOutput.new( out_port )
+      hard_timeout: 10,
+      priority: OFP_DEFAULT_PRIORITY,
+      flags: OFPFF_SEND_FLOW_REM,
+      match: Match.new( eth_src: macsa, eth_dst: macda ),
+      instructions: [ ins ]
     )
   end
 
 
   def packet_out datapath_id, message, out_port
+    action = Actions::SendOutPort.new( port_number: out_port )
     send_packet_out(
       datapath_id,
-      :packet_in => message,
-      :actions => ActionOutput.new( out_port )
+      packet_in: message,
+      actions: [ action ]
     )
   end
 

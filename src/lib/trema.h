@@ -56,7 +56,7 @@
 #include "utility.h"
 #include "wrapper.h"
 
-static const char DEFAULT_DUMP_SERVICE_NAME[] = "dump_service";
+extern const char DEFAULT_DUMP_SERVICE_NAME[];
 
 
 void init_trema( int *argc, char ***argv );

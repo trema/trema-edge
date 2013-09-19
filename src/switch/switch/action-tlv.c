@@ -75,7 +75,7 @@ init_actions( void ) {
 
 void
 finalize_actions( void ) {
-  assert( actions_arr );
+  assert( actions_arr != NULL );
   actions_nr = actions_alloc = 0;
 }
 

@@ -58,9 +58,13 @@ notify_protocol( int fd, void *user_data ) {
 
 static void
 push_datapath_message_to_peer( buffer *packet, struct datapath *datapath ) {
-  enqueue_message( datapath->peer_queue, packet );
-  datapath->send_count++;
-  set_writable_safe( datapath->peer_efd, true );
+  if ( is_datapath() ) {
+    enqueue_message( datapath->peer_queue, packet );
+    datapath->send_count++;
+    set_writable_safe( datapath->peer_efd, true );
+  } else if ( is_protocol() ) {
+    handle_datapath_packet( packet, get_protocol() );
+  }
 }
 
 
@@ -118,7 +122,7 @@ parse_argument_device_option( const char *datapath_ports ) {
     device_info *dev_info = ( device_info * ) xcalloc( 1, sizeof( device_info ) );
     strncpy( dev_info->device_name, p_dev, IFNAMSIZ - 1 );
     if ( p_port != NULL ) {
-      dev_info->port_no = ( uint32_t ) atoi( p_port );
+      dev_info->port_no = ( uint32_t ) strtoul( p_port, NULL, 0 );
     }
     else {
       dev_info->port_no = 0;
@@ -209,7 +213,7 @@ void set_event_handlers( void *user_data ) {
 
 static void
 dump_flows_actually() {
-  dump_flow_table( 0, info );
+  dump_flow_tables( info );
 }
 
 
@@ -262,6 +266,10 @@ serve_datapath( void *data ) {
   list_element *datapath_ports = parse_argument_device_option( args->datapath_ports );
   for( list_element *e = datapath_ports; e != NULL; e = e->next ) {
     device_info *dev = e->data;
+    if ( dev->port_no > OFPP_MAX ) {
+      error( "Invalid port number ( port_no = %u ).", dev->port_no );
+      return -1;
+    }
     ret = add_port( dev->port_no, dev->device_name );
     if ( ret != OFDPE_SUCCESS ) {
       return -1;

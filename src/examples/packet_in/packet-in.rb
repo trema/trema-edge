@@ -23,12 +23,10 @@
 class PacketinDumper < Controller
   def switch_ready datapath_id
     action = SendOutPort.new( port_number: OFPP_CONTROLLER, max_len: OFPCML_NO_BUFFER ) 
-    apply_ins = ApplyAction.new( actions:  [ action ] ) 
-    match = Match.new( in_port: 1 )
+    apply_ins = ApplyAction.new( actions: [ action ] ) 
     send_flow_mod_add( datapath_id,
                        priority: OFP_LOW_PRIORITY,
                        buffer_id: OFP_NO_BUFFER,
-                       match: match,
                        instructions: [ apply_ins ] )
   end
 

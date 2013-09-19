@@ -43,9 +43,10 @@ init_switch( int argc, char **argv ) {
 }
 
 
+static pthread_t threads[ 2 ];
+
 static void
 run_switch( struct switch_arguments *args ) {
-  pthread_t threads[ 2 ];
   int i;
 
   threads[ 0 ] = start_async_protocol( args );
@@ -57,6 +58,25 @@ run_switch( struct switch_arguments *args ) {
     }
   }
 }
+
+
+bool
+is_protocol( ) {
+  if ( pthread_self() == threads[ 0 ] ) {
+    return true;
+  }
+  return false;
+}
+
+
+bool
+is_datapath( ) {
+  if ( pthread_self() == threads[ 1 ] ) {
+    return true;
+  }
+  return false;
+}
+
 
 static void
 stop_switch( struct switch_arguments *args ) {
@@ -95,6 +115,7 @@ sigint_handler( int signum ) {
 int
 main( int argc, char **argv ) {
   signal( SIGINT, sigint_handler );
+  signal( SIGTERM, sigint_handler );
   set_signal_mask();
 
   if ( ( args = init_switch( argc, argv ) ) != NULL ) {

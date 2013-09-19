@@ -36,7 +36,7 @@ handle_echo_reply( uint64_t datapath_id,
   if ( !NIL_P( r_user_data ) ) {
     HASH_SET( attributes, "user_data", r_user_data );
   }
-  VALUE r_echo_reply = rb_funcall( rb_eval_string( "Messages::EchoReply" ), rb_intern( "new" ), 1, attributes );
+  VALUE r_echo_reply = rb_funcall( rb_eval_string( "Trema::Messages::EchoReply" ), rb_intern( "new" ), 1, attributes );
   rb_funcall( ( VALUE ) controller, rb_intern( "echo_reply" ), 2, ULL2NUM( datapath_id ), r_echo_reply );
 }
 

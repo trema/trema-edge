@@ -20,6 +20,18 @@
 #include "flow_entry.h"
 
 
+static bool
+table_miss_flow_entry( const flow_entry *entry ) {
+  assert( entry != NULL );
+
+  if ( entry->priority == 0 && all_wildcarded_match( entry->match ) ) {
+    return true;
+  }
+
+  return false;
+}
+
+
 flow_entry *
 alloc_flow_entry( match *match, instruction_set *instructions,
                   const uint16_t priority, const uint16_t idle_timeout, const uint16_t hard_timeout,
@@ -44,6 +56,7 @@ alloc_flow_entry( match *match, instruction_set *instructions,
   entry->packet_count = 0;
   time_now( &entry->created_at );
   entry->last_seen = entry->created_at;
+  entry->table_miss = table_miss_flow_entry( entry );
 
   if ( instructions->write_actions != NULL && instructions->write_actions->actions != NULL ) {
     action_list *actions = instructions->write_actions->actions;
@@ -83,18 +96,6 @@ free_flow_entry( flow_entry *entry ) {
 }
 
 
-bool
-table_miss_flow_entry( const flow_entry *entry ) {
-  assert( entry != NULL );
-
-  if ( entry->priority == 0 && all_wildcarded_match( entry->match ) ) {
-    return true;
-  }
-
-  return false;
-}
-
-
 void
 dump_flow_entry( const flow_entry *entry, void dump_function( const char *format, ... ) ) {
   assert( entry != NULL );
@@ -114,7 +115,6 @@ dump_flow_entry( const flow_entry *entry, void dump_function( const char *format
   if ( entry->match != NULL ) {
     dump_match( entry->match, dump_function );
   }
-
   else {
     ( *dump_function )( "NULL" );
   }

@@ -31,17 +31,16 @@ handle_features_reply(
   uint32_t transaction_id,
   uint32_t n_buffers,
   uint8_t n_tables,
+  uint8_t auxiliary_id,
   uint32_t capabilities,
-  uint32_t actions,
-  const list_element *phy_ports,
-  void *user_data
-) {
+  void *user_data ) {
   UNUSED( user_data );
 
   info( "datapath_id: %#" PRIx64, datapath_id );
   info( "transaction_id: %#lx", transaction_id );
   info( "n_buffers: %lu", n_buffers );
   info( "n_tables: %u", n_tables );
+  info( "auxiliary_id: %u", auxiliary_id );
   info( "capabilities:" );
   if ( capabilities & OFPC_FLOW_STATS ) {
     info( "  OFPC_FLOW_STATS" );
@@ -52,83 +51,14 @@ handle_features_reply(
   if ( capabilities & OFPC_PORT_STATS ) {
     info( "  OFPC_PORT_STATS" );
   }
-  if ( capabilities & OFPC_STP ) {
-    info( "  OFPC_STP" );
-  }
-  if ( capabilities & OFPC_RESERVED ) {
-    info( "  OFPC_RESERVED" );
-  }
   if ( capabilities & OFPC_IP_REASM ) {
     info( "  OFPC_IP_REASM" );
   }
   if ( capabilities & OFPC_QUEUE_STATS ) {
     info( "  OFPC_QUEUE_STATS" );
   }
-  if ( capabilities & OFPC_ARP_MATCH_IP ) {
-    info( "  OFPC_ARP_MATCH_IP" );
-  }
-  info( "actions:" );
-  if( actions & ( 1 << OFPAT_OUTPUT ) ) {
-    info( "  OFPAT_OUTPUT" );
-  }
-  if( actions & ( 1 << OFPAT_SET_VLAN_VID ) ) {
-    info( "  OFPAT_SET_VLAN_VID" );
-  }
-  if( actions & ( 1 << OFPAT_SET_VLAN_PCP ) ) {
-    info( "  OFPAT_SET_VLAN_PCP" );
-  }
-  if( actions & ( 1 << OFPAT_STRIP_VLAN ) ) {
-    info( "  OFPAT_STRIP_VLAN" );
-  }
-  if( actions & ( 1 << OFPAT_SET_DL_SRC ) ) {
-    info( "  OFPAT_SET_DL_SRC" );
-  }
-  if( actions & ( 1 << OFPAT_SET_DL_DST ) ) {
-    info( "  OFPAT_SET_DL_DST" );
-  }
-  if( actions & ( 1 << OFPAT_SET_NW_SRC ) ) {
-    info( "  OFPAT_SET_NW_SRC" );
-  }
-  if( actions & ( 1 << OFPAT_SET_NW_DST ) ) {
-    info( "  OFPAT_SET_NW_DST" );
-  }
-  if( actions & ( 1 << OFPAT_SET_NW_TOS ) ) {
-    info( "  OFPAT_SET_NW_TOS" );
-  }
-  if( actions & ( 1 << OFPAT_SET_TP_SRC ) ) {
-    info( "  OFPAT_SET_TP_SRC" );
-  }
-  if( actions & ( 1 << OFPAT_SET_TP_DST ) ) {
-    info( "  OFPAT_SET_TP_DST" );
-  }
-  if( actions & ( 1 << OFPAT_ENQUEUE ) ) {
-    info( "  OFPAT_ENQUEUE" );
-  }
-  if( actions & OFPAT_VENDOR ) {
-    info( "  OFPAT_VENDOR" );
-  }
-
-  list_element ports_list;
-  memcpy( &ports_list, phy_ports, sizeof( list_element ) );
-  for ( list_element *port = &ports_list; port != NULL; port = port->next ) {
-    struct ofp_phy_port *phy_port = port->data;
-    info( "port_no: %u", phy_port->port_no );
-    info(
-      "  hw_addr = %02x:%02x:%02x:%02x:%02x:%02x",
-      phy_port->hw_addr[ 0 ],
-      phy_port->hw_addr[ 1 ],
-      phy_port->hw_addr[ 2 ],
-      phy_port->hw_addr[ 3 ],
-      phy_port->hw_addr[ 4 ],
-      phy_port->hw_addr[ 5 ]
-    );
-    info( "  name = %s", phy_port->name );
-    info( "  config = %#lx", phy_port->config );
-    info( "  state = %#lx", phy_port->state );
-    info( "  curr = %#lx", phy_port->curr );
-    info( "  advertised = %#lx", phy_port->advertised );
-    info( "  supported = %#lx", phy_port->supported );
-    info( "  peer = %#lx", phy_port->peer );
+  if ( capabilities & OFPC_PORT_BLOCKED ) {
+    info( "  OFPC_PORT_BLOCKED" );
   }
 }
 

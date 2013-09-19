@@ -53,7 +53,7 @@ mock_create_ether_device( const char *name, const size_t max_send_queue, const s
   check_expected( name );
   check_expected( max_send_queue );
   check_expected( max_recv_queue );
-  return ( ether_device * ) ( ( uint32_t ) mock() );
+  return ( ether_device * ) mock();
 }
 
 

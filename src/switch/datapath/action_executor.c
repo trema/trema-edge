@@ -26,6 +26,7 @@
 #include "packet_buffer.h"
 #include "port_manager.h"
 #include "table_manager.h"
+#include "pipeline.h"
 
 
 OFDPE
@@ -347,7 +348,7 @@ set_vlan_vid( buffer *frame, uint16_t value ) {
   }
 
   vlantag_header_t *header = info->l2_vlan_header;
-  header->tci = ( uint16_t ) ( ( header->tci & htons( 0xf000 ) ) | ( value & 0x0fff ) );
+  header->tci = ( uint16_t ) ( ( header->tci & htons( 0xf000 ) ) | htons( value & 0x0fff ) );
 
   return parse_frame( frame );
 }
@@ -365,7 +366,8 @@ set_vlan_pcp( buffer *frame, uint8_t value ) {
   }
 
   vlantag_header_t *header = info->l2_vlan_header;
-  header->tci = ( uint16_t ) ( ( header->tci & htons( 0x1fff ) ) | ( ( value & 0x07 ) << 5 ) );
+  uint16_t tci = ( uint16_t ) ( ( value & 0x07 ) << 13 );
+  header->tci = ( uint16_t ) ( ( header->tci & htons( 0x1fff ) ) | htons( tci ) );
 
   return parse_frame( frame );
 }
@@ -891,8 +893,8 @@ set_mpls_label( buffer *frame, uint32_t value ) {
     return true;
   }
 
-  uint32_t *mpls = info->l2_mpls_header;
-  *mpls = ( *mpls & htonl( 0x00000fff ) ) | htonl( ( value & 0x000fffff ) << 12 );
+  mpls_header_t *mpls_header = info->l2_mpls_header;
+  mpls_header->label = ( mpls_header->label & htonl( 0x00000fff ) ) | htonl( ( value << 12 ) & 0xfffff000 );
 
   return parse_frame( frame );
 }
@@ -909,8 +911,8 @@ set_mpls_tc( buffer *frame, uint8_t value ) {
     return true;
   }
 
-  uint32_t *mpls = info->l2_mpls_header;
-  *mpls = ( *mpls & htonl( 0xfffff1ff ) ) | htonl( ( uint32_t ) ( value & 0x07 ) << 9 );
+  mpls_header_t *mpls_header = info->l2_mpls_header;
+  mpls_header->label = ( mpls_header->label & htonl( 0xfffff1ff ) ) | htonl( ( ( uint32_t ) value << 9 ) & 0x00000e00 );
 
   return parse_frame( frame );
 }
@@ -927,24 +929,44 @@ set_mpls_bos( buffer *frame, uint8_t value ) {
     return true;
   }
 
-  uint32_t *mpls = info->l2_mpls_header;
-  *mpls = ( *mpls & htonl( 0xfffffeff ) ) | htonl( ( uint32_t )( value & 0x01 ) << 8 );
+  mpls_header_t *mpls_header = info->l2_mpls_header;
+  mpls_header->label = ( mpls_header->label & htonl( 0xfffffeff ) ) | htonl( ( ( uint32_t ) value << 8 ) & 0x00000100 );
 
   return parse_frame( frame );
 }
 
 
-static void
+static bool
+set_pbb_isid( buffer *frame, uint32_t value ) {
+  assert( frame != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+  if ( info->l2_pbb_header == NULL ) {
+    warn( "A non-pbb packet (%#x) found while setting pbb sid.", info->format );
+    return true;
+  }
+
+  pbb_header_t *pbb_header = info->l2_pbb_header;
+  pbb_header->isid = ( pbb_header->isid & htonl( 0xFF000000 ) ) | htonl( value & 0x00FFFFFF );
+
+  return parse_frame( frame );
+}
+
+
+static void*
 push_linklayer_tag( buffer *frame, void *head, size_t tag_size ) {
   assert( frame != NULL );
   assert( head != NULL );
 
-  char *tail = ( char * ) head + tag_size;
-  size_t length = frame->length - ( size_t ) ( ( char * ) head - ( char * ) frame->data );
-  // FIXME: this is not safe since append_back_buffer() may reallocate memory
+  size_t insert_offset = ( size_t ) ( ( char * ) head - ( char * ) frame->data );
   append_back_buffer( frame, tag_size );
-  memmove( tail, head, length );
+  // head would be moved because append_back_buffer() may reallocate memory
+  head = ( char * ) frame->data + insert_offset;
+  memmove( ( char * ) head + tag_size, head, frame->length - insert_offset - tag_size );
   memset( head, 0, tag_size );
+
+  return head;
 }
 
 
@@ -960,12 +982,12 @@ pop_linklayer_tag( buffer *frame, void *head, size_t tag_size ) {
 }
 
 
-static void
+static void*
 push_vlan_tag( buffer *frame, void *head ) {
   assert( frame != NULL );
   assert( head != NULL );
 
-  push_linklayer_tag( frame, head, sizeof( vlantag_header_t ) );
+  return push_linklayer_tag( frame, head, sizeof( vlantag_header_t ) );
 }
 
 
@@ -978,12 +1000,12 @@ pop_vlan_tag( buffer *frame, void *head ) {
 }
 
 
-static void
+static void*
 push_mpls_tag( buffer *frame, void *head ) {
   assert( frame != NULL );
   assert( head != NULL );
 
-  push_linklayer_tag( frame, head, sizeof( uint32_t ) );
+  return push_linklayer_tag( frame, head, sizeof( uint32_t ) );
 }
 
 
@@ -993,6 +1015,24 @@ pop_mpls_tag( buffer *frame, void *head ) {
   assert( head != NULL );
 
   pop_linklayer_tag( frame, head, sizeof( uint32_t ) );
+}
+
+
+static void*
+push_pbb_tag( buffer *frame, void *head ) {
+  assert( frame != NULL );
+  assert( head != NULL );
+
+  return push_linklayer_tag( frame, head, sizeof( pbb_header_t ) );
+}
+
+
+static void
+pop_pbb_tag( buffer *frame, void *head ) {
+  assert( frame != NULL );
+  assert( head != NULL );
+
+  pop_linklayer_tag( frame, head, sizeof( pbb_header_t ) );
 }
 
 
@@ -1058,20 +1098,7 @@ execute_action_pop_mpls( buffer *frame, action *pop_mpls ) {
 
   pop_mpls_tag( frame, info->l2_mpls_header );
 
-  uint16_t next_type = 0;
-  if ( packet_type_ipv4( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV4;
-  }
-  else if ( packet_type_ipv6( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV6;
-  }
-  else {
-    warn( "Unsupported packet found (%#x) while popping a mpls label.", info->format );
-    return true;
-  }
-
-  ether_header_t *ether_header = frame->data;
-  ether_header->type = htons( next_type );
+  * ( uint16_t * ) ( ( char * ) info->l2_mpls_header - 2 ) = htons( pop_mpls->ethertype );
 
   return parse_frame( frame );
 }
@@ -1089,22 +1116,7 @@ execute_action_pop_vlan( buffer *frame, action *pop_vlan ) {
     return true;
   }
 
-  pop_vlan_tag( frame, info->l2_vlan_header );
-
-  uint16_t next_type = 0;
-  if ( packet_type_ipv4( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV4;
-  }
-  else if ( packet_type_ipv6( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV6;
-  }
-  else {
-    warn( "Unsupported packet found (%#x) while popping a vlan tag.", info->format );
-    return true;
-  }
-
-  ether_header_t *ether_header = frame->data;
-  ether_header->type = htons( next_type );
+  pop_vlan_tag( frame, ( char * ) info->l2_vlan_header - 2 ); // remove TPID ethertype and tci
 
   return parse_frame( frame );
 }
@@ -1117,17 +1129,27 @@ execute_action_push_mpls( buffer *frame, action *push_mpls ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  void *start = info->l2_mpls_header;
-  if ( start == NULL ) {
-    start = info->l2_payload;
+
+  void *start = info->l2_payload;
+  uint32_t default_mpls = htonl( 0x00000100 );
+  if ( info->l2_mpls_header != NULL ) {
+    start = info->l2_mpls_header;
+    default_mpls = htonl( 0xFFFFFEFF ) & *( uint32_t * ) info->l2_mpls_header;
+  }
+  else if ( packet_type_ipv4( frame ) ) {
+    ipv4_header_t *ipv4_header = info->l3_header;
+    default_mpls = htonl( 0x00000100 | ( uint32_t ) ipv4_header->ttl );
+  }
+  else if ( packet_type_ipv6( frame ) ) {
+    ipv6_header_t *ipv6_header = info->l3_header;
+    default_mpls = htonl( 0x00000100 | ( uint32_t ) ipv6_header->hoplimit );
   }
 
-  push_mpls_tag( frame, start );
-  ether_header_t *ether_header = frame->data;
-  ether_header->type = htons( push_mpls->ethertype );
+  void *mpls = push_mpls_tag( frame, start );
 
-  uint32_t *mpls = ( uint32_t * ) start;
-  *mpls = *mpls | htonl( 0x00000100 );
+  * ( uint16_t * )( ( char * ) mpls - 2 ) = htons( push_mpls->ethertype );
+  mpls_header_t *mpls_header = mpls;
+  mpls_header->label = default_mpls;
 
   return parse_frame( frame );
 }
@@ -1140,29 +1162,19 @@ execute_action_push_vlan( buffer *frame, action *push_vlan ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  void *start = info->l2_vlan_header;
-  if ( start == NULL ) {
-    start = info->l2_payload;
+  
+  char *start = info->l2_payload;
+  uint16_t default_tci = 0;
+  if ( info->l2_vlan_header != NULL ) {
+    start = info->l2_vlan_header;
+    default_tci = ( ( vlantag_header_t * ) ( info->l2_vlan_header ) )-> tci;
   }
 
-  push_vlan_tag( frame, start );
+  void *vlan = push_vlan_tag( frame, start - 2 ); // push vlan tag between source mac and ethertype
+
   ether_header_t *ether_header = ( ether_header_t * ) frame->data;
   ether_header->type = htons( push_vlan->ethertype );
-  vlantag_header_t *vlan_header = ( vlantag_header_t * ) start;
-
-  uint16_t next_type = 0;
-  if ( packet_type_ipv4( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV4;
-  }
-  else if ( packet_type_ipv6( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV6;
-  }
-  else {
-    warn( "Unsupported packet found (%#x) while pushing a vlan tag.", info->format );
-    return true;
-  }
-
-  vlan_header->type = htons( next_type );
+  ( ( vlantag_header_t * )( ( char * ) vlan + 2 ) )->tci = default_tci;
 
   return parse_frame( frame );
 }
@@ -1226,6 +1238,10 @@ execute_action_dec_mpls_ttl( buffer *frame, action *dec_mpls_ttl ) {
       match->in_phy_port.value = info->eth_in_phy_port;
       match->in_phy_port.valid = true;
     }
+    if ( info->metadata != 0 ) {
+      match->metadata.value = info->metadata;
+      match->metadata.valid = true;
+    }
     notify_packet_in( OFPR_INVALID_TTL, dec_mpls_ttl->entry->table_id, dec_mpls_ttl->entry->cookie, match, frame, MISS_SEND_LEN );
     delete_match( match );
   }
@@ -1268,6 +1284,10 @@ execute_action_dec_nw_ttl( buffer *frame, action *dec_nw_ttl ) {
     if ( info->eth_in_phy_port != match->in_port.value ) {
       match->in_phy_port.value = info->eth_in_phy_port;
       match->in_phy_port.valid = true;
+    }
+    if ( info->metadata != 0 ) {
+      match->metadata.value = info->metadata;
+      match->metadata.valid = true;
     }
     notify_packet_in( OFPR_INVALID_TTL, dec_nw_ttl->entry->table_id, dec_nw_ttl->entry->cookie, match, frame, MISS_SEND_LEN );
     delete_match( match );
@@ -1523,6 +1543,12 @@ execute_action_set_field( buffer *frame, action *set_field ) {
     }
   }
 
+  if ( match->pbb_isid.valid ) {
+    if ( !set_pbb_isid( frame, match->pbb_isid.value ) ) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -1550,6 +1576,65 @@ execute_group_all( buffer *frame, bucket_list *buckets ) {
 
 
 static bool
+execute_action_push_pbb( buffer *frame, action *push_pbb ) {
+  assert( frame != NULL );
+  assert( push_pbb != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+
+  char *start = info->l2_payload;
+  uint32_t default_isid = 0;
+  if ( info->l2_pbb_header != NULL ) {
+    // PBB I-SID <- PBB I-SID
+    start = info->l2_pbb_header;
+    pbb_header_t *pbb = info->l2_pbb_header;
+    default_isid |= ntohl( pbb->isid ) & 0x00FFFFFF;
+  }
+  if ( info->l2_vlan_header != NULL ) {
+    // PBB I-PCP <- VLAN PCP
+    vlantag_header_t *vlan = info->l2_vlan_header;
+    default_isid |= ( ( ( uint32_t ) ntohs( vlan->tci ) >> 13 ) << 29 ) & 0xE0000000;
+  }
+
+  void *new = push_pbb_tag( frame, start - 2 ); // push pbb before ethertype
+
+  *( ( uint16_t * ) new ) = htons( push_pbb->ethertype );
+
+  ether_header_t *ether = ( ether_header_t * ) frame->data;
+  pbb_header_t *pbb = ( pbb_header_t * ) ( ( char * ) new + 2 );
+  pbb->isid = htonl( default_isid );
+  memcpy( pbb->cda, ether->macda, ETH_ADDRLEN );
+  memcpy( pbb->csa, ether->macsa, ETH_ADDRLEN );
+
+  return parse_frame( frame );
+}
+
+
+static bool
+execute_action_pop_pbb( buffer *frame, action *pop_pbb ) {
+  assert( frame != NULL );
+  assert( pop_pbb != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+  if ( info->l2_pbb_header == NULL ) {
+    warn( "A non-pbb frame (%#x) found while popping a pbb tag.", info->format );
+    return true;
+  }
+
+  pbb_header_t *pbb_header = info->l2_pbb_header;
+  ether_header_t *ether_header = frame->data;
+  memcpy( ether_header->macda, pbb_header->cda, ETH_ADDRLEN );
+  memcpy( ether_header->macsa, pbb_header->csa, ETH_ADDRLEN );
+
+  pop_pbb_tag( frame, ( char * ) info->l2_pbb_header - 2 ); // remove PBB ethertype and I-TAG
+
+  return parse_frame( frame );
+}
+
+
+static bool
 check_bucket( action_list *actions ) {
   assert( actions != NULL );
 
@@ -1571,6 +1656,73 @@ check_bucket( action_list *actions ) {
 
   return ret;
 }
+
+
+#ifdef GROUP_SELECT_BY_HASH
+static inline uint32_t
+group_select_by_hash_core( uint32_t value, const void *key, int size ) {
+  // 32 bit FNV_prime
+  const uint32_t prime = 0x01000193UL;
+  const unsigned char *c = key;
+
+  for ( int i = 0; i < size; i++ ) {
+    value ^= ( const uint32_t ) c[ i ];
+    value *= prime;
+  }
+
+  return value;
+}
+
+
+static uint32_t
+group_select_by_hash( const buffer *frame ) {
+  assert( frame != NULL );
+  assert( frame->user_data != NULL );
+  const packet_info *info = ( packet_info * ) frame->user_data;
+
+  if ( ( info->format & ( ETH_DIX | ETH_8023_SNAP ) ) == 0 ) {
+    return ( uint32_t ) rand();
+  }
+
+  // 32 bit offset_basis
+  uint32_t value = 0x811c9dc5UL;
+
+  value = group_select_by_hash_core( value, info->eth_macda, sizeof( info->eth_macda ) );
+  value = group_select_by_hash_core( value, info->eth_macsa, sizeof( info->eth_macsa ) );
+  value = group_select_by_hash_core( value, &info->eth_type, sizeof( info->eth_type ) );
+  if ( ( info->format & ETH_8021Q ) == ETH_8021Q ) {
+    value = group_select_by_hash_core( value, &info->vlan_vid, sizeof( info->vlan_vid ) );
+  }
+  if ( ( info->format & MPLS ) == MPLS ) {
+    value = group_select_by_hash_core( value, &info->mpls_label, sizeof( info->mpls_label ) );
+  }
+
+  if ( ( info->format & NW_IPV4 ) == NW_IPV4 ) {
+    value = group_select_by_hash_core( value, &info->ipv4_protocol, sizeof( info->ipv4_protocol ) );
+    value = group_select_by_hash_core( value, &info->ipv4_saddr, sizeof( info->ipv4_saddr ) );
+    value = group_select_by_hash_core( value, &info->ipv4_daddr, sizeof( info->ipv4_daddr ) );
+  }
+  else if ( ( info->format & NW_IPV6 ) == NW_IPV6 ) {
+    value = group_select_by_hash_core( value, &info->ipv6_protocol, sizeof( info->ipv6_protocol ) );
+    value = group_select_by_hash_core( value, &info->ipv6_saddr, sizeof( info->ipv6_saddr ) );
+    value = group_select_by_hash_core( value, &info->ipv6_daddr, sizeof( info->ipv6_daddr ) );
+  }
+  else {
+    return value;
+  }
+
+  if ( ( info->format & TP_TCP ) == TP_TCP ) {
+    value = group_select_by_hash_core( value, &info->tcp_src_port, sizeof( info->tcp_src_port ) );
+    value = group_select_by_hash_core( value, &info->tcp_dst_port, sizeof( info->tcp_dst_port ) );
+  }
+  else if ( ( info->format & TP_UDP ) == TP_UDP ) {
+    value = group_select_by_hash_core( value, &info->udp_src_port, sizeof( info->udp_src_port ) );
+    value = group_select_by_hash_core( value, &info->udp_dst_port, sizeof( info->udp_dst_port ) );
+  }
+
+  return value;
+}
+#endif
 
 
 static bool
@@ -1600,7 +1752,11 @@ execute_group_select( buffer *frame, bucket_list *buckets ) {
     return true;
   }
 
+#ifdef GROUP_SELECT_BY_HASH
+  uint32_t candidate_index = group_select_by_hash( frame ) % length_of_candidates;
+#else
   uint32_t candidate_index = ( ( uint32_t ) rand() ) % length_of_candidates;
+#endif
   debug( "execute group select. bucket=%u(/%u)", candidate_index, length_of_candidates );
   list_element *target = candidates;
   for ( uint32_t i = 0; target != NULL && i < length_of_candidates; i++ ) {
@@ -1721,23 +1877,55 @@ execute_action_output( buffer *frame, action *output ) {
     packet_info *info = ( packet_info * ) frame->user_data;
     uint32_t in_port = info->eth_in_port;
     switch_port *port = lookup_switch_port( in_port );
-    assert( port != NULL );
 
-    if ( ( port->config & OFPPC_NO_PACKET_IN ) == 0 ) {
-      match *match = duplicate_match( output->entry->match );
-      match->in_port.value = info->eth_in_port;
-      match->in_port.valid = true;
-      if ( info->eth_in_phy_port != match->in_port.value ) {
-        match->in_phy_port.value = info->eth_in_phy_port;
-        match->in_phy_port.valid = true;
+    match *match = NULL;
+    uint8_t table_id = 0;
+    uint64_t cookie = 0;
+    if ( output->entry != NULL ) {
+      match = duplicate_match( output->entry->match );
+      cookie = output->entry->cookie;
+      table_id = output->entry->table_id;
+    } else {
+      match = create_match();
+    }
+    match->in_port.value = info->eth_in_port;
+    match->in_port.valid = true;
+    if ( info->eth_in_phy_port != match->in_port.value ) {
+      match->in_phy_port.value = info->eth_in_phy_port;
+      match->in_phy_port.valid = true;
+    }
+    if ( info->metadata != 0 ) {
+      match->metadata.value = info->metadata;
+      match->metadata.valid = true;
+    }
+    if ( output->entry != NULL && output->entry->table_miss ) {
+      if ( port == NULL || ( port->config & OFPPC_NO_PACKET_IN ) == 0 ){
+        notify_packet_in( OFPR_NO_MATCH, table_id, cookie, match, frame, MISS_SEND_LEN );
       }
-      if ( table_miss_flow_entry( output->entry ) ) {
-        notify_packet_in( OFPR_NO_MATCH, output->entry->table_id, output->entry->cookie, match, frame, MISS_SEND_LEN );
-      }
-      else {
-        notify_packet_in( OFPR_ACTION, output->entry->table_id, output->entry->cookie, match, frame, output->max_len );
-      }
-      delete_match( match );
+    }
+    else {
+      notify_packet_in( OFPR_ACTION, table_id, cookie, match, frame, output->max_len );
+    }
+    delete_match( match );
+  }
+  else if ( output->port == OFPP_TABLE ) {
+    packet_info *info = ( packet_info * ) frame->user_data;
+    uint32_t in_port = info->eth_in_port;
+
+    // port is valid standard switch port or OFPP_CONTROLLER
+    switch_port *port = lookup_switch_port( in_port );
+    bool free_port = false;
+    if ( port == NULL ){
+      port = ( switch_port * ) xmalloc( sizeof( switch_port ) );
+      memset( port, 0, sizeof( switch_port ) );
+      port->port_no = OFPP_CONTROLLER;
+      free_port = true;
+    }
+
+    handle_received_frame( port, frame );
+
+    if ( free_port ) {
+      xfree( port );
     }
   }
   else {
@@ -1867,16 +2055,14 @@ execute_action_list( action_list *list, buffer *frame ) {
       case OFPAT_PUSH_PBB:
       {
         debug( "Executing action (OFPAT_PUSH_PBB)." );
-        warn( "OFPAT_PUSH_PBB is not supported." );
-        ret = false;
+        ret = execute_action_push_pbb( frame, action );
       }
       break;
 
       case OFPAT_POP_PBB:
       {
         debug( "Executing action (OFPAT_POP_PBB)." );
-        warn( "OFPAT_POP_PBB is not supported." );
-        ret = false;
+        ret = execute_action_pop_pbb( frame, action );
       }
       break;
 
@@ -1919,22 +2105,23 @@ execute_action_set( action_set *set, buffer *frame ) {
     }
   }
 
-  if ( set->pop_mpls != NULL ) {
-    debug( "Executing action (OFPAT_POP_MPLS)." );
-    if ( !execute_action_pop_mpls( frame, set->pop_mpls ) ) {
+  if ( set->pop_vlan != NULL ) {
+    debug( "Executing action (OFPAT_POP_VLAN)." );
+    if ( !execute_action_pop_vlan( frame, set->pop_vlan ) ) {
       return OFDPE_FAILED;
     }
   }
 
   if ( set->pop_pbb != NULL ) {
     debug( "Executing action (OFPAT_POP_PBB)." );
-    warn( "OFPAT_POP_PBB is not supported" );
-    return OFDPE_FAILED;
+    if ( !execute_action_pop_pbb( frame, set->pop_pbb ) ) {
+      return OFDPE_FAILED;
+    }
   }
 
-  if ( set->pop_vlan != NULL ) {
-    debug( "Executing action (OFPAT_POP_VLAN)." );
-    if ( !execute_action_pop_vlan( frame, set->pop_vlan ) ) {
+  if ( set->pop_mpls != NULL ) {
+    debug( "Executing action (OFPAT_POP_MPLS)." );
+    if ( !execute_action_pop_mpls( frame, set->pop_mpls ) ) {
       return OFDPE_FAILED;
     }
   }
@@ -1948,8 +2135,9 @@ execute_action_set( action_set *set, buffer *frame ) {
 
   if ( set->push_pbb != NULL ) {
     debug( "Executing action (OFPAT_PUSH_PBB)." );
-    warn( "OFPAT_PUSH_PBB is not supported" );
-    return OFDPE_FAILED;
+    if ( !execute_action_push_pbb( frame, set->push_pbb ) ) {
+      return OFDPE_FAILED;
+    }
   }
 
   if ( set->push_vlan != NULL ) {

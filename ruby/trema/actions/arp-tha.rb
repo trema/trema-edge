@@ -26,6 +26,7 @@ module Trema
     # a 48-bit Ethernet address
     #
     class ArpTha < EthAddr
+      mac :mac_address, alias: :arp_tha
     end
   end
 

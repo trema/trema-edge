@@ -23,7 +23,8 @@ module Trema
     #
     class EtherType < FlexibleAction
       ofp_type OFPXMT_OFB_ETH_TYPE
-      unsigned_int16 :ether_type, presence: true
+      unsigned_int16 :ether_type, presence: true, alias: :eth_type
+      alias :eth_type :ether_type
     end
   end
 

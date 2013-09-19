@@ -27,9 +27,6 @@ module Trema
     alias :dpid :datapath_id
 
 
-    log_file { | switch | "switch.#{ switch.dpid }.log" }
-
-
     def initialize stanza
       @stanza = stanza
       TremaSwitch.add self
@@ -60,7 +57,7 @@ module Trema
         end
         ports = ports.join( ',' )
       end
-      "sudo -E #{ Executables.switch } -i #{ dpid_short } #{ option_ports( ports ) } > #{ log_file } &"
+      "sudo -E #{ Executables.switch } -i #{ dpid_short } #{ option_ports( ports ) } --daemonize"
     end
 
 

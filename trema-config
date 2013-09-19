@@ -46,7 +46,7 @@ FileUtils.cd Trema.home do
   output = []
   if $cflags
 #    output << "-I#{ Trema.home }/src/lib -I#{ Trema.openflow }"
-    output << "-I#{ Trema.home }/src/lib"
+    output << "-I#{ Trema.home }/src/lib -DTREMA_EDGE"
   end
   if $libs
     output << "-L#{ Trema.objects }/lib -ltrema -lrt -lpthread -lsqlite3 -ldl"

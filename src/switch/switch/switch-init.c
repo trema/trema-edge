@@ -115,11 +115,9 @@ init_parse_args( int argc, char **argv ) {
   assert( args->to_protocol_queue != NULL );
 
   ignore_sigpipe();
-#ifdef NOT_TESTED
   if ( args->run_as_daemon == true ) {
     daemonize( get_switch_home() );
   }
-#endif
 
   char *switch_pid_dir = get_switch_pid_dir();
   write_pid( switch_pid_dir, name );

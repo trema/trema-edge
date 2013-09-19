@@ -22,7 +22,8 @@ module Trema
     unsigned_int64 :metadata, :metadata_mask
     mac            :eth_src, :eth_src_mask
     mac            :eth_dst, :eth_dst_mask
-    unsigned_int16 :eth_type, :vlan_vid, :vlan_vid_mask
+    unsigned_int16 :eth_type
+    unsigned_int16 :vlan_vid, :vlan_vid_mask
     unsigned_int8  :vlan_pcp
     unsigned_int8  :ip_dscp # IP DSCP ( 6 bits in ToS field )
     unsigned_int8  :ip_ecn # IP ECN ( 2 bits in ToS field )
@@ -46,7 +47,7 @@ module Trema
     mac            :ipv6_nd_sll, :ipv6_nd_tll
     unsigned_int32 :mpls_label
     unsigned_int8  :mpls_tc, :mpls_bos
-    unsigned_int32 :pbb_isid
+    unsigned_int32 :pbb_isid, :pbb_isid_mask
     unsigned_int64 :tunnel_id, :tunnel_id_mask
     unsigned_int16 :ipv6_exthdr, :ipv6_exthdr_mask
   end

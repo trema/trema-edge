@@ -42,7 +42,11 @@
 #define ETH_ETHTYPE_IPV4 0x0800
 #define ETH_ETHTYPE_ARP 0x0806
 #define ETH_ETHTYPE_TPID 0x8100
-#define ETH_ETHTYPE_PBB 0x88A8
+#define ETH_ETHTYPE_TPID1 0x88a8
+#define ETH_ETHTYPE_TPID2 0x9100
+#define ETH_ETHTYPE_TPID3 0x9200
+#define ETH_ETHTYPE_TPID4 0x9300
+#define ETH_ETHTYPE_PBB 0x88e7
 #define ETH_ETHTYPE_IPV6 0x86DD
 #define ETH_ETHTYPE_EAPOL 0x88c7
 #define ETH_ETHTYPE_LLDP 0x88cc
@@ -62,6 +66,15 @@ typedef struct vlantag_header {
   uint16_t tci;
   uint16_t type;
 } vlantag_header_t;
+
+
+// 802.1ah I-TAG TCI + payload ethertype
+typedef struct pbb_header {
+  uint32_t isid;
+  uint8_t cda[ ETH_ADDRLEN ];
+  uint8_t csa[ ETH_ADDRLEN ];
+  uint16_t type;
+} pbb_header_t;
 
 
 typedef struct snap_header {

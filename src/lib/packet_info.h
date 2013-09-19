@@ -122,12 +122,6 @@ typedef struct {
   uint8_t vlan_cfi;
   uint16_t vlan_vid;
   uint8_t  vlan_pcp;
-  uint8_t  ip_dscp;
-  /*
-  * TODO not set in packet parsing but necessary to compile ofdp.
-  */
-  uint8_t  ip_ecn;
-  uint8_t  ip_proto;
 
   uint8_t snap_llc[ SNAP_LLC_LENGTH ];
   uint8_t snap_oui[ SNAP_OUI_LENGTH ];
@@ -143,9 +137,15 @@ typedef struct {
   uint8_t arp_tha[ ETH_ADDRLEN ];
   uint32_t arp_tpa;
 
+  uint8_t ip_proto;
+  uint8_t ip_dscp;
+  uint8_t ip_ecn;
+
   uint8_t ipv4_version;
   uint8_t ipv4_ihl;
   uint8_t ipv4_tos;
+  uint8_t ipv4_dscp;
+  uint8_t ipv4_ecn;
   uint16_t ipv4_tot_len;
   uint16_t ipv4_id;
   uint16_t ipv4_frag_off;
@@ -157,6 +157,8 @@ typedef struct {
 
   uint8_t ipv6_version;
   uint8_t ipv6_tc;
+  uint8_t ipv6_dscp;
+  uint8_t ipv6_ecn;
   uint32_t ipv6_flowlabel;
   uint16_t ipv6_plen;
   uint16_t ipv6_nexthdr;
@@ -227,6 +229,7 @@ typedef struct {
   void *l4_payload;
   size_t l4_payload_length;
   void *l2_vlan_header;
+  void *l2_pbb_header;
   void *l2_mpls_header;
 } packet_info;
 
@@ -235,6 +238,7 @@ bool parse_packet( buffer *buf );
 
 void calloc_packet_info( buffer *frame );
 void free_packet_info( buffer *frame );
+void copy_packet_info( buffer *dst, const buffer *src );
 packet_info get_packet_info( const buffer *frame );
 
 bool packet_type_eth_dix( const buffer *frame );

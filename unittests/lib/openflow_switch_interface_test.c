@@ -192,12 +192,6 @@ mock_add_periodic_event_callback( const time_t seconds, timer_callback callback,
 }
 
 
-const char *
-mock_get_chibach_name( void ) {
-  return SERVICE_NAME;
-}
-
-
 bool
 mock_finalize_secure_channel() {
   return true;

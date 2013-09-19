@@ -37,7 +37,7 @@ handle_port_status( uint64_t datapath_id,
   HASH_SET( r_attributes, "reason", UINT2NUM( reason ) );
   
   unpack_port( &port_desc, r_attributes );
-  VALUE cPortStatus = rb_funcall( rb_eval_string( "Messages::PortStatus" ), rb_intern( "new" ), 1, r_attributes );
+  VALUE cPortStatus = rb_funcall( rb_eval_string( "Trema::Messages::PortStatus" ), rb_intern( "new" ), 1, r_attributes );
   rb_funcall( ( VALUE ) controller, rb_intern( "port_status" ), 2, ULL2NUM( datapath_id ), cPortStatus );
 }
 

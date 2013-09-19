@@ -35,6 +35,22 @@
 #include "dpid_table.h"
 
 
+const char SWITCH_MANAGER_NAME_OPTION[] = "--name=";
+const uint SWITCH_MANAGER_NAME_OPTION_STR_LEN = sizeof( SWITCH_MANAGER_NAME_OPTION );
+const char SWITCH_MANAGER_SOCKET_OPTION[] = "--socket=";
+const uint SWITCH_MANAGER_SOCKET_OPTION_STR_LEN = sizeof( SWITCH_MANAGER_SOCKET_OPTION );
+const char SWITCH_MANAGER_DAEMONIZE_OPTION[] = "--daemonize";
+const uint SWITCH_MANAGER_SOCKET_STR_LEN = sizeof( "2147483647" );
+const char SWITCH_MANAGER_COMMAND_PREFIX[] = "switch.";
+const uint SWITCH_MANAGER_COMMAND_PREFIX_STR_LEN = sizeof( SWITCH_MANAGER_COMMAND_PREFIX );
+const char SWITCH_MANAGER_PREFIX[] = "switch.";
+const uint SWITCH_MANAGER_PREFIX_STR_LEN = sizeof( SWITCH_MANAGER_PREFIX );
+const uint SWITCH_MANAGER_ADDR_STR_LEN = sizeof( "255.255.255.255:65535" );
+
+const char SWITCH_MANAGER_PATH[] = "objects/switch_manager/switch_daemon";
+const char SWITCH_MANAGER_STATE_PREFIX[] = "state_notify::";
+
+
 #ifdef UNIT_TESTING
 #define static
 

@@ -42,7 +42,7 @@ unpack_port( const struct ofp_port *port_desc, VALUE r_attributes ) {
 
 static VALUE
 eth_addr_to_r( const uint8_t *addr ) {
-  return rb_funcall( rb_eval_string( "Mac" ), rb_intern( "new" ), 1, ULL2NUM( mac_to_uint64( addr ) ) );
+  return rb_funcall( rb_eval_string( "Trema::Mac" ), rb_intern( "new" ), 1, ULL2NUM( mac_to_uint64( addr ) ) );
 }
 
 
@@ -548,7 +548,7 @@ static void
 unpack_action_set_field( const struct ofp_action_set_field *src, VALUE r_action_ary ) {
   VALUE r_attributes = rb_hash_new();
   VALUE r_flexible_action = Qnil;
-  uint32_t field_length = src->len - offsetof( struct ofp_action_set_field, field );
+  uint16_t field_length = ( uint16_t ) ( src->len - offsetof( struct ofp_action_set_field, field ) );
 
   if ( field_length > sizeof( oxm_match_header ) ) {
     const oxm_match_header *oxm_src = ( const oxm_match_header * ) src->field;
@@ -556,14 +556,14 @@ unpack_action_set_field( const struct ofp_action_set_field *src, VALUE r_action_
 
 
     VALUE r_field = UINT2NUM( OXM_FIELD( *oxm_src ) );
-    VALUE r_klass = rb_funcall( rb_eval_string( "FlexibleAction" ), rb_intern( "search" ), 2, rb_str_new_cstr( "OFPXMT_OFB" ), r_field );
+    VALUE r_klass = rb_funcall( rb_eval_string( "Trema::FlexibleAction" ), rb_intern( "search" ), 2, rb_str_new_cstr( "OFPXMT_OFB" ), r_field );
     
     r_flexible_action = rb_funcall( r_klass, rb_intern( "new" ), 1, r_attributes );
   }
   VALUE r_action_set = rb_ary_new();
   rb_ary_push( r_action_set, r_flexible_action );
   HASH_SET( r_attributes, "action_set", r_action_set );
-  VALUE set_field = rb_funcall( rb_eval_string( "SetField" ), rb_intern( "new" ), 1, r_attributes ); 
+  VALUE set_field = rb_funcall( rb_eval_string( "Trema::SetField" ), rb_intern( "new" ), 1, r_attributes ); 
   rb_ary_push( r_action_ary, set_field );
 }
 
@@ -571,7 +571,7 @@ unpack_action_set_field( const struct ofp_action_set_field *src, VALUE r_action_
 static VALUE
 find_basic_action( const uint16_t type ) {
   VALUE r_type = UINT2NUM( type );
-  VALUE r_klass = rb_funcall( rb_eval_string( "BasicAction" ), rb_intern( "search" ), 2, rb_str_new_cstr( "OFPAT" ), r_type );
+  VALUE r_klass = rb_funcall( rb_eval_string( "Trema::BasicAction" ), rb_intern( "search" ), 2, rb_str_new_cstr( "OFPAT" ), r_type );
   return r_klass;
 }
 
@@ -759,36 +759,36 @@ unpack_instruction( const struct ofp_instruction *instruction, VALUE r_instructi
     case OFPIT_GOTO_TABLE: {
       const struct ofp_instruction_goto_table *instruction_goto_table = ( const struct ofp_instruction_goto_table * ) instruction;
       HASH_SET( r_options, "table_id", UINT2NUM( instruction_goto_table->table_id ) );
-      r_instruction = rb_funcall( rb_eval_string( "GotoTable" ), rb_intern( "new" ), 1, r_options );
+      r_instruction = rb_funcall( rb_eval_string( "Trema::GotoTable" ), rb_intern( "new" ), 1, r_options );
     }
     break;
     case OFPIT_WRITE_METADATA: {
       const struct ofp_instruction_write_metadata *instruction_write_metadata = ( const struct ofp_instruction_write_metadata * ) instruction;
       HASH_SET( r_options, "metadata", ULL2NUM( instruction_write_metadata->metadata ) );
       HASH_SET( r_options, "metadata_mask", ULL2NUM( instruction_write_metadata->metadata_mask ) );
-      r_instruction = rb_funcall( rb_eval_string( "WriteMetadata" ), rb_intern( "new" ), 1, r_options );
+      r_instruction = rb_funcall( rb_eval_string( "Trema::WriteMetadata" ), rb_intern( "new" ), 1, r_options );
     }
     break;
     case OFPIT_WRITE_ACTIONS: {
       const struct ofp_instruction_actions *instruction_actions = ( const struct ofp_instruction_actions * ) instruction;
       unpack_instruction_actions( instruction_actions, r_options );
-      r_instruction = rb_funcall( rb_eval_string( "WriteAction" ), rb_intern( "new" ), 1, r_options );
+      r_instruction = rb_funcall( rb_eval_string( "Trema::WriteAction" ), rb_intern( "new" ), 1, r_options );
     }
     break;
     case OFPIT_APPLY_ACTIONS: {
       const struct ofp_instruction_actions *instruction_actions = ( const struct ofp_instruction_actions * ) instruction;
       unpack_instruction_actions( instruction_actions, r_options );
-      r_instruction = rb_funcall( rb_eval_string( "ApplyAction" ), rb_intern( "new" ), 1, r_options );
+      r_instruction = rb_funcall( rb_eval_string( "Trema::ApplyAction" ), rb_intern( "new" ), 1, r_options );
     }
     break;
     case OFPIT_CLEAR_ACTIONS: {
-      r_instruction = rb_funcall( rb_eval_string( "ClearAction" ), rb_intern( "new" ), 0 );
+      r_instruction = rb_funcall( rb_eval_string( "Trema::ClearAction" ), rb_intern( "new" ), 0 );
     }
     break;
     case OFPIT_METER: {
       const struct ofp_instruction_meter *instruction_meter = ( const struct ofp_instruction_meter * ) instruction;
       HASH_SET( r_options, "meter_id", UINT2NUM( instruction_meter->meter_id ) );
-      r_instruction = rb_funcall( rb_eval_string( "Meter" ), rb_intern( "new" ), 1, r_options );
+      r_instruction = rb_funcall( rb_eval_string( "Trema::Meter" ), rb_intern( "new" ), 1, r_options );
     }
     break;
     case OFPIT_EXPERIMENTER: {
@@ -803,7 +803,7 @@ unpack_instruction( const struct ofp_instruction *instruction, VALUE r_instructi
         HASH_SET( r_options, "user_data", buffer_to_r_array( body ) );
         free_buffer( body );
       }
-      r_instruction = rb_funcall( rb_eval_string( "Experimenter" ), rb_intern( "new" ), 1, r_options );
+      r_instruction = rb_funcall( rb_eval_string( "Trema::Experimenter" ), rb_intern( "new" ), 1, r_options );
       
     }
     break;

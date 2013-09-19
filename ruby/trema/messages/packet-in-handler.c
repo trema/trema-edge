@@ -26,7 +26,7 @@
 #define PACKET_INFO_MAC_ADDR( packet_member )                                          \
   {                                                                                    \
     VALUE ret = ULL2NUM( mac_to_uint64( ( ( packet_info * ) ( frame->user_data ) )->packet_member ) ); \
-    return rb_funcall( rb_eval_string( "Mac" ), rb_intern( "new" ), 1, ret );  \
+    return rb_funcall( rb_eval_string( "Trema::Mac" ), rb_intern( "new" ), 1, ret );  \
   }
 
 
@@ -600,12 +600,12 @@ unpack_packet_in( packet_in *message ) {
     HASH_SET( pi_attributes, "pbb_isid", packet_in_pbb_isid( message->data ) );
   }
 
-  VALUE cPacketInfo = rb_funcall( rb_eval_string( "Messages::PacketInfo" ), rb_intern( "new" ), 1, pi_attributes );
+  VALUE cPacketInfo = rb_funcall( rb_eval_string( "Trema::Messages::PacketInfo" ), rb_intern( "new" ), 1, pi_attributes );
   HASH_SET( attributes, "packet_info", cPacketInfo );
   VALUE str = rb_inspect( attributes );
   debug( "attributes  %s", StringValuePtr( str ) );
 
-  return rb_funcall( rb_eval_string( "Messages::PacketIn" ), rb_intern( "new" ), 1, attributes );
+  return rb_funcall( rb_eval_string( "Trema::Messages::PacketIn" ), rb_intern( "new" ), 1, attributes );
 }
 
 

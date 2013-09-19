@@ -27,20 +27,20 @@
 #include <sys/types.h>
 
 
-static const char SWITCH_MANAGER_NAME_OPTION[] = "--name=";
-static const uint SWITCH_MANAGER_NAME_OPTION_STR_LEN = sizeof( SWITCH_MANAGER_NAME_OPTION );
-static const char SWITCH_MANAGER_SOCKET_OPTION[] = "--socket=";
-static const uint SWITCH_MANAGER_SOCKET_OPTION_STR_LEN = sizeof( SWITCH_MANAGER_SOCKET_OPTION );
-static const char SWITCH_MANAGER_DAEMONIZE_OPTION[] = "--daemonize";
-static const uint SWITCH_MANAGER_SOCKET_STR_LEN = sizeof( "2147483647" );
-static const char SWITCH_MANAGER_COMMAND_PREFIX[] = "switch.";
-static const uint SWITCH_MANAGER_COMMAND_PREFIX_STR_LEN = sizeof( SWITCH_MANAGER_COMMAND_PREFIX );
-static const char SWITCH_MANAGER_PREFIX[] = "switch.";
-static const uint SWITCH_MANAGER_PREFIX_STR_LEN = sizeof( SWITCH_MANAGER_PREFIX );
-static const uint SWITCH_MANAGER_ADDR_STR_LEN = sizeof( "255.255.255.255:65535" );
+extern const char SWITCH_MANAGER_NAME_OPTION[];
+extern const uint SWITCH_MANAGER_NAME_OPTION_STR_LEN;
+extern const char SWITCH_MANAGER_SOCKET_OPTION[];
+extern const uint SWITCH_MANAGER_SOCKET_OPTION_STR_LEN;
+extern const char SWITCH_MANAGER_DAEMONIZE_OPTION[];
+extern const uint SWITCH_MANAGER_SOCKET_STR_LEN;
+extern const char SWITCH_MANAGER_COMMAND_PREFIX[];
+extern const uint SWITCH_MANAGER_COMMAND_PREFIX_STR_LEN;
+extern const char SWITCH_MANAGER_PREFIX[];
+extern const uint SWITCH_MANAGER_PREFIX_STR_LEN;
+extern const uint SWITCH_MANAGER_ADDR_STR_LEN;
 
-static const char SWITCH_MANAGER_PATH[] = "objects/switch_manager/switch_daemon";
-static const char SWITCH_MANAGER_STATE_PREFIX[] = "state_notify::";
+extern const char SWITCH_MANAGER_PATH[];
+extern const char SWITCH_MANAGER_STATE_PREFIX[];
 
 
 struct listener_info {

@@ -32,9 +32,8 @@ class FeaturesRequestController < Controller
     info "transaction_id: #{ message.transaction_id.to_hex }"
     info "n_buffers: #{ message.n_buffers }"
     info "n_tables: #{ message.n_tables }"
+    info "auxiliary_id: #{ message.auxiliary_id }"
     print_capabilities message.capabilities
-    print_actions message.actions
-    print_ports message.ports
   end
 
 
@@ -48,44 +47,8 @@ class FeaturesRequestController < Controller
     info "  OFPC_FLOW_STATS" if capabilities & OFPC_FLOW_STATS != 0
     info "  OFPC_TABLE_STATS" if capabilities & OFPC_TABLE_STATS != 0
     info "  OFPC_PORT_STATS" if capabilities & OFPC_PORT_STATS != 0
-    info "  OFPC_STP" if capabilities & OFPC_STP != 0
-    info "  OFPC_RESERVED" if capabilities & OFPC_RESERVED != 0
     info "  OFPC_IP_REASM" if capabilities & OFPC_IP_REASM != 0
     info "  OFPC_QUEUE_STATS" if capabilities & OFPC_QUEUE_STATS != 0
-    info "  OFPC_ARP_MATCH_IP" if capabilities & OFPC_ARP_MATCH_IP != 0
-  end
-
-
-  def print_actions actions
-    info "actions:"
-    info "  OFPAT_OUTPUT" if actions & ( 1 << OFPAT_OUTPUT ) != 0
-    info "  OFPAT_SET_VLAN_VID" if actions & ( 1 << OFPAT_SET_VLAN_VID ) != 0
-    info "  OFPAT_SET_VLAN_PCP" if actions & ( 1 << OFPAT_SET_VLAN_PCP ) != 0
-    info "  OFPAT_STRIP_VLAN" if actions & ( 1 << OFPAT_STRIP_VLAN ) != 0
-    info "  OFPAT_SET_DL_SRC" if actions & ( 1 << OFPAT_SET_DL_SRC ) != 0
-    info "  OFPAT_SET_DL_DST" if actions & ( 1 << OFPAT_SET_DL_DST ) != 0
-    info "  OFPAT_SET_NW_SRC" if actions & ( 1 << OFPAT_SET_NW_SRC ) != 0
-    info "  OFPAT_SET_NW_DST" if actions & ( 1 << OFPAT_SET_NW_DST ) != 0
-    info "  OFPAT_SET_NW_TOS" if actions & ( 1 << OFPAT_SET_NW_TOS ) != 0
-    info "  OFPAT_SET_TP_SRC" if actions & ( 1 << OFPAT_SET_TP_SRC ) != 0
-    info "  OFPAT_SET_TP_DST" if actions & ( 1 << OFPAT_SET_TP_DST ) != 0
-    info "  OFPAT_ENQUEUE" if actions & ( 1 << OFPAT_ENQUEUE ) != 0
-    info "  OFPAT_VENDOR" if actions & OFPAT_VENDOR != 0
-  end
-
-
-  def print_ports ports
-    ports.each do | port |
-      info "port_no: %u" % port.number
-      info "  hw_addr = #{ port.hw_addr.to_s }"
-      info "  name = #{ port.name }"
-      info "  config = #{ port.config.to_hex }"
-      info "  state = #{ port.state.to_hex }"
-      info "  curr = #{ port.curr.to_hex }"
-      info "  advertised = #{ port.advertised.to_hex }"
-      info "  supported = #{ port.supported.to_hex }"
-      info "  peer = #{ port.peer.to_hex }"
-    end
   end
 end
 

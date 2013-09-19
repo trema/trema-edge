@@ -139,7 +139,7 @@ ofpmsg_send_error_msg( struct switch_info *sw_info, uint16_t type, uint16_t code
 static int
 update_flowmod_cookie( buffer *buf, char *service_name ) {
   struct ofp_flow_mod *flow_mod = buf->data;
-  uint16_t command = ntohs( flow_mod->command );
+  uint8_t command = flow_mod->command;
   uint16_t flags = ntohs( flow_mod->flags );
   uint64_t cookie = ntohll( flow_mod->cookie );
 

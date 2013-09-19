@@ -28,7 +28,7 @@
 
 typedef struct {
   uint8_t mac[ OFP_ETH_ALEN ];
-  uint16_t port_no;
+  uint32_t port_no;
   time_t last_update;
 } forwarding_entry;
 
@@ -117,6 +117,34 @@ static const int AGING_INTERVAL = 5;
 
 static void
 handle_switch_ready( uint64_t datapath_id, void *switch_db ) {
+  openflow_actions *actions = create_actions();
+  append_action_output( actions, OFPP_CONTROLLER, OFPCML_NO_BUFFER );
+  openflow_instructions *insts = create_instructions();
+  append_instructions_apply_actions( insts, actions );
+
+  buffer *flow_mod = create_flow_mod(
+    get_transaction_id(),
+    get_cookie(),
+    0,
+    0,
+    OFPFC_ADD,
+    0,
+    0,
+    OFP_LOW_PRIORITY,
+    OFP_NO_BUFFER,
+    0,
+    0,
+    OFPFF_SEND_FLOW_REM,
+    NULL,
+    insts
+  );
+  send_openflow_message( datapath_id, flow_mod );
+  free_buffer( flow_mod );
+
+  delete_instructions( insts );
+  delete_actions( actions );
+
+
   known_switch *sw = lookup_hash_entry( switch_db, &datapath_id );
   if ( sw == NULL ) {
     sw = new_switch( datapath_id );
@@ -154,7 +182,7 @@ handle_switch_disconnected( uint64_t datapath_id, void *switch_db ) {
  ********************************************************************************/
 
 static void
-learn( hash_table *forwarding_db, uint16_t port_no, uint8_t *mac ) {
+learn( hash_table *forwarding_db, uint32_t port_no, uint8_t *mac ) {
   forwarding_entry *entry = lookup_hash_entry( forwarding_db, mac );
 
   if ( entry == NULL ) {
@@ -168,7 +196,7 @@ learn( hash_table *forwarding_db, uint16_t port_no, uint8_t *mac ) {
 
 
 static void
-do_flooding( packet_in packet_in ) {
+do_flooding( packet_in packet_in, uint32_t in_port ) {
   openflow_actions *actions = create_actions();
   append_action_output( actions, OFPP_ALL, OFPCML_NO_BUFFER );
 
@@ -179,7 +207,7 @@ do_flooding( packet_in packet_in ) {
     packet_out = create_packet_out(
       get_transaction_id(),
       packet_in.buffer_id,
-      packet_in.in_port,
+      in_port,
       actions,
       frame
     );
@@ -189,7 +217,7 @@ do_flooding( packet_in packet_in ) {
     packet_out = create_packet_out(
       get_transaction_id(),
       packet_in.buffer_id,
-      packet_in.in_port,
+      in_port,
       actions,
       NULL
     );
@@ -201,28 +229,36 @@ do_flooding( packet_in packet_in ) {
 
 
 static void
-send_packet( uint16_t destination_port, packet_in packet_in ) {
+send_packet( uint32_t destination_port, packet_in packet_in, uint32_t in_port ) {
   openflow_actions *actions = create_actions();
   append_action_output( actions, destination_port, OFPCML_NO_BUFFER );
 
-  struct ofp_match match;
-  set_match_from_packet( &match, packet_in.in_port, 0, packet_in.data );
+  openflow_instructions *insts = create_instructions();
+  append_instructions_apply_actions( insts, actions );
+
+  oxm_matches *match = create_oxm_matches();
+  set_match_from_packet( match, in_port, NULL, packet_in.data );
 
   buffer *flow_mod = create_flow_mod(
     get_transaction_id(),
-    match,
     get_cookie(),
+    0,
+    0,
     OFPFC_ADD,
     60,
     0,
     OFP_HIGH_PRIORITY,
     packet_in.buffer_id,
-    OFPP_NONE,
+    0,
+    0,
     OFPFF_SEND_FLOW_REM,
-    actions
+    match,
+    insts
   );
   send_openflow_message( packet_in.datapath_id, flow_mod );
   free_buffer( flow_mod );
+  delete_oxm_matches( match );
+  delete_instructions( insts );
 
   if ( packet_in.buffer_id == OFP_NO_BUFFER ) {
     buffer *frame = duplicate_buffer( packet_in.data );
@@ -230,7 +266,7 @@ send_packet( uint16_t destination_port, packet_in packet_in ) {
     buffer *packet_out = create_packet_out(
       get_transaction_id(),
       packet_in.buffer_id,
-      packet_in.in_port,
+      in_port,
       actions,
       frame
     );
@@ -255,15 +291,19 @@ handle_packet_in( uint64_t datapath_id, packet_in message ) {
   }
   
   packet_info packet_info = get_packet_info( message.data );
-  learn( sw->forwarding_db, message.in_port, packet_info.eth_macsa );
+  uint32_t in_port = get_in_port_from_oxm_matches( message.match );
+  if ( in_port == 0 ) {
+    return;
+  }
+  learn( sw->forwarding_db, in_port, packet_info.eth_macsa );
   forwarding_entry *destination = lookup_hash_entry( sw->forwarding_db, 
                                                      packet_info.eth_macda );
 
   if ( destination == NULL ) {
-    do_flooding( message );
+    do_flooding( message, in_port );
   }
   else {
-    send_packet( destination->port_no, message );
+    send_packet( destination->port_no, message, in_port );
   }
 }
 

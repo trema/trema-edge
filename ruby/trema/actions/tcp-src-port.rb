@@ -25,6 +25,7 @@ module Trema
     # A match field to match a TCP source port
     #
     class TcpSrcPort < TransportPort
+      unsigned_int16 :transport_port, alias: :tcp_src
       ofp_type OFPXMT_OFB_TCP_SRC
     end
   end

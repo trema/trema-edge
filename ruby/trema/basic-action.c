@@ -131,6 +131,14 @@ pack_set_ip_ttl( VALUE self, VALUE actions, VALUE options ) {
 
 
 static VALUE
+pack_dec_ip_ttl( VALUE self, VALUE actions, VALUE options ) {
+  UNUSED( options );
+  append_action_dec_nw_ttl( openflow_actions_ptr( actions ) );
+  return self;
+}
+
+
+static VALUE
 pack_push_pbb( VALUE self, VALUE actions, VALUE options ) {
   VALUE r_ether_type = HASH_REF( options, ether_type );
   append_action_push_pbb( openflow_actions_ptr( actions ), ( const uint16_t ) NUM2UINT( r_ether_type ) );
@@ -183,6 +191,7 @@ Init_basic_action( void ) {
   rb_define_module_function( mActions, "pack_pop_mpls", push_pop_mpls, 2 );
   rb_define_module_function( mActions, "pack_set_queue", pack_set_queue, 2 );
   rb_define_module_function( mActions, "pack_set_ip_ttl", pack_set_ip_ttl, 2 );
+  rb_define_module_function( mActions, "pack_dec_ip_ttl", pack_dec_ip_ttl, 2 );
   rb_define_module_function( mActions, "pack_push_pbb", pack_push_pbb, 2 );
   rb_define_module_function( mActions, "pack_pop_pbb", pack_pop_pbb, 2 );
   rb_define_module_function( mActions, "pack_experimenter", pack_experimenter, 2 );

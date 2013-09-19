@@ -25,6 +25,7 @@ module Trema
     # A match field to match a MAC source address
     #
     class EthSrc < EthAddr
+      mac :mac_address, alias: :eth_src
     end
   end
 

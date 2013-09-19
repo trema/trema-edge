@@ -23,6 +23,7 @@ module Trema
     # a 32-bit Internet address
     #
     class ArpSpa < ActionIpAddr
+      ip_addr :ip_addr, alias: :arp_spa
     end
   end
 

@@ -1,6 +1,4 @@
 /*
- * Private functions that are only called from [chibach]/src/lib.
- *
  * Author: Yasuhito Takamiya <yasuhito@gmail.com>
  *
  * Copyright (C) 2008-2013 NEC Corporation
@@ -20,28 +18,15 @@
  */
 
 
-#ifndef CHIBACH_PRIVATE_H
-#define CHIBACH_PRIVATE_H
+#include <sqlite3.h>
 
 
-#include "bool.h"
-
-
-void set_chibach_home( void );
-const char *get_chibach_home( void );
-void unset_chibach_home( void );
-
-void set_chibach_tmp( void );
-const char *get_chibach_tmp( void );
-void unset_chibach_tmp( void );
-
-const char *get_chibach_name( void );
-
-const char *_get_chibach_home( void );
-const char *_get_chibach_tmp( void );
-
-
-#endif // CHIBACH_PRIVATE_H
+int ( *trema_sqlite3_open )( const char *filename, sqlite3 **ppDb ) = sqlite3_open;
+int ( *trema_sqlite3_close )( sqlite3 * ) = sqlite3_close;
+int ( *trema_sqlite3_exec )( sqlite3 *, const char *sql, int ( *callback ) ( void *, int, char **, char ** ), void *, char **errmsg ) = sqlite3_exec;
+int ( *trema_sqlite3_changes )( sqlite3 * ) = sqlite3_changes;
+void ( *trema_sqlite3_free )( void * ) = sqlite3_free;
+const char * ( *trema_sqlite3_errmsg )( sqlite3 * ) = sqlite3_errmsg;
 
 
 /*

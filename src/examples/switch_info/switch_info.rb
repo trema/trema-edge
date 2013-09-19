@@ -31,9 +31,8 @@ class SwitchInfoController < Controller
     info "transaction_id: %#x" % message.transaction_id
     info "n_buffers: %u" % message.n_buffers
     info "n_tables: %u" % message.n_tables
+    info "auxiliary_id: %u" % message.auxiliary_id
     info "capabilities: %u" % message.capabilities
-    info "actions: %u" % message.actions
-    info "ports: %s" % message.ports.collect { | each | each.number }.sort.join( ", " )
     shutdown!
   end
 end

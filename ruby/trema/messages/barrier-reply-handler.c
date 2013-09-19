@@ -30,7 +30,7 @@ handle_barrier_reply( uint64_t datapath_id,
   }
   VALUE attributes = rb_hash_new();
   HASH_SET( attributes, "transaction_id", UINT2NUM( transaction_id ) );
-  VALUE r_barrier_reply = rb_funcall( rb_eval_string( "Messages::BarrierReply" ), rb_intern( "new" ), 1, attributes );
+  VALUE r_barrier_reply = rb_funcall( rb_eval_string( "Trema::Messages::BarrierReply" ), rb_intern( "new" ), 1, attributes );
   rb_funcall( ( VALUE ) controller, rb_intern( "barrier_reply" ), 2, ULL2NUM( datapath_id ), r_barrier_reply );
 }
 

@@ -654,7 +654,7 @@ enum ofp_capabilities {
 /* Switch configuration. */
 struct ofp_switch_config {
     struct ofp_header header;
-    uint16_t flags;             /* Bitmap of OFPC_* flags. */
+    uint16_t flags;             /* Bitmap of OFPC_FRAG_* flags. */
     uint16_t miss_send_len;     /* Max bytes of packet that datapath
                                    should send to the controller. See
                                    ofp_controller_max_len for valid values.
