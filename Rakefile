@@ -19,9 +19,7 @@
 $LOAD_PATH.unshift File.expand_path( File.join File.dirname( __FILE__ ), "ruby" )
 
 
-require "paper-house/executable-task"
-require "paper-house/ruby-library-task"
-require "paper-house/static-library-task"
+require "paper_house"
 require "rake/clean"
 require "rspec/core"
 require "rspec/core/rake_task"
