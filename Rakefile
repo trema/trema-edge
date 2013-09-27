@@ -268,28 +268,6 @@ Rake::Task[ :tremashark ].prerequisites.each do | utility |
 end
 
 
-PaperHouse::ExecutableTask.new 'tremashark:tremashark' do | task |
-  task.target_directory = File.dirname( Trema::Executables.tremashark )
-  task.sources = [
-    "src/tremashark/tremashark.c",
-    "src/tremashark/pcap_queue.c",
-    "src/tremashark/queue.c",
-  ]
-  task.includes = Trema.include
-  task.cflags = CFLAGS
-  task.ldflags = "-L#{ Trema.lib }"
-  task.library_dependencies = [
-    "trema",
-    "sqlite3",
-    "pthread",
-    "rt",
-    "dl",
-    "pcap",
-  ]
-end
-
-
-
 ################################################################################
 # Examples.
 ################################################################################
