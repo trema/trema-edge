@@ -1,6 +1,4 @@
 /*
- * Author: Yasunobu Chiba
- *
  * Copyright (C) 2008-2013 NEC Corporation
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +37,7 @@ bool
 delete_queue( queue *queue ) {
   assert( queue != NULL );
 
-  while( queue->head != NULL ) {
+  while ( queue->head != NULL ) {
     queue_element *e = queue->head;
     if ( queue->head->data != NULL ) {
       free_buffer( queue->head->data );
@@ -75,7 +73,7 @@ enqueue( queue *queue, buffer *data ) {
 
   queue->tail->next = new_tail;
   queue->tail = new_tail;
-  queue->length++;
+  __sync_add_and_fetch( &queue->length, 1 ); // this must be an atomic operation for thread safety
 
   collect_garbage( queue );
 
@@ -92,7 +90,7 @@ dequeue( queue *queue ) {
     buffer *data = next->data;
     next->data = NULL; // data must be freed by caller
     queue->divider = next;
-    queue->length--;
+    __sync_sub_and_fetch( &queue->length, 1 ); // this must be an atomic operation for thread safety
 
     return data;
   }
@@ -139,7 +137,8 @@ sort_queue( queue *queue, bool compare( const buffer *x, const buffer *y ) ) {
       do {
         elements[ j ]->data = elements[ j - 1 ]->data;
         j--;
-      } while ( j > 0 && compare( elements[ j - 1 ]->data, data ) );
+      }
+      while ( j > 0 && compare( elements[ j - 1 ]->data, data ) );
       elements[ j ]->data = data;
     }
   }

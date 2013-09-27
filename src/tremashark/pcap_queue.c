@@ -1,6 +1,4 @@
 /*
- * Author: Yasunori Nakazawa, Yasunobu Chiba
- *
  * Copyright (C) 2008-2013 NEC Corporation
  *
  * This program is free software; you can redistribute it and/or modify
@@ -57,7 +55,7 @@ delete_pcap_queue( void ) {
 
 
 buffer *
-create_pcap_packet( void* pcap_header, size_t pcap_len, void* dump_header, size_t dump_len, void* data, size_t data_len ) {
+create_pcap_packet( void *pcap_header, size_t pcap_len, void *dump_header, size_t dump_len, void *data, size_t data_len ) {
   size_t length = pcap_len + dump_len + data_len;
   assert( length != 0 );
   assert( pcap_header != NULL && dump_header != NULL );
@@ -90,7 +88,7 @@ create_pcap_packet( void* pcap_header, size_t pcap_len, void* dump_header, size_
 bool
 delete_pcap_packet( buffer *packet ) {
   assert( packet != NULL );
-  
+
   free_buffer( packet );
 
   return true;
