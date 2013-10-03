@@ -52,7 +52,7 @@ _handle_hello( const uint32_t transaction_id, const uint8_t version, const buffe
   debug( "Hello received ( transaction_id = %#x, version = %#x ).", transaction_id, version );
 
   bool version_matched = false;
-  const uint32_t supported_versions[ 1 ] = { OFP_VERSION };
+  const uint8_t supported_versions[ 1 ] = { OFP_VERSION };
 
   if ( elements != NULL ) {
     struct ofp_hello_elem_header *element = elements->data;
@@ -77,9 +77,10 @@ _handle_hello( const uint32_t transaction_id, const uint8_t version, const buffe
   }
 
   if ( version_matched ) {
-    buffer *hello_buf = create_hello_elem_versionbitmap( transaction_id, supported_versions,
-                                                         sizeof( supported_versions ) / sizeof( supported_versions[ 0 ] ) );
-    bool ret = switch_send_openflow_message( hello_buf );
+    buffer *element = create_hello_elem_versionbitmap( supported_versions, sizeof( supported_versions ) / sizeof( supported_versions[ 0 ] ) );
+    buffer *buf = create_hello( transaction_id, element );
+    free_buffer( element );
+    bool ret = switch_send_openflow_message( buf );
     if ( ret ) {
       switch_features features;
       memset( &features, 0, sizeof( switch_features ) );
@@ -87,7 +88,7 @@ _handle_hello( const uint32_t transaction_id, const uint8_t version, const buffe
       protocol->ctrl.controller_connected = true;
       protocol->ctrl.capabilities = features.capabilities;
     }
-    free_buffer( hello_buf );
+    free_buffer( buf );
   }
   else {
     send_error_message( transaction_id, OFPET_HELLO_FAILED, OFPHFC_INCOMPATIBLE );

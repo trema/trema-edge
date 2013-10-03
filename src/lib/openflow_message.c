@@ -210,41 +210,35 @@ create_error_experimenter( const uint32_t transaction_id, const uint16_t type,
 
 
 buffer *
-create_hello_elem_versionbitmap( const uint32_t transaction_id, const uint32_t ofp_versions[],
-                                 const uint16_t nr_versions ) {
-  uint32_t i;
-  uint32_t nr_bitmaps = 0;
+create_hello_elem_versionbitmap( const uint8_t *ofp_versions, const uint16_t n_versions ) {
+  assert( ofp_versions != NULL );
+  assert( n_versions > 0 );
 
-  // figure out how many bitmaps necessary to store the ofp_versions
-  for ( i = 0; i < nr_versions; i++ ) {
-    assert( ofp_versions[ i ] != 0 );
-    if ( nr_bitmaps < ofp_versions[ i ] / 32 ) {
-      nr_bitmaps = ofp_versions[ i ] / 32;
+  int max_version = 0;
+  for ( int i = 0; i < n_versions; i++ ) {
+    if ( ofp_versions[ i ] > max_version ) {
+      max_version = ofp_versions[ i ];
     }
   }
-  if ( !nr_bitmaps ) {
-    nr_bitmaps = 1;
+  size_t n_bitmaps = ( size_t ) ( max_version / 32 + 1 );
+
+  uint16_t element_length = ( uint16_t ) ( offsetof( struct ofp_hello_elem_versionbitmap, bitmaps ) + n_bitmaps * sizeof( uint32_t ) );
+
+  size_t buffer_length = ( size_t ) element_length + PADLEN_TO_64( element_length );
+  buffer *buf = alloc_buffer_with_length( buffer_length );
+  struct ofp_hello_elem_versionbitmap *element = append_back_buffer( buf, buffer_length );
+  memset( element, 0, buffer_length );
+
+  element->type = htons( OFPHET_VERSIONBITMAP );
+  element->length = htons( element_length );
+
+  for ( int i = 0; i < n_versions; i++ ) {
+    int index = ofp_versions[ i ] / 32;
+    uint32_t bit = ( uint32_t ) 1 << ( ofp_versions[ i ] - index * 32 );
+    element->bitmaps[ index ] |= htonl( bit );
   }
 
-  buffer *hello_buf = create_header( transaction_id, OFPT_HELLO,
-                                     ( uint16_t ) ( sizeof( struct ofp_hello ) + sizeof( struct ofp_hello_elem_versionbitmap )
-                                                    + nr_bitmaps * offsetof( struct ofp_hello_elem_versionbitmap, bitmaps ) ) );
-
-  assert( hello_buf != NULL );
-  struct ofp_hello *hello = ( struct ofp_hello * ) hello_buf->data;
-  struct ofp_hello_elem_versionbitmap *hello_elem_versionbitmap = ( struct ofp_hello_elem_versionbitmap * ) hello->elements;
-  hello_elem_versionbitmap->type = htons( OFPHET_VERSIONBITMAP );
-  hello_elem_versionbitmap->length = htons( ( uint16_t ) ( sizeof( struct ofp_hello_elem_header )
-                                                           + nr_bitmaps * offsetof( struct ofp_hello_elem_versionbitmap, bitmaps ) ) );
-
-#define BIT_SET( bit ) ( ( ( uint32_t ) 1 ) << ( bit ) )
-#define SEGMENT( x ) ( ( x ) / 32 )
-
-  for ( i = 0; i < nr_versions; i++ ) {
-    hello_elem_versionbitmap->bitmaps[ SEGMENT( ofp_versions[ i ] ) ] |= htonl( BIT_SET( ofp_versions[ i ] ) );
-  }
-
-  return hello_buf;
+  return buf;
 }
 
 
@@ -262,7 +256,7 @@ create_hello( const uint32_t transaction_id, const buffer *elements ) {
   assert( hello != NULL );
 
   if ( elements_length > 0 ) {
-    memcpy( ( char * ) hello->data + sizeof( struct ofp_hello ), elements->data, elements_length );
+    memcpy( ( char * ) hello->data + offsetof( struct ofp_hello, elements ), elements->data, elements_length );
   }
 
   return hello;
