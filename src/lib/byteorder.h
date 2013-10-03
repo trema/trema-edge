@@ -39,6 +39,12 @@
 #endif
 
 
+void ntoh_hello_elem_versionbitmap( struct ofp_hello_elem_versionbitmap *dst, const struct ofp_hello_elem_versionbitmap *src );
+void hton_hello_elem_versionbitmap( struct ofp_hello_elem_versionbitmap *dst, const struct ofp_hello_elem_versionbitmap *src );
+
+void ntoh_hello_elem( struct ofp_hello_elem_header *dst, const struct ofp_hello_elem_header *src );
+void hton_hello_elem( struct ofp_hello_elem_header *dst, const struct ofp_hello_elem_header *src );
+
 void ntoh_port( struct ofp_port *dst, const struct ofp_port *src );
 #define hton_port ntoh_port
 
