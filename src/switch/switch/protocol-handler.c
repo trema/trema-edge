@@ -44,19 +44,43 @@ bool mock_switch_send_openflow_message( buffer *message );
 
 
 static void
-_handle_hello( const uint32_t transaction_id, const uint8_t version, const buffer *version_data, void *user_data ) {
-  assert( user_data );
+_handle_hello( const uint32_t transaction_id, const uint8_t version, const buffer *elements, void *user_data ) {
+  assert( user_data != NULL );
+
   struct protocol *protocol = user_data;
+
   debug( "Hello received ( transaction_id = %#x, version = %#x ).", transaction_id, version );
 
-  struct ofp_hello_elem_versionbitmap *versionbitmap = ( struct ofp_hello_elem_versionbitmap * ) version_data->data;
-  const uint32_t ofp_versions[ 1 ] = { OFP_VERSION };
-  
-  uint32_t bitmap = versionbitmap->bitmaps[ 0 ];
-  if ( ( bitmap & ( ( uint32_t ) 1 << ofp_versions[ 0 ] ) ) != ( ( uint32_t ) ofp_versions[ 0 ] ) ) {
-    buffer *hello_buf = create_hello_elem_versionbitmap( transaction_id, ofp_versions,
-      sizeof( ofp_versions ) / sizeof( ofp_versions[ 0 ] ) );
-    if ( switch_send_openflow_message( hello_buf ) ) {
+  bool version_matched = false;
+  const uint32_t supported_versions[ 1 ] = { OFP_VERSION };
+
+  if ( elements != NULL ) {
+    struct ofp_hello_elem_header *element = elements->data;
+    size_t elements_length = elements->length;
+    while ( elements_length >= sizeof( struct ofp_hello_elem_header ) ) {
+      if ( element->type == OFPHET_VERSIONBITMAP ) {
+        struct ofp_hello_elem_versionbitmap *versionbitmap = ( struct ofp_hello_elem_versionbitmap * ) element;
+        uint32_t bitmap = versionbitmap->bitmaps[ 0 ];
+        if ( ( bitmap & ( ( uint32_t ) 1 << supported_versions[ 0 ] ) ) != 0 ) {
+          version_matched = true;
+        }
+      }
+      uint16_t element_length = ( uint16_t ) ( element->length + PADLEN_TO_64( element->length ) );
+      elements_length -= element_length;
+      element = ( struct ofp_hello_elem_header * ) ( ( char * ) element + element_length );
+    }
+  }
+  else {
+    if ( version == supported_versions[ 0 ] ) {
+      version_matched = true;
+    }
+  }
+
+  if ( version_matched ) {
+    buffer *hello_buf = create_hello_elem_versionbitmap( transaction_id, supported_versions,
+                                                         sizeof( supported_versions ) / sizeof( supported_versions[ 0 ] ) );
+    bool ret = switch_send_openflow_message( hello_buf );
+    if ( ret ) {
       switch_features features;
       memset( &features, 0, sizeof( switch_features ) );
       get_switch_features( &features );
@@ -64,7 +88,8 @@ _handle_hello( const uint32_t transaction_id, const uint8_t version, const buffe
       protocol->ctrl.capabilities = features.capabilities;
     }
     free_buffer( hello_buf );
-  } else {
+  }
+  else {
     send_error_message( transaction_id, OFPET_HELLO_FAILED, OFPHFC_INCOMPATIBLE );
   }
 }
