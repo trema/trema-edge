@@ -45,54 +45,27 @@ bool mock_switch_send_openflow_message( buffer *message );
 
 static void
 _handle_hello( const uint32_t transaction_id, const uint8_t version, const buffer *elements, void *user_data ) {
+  UNUSED( elements );
+
   assert( user_data != NULL );
 
   struct protocol *protocol = user_data;
 
   debug( "Hello received ( transaction_id = %#x, version = %#x ).", transaction_id, version );
 
-  bool version_matched = false;
-  const uint8_t supported_versions[ 1 ] = { OFP_VERSION };
-
-  if ( elements != NULL ) {
-    struct ofp_hello_elem_header *element = elements->data;
-    size_t elements_length = elements->length;
-    while ( elements_length >= sizeof( struct ofp_hello_elem_header ) ) {
-      if ( element->type == OFPHET_VERSIONBITMAP ) {
-        struct ofp_hello_elem_versionbitmap *versionbitmap = ( struct ofp_hello_elem_versionbitmap * ) element;
-        uint32_t bitmap = versionbitmap->bitmaps[ 0 ];
-        if ( ( bitmap & ( ( uint32_t ) 1 << supported_versions[ 0 ] ) ) != 0 ) {
-          version_matched = true;
-        }
-      }
-      uint16_t element_length = ( uint16_t ) ( element->length + PADLEN_TO_64( element->length ) );
-      elements_length -= element_length;
-      element = ( struct ofp_hello_elem_header * ) ( ( char * ) element + element_length );
-    }
+  uint8_t supported_versions[ 1 ] = { OFP_VERSION };
+  buffer *element = create_hello_elem_versionbitmap( supported_versions, sizeof( supported_versions ) / sizeof( supported_versions[ 0 ] ) );
+  buffer *buf = create_hello( transaction_id, element );
+  free_buffer( element );
+  bool ret = switch_send_openflow_message( buf );
+  if ( ret ) {
+    switch_features features;
+    memset( &features, 0, sizeof( switch_features ) );
+    get_switch_features( &features );
+    protocol->ctrl.controller_connected = true;
+    protocol->ctrl.capabilities = features.capabilities;
   }
-  else {
-    if ( version == supported_versions[ 0 ] ) {
-      version_matched = true;
-    }
-  }
-
-  if ( version_matched ) {
-    buffer *element = create_hello_elem_versionbitmap( supported_versions, sizeof( supported_versions ) / sizeof( supported_versions[ 0 ] ) );
-    buffer *buf = create_hello( transaction_id, element );
-    free_buffer( element );
-    bool ret = switch_send_openflow_message( buf );
-    if ( ret ) {
-      switch_features features;
-      memset( &features, 0, sizeof( switch_features ) );
-      get_switch_features( &features );
-      protocol->ctrl.controller_connected = true;
-      protocol->ctrl.capabilities = features.capabilities;
-    }
-    free_buffer( buf );
-  }
-  else {
-    send_error_message( transaction_id, OFPET_HELLO_FAILED, OFPHFC_INCOMPATIBLE );
-  }
+  free_buffer( buf );
 }
 void ( *handle_hello )( const uint32_t transaction_id,
         const uint8_t version,

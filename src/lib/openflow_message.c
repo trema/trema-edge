@@ -3900,54 +3900,101 @@ validate_header( const buffer *message, const uint8_t type,
 }
 
 
-int
-validate_hello_versionbitmap( const buffer *buffer ) {
-  struct ofp_hello *hello = ( struct ofp_hello * ) buffer->data;
+static int
+validate_hello_elem_versionbitmap( struct ofp_hello_elem_versionbitmap *element ) {
+  size_t bitmaps_length;
 
-  if (  ntohs( hello->elements[ 0 ].type ) != OFPHET_VERSIONBITMAP ) {
-    return ERROR_INVALID_TYPE;
-  }
-  if ( ntohs( hello->elements[ 0 ].length ) <= ( sizeof( struct ofp_hello_elem_header ) ) ) {
-    return ERROR_TOO_SHORT_MESSAGE;
-  }
-  struct ofp_hello_elem_versionbitmap *versionbitmap = ( struct ofp_hello_elem_versionbitmap * ) hello->elements;
-  if ( ntohs( versionbitmap->type ) != OFPHET_VERSIONBITMAP ) {
-    return ERROR_INVALID_TYPE;
-  }
-  if ( ntohs( versionbitmap->length ) <= sizeof( struct ofp_hello_elem_header ) ) {
-    return ERROR_TOO_SHORT_MESSAGE;
-  }
-  if ( ( ntohs( versionbitmap->length ) - sizeof( uint32_t ) ) % 4 != 0 ) {
-    return ERROR_UNDEFINED_TYPE;
+  assert( element != NULL );
+  assert( ntohs( element->type ) == OFPHET_VERSIONBITMAP );
+
+  if ( ntohs( element->length ) < offsetof( struct ofp_hello_elem_versionbitmap, bitmaps ) ) {
+    return ERROR_TOO_SHORT_HELLO_ELEMENT;
   }
 
-  uint32_t nr_bitmaps = ( uint32_t ) ( ntohs( versionbitmap->length ) - 4 ) / sizeof( uint32_t );
-  uint32_t i;
-  bool ret = false;
-
-  for ( i = 0; i < nr_bitmaps; i++ ) {
-    uint32_t bitmap = ntohl( versionbitmap->bitmaps[ i ] );
-    ret |= ( bitmap & ( 1 << 1 ) ) != 0;
-    ret |= ( bitmap & ( 1 << 4 ) ) != 0;
+  bitmaps_length = ntohs( element->length ) - offsetof( struct ofp_hello_elem_versionbitmap, bitmaps );
+  if ( bitmaps_length % sizeof( uint32_t ) != 0 ) {
+    return ERROR_INVALID_HELLO_ELEMENT_LENGTH;
   }
-  if ( ret == false ) {
-    return ERROR_UNSUPPORTED_VERSION;
+
+  if ( bitmaps_length > 0 ) {
+    // FIXME: Since version negotiation is not implemented yet, we check OFP_VERSION here.
+    if ( ( ntohl( element->bitmaps[ 0 ] ) & ( ( uint32_t ) 1 << OFP_VERSION ) ) == 0 ) {
+      return ERROR_UNSUPPORTED_VERSION;
+    }
   }
 
   return 0;
 }
 
 
+static int
+validate_hello_elements( struct ofp_hello_elem_header *elements_head, const uint16_t length, bool *version_bitmap_found ) {
+  int ret;
+  size_t offset;
+  struct ofp_hello_elem_header *element;
+
+  assert( elements_head != NULL );
+
+  *version_bitmap_found = false;
+  ret = 0;
+  offset = 0;
+  while ( offset < length ) {
+    element = ( struct ofp_hello_elem_header * ) ( ( char * ) elements_head + offset );
+    switch ( ntohs( element->type ) ) {
+    case OFPHET_VERSIONBITMAP:
+      ret = validate_hello_elem_versionbitmap( ( struct ofp_hello_elem_versionbitmap * ) element );
+      *version_bitmap_found = true;
+      break;
+    default:
+      ret = ERROR_UNDEFINED_HELLO_ELEMENT_TYPE;
+      break;
+    }
+
+    if ( ret < 0 ) {
+      break;
+    }
+
+    offset += ( size_t ) ( ntohs( element->length ) + PADLEN_TO_64( ntohs( element->length ) ) );
+  }
+
+  return ret;
+}
+
+
 int
 validate_hello( const buffer *message ) {
-  assert( message != NULL );
+  bool version_bitmap_found;
   int ret;
+  size_t elements_length;
+  struct ofp_hello *hello;
 
-  if ( !( ret = validate_header( message, OFPT_HELLO, sizeof( struct ofp_header ), UINT16_MAX ) ) ) {
-    if ( message->length > sizeof( struct ofp_hello ) ) {
-      ret = validate_hello_versionbitmap( message );
-    }
+  assert( message != NULL );
+
+  ret = validate_header( message, OFPT_HELLO, sizeof( struct ofp_header ), UINT16_MAX );
+  if ( ret < 0 ) {
+    return ret;
   }
+
+  hello = ( struct ofp_hello * ) message->data;
+  if ( message->length != ntohs( hello->header.length ) ) {
+    return ERROR_INVALID_LENGTH;
+  }
+
+  elements_length = ntohs( hello->header.length ) - offsetof( struct ofp_hello, elements );
+
+  if ( elements_length > 0 && elements_length < sizeof( struct ofp_hello_elem_header ) ) {
+    return ERROR_INVALID_LENGTH;
+  }
+
+  version_bitmap_found = false;
+  if ( elements_length > 0 ) {
+    ret = validate_hello_elements( hello->elements, ( uint16_t ) elements_length, &version_bitmap_found );
+  }
+
+  if ( !version_bitmap_found && hello->header.version != OFP_VERSION ) {
+    ret = ERROR_UNSUPPORTED_VERSION;
+  }
+
   return ret;
 }
 
@@ -7541,6 +7588,9 @@ static struct error_map {
       { ERROR_INVALID_LENGTH, OFPET_BAD_REQUEST, OFPBRC_BAD_LEN },
       { ERROR_UNDEFINED_TYPE, OFPET_BAD_REQUEST, OFPBRC_BAD_TYPE },
       { ERROR_INVALID_TYPE, OFPET_BAD_REQUEST, OFPBRC_BAD_TYPE },
+      { ERROR_TOO_SHORT_HELLO_ELEMENT, OFPET_BAD_REQUEST, OFPBRC_BAD_LEN },
+      { ERROR_INVALID_HELLO_ELEMENT_LENGTH, OFPET_BAD_REQUEST, OFPBRC_BAD_LEN },
+      { ERROR_UNDEFINED_HELLO_ELEMENT_TYPE, OFPET_HELLO_FAILED, OFPHFC_INCOMPATIBLE }, // FIXME
       { 0, 0, 0 },
     }
   },
