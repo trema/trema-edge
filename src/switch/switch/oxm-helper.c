@@ -285,6 +285,20 @@ assign_metadata( const oxm_match_header *hdr, match *match ) {
 
 
 static void
+assign_pbb_isid( const oxm_match_header *hdr, match *match ) {
+  const uint32_t *value = ( const uint32_t * ) ( ( const char * ) hdr + sizeof( oxm_match_header ) );
+
+  if ( *hdr == OXM_OF_PBB_ISID ) {
+    MATCH_ATTR_SET( pbb_isid, (*value & 0xffffff));
+  }
+  if ( *hdr == OXM_OF_PBB_ISID_W ) {
+    const uint32_t *mask = ( const uint32_t * ) ( ( const char * ) value + sizeof ( uint32_t ) );
+    MATCH_ATTR_MASK_SET( pbb_isid, (*value & 0xffffff), (*mask & 0xffffff));
+  }
+}
+
+
+static void
 _assign_match( match *match, const oxm_match_header *hdr ) {
   switch( *hdr ) {
     case OXM_OF_IN_PORT: {
@@ -447,6 +461,11 @@ _assign_match( match *match, const oxm_match_header *hdr ) {
       assign_ipv6_exthdr( hdr, match );
     }
     break;
+    case OXM_OF_PBB_ISID:
+    case OXM_OF_PBB_ISID_W: {
+      assign_pbb_isid( hdr, match );
+    }
+    break;
     default:
       error( "Undefined oxm type ( header = %#x, type = %#x, has_mask = %u, length = %u ). ",
               *hdr, OXM_TYPE( *hdr ), OXM_HASMASK( *hdr ), OXM_LENGTH( *hdr ) );
@@ -553,6 +572,9 @@ _construct_oxm( oxm_matches *oxm_match, match *match ) {
   }
   APPEND_OXM_MATCH( udp_dst )
   APPEND_OXM_MATCH( udp_src )
+  if ( match->pbb_isid.valid ) {
+    append_oxm_match_pbb_isid( oxm_match, match->pbb_isid.value, match->pbb_isid.mask );
+  }
 }
 void ( *construct_oxm )( oxm_matches *oxm_match, match *match ) = _construct_oxm;
 
