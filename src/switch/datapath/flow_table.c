@@ -315,7 +315,7 @@ init_flow_table( const uint8_t table_id, const uint32_t max_flow_entries ) {
     return OFDPE_FAILED;
   }
 
-  memset( table, 0, sizeof( table ) );
+  memset( table, 0, sizeof( flow_table ) );
 
   table->counters.active_count = 0;
   table->counters.lookup_count = 0;
