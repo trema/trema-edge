@@ -219,10 +219,13 @@ parse_frame( buffer *frame ) {
 
   uint32_t eth_in_port = 0;
   uint64_t metadata = 0;
+  uint64_t tunnel_id = 0;
 
   if ( frame->user_data != NULL ) {
-    eth_in_port = ( ( packet_info * ) frame->user_data )->eth_in_port;
-    metadata = ( ( packet_info * ) frame->user_data )->metadata;
+    packet_info *info =  ( packet_info * ) frame->user_data;
+    eth_in_port = info->eth_in_port;
+    metadata    = info->metadata;
+    tunnel_id   = info->tunnel_id;
     free_packet_info( frame );
   }
 
@@ -234,8 +237,12 @@ parse_frame( buffer *frame ) {
 
   assert( frame->user_data != NULL );
 
-  ( ( packet_info * ) frame->user_data )->eth_in_port = eth_in_port;
-  ( ( packet_info * ) frame->user_data )->metadata = metadata;
+  {
+    packet_info *info =  ( packet_info * ) frame->user_data;
+    info->eth_in_port = eth_in_port;
+    info->metadata = metadata;
+    info->tunnel_id = tunnel_id;
+  }
 
   return true;
 }
@@ -954,6 +961,19 @@ set_pbb_isid( buffer *frame, uint32_t value ) {
 }
 
 
+static bool
+set_tunnel_id( buffer *frame, uint64_t value ) {
+  assert( frame != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+
+  info->tunnel_id = value;
+
+  return true;
+}
+
+
 static void*
 push_linklayer_tag( buffer *frame, void *head, size_t tag_size ) {
   assert( frame != NULL );
@@ -1242,6 +1262,11 @@ execute_action_dec_mpls_ttl( buffer *frame, action *dec_mpls_ttl ) {
       match->metadata.value = info->metadata;
       match->metadata.valid = true;
     }
+    if ( info->tunnel_id != 0 ) {
+      match->tunnel_id.value = info->tunnel_id;
+      match->tunnel_id.valid = true;
+    }
+
     notify_packet_in( OFPR_INVALID_TTL, dec_mpls_ttl->entry->table_id, dec_mpls_ttl->entry->cookie, match, frame, MISS_SEND_LEN );
     delete_match( match );
   }
@@ -1288,6 +1313,10 @@ execute_action_dec_nw_ttl( buffer *frame, action *dec_nw_ttl ) {
     if ( info->metadata != 0 ) {
       match->metadata.value = info->metadata;
       match->metadata.valid = true;
+    }
+    if ( info->tunnel_id != 0 ) {
+      match->tunnel_id.value = info->tunnel_id;
+      match->tunnel_id.valid = true;
     }
     notify_packet_in( OFPR_INVALID_TTL, dec_nw_ttl->entry->table_id, dec_nw_ttl->entry->cookie, match, frame, MISS_SEND_LEN );
     delete_match( match );
@@ -1548,6 +1577,15 @@ execute_action_set_field( buffer *frame, action *set_field ) {
       return false;
     }
   }
+
+  if ( match->tunnel_id.valid ) {
+    if ( !set_tunnel_id( frame, match->tunnel_id.value ) ) {
+      return false;
+    }
+  }
+
+  // TODO: sctp_dst implementation is missing.
+  // TODO: sctp_src implementation is missing.
 
   return true;
 }
@@ -1897,6 +1935,10 @@ execute_action_output( buffer *frame, action *output ) {
     if ( info->metadata != 0 ) {
       match->metadata.value = info->metadata;
       match->metadata.valid = true;
+    }
+    if ( info->tunnel_id != 0 ) {
+      match->tunnel_id.value = info->tunnel_id;
+      match->tunnel_id.valid = true;
     }
     if ( output->entry != NULL && output->entry->table_miss ) {
       if ( port == NULL || ( port->config & OFPPC_NO_PACKET_IN ) == 0 ){

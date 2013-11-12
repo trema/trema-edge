@@ -888,10 +888,10 @@ build_match_from_packet_info( match *m, const packet_info *pinfo ) {
     m->vlan_vid.valid = true;
   }
 
-  // tunnel_id is not supported to match.
-  m->tunnel_id.value = 0;
-  m->tunnel_id.mask = 0;
-  m->tunnel_id.valid = false;
+  // tunnel_id is always valid to match.
+  m->tunnel_id.value = pinfo->tunnel_id; // This value is zero if the packet was received on a physical port.
+  m->tunnel_id.mask = UINT64_MAX;
+  m->tunnel_id.valid = true;
 }
 
 
