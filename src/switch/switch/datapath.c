@@ -226,16 +226,34 @@ dump_flows( int signum ) {
 
 
 static void
+dump_group_actually() {
+  dump_group_table( info );
+}
+
+
+static void
+dump_group( int signum ) {
+  UNUSED( signum );
+
+  set_external_callback_safe( dump_group_actually );
+}
+
+
+static void
 set_signal_handlers() {
   sigset_t signals;
   sigemptyset( &signals );
   sigaddset( &signals, SIGUSR1 );
+  sigaddset( &signals, SIGUSR2 );
   pthread_sigmask( SIG_UNBLOCK, &signals, NULL );
 
   struct sigaction signal_dump_table;
   memset( &signal_dump_table, 0, sizeof( struct sigaction ) );
   signal_dump_table.sa_handler = dump_flows;
   sigaction( SIGUSR1, &signal_dump_table, NULL );
+
+  signal_dump_table.sa_handler = dump_group;
+  sigaction( SIGUSR2, &signal_dump_table, NULL );
 }
 
 

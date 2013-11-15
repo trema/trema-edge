@@ -53,6 +53,7 @@ bucket_list *duplicate_bucket_list( bucket_list *buckets );
 #define duplicate_buckets duplicate_bucket_list
 #define duplicate_action_buckets duplicate_bucket_list
 #define duplicate_action_bucket_list duplicate_bucket_list
+void dump_buckets( bucket_list *buckets, void dump_function( const char *format, ... ) );
 
 
 #endif // ACTION_BUCKET_H

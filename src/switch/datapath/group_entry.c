@@ -99,6 +99,41 @@ valid_group_type( const uint8_t type ) {
 }
 
 
+void
+dump_group_entry( const group_entry *entry, void dump_function( const char *format, ... ) ) {
+  assert( entry != NULL );
+  assert( dump_function != NULL );
+
+  ( *dump_function )( "[group entry ( %p )]", entry );
+  const char *name = "UNDEFINED";
+  switch ( entry->type ) {
+    case OFPGT_ALL:
+      name = "ALL";
+      break;
+    case OFPGT_SELECT:
+      name = "SELECT";
+      break;
+    case OFPGT_INDIRECT:
+      name = "INDIRECT";
+      break;
+    case OFPGT_FF:
+      name = "FF";
+      break;
+  }
+  ( *dump_function )( "type: %s ( %u )", name, entry->type );
+  ( *dump_function )( "group_id: %#x", entry->group_id );
+  ( *dump_function )( "ref_count: %u", entry->ref_count );
+  ( *dump_function )( "packet_count: %" PRIu64, entry->packet_count );
+  ( *dump_function )( "byte_count: %" PRIu64, entry->byte_count );
+  ( *dump_function )( "duration: %u.%09u", entry->duration_sec, entry->duration_nsec );
+  ( *dump_function )( "buckets: %p", entry->buckets );
+  if ( entry->buckets != NULL ) {
+    dump_buckets( entry->buckets, dump_function );
+  }
+  ( *dump_function )( "created_at: %d.%09d", ( int ) entry->created_at.tv_sec, ( int ) entry->created_at.tv_nsec );
+}
+
+
 /*
  * Local variables:
  * c-basic-offset: 2

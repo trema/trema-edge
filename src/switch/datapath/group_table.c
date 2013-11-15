@@ -479,6 +479,21 @@ decrement_reference_count( const uint32_t group_id ) {
 }
 
 
+void
+dump_group_table( void dump_function( const char *format, ... ) ) {
+  assert( table != NULL );
+  assert( dump_function != NULL );
+
+  for ( list_element *element = table->entries; element != NULL; element = element->next ) {
+    if ( element->data == NULL ) {
+      continue;
+    }
+    group_entry *entry = element->data;
+    dump_group_entry( entry, dump_function );
+  }
+}
+
+
 /*
  * Local variables:
  * c-basic-offset: 2
