@@ -43,8 +43,8 @@ construct_bucket_list( const list_element *buckets ) {
     uint16_t offset = ( uint16_t ) offsetof( struct ofp_bucket, actions );
     if ( ofp_bucket->len > offset ) {
       action_list *ac_list = create_action_list();
-      const struct ofp_action_header *ac_hdr = ofp_bucket->actions;
-      ac_list = assign_actions( ac_list, ac_hdr, ac_hdr->len );
+      uint16_t action_length = ( uint16_t ) ( ofp_bucket->len - offset );
+      ac_list = assign_actions( ac_list, ofp_bucket->actions, action_length );
       bucket *bucket = create_action_bucket( ofp_bucket->weight, ofp_bucket->watch_port, ofp_bucket->watch_group, ac_list );
       if ( bucket != NULL ) {
         append_action_bucket( bkt_list, bucket );
