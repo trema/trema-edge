@@ -34,8 +34,8 @@
 #endif
 
 
-#define OFP_TCP_PORT  6633
-#define OFP_SSL_PORT  6633
+#define OFP_TCP_PORT  6653
+#define OFP_SSL_PORT  6653
 
 
 // 7.1  OpenFlow Header

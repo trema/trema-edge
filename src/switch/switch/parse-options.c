@@ -57,7 +57,7 @@ set_default_opts( struct switch_arguments *args, const struct option long_option
   args->datapath_ports = "",
   args->datapath_id = 1,
   args->server_ip = 0x7f000001,
-  args->server_port = 6633,
+  args->server_port = 6653,
   args->max_flow_entries = UINT8_MAX;
   args->run_as_daemon = false,
   args->options = long_options;
