@@ -303,7 +303,9 @@ get_group_stats( const uint32_t group_id, group_stats **stats, uint32_t *n_group
   if ( group_id != OFPG_ALL ) {
     group_entry *entry = lookup_group_entry( group_id );
     if ( entry == NULL ) {
-      unlock_pipeline();
+      if ( !unlock_pipeline() ) {
+        return ERROR_UNLOCK;
+      }
       return ERROR_OFDPE_BAD_REQUEST_BAD_TABLE_ID;
     }
     append_to_tail( &groups, entry );
