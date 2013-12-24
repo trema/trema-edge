@@ -122,7 +122,7 @@ typedef struct {
 
 
 static bool openflow_switch_interface_initialized = false;
-static openflow_event_handlers event_handlers;
+static openflow_switch_event_handlers event_handlers;
 static openflow_switch_config config;
 static const int CONTEXT_LIFETIME = 5;
 static hash_table *contexts = NULL;
@@ -245,7 +245,7 @@ openflow_switch_interface_is_initialized() {
 
 
 bool
-switch_set_openflow_event_handlers( const openflow_event_handlers handlers ) {
+set_openflow_switch_event_handlers( const openflow_switch_event_handlers handlers ) {
   assert( openflow_switch_interface_initialized );
 
   memcpy( &event_handlers, &handlers, sizeof( event_handlers ) );
@@ -1700,7 +1700,7 @@ init_openflow_switch_interface( const uint64_t datapath_id, uint32_t controller_
   }
 
 
-  memset( &event_handlers, 0, sizeof( openflow_event_handlers ) );
+  memset( &event_handlers, 0, sizeof( openflow_switch_event_handlers ) );
   memset( &config, 0, sizeof( openflow_switch_config ) );
 
   config.datapath_id = datapath_id;

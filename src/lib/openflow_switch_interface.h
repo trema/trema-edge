@@ -305,14 +305,14 @@ typedef struct {
   
   meter_mod_handler meter_mod_callback;
   void *meter_mod_user_data;
-} openflow_event_handlers;
+} openflow_switch_event_handlers;
 
 
 /********************************************************************************
  * Functions for setting callback functions for OpenFlow related events.
  ********************************************************************************/
 
-bool switch_set_openflow_event_handlers( const openflow_event_handlers handlers );
+bool set_openflow_switch_event_handlers( const openflow_switch_event_handlers handlers );
 bool set_controller_connected_handler( controller_connected_handler callback, void *user_data );
 bool set_controller_disconnected_handler( controller_disconnected_handler callback, void *user_data );
 bool set_hello_handler( hello_handler callback, void *user_data );
