@@ -128,7 +128,9 @@ log_stdout( const char *format, va_list ap ) {
 
 static void
 log_syslog( int priority, const char *format, va_list ap ) {
-  trema_vsyslog( priority, format, ap );
+  va_list new_ap;
+  va_copy( new_ap, ap );
+  trema_vsyslog( priority, format, new_ap );
 }
 
 
