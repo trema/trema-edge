@@ -40,6 +40,8 @@
 
 
 typedef enum {
+  LOGGING_TYPE_UNKNOWN = 0xffffffff,
+
   LOGGING_TYPE_FILE = 0x1,
   LOGGING_TYPE_SYSLOG = 0x2,
   LOGGING_TYPE_STDOUT = 0x4,
