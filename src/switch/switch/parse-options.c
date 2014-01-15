@@ -53,7 +53,7 @@ print_usage( const struct switch_arguments *args, int exit_code ) {
 static void
 set_default_opts( struct switch_arguments *args, const struct option long_options[] ) {
   args->progname = "switch",
-  args->log_type = -1,
+  args->log_type = LOGGING_TYPE_UNSET,
   args->log_level = "info",
   args->datapath_ports = "",
   args->datapath_id = 1,
