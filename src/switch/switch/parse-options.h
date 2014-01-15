@@ -30,6 +30,7 @@ extern "C" {
 
 struct switch_arguments {
   const char *progname;
+  logging_type log_type;
   const char *log_level;
   const struct option *options;
 
