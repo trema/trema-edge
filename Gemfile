@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 
 gem "gli", "~> 2.5.5"
-gem "paper_house", "~> 0.4.0"
+gem "paper_house", "~> 0.5.0"
 
 
 group :development do
