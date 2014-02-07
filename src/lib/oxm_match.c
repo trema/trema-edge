@@ -158,6 +158,35 @@ append_oxm_match_16w( oxm_matches *matches, oxm_match_header header, uint16_t va
 
 
 static bool
+append_oxm_match_24( oxm_matches *matches, oxm_match_header header, uint32_t value ) {
+  assert( matches != NULL );
+  assert( OXM_LENGTH( header ) == 3 );
+
+  oxm_match_header *buf = xmalloc( sizeof( oxm_match_header ) + 3 );
+  *buf = header;
+  uint32_t *v = ( uint32_t * ) ( ( char * ) buf + sizeof( oxm_match_header ) );
+  *v = ( *v & 0xF000 ) | ( value & 0x0FFF );
+
+  return append_oxm_match( matches, buf );
+}
+
+
+static bool
+append_oxm_match_24w( oxm_matches *matches, oxm_match_header header, uint32_t value, uint32_t mask ) {
+  assert( matches != NULL );
+  assert( OXM_LENGTH( header ) == ( 3 * 2 ) );
+
+  oxm_match_header *buf = xmalloc( sizeof( oxm_match_header ) + 3 * 2 );
+  *buf = header;
+  uint32_t *v = ( uint32_t * ) ( ( char * ) buf + sizeof( oxm_match_header ) );
+  *v = ( *v & 0xF000 ) | ( value & 0x0FFF );
+  v = ( uint32_t * ) ( ( char * ) v + sizeof( uint32_t ) );
+  *v = ( *v & 0xF000 ) | ( mask & 0x0FFF );
+
+  return append_oxm_match( matches, buf );
+}
+
+static bool
 append_oxm_match_32( oxm_matches *matches, oxm_match_header header, uint32_t value ) {
   assert( matches != NULL );
   assert( OXM_LENGTH( header ) == sizeof( uint32_t ) );
@@ -629,10 +658,10 @@ append_oxm_match_pbb_isid( oxm_matches *matches, uint32_t value, uint32_t mask )
   assert( matches != NULL );
 
   if ( mask == UINT32_MAX ) {
-    return append_oxm_match_32( matches, OXM_OF_PBB_ISID, value );
+    return append_oxm_match_24( matches, OXM_OF_PBB_ISID, value );
   }
 
-  return append_oxm_match_32w( matches, OXM_OF_PBB_ISID_W, value, mask );
+  return append_oxm_match_24w( matches, OXM_OF_PBB_ISID_W, value, mask );
 }
 
 

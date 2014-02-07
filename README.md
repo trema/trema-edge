@@ -268,10 +268,6 @@ To stop the controller
 - added macro
     - `OFP_DEFAULT_PRIORITY`
     - `OFP_DEFAULT_MISS_SEND_LEN`
-- data length of the OXM TLV
-    - `OXM_OF_IPV6_FLABEL` 20bits is 4bytes
-    - `OXM_OF_MPLS_LABEL` 20bits is 4bytes
-    - `OXM_OF_PBB_ISID` 24bits is 4bytes
 
 
 License
