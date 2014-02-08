@@ -543,6 +543,47 @@ compare_match64( const match64 narrow, const match64 wide ) {
 }
 
 
+static bool
+compare_vlan( const match16 narrow, const match16 wide ) {
+  if ( !wide.valid ) { // with and without a VLAN tag
+    return true;
+  }
+  if ( !narrow.valid ) {
+    return false;
+  }
+  if ( wide.value == OFPVID_NONE && wide.mask == UINT16_MAX ) { // without a VLAN tag
+    if ( narrow.value == OFPVID_NONE && narrow.mask == UINT16_MAX ) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+  if ( wide.value == OFPVID_PRESENT && wide.mask == OFPVID_PRESENT ) { // with a VLAN tag regardless of its value
+    if ( narrow.value == OFPVID_NONE && narrow.mask == UINT16_MAX ){
+      return false;
+    }
+    else {
+      return true;
+    }
+  }
+  if ( wide.value & OFPVID_PRESENT ) { // with a VLAN tag with VID
+    if ( (wide.value & ~OFPVID_PRESENT) == (narrow.value & ~OFPVID_PRESENT) && narrow.mask == UINT16_MAX ) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+  uint16_t mask = ~OFPVID_PRESENT & narrow.mask & wide.mask;
+  if ( ( narrow.value & mask ) == ( wide.value & wide.mask ) ) {
+    return true;
+  }
+
+  return false;
+}
+
+
 bool
 compare_match( const match *narrow, const match *wide ) {
   assert( narrow != NULL );
@@ -685,7 +726,7 @@ compare_match( const match *narrow, const match *wide ) {
   if ( !compare_match8( narrow->vlan_pcp, wide->vlan_pcp ) ) {
     return false;
   }
-  if ( !compare_match16( narrow->vlan_vid, wide->vlan_vid ) ) {
+  if ( !compare_vlan( narrow->vlan_vid, wide->vlan_vid ) ) {
     return false;
   }
   if ( !compare_match32( narrow->pbb_isid, wide->pbb_isid ) ) {
@@ -875,15 +916,15 @@ build_match_from_packet_info( match *m, const packet_info *pinfo ) {
   }
 
   if ( ( pinfo->format & ETH_8021Q ) != 0 ) {
-    m->vlan_pcp.value = pinfo->vlan_pcp;
+    m->vlan_pcp.value = pinfo->vlan_prio;
     m->vlan_pcp.mask = UINT8_MAX;
     m->vlan_pcp.valid = true;
-    m->vlan_vid.value = pinfo->vlan_vid;
+    m->vlan_vid.value = pinfo->vlan_vid | OFPVID_PRESENT;
     m->vlan_vid.mask = UINT16_MAX;
     m->vlan_vid.valid = true;
   }
   else {
-    m->vlan_vid.value = 0; // OFPVID_NONE
+    m->vlan_vid.value = OFPVID_NONE;
     m->vlan_vid.mask = UINT16_MAX;
     m->vlan_vid.valid = true;
   }
