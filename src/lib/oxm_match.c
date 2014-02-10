@@ -164,8 +164,10 @@ append_oxm_match_24( oxm_matches *matches, oxm_match_header header, uint32_t val
 
   oxm_match_header *buf = xmalloc( sizeof( oxm_match_header ) + 3 );
   *buf = header;
-  uint32_t *v = ( uint32_t * ) ( ( char * ) buf + sizeof( oxm_match_header ) );
-  *v = ( *v & 0xF000 ) | ( value & 0x0FFF );
+  uint8_t *v = ( uint8_t * ) ( ( char * ) buf + sizeof( oxm_match_header ) );
+  v[ 0 ] = ( uint8_t ) ( value >> 16 ) & 0xFF;
+  v[ 1 ] = ( uint8_t ) ( value >>  8 ) & 0xFF;
+  v[ 2 ] = ( uint8_t ) ( value >>  0 ) & 0xFF;
 
   return append_oxm_match( matches, buf );
 }
@@ -178,10 +180,13 @@ append_oxm_match_24w( oxm_matches *matches, oxm_match_header header, uint32_t va
 
   oxm_match_header *buf = xmalloc( sizeof( oxm_match_header ) + 3 * 2 );
   *buf = header;
-  uint32_t *v = ( uint32_t * ) ( ( char * ) buf + sizeof( oxm_match_header ) );
-  *v = ( *v & 0xF000 ) | ( value & 0x0FFF );
-  v = ( uint32_t * ) ( ( char * ) v + sizeof( uint32_t ) );
-  *v = ( *v & 0xF000 ) | ( mask & 0x0FFF );
+  uint8_t *v = ( uint8_t * ) ( ( char * ) buf + sizeof( oxm_match_header ) );
+  v[ 0 ] = ( uint8_t ) ( value >> 16 ) & 0xFF;
+  v[ 1 ] = ( uint8_t ) ( value >>  8 ) & 0xFF;
+  v[ 2 ] = ( uint8_t ) ( value >>  0 ) & 0xFF;
+  v[ 3 ] = ( uint8_t ) ( mask  >> 16 ) & 0xFF;
+  v[ 4 ] = ( uint8_t ) ( mask  >>  8 ) & 0xFF;
+  v[ 5 ] = ( uint8_t ) ( mask  >>  0 ) & 0xFF;
 
   return append_oxm_match( matches, buf );
 }

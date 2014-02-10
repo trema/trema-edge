@@ -8295,6 +8295,17 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
     }
     append_oxm_match_eth_dst( match, ( ( packet_info * ) packet->user_data )->eth_macda, tmp_mac_mask );
   }
+  if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_PBB_ISID ) ) ) {
+    uint32_t pbb_isid;
+    if ( packet_type_eth_pbb( packet ) ) {
+      pbb_isid = ( ( packet_info * ) packet->user_data )->pbb_isid;
+      if ( ( pbb_isid & ~PBB_ISID_MASK ) != 0 ) {
+        warn( "Invalid pbb_isid ( change %#x to %#x )", pbb_isid, pbb_isid & PBB_ISID_MASK );
+        pbb_isid = ( uint32_t ) ( pbb_isid & PBB_ISID_MASK );
+      }
+    }
+    append_oxm_match_pbb_isid( match, pbb_isid, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_pbb_isid ) );
+  }
   if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_VLAN_VID ) ) ) {
     uint16_t vlan_vid;
     if ( packet_type_eth_vtag( packet ) ) {

@@ -286,14 +286,14 @@ assign_metadata( const oxm_match_header *hdr, match *match ) {
 
 static void
 assign_pbb_isid( const oxm_match_header *hdr, match *match ) {
-  const uint32_t *value = ( const uint32_t * ) ( ( const char * ) hdr + sizeof( oxm_match_header ) );
+  const uint8_t *v = ( const uint8_t * ) ( ( const char * ) hdr + sizeof( oxm_match_header ) );
 
+  uint32_t value = ( v[ 0 ] << 16 ) + ( v[ 1 ] << 8 ) + v[ 2 ];
   if ( *hdr == OXM_OF_PBB_ISID ) {
-    MATCH_ATTR_SET( pbb_isid, (*value & 0xffffff));
+    MATCH_ATTR_SET( pbb_isid, value );
   }
-  if ( *hdr == OXM_OF_PBB_ISID_W ) {
-    const uint32_t *mask = ( const uint32_t * ) ( ( const char * ) value + sizeof ( uint32_t ) );
-    MATCH_ATTR_MASK_SET( pbb_isid, (*value & 0xffffff), (*mask & 0xffffff));
+  else if ( *hdr == OXM_OF_PBB_ISID_W ) {
+    MATCH_ATTR_MASK_SET( pbb_isid, value, ( v[ 3 ] << 16 ) + ( v[ 4 ] << 8 ) + v[ 5 ] );
   }
 }
 
