@@ -275,12 +275,12 @@ static void
 assign_pbb_isid( const oxm_match_header *hdr, match *match ) {
   const uint8_t *v = ( const uint8_t * ) ( ( const char * ) hdr + sizeof( oxm_match_header ) );
 
-  uint32_t value = ( v[ 0 ] << 16 ) + ( v[ 1 ] << 8 ) + v[ 2 ];
+  uint32_t value = ( uint32_t ) ( ( v[ 0 ] << 16 ) + ( v[ 1 ] << 8 ) + v[ 2 ] );
   if ( *hdr == OXM_OF_PBB_ISID ) {
     MATCH_ATTR_SET( pbb_isid, value );
   }
   else if ( *hdr == OXM_OF_PBB_ISID_W ) {
-    MATCH_ATTR_MASK_SET( pbb_isid, value, ( v[ 3 ] << 16 ) + ( v[ 4 ] << 8 ) + v[ 5 ] );
+    MATCH_ATTR_MASK_SET( pbb_isid, value, ( uint32_t ) ( ( v[ 3 ] << 16 ) + ( v[ 4 ] << 8 ) + v[ 5 ] ) );
   }
 }
 

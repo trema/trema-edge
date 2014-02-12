@@ -1079,7 +1079,7 @@ execute_action_copy_ttl_in( buffer *frame, action *copy_ttl_in ) {
 
   packet_info *info = get_packet_info_data( frame );
   if ( packet_type_eth_mpls( frame ) ) {
-    void *ptr = info->l2_mpls_header + sizeof( mpls_header_t );
+    void *ptr = ( char * ) info->l2_mpls_header + sizeof( mpls_header_t );
     size_t length = REMAINED_BUFFER_LENGTH( frame, ptr );
 
     assert( info->l2_mpls_header != NULL );
@@ -1112,7 +1112,7 @@ execute_action_copy_ttl_in( buffer *frame, action *copy_ttl_in ) {
         return false;
       }
       mpls_header_t *inner_header = ( mpls_header_t * ) ( mpls_header + 1 );
-      uint32_t inner_mpls = ntohl( inner_header->label );
+      //uint32_t inner_mpls = ntohl( inner_header->label ); // unused variable
       uint8_t *inner_mpls_ttl = ( uint8_t * ) inner_header + 3;
       *inner_mpls_ttl = ttl;
     }
@@ -1236,7 +1236,7 @@ execute_action_copy_ttl_out( buffer *frame, action *copy_ttl_out ) {
   assert( info != NULL );
 
   if ( packet_type_eth_mpls( frame ) ) {
-    void *ptr = info->l2_mpls_header + sizeof( mpls_header_t );
+    void *ptr = ( char * ) info->l2_mpls_header + sizeof( mpls_header_t );
     size_t length = REMAINED_BUFFER_LENGTH( frame, ptr );
 
     assert( info->l2_mpls_header != NULL );

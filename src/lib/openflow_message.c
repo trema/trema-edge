@@ -8299,7 +8299,7 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
     uint32_t pbb_isid;
     if ( packet_type_eth_pbb( packet ) ) {
       pbb_isid = ( ( packet_info * ) packet->user_data )->pbb_isid;
-      if ( ( pbb_isid & ~PBB_ISID_MASK ) != 0 ) {
+      if ( ( pbb_isid & ( uint32_t ) ~PBB_ISID_MASK ) != 0 ) {
         warn( "Invalid pbb_isid ( change %#x to %#x )", pbb_isid, pbb_isid & PBB_ISID_MASK );
         pbb_isid = ( uint32_t ) ( pbb_isid & PBB_ISID_MASK );
       }

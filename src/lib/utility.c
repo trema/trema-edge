@@ -214,6 +214,7 @@ oxm_match_16w_to_hex_string( const oxm_match_header *header, char *str, size_t l
 }
 
 
+#if 0
 static bool
 oxm_match_24_to_dec_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
   assert( header != NULL );
@@ -229,6 +230,7 @@ oxm_match_24_to_dec_string( const oxm_match_header *header, char *str, size_t le
 
   return true;
 }
+#endif
 
 
 static bool
@@ -248,6 +250,7 @@ oxm_match_24_to_hex_string( const oxm_match_header *header, char *str, size_t le
 }
 
 
+#if 0
 static bool
 oxm_match_24w_to_dec_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
   assert( header != NULL );
@@ -263,6 +266,7 @@ oxm_match_24w_to_dec_string( const oxm_match_header *header, char *str, size_t l
 
   return true;
 }
+#endif
 
 
 static bool

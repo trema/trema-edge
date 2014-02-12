@@ -575,7 +575,7 @@ compare_vlan( const match16 narrow, const match16 wide ) {
       return false;
     }
   }
-  uint16_t mask = ~OFPVID_PRESENT & narrow.mask & wide.mask;
+  uint16_t mask = ( uint16_t ) ( ~OFPVID_PRESENT & narrow.mask & wide.mask );
   if ( ( narrow.value & mask ) == ( wide.value & wide.mask ) ) {
     return true;
   }
