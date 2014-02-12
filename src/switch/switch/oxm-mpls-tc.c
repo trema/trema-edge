@@ -66,8 +66,11 @@ mpls_tc_length( const match *match ) {
 
 static uint16_t
 pack_mpls_tc( oxm_match_header *hdr, const match *match ) {
-  UNUSED( hdr );
   if ( match->mpls_tc.valid ) {
+    *hdr = OXM_OF_MPLS_TC;
+    uint32_t *value = ( uint32_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    *value = match->mpls_tc.value;
+    return oxm_mpls_tc.length;
   }
   return 0;
 }

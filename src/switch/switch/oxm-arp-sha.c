@@ -73,7 +73,9 @@ pack_arp_sha( oxm_match_header *hdr, const match *match ) {
   if ( match->arp_sha[ 0 ].valid ) {
     *hdr = OXM_OF_ARP_SHA; 
     uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
-    memcpy( value, &match->arp_spa.value, OFP_ETH_ALEN );
+    for ( int i = 0; i < OFP_ETH_ALEN; i++ ) {
+      value[ i ] = match->arp_sha[ i ].value;
+    }
     return oxm_arp_sha.length;
   }
   return 0;
