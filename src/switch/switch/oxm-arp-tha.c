@@ -72,7 +72,9 @@ pack_arp_tha( oxm_match_header *hdr, const match *match ) {
   if ( match->arp_tha[ 0 ].valid ) {
     *hdr = OXM_OF_ARP_THA; 
     uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof( oxm_match_header ) );
-    memcpy( value, &match->arp_tha[ 0 ].value, OFP_ETH_ALEN );
+    for ( int i = 0; i < OFP_ETH_ALEN; i++ ) {
+      value[ i ] = match->arp_tha[ i ].value;
+    }
     return oxm_arp_tha.length;
   }
   return 0;
