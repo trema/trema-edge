@@ -28,6 +28,8 @@
 #include "table_manager.h"
 #include "pipeline.h"
 
+#define REMAINED_BUFFER_LENGTH( buf, ptr )  \
+  ( buf->length - ( size_t ) ( ( char * ) ptr - ( char * ) buf->data ) )
 
 OFDPE
 init_action_executor() {
@@ -1076,29 +1078,54 @@ execute_action_copy_ttl_in( buffer *frame, action *copy_ttl_in ) {
   assert( copy_ttl_in != NULL );
 
   packet_info *info = get_packet_info_data( frame );
-  assert( info != NULL );
-  if ( !packet_type_eth_mpls( frame ) ) {
-    warn( "A non-mpls packet (%#x) found while retrieving the ttl field.", info->format );
-    return true;
-  }
+  if ( packet_type_eth_mpls( frame ) ) {
+    void *ptr = info->l2_mpls_header + sizeof( mpls_header_t );
+    size_t length = REMAINED_BUFFER_LENGTH( frame, ptr );
 
-  uint32_t *mpls = ( uint32_t * ) info->l2_mpls_header;
-  assert( mpls != NULL );
-  uint8_t ttl = ( uint8_t ) ( *mpls >> 24 );
+    assert( info->l2_mpls_header != NULL );
+    mpls_header_t *mpls_header = info->l2_mpls_header;
+    uint32_t mpls = ntohl( mpls_header->label );
+    uint8_t mpls_bos = ( uint8_t ) ( ( mpls & 0x00000100 ) >>  8 );
 
-  if ( packet_type_ipv4( frame ) ) {
-    ipv4_header_t *ipv4_header = info->l3_header;
-    ipv4_header->ttl = ttl;
-    set_ipv4_checksum( ipv4_header );
+    uint8_t ttl = mpls & 0x000000FF;
+    if ( mpls_bos == 1 ) { // MPLS-to-IP copy
+      // Check the length of remained buffer for an ipv4 header without options.
+      if ( length < sizeof( ipv4_header_t ) ) {
+        return false;
+      }
+
+      // Check the length of remained buffer for an ipv4 header with options.
+      ipv4_header_t *ipv4_header = ptr;
+      if ( ipv4_header->ihl < 5 ) {
+        return false;
+      }
+      if ( length < ( size_t ) ipv4_header->ihl * 4 ) {
+        return false;
+      }
+
+      ipv4_header->ttl = ttl;
+      set_ipv4_checksum( ipv4_header );
+    }
+    else { // MPLS-to-MPLS copy
+      if ( length < sizeof( mpls_header_t ) ) {
+        debug("incomplete mpls");
+        return false;
+      }
+      mpls_header_t *inner_header = ( mpls_header_t * ) ( mpls_header + 1 );
+      uint32_t inner_mpls = ntohl( inner_header->label );
+      uint8_t *inner_mpls_ttl = ( uint8_t * ) inner_header + 3;
+      *inner_mpls_ttl = ttl;
+    }
   }
-  else if ( packet_type_ipv6( frame ) ) {
-    ipv6_header_t *ipv6_header = info->l3_header;
-    ipv6_header->hoplimit = ttl;
+  else if ( packet_type_ipv4( frame ) || packet_type_ipv6( frame ) ) {
+    warn( "IP-to-IP TTL copy not supported yet." );
   }
   else {
-    warn( "A non-ip packet (%#x) found while setting the ttl field.", info->format );
+    warn( "A non-ip,mpls packet (%#x) found while setting the ttl field.", info->format );
     return true;
   }
+
+
 
   return parse_frame( frame );
 }
@@ -1207,28 +1234,54 @@ execute_action_copy_ttl_out( buffer *frame, action *copy_ttl_out ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  if ( !packet_type_eth_mpls( frame ) ) {
-    warn( "A non-mpls packet (%#x) found while replacing the mpls ttl.", info->format );
-    return true;
-  }
 
-  uint8_t ttl = 0;
-  if ( packet_type_ipv4( frame ) ) {
-    ipv4_header_t *ipv4_header = info->l3_header;
-    ttl = ipv4_header->ttl;
+  if ( packet_type_eth_mpls( frame ) ) {
+    void *ptr = info->l2_mpls_header + sizeof( mpls_header_t );
+    size_t length = REMAINED_BUFFER_LENGTH( frame, ptr );
+
+    assert( info->l2_mpls_header != NULL );
+    mpls_header_t *mpls_header = info->l2_mpls_header;
+    uint32_t mpls = ntohl( mpls_header->label );
+    uint8_t mpls_bos = ( uint8_t ) ( ( mpls & 0x00000100 ) >>  8 );
+
+    uint8_t ttl = 0;
+    if ( mpls_bos == 1 ) { // IP-to-MPLS copy
+      // Check the length of remained buffer for an ipv4 header without options.
+      if ( length < sizeof( ipv4_header_t ) ) {
+        return false;
+      }
+
+      // Check the length of remained buffer for an ipv4 header with options.
+      ipv4_header_t *ipv4_header = ptr;
+      if ( ipv4_header->ihl < 5 ) {
+        return false;
+      }
+      if ( length < ( size_t ) ipv4_header->ihl * 4 ) {
+        return false;
+      }
+
+      ttl = ipv4_header->ttl;
+    }
+    else { // MPLS-to-MPLS copy
+      if ( length < sizeof( mpls_header_t ) ) {
+        debug("incomplete mpls");
+        return false;
+      }
+      mpls_header_t *inner_header = ( mpls_header_t * ) ( mpls_header + 1 );
+      uint32_t inner_mpls = ntohl( inner_header->label );
+      ttl = inner_mpls & 0x000000FF;
+    }
+
+    uint8_t *mpls_ttl = ( ( uint8_t * ) info->l2_mpls_header ) + 3;
+    *mpls_ttl = ttl;
   }
-  else if ( packet_type_ipv6( frame ) ) {
-    ipv6_header_t *ipv6_header = info->l3_header;
-    ttl = ipv6_header->hoplimit;
+  else if ( packet_type_ipv4( frame ) || packet_type_ipv6( frame ) ) {
+    warn( "IP-IP TTL copy not supported yet." );
   }
   else {
-    warn( "A non-ip packet (%#x) found while setting the ttl field.", info->format );
+    warn( "A non-ip,mpls packet (%#x) found while setting the ttl field.", info->format );
     return true;
   }
-
-  assert( info->l2_mpls_header != NULL );
-  uint8_t *mpls_ttl = ( ( uint8_t * ) info->l2_mpls_header ) + 3;
-  *mpls_ttl = ttl;
 
   return parse_frame( frame );
 }
