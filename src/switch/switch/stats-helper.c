@@ -743,7 +743,6 @@ _handle_flow_stats( const struct ofp_flow_stats_request *req, const uint32_t tra
       uint16_t match_len = ( uint16_t ) ( offsetof( struct ofp_match, oxm_fields ) + get_oxm_matches_length( oxm_matches ) );
       match_len = ( uint16_t ) ( match_len + PADLEN_TO_64( match_len ) );
       uint16_t ins_len = ( uint16_t ) instructions_len( &stats[ i ].instructions );
-      ins_len = ( uint16_t ) ( ins_len + PADLEN_TO_64( ins_len ) );
       uint16_t length = ( uint16_t ) ( offsetof( struct ofp_flow_stats, match ) + match_len + ins_len );
 
       struct ofp_flow_stats *fs = xmalloc( length );
