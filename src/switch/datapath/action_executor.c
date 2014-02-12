@@ -388,15 +388,21 @@ set_nw_dscp( buffer *frame, uint8_t value ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  if ( !packet_type_ipv4( frame ) ) {
-    warn( "A non-ipv4 packet (%#x) found while setting the dscp field.", info->format );
+  if ( packet_type_ipv4( frame ) ){
+    ipv4_header_t *header = info->l3_header;
+    header->tos = ( uint8_t ) ( ( header->tos & 0x03 ) | ( ( value << 2 ) & 0xFC ) );
+    // no tcp/udp/icmp checksum caculation here because tos field is not included in pseudo header
+    set_ipv4_checksum( header );
+  }
+  else if ( packet_type_ipv6( frame ) ) {
+    ipv6_header_t *header = info->l3_header;
+    uint32_t hdrctl = ntohl(header->hdrctl);
+    header->hdrctl = htonl((hdrctl & 0xF03FFFFF) + ((0x3F & value)<<22));
+  }
+  else {
+    warn( "A non-ipv4,ipv6 packet (%#x) found while setting the dscp field.", info->format );
     return true;
   }
-
-  ipv4_header_t *header = info->l3_header;
-  header->tos = ( uint8_t ) ( ( header->tos & 0x03 ) | ( ( value << 2 ) & 0xFC ) );
-  set_ipv4_checksum( header );
-
   return parse_frame( frame );
 }
 
@@ -407,14 +413,22 @@ set_nw_ecn( buffer *frame, uint8_t value ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  if ( !packet_type_ipv4( frame ) ) {
-    warn( "A non-ipv4 packet (%#x) found while setting the ecn field.", info->format );
+  if ( packet_type_ipv4( frame ) ) {
+    ipv4_header_t *header = info->l3_header;
+    header->tos = ( uint8_t ) ( ( header->tos & 0xFC ) | ( value & 0x03 ) );
+    // no tcp/udp/icmp checksum caculation here because tos field is not included in pseudo header
+    set_ipv4_checksum( header );
+  }
+  else if ( packet_type_ipv6( frame ) ) {
+    ipv6_header_t *header = info->l3_header;
+    // set Traffic Class
+    uint32_t hdrctl = ntohl(header->hdrctl);
+    header->hdrctl = htonl((hdrctl & 0xFFcFFFFF) + ((0x03 & value)<<20));
+  }
+  else {
+    warn( "A non-ipv4,ipv6 packet (%#x) found while setting the ecn field.", info->format );
     return true;
   }
-
-  ipv4_header_t *header = info->l3_header;
-  header->tos = ( uint8_t ) ( ( header->tos & 0xFC ) | ( value & 0x03 ) );
-  set_ipv4_checksum( header );
 
   return parse_frame( frame );
 }
@@ -426,14 +440,21 @@ set_ip_proto( buffer *frame, uint8_t value ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  if ( !packet_type_ipv4( frame ) ) {
-    warn( "A non-ipv4 packet (%#x) found while setting the ip_proto field.", info->format );
+  if ( packet_type_ipv4( frame ) ) {
+    ipv4_header_t *header = info->l3_header;
+    header->protocol = value;
+    set_ipv4_checksum( header );
+    // It is hard to calculate tcp/udp/icmp checksum caculation here, as we might break the payload.
+  }
+  else if ( packet_type_ipv6( frame ) ) {
+    ipv6_header_t *header = info->l3_header;
+    header->nexthdr = value;
+    // It is hard to calculate tcp/udp/icmp checksum caculation here, as we might break the payload.
+  }
+  else {
+    warn( "A non-ipv4,ipv6 packet (%#x) found while setting the ip_proto field.", info->format );
     return true;
   }
-
-  ipv4_header_t *header = info->l3_header;
-  header->protocol = value;
-  set_ipv4_checksum( header );
 
   return parse_frame( frame );
 }
