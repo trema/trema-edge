@@ -481,6 +481,12 @@ parse_icmpv6( buffer *buf ) {
     break;
   }
 
+  ptr = ( void * ) ( icmpv6_header + 1 );
+  size_t payload_length = REMAINED_BUFFER_LENGTH( buf, ptr );
+  if ( payload_length > 0 ) {
+    packet_info->l4_payload = ptr;
+    packet_info->l4_payload_length = payload_length;
+  }
   packet_info->format |= NW_ICMPV6;
 
   return;
