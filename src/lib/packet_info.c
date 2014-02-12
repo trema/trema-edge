@@ -241,6 +241,20 @@ packet_type_ipv6_udp( const buffer *frame ) {
 
 
 bool
+packet_type_ipv4_sctp( const buffer *frame ) {
+  die_if_NULL( frame );
+  return if_packet_type( frame, NW_IPV4 | TP_SCTP );
+}
+
+
+bool
+packet_type_ipv6_sctp( const buffer *frame ) {
+  die_if_NULL( frame );
+  return if_packet_type( frame, NW_IPV6 | TP_SCTP );
+}
+
+
+bool
 packet_type_ipv4_etherip( const buffer *frame ) {
   die_if_NULL( frame );
   return if_packet_type( frame, NW_IPV4 | TP_ETHERIP );
