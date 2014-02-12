@@ -54,6 +54,7 @@
 #define ETH_ETHTYPE_MPLS_MLT 0x8848
 #define ETH_ETHTYPE_UKNOWN 0xffff
 
+#pragma pack(1)
 
 typedef struct ether_headr {
   uint8_t macda[ ETH_ADDRLEN ];
@@ -83,6 +84,7 @@ typedef struct snap_header {
   uint16_t type;
 } snap_header_t;
 
+#pragma pack()
 
 #define TCI_GET_PRIO( _tci ) ( uint8_t )( ( ( _tci ) >> 13 ) & 7 )
 
