@@ -91,7 +91,7 @@ get_ipv4_pseudo_header_sum( ipv4_header_t *header, uint8_t protocol, size_t payl
   sum += get_sum( ( uint16_t * ) &header->daddr, sizeof( header->saddr ) );
   uint8_t protocol_field[2] = { 0, protocol };
   sum += * ( uint16_t * ) protocol_field;
-  sum += ( uint16_t ) htons(payload_size);
+  sum += ( uint16_t ) htons( ( uint16_t ) payload_size );
 
   return sum;
 }
@@ -107,7 +107,7 @@ get_ipv6_pseudo_header_sum( ipv6_header_t *header, uint8_t protocol, size_t payl
   sum += get_sum( ( uint16_t * ) &header->daddr[ 0 ], sizeof( header->saddr ) );
   uint8_t protocol_field[2] = { 0, protocol };
   sum += * ( uint16_t * ) protocol_field;
-  sum += ( uint16_t ) htons(payload_size);
+  sum += ( uint16_t ) htons( ( uint16_t ) payload_size );
 
   return sum;
 }
@@ -123,7 +123,7 @@ get_icmpv6_pseudo_header_sum( ipv6_header_t *header, size_t payload_size ) {
   sum += get_sum( ( uint16_t * ) &header->daddr[ 0 ], sizeof( header->saddr ) );
   uint8_t protocol_field[2] = { 0, IPPROTO_ICMPV6 };
   sum += * ( uint16_t * ) protocol_field;
-  sum += ( uint16_t ) htons(payload_size);
+  sum += ( uint16_t ) htons( ( uint16_t ) payload_size );
 
   return sum;
 }
@@ -170,7 +170,7 @@ set_ipv4_tcp_checksum( ipv4_header_t *ipv4_header, tcp_header_t *tcp_header, voi
 
   uint32_t sum = 0;
 
-  sum += get_ipv4_pseudo_header_sum( ipv4_header, IPPROTO_TCP, tcp_header->offset * 4 + tcp_payload_length );
+  sum += get_ipv4_pseudo_header_sum( ipv4_header, IPPROTO_TCP, ( size_t ) tcp_header->offset * 4 + tcp_payload_length );
   tcp_header->csum = 0;
   sum += get_sum( ( uint16_t * ) tcp_header, sizeof( tcp_header_t ) );
   if ( tcp_payload != NULL && tcp_payload_length > 0 ) {
@@ -187,7 +187,7 @@ set_ipv6_tcp_checksum( ipv6_header_t *ipv6_header, tcp_header_t *tcp_header, voi
 
   uint32_t sum = 0;
 
-  sum += get_ipv6_pseudo_header_sum( ipv6_header, IPPROTO_TCP, tcp_header->offset * 4 + tcp_payload_length );
+  sum += get_ipv6_pseudo_header_sum( ipv6_header, IPPROTO_TCP, ( size_t ) tcp_header->offset * 4 + tcp_payload_length );
   tcp_header->csum = 0;
   sum += get_sum( ( uint16_t * ) tcp_header, sizeof( tcp_header_t ) );
   if ( tcp_payload != NULL && tcp_payload_length > 0 ) {
@@ -401,8 +401,8 @@ set_nw_dscp( buffer *frame, uint8_t value ) {
   }
   else if ( packet_type_ipv6( frame ) ) {
     ipv6_header_t *header = info->l3_header;
-    uint32_t hdrctl = ntohl(header->hdrctl);
-    header->hdrctl = htonl((hdrctl & 0xF03FFFFF) + ((0x3F & value)<<22));
+    uint32_t hdrctl = ntohl( header->hdrctl );
+    header->hdrctl = htonl( ( hdrctl & 0xF03FFFFF ) + ( ( 0x3FU & value ) << 22 ) );
   }
   else {
     warn( "A non-ipv4,ipv6 packet (%#x) found while setting the dscp field.", info->format );
@@ -428,7 +428,7 @@ set_nw_ecn( buffer *frame, uint8_t value ) {
     ipv6_header_t *header = info->l3_header;
     // set Traffic Class
     uint32_t hdrctl = ntohl(header->hdrctl);
-    header->hdrctl = htonl((hdrctl & 0xFFcFFFFF) + ((0x03 & value)<<20));
+    header->hdrctl = htonl( ( hdrctl & 0xFFcFFFFF ) + ( ( 0x03U & value ) << 20 ) );
   }
   else {
     warn( "A non-ipv4,ipv6 packet (%#x) found while setting the ecn field.", info->format );
