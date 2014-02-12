@@ -62,7 +62,8 @@ get_sum( uint16_t *pos, size_t size ) {
     sum += *pos;
   }
   if ( size == 1 ) {
-    sum += *( uint8_t * ) pos;
+    uint8_t buf[2] = { *( uint8_t * ) pos, 0 };
+    sum += * ( uint16_t * ) buf;
   }
 
   return sum;
@@ -71,6 +72,7 @@ get_sum( uint16_t *pos, size_t size ) {
 
 static uint16_t
 get_checksum_from_sum( uint32_t sum ) {
+  // ones' complement: sum up carry
   while ( sum & 0xffff0000 ) {
     sum = ( sum & 0x0000ffff ) + ( sum >> 16 );
   }
@@ -87,8 +89,9 @@ get_ipv4_pseudo_header_sum( ipv4_header_t *header, uint8_t protocol, size_t payl
 
   sum += get_sum( ( uint16_t * ) &header->saddr, sizeof( header->saddr ) );
   sum += get_sum( ( uint16_t * ) &header->daddr, sizeof( header->saddr ) );
-  sum += ( ( uint32_t ) protocol ) << 8;
-  sum += ( uint32_t ) payload_size;
+  uint8_t protocol_field[2] = { 0, protocol };
+  sum += * ( uint16_t * ) protocol_field;
+  sum += ( uint16_t ) htons(payload_size);
 
   return sum;
 }
@@ -102,8 +105,9 @@ get_ipv6_pseudo_header_sum( ipv6_header_t *header, uint8_t protocol, size_t payl
 
   sum += get_sum( ( uint16_t * ) &header->saddr[ 0 ], sizeof( header->saddr ) );
   sum += get_sum( ( uint16_t * ) &header->daddr[ 0 ], sizeof( header->saddr ) );
-  sum += ( uint32_t ) payload_size;
-  sum += ( ( uint32_t ) protocol ) << 8;
+  uint8_t protocol_field[2] = { 0, protocol };
+  sum += * ( uint16_t * ) protocol_field;
+  sum += ( uint16_t ) htons(payload_size);
 
   return sum;
 }
@@ -117,8 +121,9 @@ get_icmpv6_pseudo_header_sum( ipv6_header_t *header, size_t payload_size ) {
 
   sum += get_sum( ( uint16_t * ) &header->saddr[ 0 ], sizeof( header->saddr ) );
   sum += get_sum( ( uint16_t * ) &header->daddr[ 0 ], sizeof( header->saddr ) );
-  sum += ( uint32_t ) ( IPPROTO_ICMPV6 ) << 8;
-  sum += ( uint32_t ) payload_size;
+  uint8_t protocol_field[2] = { 0, IPPROTO_ICMPV6 };
+  sum += * ( uint16_t * ) protocol_field;
+  sum += ( uint16_t ) htons(payload_size);
 
   return sum;
 }
@@ -131,7 +136,7 @@ set_ipv4_udp_checksum( ipv4_header_t *ipv4_header, udp_header_t *udp_header, voi
 
   uint32_t sum = 0;
 
-  sum += get_ipv4_pseudo_header_sum( ipv4_header, IPPROTO_UDP, udp_header->len );
+  sum += get_ipv4_pseudo_header_sum( ipv4_header, IPPROTO_UDP, ntohs( udp_header->len ) );
   udp_header->csum = 0;
   sum += get_sum( ( uint16_t * ) udp_header, sizeof( udp_header_t ) );
   if ( payload != NULL ) {
@@ -148,7 +153,7 @@ set_ipv6_udp_checksum( ipv6_header_t *ipv6_header, udp_header_t *udp_header, voi
 
   uint32_t sum = 0;
 
-  sum += get_ipv6_pseudo_header_sum( ipv6_header, IPPROTO_UDP, udp_header->len );
+  sum += get_ipv6_pseudo_header_sum( ipv6_header, IPPROTO_UDP, ntohs( udp_header->len ) );
   udp_header->csum = 0;
   sum += get_sum( ( uint16_t * ) udp_header, sizeof( udp_header_t ) );
   if ( payload != NULL ) {
@@ -159,58 +164,58 @@ set_ipv6_udp_checksum( ipv6_header_t *ipv6_header, udp_header_t *udp_header, voi
 
 
 static void
-set_ipv4_tcp_checksum( ipv4_header_t *ipv4_header, tcp_header_t *tcp_header, void *payload, size_t payload_length ) {
+set_ipv4_tcp_checksum( ipv4_header_t *ipv4_header, tcp_header_t *tcp_header, void *tcp_payload, size_t tcp_payload_length ) {
   assert( ipv4_header != NULL );
   assert( tcp_header != NULL );
 
   uint32_t sum = 0;
 
-  sum += get_ipv4_pseudo_header_sum( ipv4_header, IPPROTO_TCP, payload_length );
+  sum += get_ipv4_pseudo_header_sum( ipv4_header, IPPROTO_TCP, tcp_header->offset * 4 + tcp_payload_length );
   tcp_header->csum = 0;
   sum += get_sum( ( uint16_t * ) tcp_header, sizeof( tcp_header_t ) );
-  if ( payload != NULL && payload_length > 0 ) {
-    sum += get_sum( payload, payload_length );
+  if ( tcp_payload != NULL && tcp_payload_length > 0 ) {
+    sum += get_sum( tcp_payload, tcp_payload_length );
   }
   tcp_header->csum = get_checksum_from_sum( sum );
 }
 
 
 static void
-set_ipv6_tcp_checksum( ipv6_header_t *ipv6_header, tcp_header_t *tcp_header, void *payload, size_t payload_length ) {
+set_ipv6_tcp_checksum( ipv6_header_t *ipv6_header, tcp_header_t *tcp_header, void *tcp_payload, size_t tcp_payload_length ) {
   assert( ipv6_header != NULL );
   assert( tcp_header != NULL );
 
   uint32_t sum = 0;
 
-  sum += get_ipv6_pseudo_header_sum( ipv6_header, IPPROTO_TCP, payload_length );
+  sum += get_ipv6_pseudo_header_sum( ipv6_header, IPPROTO_TCP, tcp_header->offset * 4 + tcp_payload_length );
   tcp_header->csum = 0;
   sum += get_sum( ( uint16_t * ) tcp_header, sizeof( tcp_header_t ) );
-  if ( payload != NULL && payload_length > 0 ) {
-    sum += get_sum( payload, payload_length );
+  if ( tcp_payload != NULL && tcp_payload_length > 0 ) {
+    sum += get_sum( tcp_payload, tcp_payload_length );
   }
   tcp_header->csum = get_checksum_from_sum( sum );
 }
 
 
 static void
-set_icmpv4_checksum( icmp_header_t *header, size_t length ) {
-  assert( header != NULL );
+set_icmpv4_checksum( icmp_header_t *icmp_header, size_t icmp_length ) {
+  assert( icmp_header != NULL );
 
-  header->csum = 0;
-  header->csum = get_checksum( ( uint16_t * ) header, ( uint32_t ) length );
+  icmp_header->csum = 0;
+  icmp_header->csum = get_checksum( ( uint16_t * ) icmp_header, ( uint32_t ) icmp_length );
 }
 
 
 static void
-set_icmpv6_checksum( ipv6_header_t *ipv6_header, icmp_header_t *icmp_header, size_t length ) {
+set_icmpv6_checksum( ipv6_header_t *ipv6_header, icmpv6_header_t *icmp_header, size_t length ) {
   assert( ipv6_header != NULL );
   assert( icmp_header != NULL );
 
   uint32_t sum = 0;
 
-  sum += get_icmpv6_pseudo_header_sum( ipv6_header, length );
+  sum += get_icmpv6_pseudo_header_sum( ipv6_header, sizeof( icmpv6_header_t ) + length );
   icmp_header->csum = 0;
-  sum += get_sum( ( uint16_t * ) icmp_header, length );
+  sum += get_sum( ( uint16_t * ) icmp_header, sizeof( icmpv6_header_t ) + length );
   icmp_header->csum = get_checksum_from_sum( sum );
 }
 
@@ -452,6 +457,15 @@ set_ipv4_src( buffer *frame, uint32_t value ) {
 
   ipv4_header_t *header = info->l3_header;
   header->saddr = htonl( value );
+  if ( packet_type_ipv4_tcp( frame ) ) {
+    set_ipv4_tcp_checksum( info->l3_header, ( tcp_header_t * ) info->l4_header, info->l4_payload, info->l4_payload_length );
+  }
+  else if ( packet_type_ipv4_udp( frame ) ) {
+    set_ipv4_udp_checksum( info->l3_header, ( udp_header_t * ) info->l4_header, info->l4_payload );
+  }
+  else if ( packet_type_icmpv4( frame ) ) {
+    set_icmpv4_checksum( ( icmp_header_t * ) info->l4_header, info->l3_payload_length );
+  }
   set_ipv4_checksum( header );
 
   return parse_frame( frame );
@@ -471,6 +485,15 @@ set_ipv4_dst( buffer *frame, uint32_t value ) {
 
   ipv4_header_t *header = info->l3_header;
   header->daddr = htonl( value );
+  if ( packet_type_ipv4_tcp( frame ) ) {
+    set_ipv4_tcp_checksum( info->l3_header, ( tcp_header_t * ) info->l4_header, info->l4_payload, info->l4_payload_length );
+  }
+  else if ( packet_type_ipv4_udp( frame ) ) {
+    set_ipv4_udp_checksum( info->l3_header, ( udp_header_t * ) info->l4_header, info->l4_payload );
+  }
+  else if ( packet_type_icmpv4( frame ) ) {
+    set_icmpv4_checksum( ( icmp_header_t * ) info->l4_header, info->l3_payload_length );
+  }
   set_ipv4_checksum( header );
 
   return parse_frame( frame );
@@ -591,7 +614,7 @@ set_icmpv4_type( buffer *frame, uint8_t value ) {
   icmp_header_t *icmp_header = info->l4_header;
   icmp_header->type = value;
 
-  set_icmpv4_checksum( icmp_header, info->l4_payload_length );
+  set_icmpv4_checksum( icmp_header, info->l3_payload_length );
 
   return parse_frame( frame );
 }
@@ -611,7 +634,7 @@ set_icmpv4_code( buffer *frame, uint8_t value ) {
   icmp_header_t *icmp_header = info->l4_header;
   icmp_header->code = value;
 
-  set_icmpv4_checksum( icmp_header, info->l4_payload_length );
+  set_icmpv4_checksum( icmp_header, info->l3_payload_length );
 
   return parse_frame( frame );
 }
@@ -724,6 +747,16 @@ set_ipv6_src( buffer *frame, match8 *value ) {
   ipv6_header_t *header = info->l3_header;
   set_ipv6_address( header->saddr, value );
 
+  if ( packet_type_ipv6_tcp( frame ) ) {
+    set_ipv6_tcp_checksum( info->l3_header, ( tcp_header_t * ) info->l4_header, info->l4_payload, info->l4_payload_length );
+  }
+  else if ( packet_type_ipv6_udp( frame ) ) {
+    set_ipv6_udp_checksum( info->l3_header, ( udp_header_t * ) info->l4_header, info->l4_payload );
+  }
+  else if ( packet_type_icmpv6( frame ) ) {
+    set_icmpv6_checksum( info->l3_header, ( icmpv6_header_t * ) info->l4_header, info->l4_payload_length );
+  }
+
   return parse_frame( frame );
 }
 
@@ -742,6 +775,16 @@ set_ipv6_dst( buffer *frame, match8 value[] ) {
 
   ipv6_header_t *header = info->l3_header;
   set_ipv6_address( header->daddr, value );
+
+  if ( packet_type_ipv6_tcp( frame ) ) {
+    set_ipv6_tcp_checksum( info->l3_header, ( tcp_header_t * ) info->l4_header, info->l4_payload, info->l4_payload_length );
+  }
+  else if ( packet_type_ipv6_udp( frame ) ) {
+    set_ipv6_udp_checksum( info->l3_header, ( udp_header_t * ) info->l4_header, info->l4_payload );
+  }
+  else if ( packet_type_icmpv6( frame ) ) {
+    set_icmpv6_checksum( info->l3_header, ( icmpv6_header_t * ) info->l4_header, info->l4_payload_length );
+  }
 
   return parse_frame( frame );
 }
@@ -776,7 +819,7 @@ set_icmpv6_type( buffer *frame, uint8_t value ) {
     return true;
   }
 
-  icmp_header_t *icmp_header = info->l4_header;
+  icmpv6_header_t *icmp_header = info->l4_header;
   icmp_header->type = value;
   set_icmpv6_checksum( info->l3_header, icmp_header, info->l4_payload_length );
 
@@ -795,7 +838,7 @@ set_icmpv6_code( buffer *frame, uint8_t value ) {
     return true;
   }
 
-  icmp_header_t *icmp_header = info->l4_header;
+  icmpv6_header_t *icmp_header = info->l4_header;
   icmp_header->code = value;
   set_icmpv6_checksum( info->l3_header, icmp_header, info->l4_payload_length );
 
@@ -824,6 +867,7 @@ set_ipv6_nd_target( buffer *frame, match8 *value ) {
   icmpv6_header_t *header = info->l3_payload;
   icmpv6data_ndp_t *icmpv6data_ndp = ( icmpv6data_ndp_t * ) header->data;
   set_ipv6_address( icmpv6data_ndp->nd_target, value );
+  set_icmpv6_checksum( info->l3_header, header, info->l4_payload_length );
 
   return parse_frame( frame );
 }
@@ -855,6 +899,7 @@ set_ipv6_nd_sll( buffer *frame, match8 *value ) {
     return true;
   }
   set_dl_address( icmpv6data_ndp->ll_addr, value );
+  set_icmpv6_checksum( info->l3_header, header, info->l4_payload_length );
 
   return parse_frame( frame );
 }
@@ -886,6 +931,7 @@ set_ipv6_nd_tll( buffer *frame, match8 *value ) {
     return true;
   }
   set_dl_address( icmpv6data_ndp->ll_addr, value );
+  set_icmpv6_checksum( info->l3_header, header, info->l4_payload_length );
 
   return parse_frame( frame );
 }
@@ -1104,6 +1150,7 @@ execute_action_copy_ttl_in( buffer *frame, action *copy_ttl_in ) {
       }
 
       ipv4_header->ttl = ttl;
+      // no tcp/udp/icmp checksum caculation here because tos field is not included in pseudo header
       set_ipv4_checksum( ipv4_header );
     }
     else { // MPLS-to-MPLS copy
@@ -1342,6 +1389,7 @@ execute_action_dec_nw_ttl( buffer *frame, action *dec_nw_ttl ) {
     ipv4_header_t *header = info->l3_header;
     ttl = &header->ttl;
     ttl_exceeded = !decrement_ttl( ttl );
+    // no tcp/udp/icmp checksum caculation here because ttl field is not included in pseudo header
     set_ipv4_checksum( header );
   }
   else if ( packet_type_ipv6( frame ) ) {

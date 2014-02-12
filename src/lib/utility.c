@@ -1809,8 +1809,10 @@ get_checksum( uint16_t *pos, uint32_t size ) {
     csum += *pos;
   }
   if ( size == 1 ) {
-    csum += *( unsigned char * ) pos;
+    uint8_t tmp[2] = { * ( uint8_t * ) pos, 0 };
+    csum += *( uint16_t * ) tmp;
   }
+  // ones' complement: sum up carry
   while ( csum & 0xffff0000 ) {
     csum = ( csum & 0x0000ffff ) + ( csum >> 16 );
   }
