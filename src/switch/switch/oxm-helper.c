@@ -509,6 +509,7 @@ _construct_oxm( oxm_matches *oxm_match, match *match ) {
     append_oxm_match_eth_src( oxm_match, eth_addr, eth_addr_mask );
   }
   APPEND_OXM_MATCH( icmpv4_code )
+  APPEND_OXM_MATCH( icmpv6_code )
   APPEND_OXM_MATCH( ip_dscp )
   APPEND_OXM_MATCH( ip_ecn )
   if ( match->ipv4_dst.valid ) {
