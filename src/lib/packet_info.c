@@ -157,6 +157,13 @@ packet_type_eth_mpls( const buffer *frame ) {
 
 
 bool
+packet_type_eth_pbb( const buffer *frame ) {
+  die_if_NULL( frame );
+  return if_packet_type( frame, PBB );
+}
+
+
+bool
 packet_type_arp( const buffer *frame ) {
   die_if_NULL( frame );
   return if_packet_type( frame, NW_ARP );

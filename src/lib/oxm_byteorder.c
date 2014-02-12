@@ -428,11 +428,13 @@ void hton_oxm_match_pbb_isid( oxm_match_header *dst, const oxm_match_header *src
   assert( src != NULL );
   assert( *src == OXM_OF_PBB_ISID || *src == OXM_OF_PBB_ISID_W );
 
+  hton_oxm_match_header( dst, src );
   if ( OXM_HASMASK( *src ) ) {
-    return hton_oxm_match_32w( dst, src );
+    memcpy(( ( char * ) dst + sizeof( oxm_match_header ) ), ( ( char * ) src + sizeof( oxm_match_header ) ), 6);
   }
-
-  hton_oxm_match_32( dst, src );
+  else {
+    memcpy(( ( char * ) dst + sizeof( oxm_match_header ) ), ( ( char * ) src + sizeof( oxm_match_header ) ), 3);
+  }
 }
 
 
@@ -1022,14 +1024,15 @@ void ntoh_oxm_match_pbb_isid( oxm_match_header *dst, const oxm_match_header *src
   assert( dst != NULL );
   assert( src != NULL );
 
+  ntoh_oxm_match_header( dst, src );
   if ( OXM_HASMASK( ntohl( *src ) ) ) {
-    ntoh_oxm_match_32w( dst, src );
     assert( *dst == OXM_OF_PBB_ISID_W );
-    return;
+    memcpy(( ( char * ) dst + sizeof( oxm_match_header ) ), ( ( char * ) src + sizeof( oxm_match_header ) ), 6);
   }
-
-  ntoh_oxm_match_32( dst, src );
-  assert( *dst == OXM_OF_PBB_ISID );
+  else {
+    assert( *dst == OXM_OF_PBB_ISID );
+    memcpy(( ( char * ) dst + sizeof( oxm_match_header ) ), ( ( char * ) src + sizeof( oxm_match_header ) ), 3);
+  }
 }
 
 

@@ -369,6 +369,8 @@ parse_pbb( buffer *buf ) {
 
   pbb_header_t *pbb_header = ptr;
   packet_info->pbb_isid = ntohl( pbb_header->isid ) & 0x00FFFFFF;
+  packet_info->l2_pbb_header = ptr;
+  packet_info->format |= PBB;
 
   return;
 }

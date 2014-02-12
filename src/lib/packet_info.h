@@ -46,6 +46,7 @@ enum {
   ETH_8023_SNAP = 0x00000008,
   ETH_8021Q = 0x00000010,
   MPLS = 0x00000020,
+  PBB = 0x00000040,
   NW_IPV4 = 0x00000100,
   NW_ICMPV4 = 0x00000200,
   NW_IPV6 = 0x00000400,
@@ -247,6 +248,7 @@ bool packet_type_eth_raw( const buffer *frame );
 bool packet_type_eth_llc( const buffer *frame );
 bool packet_type_eth_snap( const buffer *frame );
 bool packet_type_eth_mpls( const buffer *frame );
+bool packet_type_eth_pbb(const buffer *frame);
 bool packet_type_ether( const buffer *frame );
 bool packet_type_arp( const buffer *frame );
 bool packet_type_ipv4( const buffer *frame );

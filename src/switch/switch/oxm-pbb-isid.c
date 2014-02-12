@@ -59,6 +59,10 @@ pbb_isid_length( const match *match ) {
   
   if ( match->pbb_isid.valid ) {
     length = oxm_pbb_isid.length;
+
+    if( match->pbb_isid.mask != UINT32_MAX ){
+      length = ( uint16_t ) ( length * 2);
+    }
   }
   return length;
 }
@@ -68,8 +72,10 @@ static uint16_t
 pack_pbb_isid( oxm_match_header *hdr, const match *match ) {
   if ( match->pbb_isid.valid ) {
     *hdr = OXM_OF_PBB_ISID;
-    uint32_t *value = ( uint32_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
-    *value = match->pbb_isid.value;
+    uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    value[ 0 ] = ( match->pbb_isid.value >> 16 ) & 0xFF;
+    value[ 1 ] = ( match->pbb_isid.value >>  8 ) & 0xFF;
+    value[ 2 ] = ( match->pbb_isid.value >>  0 ) & 0xFF;
     return oxm_pbb_isid.length;
   }
   return 0;
