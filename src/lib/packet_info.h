@@ -119,10 +119,9 @@ typedef struct {
 
   uint16_t vlan_tci;
   uint16_t vlan_tpid;
-  uint8_t vlan_prio;
+  uint8_t vlan_prio; // PCP
   uint8_t vlan_cfi;
   uint16_t vlan_vid;
-  uint8_t  vlan_pcp;
 
   uint8_t snap_llc[ SNAP_LLC_LENGTH ];
   uint8_t snap_oui[ SNAP_OUI_LENGTH ];

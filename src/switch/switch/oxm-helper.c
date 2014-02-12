@@ -218,24 +218,11 @@ static void
 assign_vlan_vid( const oxm_match_header *hdr, match *match ) {
   const uint16_t *value = ( const uint16_t * ) ( ( const char * ) hdr + sizeof ( oxm_match_header ) );
   if ( *hdr == OXM_OF_VLAN_VID ) {
-    if ( ( *value & OFPVID_PRESENT ) != 0 ) {
-      MATCH_ATTR_SET( vlan_vid, ( *value & ( uint16_t ) ~OFPVID_PRESENT ) )
-    }
-    else if ( *value == OFPVID_NONE ) {
-      MATCH_ATTR_SET( vlan_vid, 0 )
-    }
-    else {
-      MATCH_ATTR_SET( vlan_vid, *value )
-    }
+    MATCH_ATTR_SET( vlan_vid, *value )
   }
-  if ( *hdr == OXM_OF_VLAN_VID_W ) {
+  else if ( *hdr == OXM_OF_VLAN_VID_W ) {
     const uint16_t *mask = ( const uint16_t * ) ( ( const char * ) value + sizeof ( uint16_t ) );
-    if ( *value == OFPVID_PRESENT && *mask == OFPVID_PRESENT ) {
-      MATCH_ATTR_MASK_SET( vlan_vid, 0, 0 )
-    }
-    else {
-      MATCH_ATTR_MASK_SET( vlan_vid, *value, *mask )
-    }
+    MATCH_ATTR_MASK_SET( vlan_vid, *value, *mask )
   }
 }
 
