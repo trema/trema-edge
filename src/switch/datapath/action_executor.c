@@ -302,10 +302,10 @@ set_sctp_checksum( sctp_header_t *sctp_header, size_t sctp_length ) {
   crc32 = ( ~crc32 ) & 0xffffffff;
 
   uint8_t *csum = ( uint8_t * ) &sctp_header->checksum;
-  csum[ 0 ] = ( crc32 >> 0  ) & 0xFF;
-  csum[ 1 ] = ( crc32 >> 8  ) & 0xFF;
-  csum[ 2 ] = ( crc32 >> 16 ) & 0xFF;
-  csum[ 3 ] = ( crc32 >> 24 ) & 0xFF;
+  csum[ 0 ] = ( uint8_t ) ( ( crc32 >> 0  ) & 0xFF );
+  csum[ 1 ] = ( uint8_t ) ( ( crc32 >> 8  ) & 0xFF );
+  csum[ 2 ] = ( uint8_t ) ( ( crc32 >> 16 ) & 0xFF );
+  csum[ 3 ] = ( uint8_t ) ( ( crc32 >> 24 ) & 0xFF );
 }
 
 
