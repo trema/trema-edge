@@ -2042,6 +2042,7 @@ execute_group_select( buffer *frame, bucket_list *buckets ) {
 
   list_element *candidates = NULL;
   create_list( &candidates );
+  uint32_t candidates_weight_total = 0;
 
   dlist_element *bucket_element = get_first_element( buckets );
 
@@ -2051,30 +2052,36 @@ execute_group_select( buffer *frame, bucket_list *buckets ) {
       if ( !check_bucket( b->actions ) ) {
         continue;
       }
+      candidates_weight_total += b->weight;
       append_to_tail( &candidates, bucket_element );
     }
     bucket_element = bucket_element->next;
   }
 
   uint32_t length_of_candidates = list_length_of( candidates );
-  if ( length_of_candidates == 0 ) {
+  if ( length_of_candidates == 0 || candidates_weight_total == 0 ) {
     delete_list( candidates );
     return true;
   }
 
 #ifdef GROUP_SELECT_BY_HASH
-  uint32_t candidate_index = group_select_by_hash( frame ) % length_of_candidates;
+  uint32_t candidate_weight = group_select_by_hash( frame ) % candidates_weight_total;
 #else
-  uint32_t candidate_index = ( ( uint32_t ) rand() ) % length_of_candidates;
+  uint32_t candidate_weight = ( ( uint32_t ) rand() ) % candidates_weight_total;
 #endif
-  debug( "execute group select. bucket=%u(/%u)", candidate_index, length_of_candidates );
+
+  uint32_t candidate_index = 0;
   list_element *target = candidates;
   for ( uint32_t i = 0; target != NULL && i < length_of_candidates; i++ ) {
-    if ( i == candidate_index ) {
+    bucket *b = target->data;
+    if ( candidate_weight < b->weight ) {
       break;
     }
+    candidate_index++;
+    candidate_weight -= b->weight;
     target = target->next;
   }
+  debug( "execute group select. bucket=%u(/%u)", candidate_index, length_of_candidates );
 
   if ( target != NULL ) {
     bucket_element = target->data;

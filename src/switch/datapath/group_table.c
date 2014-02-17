@@ -119,12 +119,6 @@ validate_buckets( uint8_t type, bucket_list *buckets ) {
       continue;
     }
     bucket *bucket = element->data;
-    if ( ( table->features.types & GROUP_TYPE_SELECT ) != 0 && type == OFPGT_SELECT ) {
-      if ( bucket->weight != 1 ) {
-        ret = ERROR_OFDPE_GROUP_MOD_FAILED_WEIGHT_UNSUPPORTED;
-	break;
-      }
-    }
     if ( ( table->features.types & GROUP_TYPE_FF ) != 0 && type == OFPGT_FF ) {
       if ( !switch_port_exists( bucket->watch_port ) ) {
         ret = ERROR_OFDPE_GROUP_MOD_FAILED_BAD_WATCH;
