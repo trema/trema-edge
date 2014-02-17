@@ -1297,23 +1297,33 @@ execute_action_copy_ttl_in( buffer *frame, action *copy_ttl_in ) {
 
     uint8_t ttl = mpls & 0x000000FF;
     if ( mpls_bos == 1 ) { // MPLS-to-IP copy
-      // Check the length of remained buffer for an ipv4 header without options.
       if ( length < sizeof( ipv4_header_t ) ) {
         return false;
       }
-
-      // Check the length of remained buffer for an ipv4 header with options.
       ipv4_header_t *ipv4_header = ptr;
-      if ( ipv4_header->ihl < 5 ) {
-        return false;
+      // Inner payload MAY BE IPv4 or IPv6, below checks the first byte for version.
+      if ( ipv4_header->version == 4 ) {
+        if ( ipv4_header->ihl < 5 ) {
+          return false;
+        }
+        if ( length < ( size_t ) ipv4_header->ihl * 4 ) {
+          return false;
+        }
+        ipv4_header->ttl = ttl;
+        // no tcp/udp/icmp checksum caculation here because tos field is not included in pseudo header
+        set_ipv4_checksum( ipv4_header );
       }
-      if ( length < ( size_t ) ipv4_header->ihl * 4 ) {
-        return false;
+      else if ( ipv4_header->version == 6 ) {
+        if ( length < sizeof( ipv6_header_t ) ) {
+          return false;
+        }
+        ipv6_header_t *ipv6_header = ptr;
+        ipv6_header->hoplimit = ttl;
       }
-
-      ipv4_header->ttl = ttl;
-      // no tcp/udp/icmp checksum caculation here because tos field is not included in pseudo header
-      set_ipv4_checksum( ipv4_header );
+      else {
+        warn( "MPLS inner payload was not ipv4 or ipv6 (%#x) while setting the ttl field.", info->format );
+        return true;
+      }
     }
     else { // MPLS-to-MPLS copy
       if ( length < sizeof( mpls_header_t ) ) {
@@ -1455,21 +1465,31 @@ execute_action_copy_ttl_out( buffer *frame, action *copy_ttl_out ) {
 
     uint8_t ttl = 0;
     if ( mpls_bos == 1 ) { // IP-to-MPLS copy
-      // Check the length of remained buffer for an ipv4 header without options.
       if ( length < sizeof( ipv4_header_t ) ) {
         return false;
       }
-
-      // Check the length of remained buffer for an ipv4 header with options.
       ipv4_header_t *ipv4_header = ptr;
-      if ( ipv4_header->ihl < 5 ) {
-        return false;
+      // Inner payload MAY BE IPv4 or IPv6, below checks the first byte for version.
+      if ( ipv4_header->version == 4 ) {
+        if ( ipv4_header->ihl < 5 ) {
+          return false;
+        }
+        if ( length < ( size_t ) ipv4_header->ihl * 4 ) {
+          return false;
+        }
+        ttl = ipv4_header->ttl;
       }
-      if ( length < ( size_t ) ipv4_header->ihl * 4 ) {
-        return false;
+      else if ( ipv4_header->version == 6 ) {
+        if ( length < sizeof( ipv6_header_t ) ) {
+          return false;
+        }
+        ipv6_header_t *ipv6_header = ptr;
+        ttl = ipv6_header->hoplimit;
       }
-
-      ttl = ipv4_header->ttl;
+      else {
+        warn( "MPLS inner payload was not ipv4 or ipv6 (%#x) while setting the ttl field.", info->format );
+        return true;
+      }
     }
     else { // MPLS-to-MPLS copy
       if ( length < sizeof( mpls_header_t ) ) {
