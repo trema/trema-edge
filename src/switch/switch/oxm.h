@@ -26,7 +26,7 @@ extern "C" {
 
 struct oxm {
   uint16_t type;
-  uint16_t length;
+  uint16_t length; // length includes oxm_match_header
   uint32_t ( *oxm_attr_field )( const bool attr, const enum oxm_ofb_match_fields oxm_type );
   uint16_t ( *match_length )( const match *match );
   uint16_t ( *pack )( oxm_match_header *hdr, const match *match );
