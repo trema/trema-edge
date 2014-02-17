@@ -259,6 +259,8 @@ bool packet_type_ipv4_tcp( const buffer *frame );
 bool packet_type_ipv6_tcp( const buffer *frame );
 bool packet_type_ipv4_udp( const buffer *frame );
 bool packet_type_ipv6_udp( const buffer *frame );
+bool packet_type_ipv4_sctp( const buffer *frame );
+bool packet_type_ipv6_sctp( const buffer *frame );
 bool packet_type_ipv4_etherip( const buffer *frame );
 
 bool packet_type_arp_request( const buffer *frame );
