@@ -1228,6 +1228,112 @@ dump_match( const match *m, void dump_function( const char *format, ... ) ) {
 }
 
 
+static void
+merge_match8( match8 *dst, const match8 *src ) {
+  if ( src->valid ) {
+    dst->value = src->value;
+    dst->mask = src->mask;
+    dst->valid = true;
+  }
+}
+
+
+static void
+merge_match16( match16 *dst, const match16 *src ) {
+  if ( src->valid ) {
+    dst->value = src->value;
+    dst->mask = src->mask;
+    dst->valid = true;
+  }
+}
+
+
+static void
+merge_match32( match32 *dst, const match32 *src ) {
+  if ( src->valid ) {
+    dst->value = src->value;
+    dst->mask = src->mask;
+    dst->valid = true;
+  }
+}
+
+
+static void
+merge_match64( match64 *dst, const match64 *src ) {
+  if ( src->valid ) {
+    dst->value = src->value;
+    dst->mask = src->mask;
+    dst->valid = true;
+  }
+}
+
+
+void
+merge_match( match *dst, const match *src) {
+  assert( dst != NULL );
+  assert( src != NULL );
+
+  merge_match16( &dst->arp_op, &src->arp_op );
+  for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
+    merge_match8( &( dst->arp_sha[ i ] ), &( src->arp_sha[ i ] ) );
+  }
+  merge_match32( &dst->arp_spa, &src->arp_spa );
+  for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
+    merge_match8( &( dst->arp_tha[ i ] ), &( src->arp_tha[ i ] ) );
+  }
+  merge_match32( &dst->arp_tpa, &src->arp_tpa );
+  merge_match32( &dst->in_phy_port, &src->in_phy_port );
+  merge_match32( &dst->in_port, &src->in_port );
+  for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
+    merge_match8( &( dst->eth_dst[ i ] ), &( src->eth_dst[ i ] ) );
+  }
+  for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
+    merge_match8( &( dst->eth_src[ i ] ), &( src->eth_src[ i ] ) );
+  }
+  merge_match16( &dst->eth_type, &src->eth_type );
+  merge_match8( &dst->icmpv4_code, &src->icmpv4_code );
+  merge_match8( &dst->icmpv4_type, &src->icmpv4_type );
+  merge_match8( &dst->icmpv6_code, &src->icmpv6_code );
+  merge_match8( &dst->icmpv6_type, &src->icmpv6_type );
+  merge_match8( &dst->ip_dscp, &src->ip_dscp );
+  merge_match8( &dst->ip_ecn, &src->ip_ecn );
+  merge_match8( &dst->ip_proto, &src->ip_proto );
+  merge_match32( &dst->ipv4_dst, &src->ipv4_dst );
+  merge_match32( &dst->ipv4_src, &src->ipv4_src );
+  for ( int i = 0; i < IPV6_ADDRLEN; i++ ) {
+    merge_match8( &( dst->ipv6_dst[ i ] ), &( src->ipv6_dst[ i ] ) );
+  }
+  merge_match16( &dst->ipv6_exthdr, &src->ipv6_exthdr );
+  merge_match32( &dst->ipv6_flabel, &src->ipv6_flabel );
+  for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
+    merge_match8( &( dst->ipv6_nd_sll[ i ] ), &( src->ipv6_nd_sll[ i ] ) );
+  }
+  for ( int i = 0; i < IPV6_ADDRLEN; i++ ) {
+    merge_match8( &( dst->ipv6_nd_target[ i ] ), &( src->ipv6_nd_target[ i ] ) );
+  }
+  for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
+    merge_match8( &( dst->ipv6_nd_tll[ i ] ), &( src->ipv6_nd_tll[ i ] ) );
+  }
+  for ( int i = 0; i < IPV6_ADDRLEN; i++ ) {
+    merge_match8( &( dst->ipv6_src[ i ] ), &( src->ipv6_src[ i ] ) );
+  }
+  merge_match64( &dst->metadata, &src->metadata );
+  merge_match8( &dst->mpls_bos, &src->mpls_bos );
+  merge_match32( &dst->mpls_label, &src->mpls_label );
+  merge_match8( &dst->mpls_tc, &src->mpls_tc );
+  merge_match16( &dst->sctp_dst, &src->sctp_dst );
+  merge_match16( &dst->sctp_src, &src->sctp_src );
+  merge_match16( &dst->tcp_dst, &src->tcp_dst );
+  merge_match16( &dst->tcp_src, &src->tcp_src );
+  merge_match64( &dst->tunnel_id, &src->tunnel_id );
+  merge_match16( &dst->udp_dst, &src->udp_dst );
+  merge_match16( &dst->udp_src, &src->udp_src );
+  merge_match8( &dst->vlan_pcp, &src->vlan_pcp );
+  merge_match16( &dst->vlan_vid, &src->vlan_vid );
+  merge_match32( &dst->pbb_isid, &src->pbb_isid );
+}
+
+
 /*
  * Local variables:
  * c-basic-offset: 2

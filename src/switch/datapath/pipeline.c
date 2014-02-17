@@ -140,6 +140,7 @@ process_received_frame( const switch_port *port, buffer *frame ) {
       error( "Failed to execute action set ( set = %p, frame = %p ).", &set, frame );
     }
   }
+  clear_action_set( &set );
 }
 
 

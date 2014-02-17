@@ -622,7 +622,12 @@ write_action_set( action_list *list, action_set *set ) {
 
       case OFPAT_SET_FIELD:
       {
-        set->set_field = act;
+        if ( set->set_field == NULL ) {
+          set->set_field = create_action_set_field( duplicate_match( act->match ) );
+        }
+        else{
+          merge_match( set->set_field->match, ( const match * ) act->match );
+        }
       }
       break;
 
