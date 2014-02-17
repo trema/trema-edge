@@ -520,6 +520,9 @@ clear_action_set( action_set *set ) {
   set->push_mpls = NULL;
   set->push_pbb = NULL;
   set->push_vlan = NULL;
+  if ( set->set_field != NULL ) {
+    delete_action( set->set_field );
+  }
   set->set_field = NULL;
   set->set_mpls_ttl = NULL;
   set->set_nw_ttl = NULL;
