@@ -429,11 +429,13 @@ void hton_oxm_match_pbb_isid( oxm_match_header *dst, const oxm_match_header *src
   assert( *src == OXM_OF_PBB_ISID || *src == OXM_OF_PBB_ISID_W );
 
   hton_oxm_match_header( dst, src );
-  if ( OXM_HASMASK( *src ) ) {
-    memcpy(( ( char * ) dst + sizeof( oxm_match_header ) ), ( ( const char * ) src + sizeof( oxm_match_header ) ), 6);
-  }
-  else {
-    memcpy(( ( char * ) dst + sizeof( oxm_match_header ) ), ( ( const char * ) src + sizeof( oxm_match_header ) ), 3);
+  if ( dst != src ) {
+    if ( OXM_HASMASK( *src ) ) {
+      memcpy(( ( char * ) dst + sizeof( oxm_match_header ) ), ( ( const char * ) src + sizeof( oxm_match_header ) ), 6);
+    }
+    else {
+      memcpy(( ( char * ) dst + sizeof( oxm_match_header ) ), ( ( const char * ) src + sizeof( oxm_match_header ) ), 3);
+    }
   }
 }
 
