@@ -1809,8 +1809,11 @@ get_checksum( uint16_t *pos, uint32_t size ) {
     csum += *pos;
   }
   if ( size == 1 ) {
-    uint8_t tmp[2] = { * ( uint8_t * ) pos, 0 };
-    csum += *( uint16_t * ) tmp;
+    union {
+     uint8_t bytes[ 2 ];
+     uint16_t num;
+    } tmp = { .bytes = { * ( uint8_t * ) pos, 0 } };
+    csum += tmp.num;
   }
   // ones' complement: sum up carry
   while ( csum & 0xffff0000 ) {

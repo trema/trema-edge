@@ -62,8 +62,11 @@ get_sum( uint16_t *pos, size_t size ) {
     sum += *pos;
   }
   if ( size == 1 ) {
-    uint8_t buf[2] = { *( uint8_t * ) pos, 0 };
-    sum += * ( uint16_t * ) buf;
+    union {
+      uint8_t buf[ 2 ];
+      uint16_t num;
+    } tail = { .buf = { *( uint8_t * ) pos, 0 } };
+    sum += tail.num;
   }
 
   return sum;
@@ -89,9 +92,12 @@ get_ipv4_pseudo_header_sum( ipv4_header_t *header, uint8_t protocol, size_t payl
 
   sum += get_sum( ( uint16_t * ) &header->saddr, sizeof( header->saddr ) );
   sum += get_sum( ( uint16_t * ) &header->daddr, sizeof( header->saddr ) );
-  uint8_t protocol_field[2] = { 0, protocol };
-  sum += * ( uint16_t * ) protocol_field;
-  sum += ( uint16_t ) htons( ( uint16_t ) payload_size );
+  union {
+    uint8_t buf[ 2 ];
+    uint16_t num;
+  } protocol_field = { .buf = { 0, protocol } };
+  sum += protocol_field.num;
+  sum += htons( payload_size );
 
   return sum;
 }
@@ -105,9 +111,12 @@ get_ipv6_pseudo_header_sum( ipv6_header_t *header, uint8_t protocol, size_t payl
 
   sum += get_sum( ( uint16_t * ) &header->saddr[ 0 ], sizeof( header->saddr ) );
   sum += get_sum( ( uint16_t * ) &header->daddr[ 0 ], sizeof( header->saddr ) );
-  uint8_t protocol_field[2] = { 0, protocol };
-  sum += * ( uint16_t * ) protocol_field;
-  sum += ( uint16_t ) htons( ( uint16_t ) payload_size );
+  union {
+    uint8_t buf[ 2 ];
+    uint16_t num;
+  } protocol_field = { .buf = { 0, protocol } };
+  sum += protocol_field.num;
+  sum += htons( payload_size );
 
   return sum;
 }
@@ -121,9 +130,12 @@ get_icmpv6_pseudo_header_sum( ipv6_header_t *header, size_t payload_size ) {
 
   sum += get_sum( ( uint16_t * ) &header->saddr[ 0 ], sizeof( header->saddr ) );
   sum += get_sum( ( uint16_t * ) &header->daddr[ 0 ], sizeof( header->saddr ) );
-  uint8_t protocol_field[2] = { 0, IPPROTO_ICMPV6 };
-  sum += * ( uint16_t * ) protocol_field;
-  sum += ( uint16_t ) htons( ( uint16_t ) payload_size );
+  union {
+    uint8_t buf[ 2 ];
+    uint16_t num;
+  } protocol_field = { .buf = { 0, IPPROTO_ICMPV6 } };
+  sum += protocol_field.num;
+  sum += htons( payload_size );
 
   return sum;
 }

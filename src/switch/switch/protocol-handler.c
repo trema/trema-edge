@@ -575,6 +575,7 @@ save_outstanding_request( struct protocol_ctrl *ctrl, const uint32_t transaction
      */
     if ( ctrl->nr_requests < MAX_OUTSTANDING_REQUESTS ) {
       if ( ( flags & OFPMPF_REQ_MORE ) == OFPMPF_REQ_MORE ) {
+        i = MAX_OUTSTANDING_REQUESTS - 1; // overwrite the last one
         ctrl->outstanding_requests[ i ].transaction_id = transaction_id;
         ctrl->outstanding_requests[ i ].type = type;
         ctrl->outstanding_requests[ i ].flags = flags;

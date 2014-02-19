@@ -8296,7 +8296,7 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
     append_oxm_match_eth_dst( match, ( ( packet_info * ) packet->user_data )->eth_macda, tmp_mac_mask );
   }
   if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_PBB_ISID ) ) ) {
-    uint32_t pbb_isid;
+    uint32_t pbb_isid = 0;
     if ( packet_type_eth_pbb( packet ) ) {
       pbb_isid = ( ( packet_info * ) packet->user_data )->pbb_isid;
       if ( ( pbb_isid & ( uint32_t ) ~PBB_ISID_MASK ) != 0 ) {
