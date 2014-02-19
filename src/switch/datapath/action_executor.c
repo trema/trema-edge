@@ -97,7 +97,7 @@ get_ipv4_pseudo_header_sum( ipv4_header_t *header, uint8_t protocol, size_t payl
     uint16_t num;
   } protocol_field = { .buf = { 0, protocol } };
   sum += protocol_field.num;
-  sum += htons( payload_size );
+  sum += htons( ( uint16_t ) payload_size );
 
   return sum;
 }
@@ -116,7 +116,7 @@ get_ipv6_pseudo_header_sum( ipv6_header_t *header, uint8_t protocol, size_t payl
     uint16_t num;
   } protocol_field = { .buf = { 0, protocol } };
   sum += protocol_field.num;
-  sum += htons( payload_size );
+  sum += htons( ( uint16_t ) payload_size );
 
   return sum;
 }
@@ -135,7 +135,7 @@ get_icmpv6_pseudo_header_sum( ipv6_header_t *header, size_t payload_size ) {
     uint16_t num;
   } protocol_field = { .buf = { 0, IPPROTO_ICMPV6 } };
   sum += protocol_field.num;
-  sum += htons( payload_size );
+  sum += htons( ( uint16_t ) payload_size );
 
   return sum;
 }
