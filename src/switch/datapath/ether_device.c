@@ -541,14 +541,34 @@ create_ether_device( const char *name, const size_t max_send_queue, const size_t
   size_t device_mtu = ( size_t ) mtu + MAX_L2_HEADER_LENGTH;
 #ifdef WITH_PCAP
   char errbuf[ PCAP_ERRBUF_SIZE ];
-  pcap_t *handle = pcap_open_live( name, ( int ) device_mtu, 1, 100, errbuf );
+  pcap_t *handle = pcap_create( name, errbuf );
   if( handle == NULL ){
     error( "Failed to open %s ( %s ).", name, errbuf );
     return NULL;
   }
+  if ( pcap_set_snaplen( handle, ( int ) device_mtu ) < 0 ) {
+    warn( "Failed to set MTU for %s.", name );
+  }
+  if ( pcap_set_promisc( handle, 1 ) < 0 ) {
+    warn( "Failed to set PROMISC for %s.", name );
+  }
+  if ( pcap_set_timeout( handle, 100 ) < 0 ) {
+    warn( "Failed to set timeout for %s.", name );
+  }
+  #ifdef USE_PCAP_IMMEDIATE_MODE // TPACKET_V3 do buffers
+  if ( pcap_set_immediate_mode( handle, 1 ) < 0 ) {
+    warn( "Failed to set immediate mode for %s.", name );
+  }
+  #endif // USE_PCAP_IMMEDIATE_MODE
   if ( pcap_setnonblock( handle, 1, errbuf ) == -1 ) {
     warn( "Failed to setnonblock %s ( %s ).", name, errbuf );
   }
+  if ( pcap_activate( handle ) < 0 ) {
+    error( "Failed to activate %s.", name );
+    pcap_close( handle );
+    return NULL;
+  }
+
   int fd = pcap_get_selectable_fd( handle );
 #else // WITH_PCAP
   int fd = socket( PF_PACKET, SOCK_RAW, htons( ETH_P_ALL ) );
