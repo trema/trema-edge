@@ -649,7 +649,7 @@ write_action_set( action_list *list, action_set *set ) {
       case OFPAT_EXPERIMENTER:
       {
         error( "OFPAT_EXPERIMENTER is not implemented." );
-        ret = OFPAT_EXPERIMENTER;
+        ret = ERROR_OFDPE_BAD_ACTION_BAD_TYPE;
       }
       break;
 
