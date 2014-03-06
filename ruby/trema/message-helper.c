@@ -49,11 +49,9 @@ send_controller_message( VALUE self, VALUE datapath_id, VALUE message ) {
   if ( !NIL_P( message ) ) {
     switch ( TYPE( message ) ) {
       case T_ARRAY: {
-          VALUE *each = RARRAY_PTR( message );
-          
           for ( int i = 0; i < RARRAY_LEN( message ); i++ ) {
-            if ( rb_respond_to( each[ i ], id_pack_msg ) ) {
-              rb_funcall( each[ i ], id_pack_msg, 1, datapath_id );
+            if ( rb_respond_to( rb_ary_entry( message, i ), id_pack_msg ) ) {
+              rb_funcall( rb_ary_entry( message, i ), id_pack_msg, 1, datapath_id );
             }
           }
       }
