@@ -124,16 +124,15 @@ _action_pack( void *dest, action_list **list  ) {
   if ( *list == NULL ) {
     return;
   }
-  dlist_element *item = get_first_element( *list );
-  action *action;
   struct ofp_action_header *ac_hdr = dest;
-  while ( item != NULL ) {
-    action = item->data;
+
+  dlist_element *sentinel = *list;
+  for ( dlist_element *item = sentinel->next; item != sentinel; item = item->next ) {
+    action *action = item->data;
     if ( action != NULL ) {
       action_tlv_pack( ac_hdr, action );
       ac_hdr = ( struct ofp_action_header * ) ( ( char * ) ac_hdr + ac_hdr->len );
     }
-    item = item->next;
   }
 }
 void ( *action_pack )( void *dest, action_list **list ) = _action_pack;
@@ -145,10 +144,9 @@ _action_list_length( action_list **list ) {
     return 0;
   }
   uint16_t length = 0;
-  dlist_element *item = get_first_element( *list );
-  action *action;
-  while ( item != NULL ) {
-    action = item->data;
+  dlist_element *sentinel = *list;
+  for ( dlist_element *item = sentinel->next; item != sentinel; item = item->next ) {
+    action *action = item->data;
     if ( action != NULL ) {
       length = ( uint16_t ) ( length + action_tlv_length_by_type( action->type ) );
       if ( action->type == OFPAT_SET_FIELD && action->match ) {
@@ -158,7 +156,6 @@ _action_list_length( action_list **list ) {
         length = ( uint16_t ) ( length + PADLEN_TO_64( length ) );
       }
     }
-    item = item->next;
   }
   return length;
 }

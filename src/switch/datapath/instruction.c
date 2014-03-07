@@ -104,6 +104,7 @@ free_instruction( instruction *instruction ) {
 
   if ( instruction->actions != NULL ) {
     delete_action_list( instruction->actions );
+    instruction->actions = NULL;
   }
 
   xfree( instruction );
@@ -525,7 +526,8 @@ update_reference_counters_in_instruction( instruction *instruction, counter_upda
     return;
   }
 
-  for ( dlist_element *a = get_first_element( instruction->actions ); a != NULL; a = a->next ) {
+  dlist_element *sentinel = instruction->actions;
+  for ( dlist_element *a = sentinel->next; a != sentinel; a = a->next ) {
     if ( a->data == NULL ) {
       continue;
     }

@@ -90,12 +90,11 @@ typedef struct {
  * hash_table. It should only be accessed via the following functions.
  */
 typedef struct {
+  dlist_element **buckets;
   unsigned int number_of_buckets;
   compare_function compare;
   hash_function hash;
   unsigned int length;
-  dlist_element **buckets;
-  dlist_element *nonempty_bucket_index;
 } hash_table;
 
 
@@ -106,10 +105,9 @@ typedef struct {
  * initialized with init_hash_iterator().
  */
 typedef struct {
-  dlist_element **buckets;
-  dlist_element *bucket_index;
-  dlist_element *next_bucket_index;
-  dlist_element *element;
+  void **hash_entries;
+  unsigned int pos;
+  unsigned int length;
 } hash_iterator;
 
 

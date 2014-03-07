@@ -60,7 +60,8 @@ alloc_flow_entry( match *match, instruction_set *instructions,
 
   if ( instructions->write_actions != NULL && instructions->write_actions->actions != NULL ) {
     action_list *actions = instructions->write_actions->actions;
-    for ( dlist_element *e = get_first_element( actions ); e != NULL; e = e->next ) {
+    dlist_element *sentinel = actions;
+    for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
       action *action = e->data;
       if ( action != NULL ) {
         action->entry = entry;
@@ -69,7 +70,8 @@ alloc_flow_entry( match *match, instruction_set *instructions,
   }
   if ( instructions->apply_actions != NULL && instructions->apply_actions->actions != NULL ) {
     action_list *actions = instructions->apply_actions->actions;
-    for ( dlist_element *e = get_first_element( actions ); e != NULL; e = e->next ) {
+    dlist_element *sentinel = actions;
+    for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
       action *action = e->data;
       if ( action != NULL ) {
         action->entry = entry;

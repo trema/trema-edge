@@ -32,19 +32,20 @@
  *
  * @code
  * // Create a doubly linked list ("alpha" <=> "bravo" <=> "charlie")
- * dlist_element *alpha = create_dlist();
+ * dlist_element *sentinel = create_dlist();
+ * dlist_element *alpha = insert_after_dlist( sentinel, "alpha" );
  * dlist_element *bravo = insert_after_dlist( alpha, "bravo" );
  * dlist_element *charlie = insert_after_dlist( bravo, "charlie" );
  *
  * // Find element "charlie" from the list
- * find_element( alpha, "charlie" ); // => charlie
- * find_element( alpha, "delta" ); // => NULL
+ * find_element( sentinel, "charlie" ); // => charlie
+ * find_element( sentinel, "delta" ); // => NULL
  *
  * // Delete element "bravo" from the list
- * delete_dlist_element( bravo ); // => true
+ * delete_dlist_element( sentinel, bravo ); // => true
  *
  * // Delete entire list
- * delete_dlist( alpha );
+ * delete_dlist( sentinel );
  * @endcode
  */
 
@@ -68,13 +69,13 @@ typedef struct dlist_element {
 
 
 dlist_element *create_dlist( void );
-dlist_element *insert_before_dlist( dlist_element *element, void *data );
-dlist_element *insert_after_dlist( dlist_element *element, void *data );
-dlist_element *get_first_element( dlist_element *element );
-dlist_element *get_last_element( dlist_element *element );
-dlist_element *find_element( dlist_element *element, const void *data );
-bool delete_dlist_element( dlist_element *element );
-bool delete_dlist( dlist_element *element );
+dlist_element *insert_before_dlist( dlist_element *sentinel, dlist_element *element, void *data );
+dlist_element *insert_after_dlist( dlist_element *sentinel, dlist_element *element, void *data );
+dlist_element *get_first_element( dlist_element *sentinel );
+dlist_element *get_last_element( dlist_element *sentinel );
+dlist_element *find_element( dlist_element *sentinel, const void *data );
+bool delete_dlist_element( dlist_element *sentinel, dlist_element *element );
+bool delete_dlist( dlist_element *sentinel );
 
 
 #endif // DOUBLY_LINKED_LIST_H

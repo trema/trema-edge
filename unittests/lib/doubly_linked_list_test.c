@@ -68,8 +68,8 @@ test_create_dlist() {
 
   assert_true( new_element != NULL );
   assert_true( new_element->data == NULL );
-  assert_true( new_element->next == NULL );
-  assert_true( new_element->prev == NULL );
+  assert_true( new_element->next == new_element );
+  assert_true( new_element->prev == new_element );
 
   delete_dlist( new_element );
 }
@@ -194,61 +194,67 @@ test_get_last_element_aborts_with_NULL_dlist() {
 // Remove "alpha" of "alpha" <-> "bravo" <-> "charlie"
 static void
 test_remove_first_element() {
+  char element_data1[] = "alpha";
   char element_data2[] = "bravo";
   char element_data3[] = "charlie";
 
-  dlist_element *alpha = create_dlist();
+  dlist_element *sentinel = create_dlist();
+  dlist_element *alpha = insert_after_dlist( sentinel, element_data1 );
   dlist_element *bravo = insert_after_dlist( alpha, element_data2 );
   dlist_element *charlie = insert_after_dlist( bravo, element_data3 );
 
-  assert_true( delete_dlist_element( alpha ) );
-  assert_true( bravo->prev == NULL );
+  assert_true( delete_dlist_element( sentinel, alpha ) );
+  assert_true( bravo->prev == sentinel );
   assert_true( bravo->next == charlie );
 
-  delete_dlist( bravo );
+  delete_dlist( sentinel );
 }
 
 
 // Remove "bravo" of "alpha" <-> "bravo" <-> "charlie"
 static void
 test_remove_middle_element() {
+  char element_data1[] = "alpha";
   char element_data2[] = "bravo";
   char element_data3[] = "charlie";
 
-  dlist_element *alpha = create_dlist();
+  dlist_element *sentinel = create_dlist();
+  dlist_element *alpha = insert_after_dlist( sentinel, element_data1 );
   dlist_element *bravo = insert_after_dlist( alpha, element_data2 );
   dlist_element *charlie = insert_after_dlist( bravo, element_data3 );
 
-  assert_true( delete_dlist_element( bravo ) );
+  assert_true( delete_dlist_element( sentinel, bravo ) );
   assert_true( alpha->next == charlie );
   assert_true( charlie->prev == alpha );
 
-  delete_dlist( alpha );
+  delete_dlist( sentinel );
 }
 
 
 // Remove "charlie" of "alpha" <-> "bravo" <-> "charlie"
 static void
 test_remove_last_element() {
+  char element_data1[] = "alpha";
   char element_data2[] = "bravo";
   char element_data3[] = "charlie";
 
-  dlist_element *alpha = create_dlist();
+  dlist_element *sentinel = create_dlist();
+  dlist_element *alpha = insert_after_dlist( sentinel, element_data1 );
   dlist_element *bravo = insert_after_dlist( alpha, element_data2 );
   dlist_element *charlie = insert_after_dlist( bravo, element_data3 );
 
-  assert_true( delete_dlist_element( charlie ) );
-  assert_true( bravo->next == NULL );
+  assert_true( delete_dlist_element( sentinel, charlie ) );
+  assert_true( bravo->next == sentinel );
   assert_true( bravo->prev == alpha );
 
-  delete_dlist( alpha );
+  delete_dlist( sentinel );
 }
 
 
 static void
 test_delete_dlist_element_aborts_with_NULL_dlist() {
   expect_string( mock_die, output, "element must not be NULL" );
-  expect_assert_failure( delete_dlist_element( NULL ) );
+  expect_assert_failure( delete_dlist_element( NULL, NULL ) );
 }
 
 

@@ -80,12 +80,9 @@ mock_debug( const char *format, ... ) {
 
 static timer_callback_info *
 find_timer_callback( void ( *callback )( void *user_data ) ) {
-  dlist_element *e;
-  timer_callback_info *cb;
-
-  cb = NULL;
-  for ( e = timer_callbacks->next; e; e = e->next ) {
-    cb = e->data;
+  dlist_element *sentinel = timer_callbacks;
+  for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
+    timer_callback_info * cb = e->data;
     if ( cb->function == callback ) {
       return cb;
     }

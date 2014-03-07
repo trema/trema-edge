@@ -114,7 +114,8 @@ validate_buckets( uint8_t type, bucket_list *buckets ) {
   assert( buckets != NULL );
 
   OFDPE ret = OFDPE_SUCCESS;
-  for ( dlist_element *element = get_first_element( buckets ); element != NULL; element = element->next ) {
+  dlist_element *sentinel = buckets;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     if ( element->data == NULL ) {
       continue;
     }
@@ -337,7 +338,9 @@ get_group_stats( const uint32_t group_id, group_stats **stats, uint32_t *n_group
     stat->duration_sec = ( uint32_t ) diff.tv_sec;
     stat->duration_nsec = ( uint32_t ) diff.tv_nsec;
     create_list( &stat->bucket_stats );
-    for ( dlist_element *b = get_first_element( entry->buckets ); b != NULL; b = b->next ) {
+
+    dlist_element *sentinel = entry->buckets;
+    for ( dlist_element *b = sentinel->next; b != sentinel; b = b->next ) {
       if ( b->data == NULL ) {
         continue;
       }

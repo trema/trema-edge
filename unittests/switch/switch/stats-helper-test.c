@@ -985,7 +985,7 @@ test_instructions( void **state ) {
   if ( e->data == NULL ) {
     e = ins_list->next;
   }
-  for (; e; e = e->next ) {
+  for (; e != ins_list; e = e->next ) {
     if ( e->data != NULL ) {
       instruction *ins = e->data;
       printf( "ins type( %u )\n", ins->type );
@@ -999,7 +999,7 @@ test_instructions( void **state ) {
   if ( e->data == NULL ) {
     e = ins_list->next;
   }
-  for (; e; e = e->next ) {
+  for (; e != ins_list; e = e->next ) {
     if ( e->data != NULL ) {
       instruction *ins = e->data;
       printf( "ad ins type( %u )\n", ins->type );
@@ -1011,7 +1011,7 @@ test_instructions( void **state ) {
   if ( e->data == NULL ) {
     e = new_ins_list->next;
   }
-  for (; e; e = e->next ) {
+  for (; e != new_ins_list; e = e->next ) {
     if ( e->data != NULL ) {
       instruction *ins = e->data;
       printf( "ins type( %u )\n", ins->type );

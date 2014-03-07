@@ -68,7 +68,8 @@ _finalize_timer() {
   debug( "Deleting timer callbacks ( timer_callbacks = %p ).", timer->timer_callbacks );
 
   if ( timer->timer_callbacks != NULL ) {
-    for ( dlist_element *e = timer->timer_callbacks->next; e; e = e->next ) {
+    dlist_element *sentinel = timer->timer_callbacks;
+    for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
       xfree( e->data );
     }
     delete_dlist( timer->timer_callbacks );
@@ -120,17 +121,19 @@ on_timer( timer_callback_info *callback, struct timespec *now ) {
 
 static void
 insert_timer_callback( struct timer_info *timer, timer_callback_info *new_cb ) {
+  assert( timer != NULL );
   assert( timer->timer_callbacks != NULL );
-  dlist_element *element, *last = timer->timer_callbacks;
-  for ( element = timer->timer_callbacks->next; element != NULL; element = element->next ) {
+
+  // note: new_cb is likely to be the last element
+  dlist_element *sentinel = timer->timer_callbacks;
+  for ( dlist_element *element = sentinel->prev; element != sentinel; element = element->prev ) {
     timer_callback_info *cb = element->data;
-    if ( TIMESPEC_LESS_THEN( &new_cb->expires_at, &cb->expires_at ) ) {
-      insert_before_dlist( element, new_cb );
+    if ( TIMESPEC_LESS_THEN( &cb->expires_at, &new_cb->expires_at ) ) {
+      insert_after_dlist( sentinel, element, new_cb );
       return;
     }
-    last = element;
   }
-  insert_after_dlist( last, new_cb );
+  insert_after_dlist( sentinel, sentinel, new_cb );
 }
 
 
@@ -149,33 +152,32 @@ _execute_timer_events( int *next_timeout_usec ) {
   assert( clock_gettime( CLOCK_MONOTONIC, &now ) == 0 );
   assert( timer->timer_callbacks != NULL );
 
-  timer_callback_info *callback = NULL;
-  dlist_element *element_next = NULL;
-  for ( dlist_element *element = timer->timer_callbacks->next; element; element = element_next ) {
+  dlist_element *element_next, *sentinel = timer->timer_callbacks;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element_next ) {
     element_next = element->next;
-    callback = element->data;
+    timer_callback_info *callback = element->data;
     if ( callback->function != NULL ) {
       if ( TIMESPEC_LESS_THEN( &now, &callback->expires_at ) ) {
         break;
       }
       on_timer( callback, &now );
     }
-    delete_dlist_element( element );
+    delete_dlist_element( sentinel, element );
     if ( callback->function == NULL ) {
       xfree( callback );
     }
-    else {
+    else { // callback interval is set
       insert_timer_callback( timer, callback );
     }
   }
 
   struct timespec max_timeout = { ( INT_MAX / 1000000 ), 0 };
   struct timespec min_timeout = { 0, 0 };
-  if ( timer->timer_callbacks->next == NULL ) {
+  if ( timer->timer_callbacks->next == timer->timer_callbacks ) {
     TIMESPEC_TO_MICROSECONDS( &max_timeout, next_timeout_usec );
   }
   else {
-    callback = timer->timer_callbacks->next->data;
+    timer_callback_info *callback = timer->timer_callbacks->next->data;
     if ( TIMESPEC_LESS_THEN( &callback->expires_at, &now ) ) {
       TIMESPEC_TO_MICROSECONDS( &min_timeout, next_timeout_usec );
     }
@@ -277,7 +279,8 @@ _delete_timer_event( timer_callback callback, void *user_data ) {
     return false;
   }
 
-  for ( dlist_element *e = timer->timer_callbacks->next; e; e = e->next ) {
+  dlist_element *sentinel = timer->timer_callbacks;
+  for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
     timer_callback_info *cb = e->data;
     if ( cb->function == callback && cb->user_data == user_data ) {
       debug( "Deleting a callback ( callback = %p, user_data = %p ).", callback, user_data );
