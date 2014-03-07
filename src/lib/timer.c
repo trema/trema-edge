@@ -60,6 +60,7 @@ typedef struct timer_callback_info {
 } timer_callback_info;
 
 
+// XXX: thread-safety issue; This is the major difference with safe_timer.c
 static dlist_element *timer_callbacks = NULL;
 
 
@@ -80,12 +81,11 @@ bool ( *init_timer )( void ) = _init_timer;
 
 bool
 _finalize_timer() {
-  dlist_element *e;
-
   debug( "Deleting timer callbacks ( timer_callbacks = %p ).", timer_callbacks );
 
   if ( timer_callbacks != NULL ) {
-    for ( e = timer_callbacks->next; e; e = e->next ) {
+    dlist_element *sentinel = timer_callbacks;
+    for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
       xfree( e->data );
     }
     delete_dlist( timer_callbacks );
@@ -172,16 +172,16 @@ on_timer( timer_callback_info *callback, struct timespec *now ) {
 static void
 insert_timer_callback( timer_callback_info *new_cb ) {
   assert( timer_callbacks != NULL );
-  dlist_element *element, *last = timer_callbacks;
-  for ( element = timer_callbacks->next; element != NULL; element = element->next ) {
-    timer_callback_info *cb = element->data;
-    if ( TIMESPEC_LESS_THEN( &new_cb->expires_at, &cb->expires_at ) ) {
-      insert_before_dlist( element, new_cb );
+
+  dlist_element *sentinel = timer_callbacks;
+  for ( dlist_element *e = sentinel->prev; e != sentinel; e = e->prev ) {
+    timer_callback_info *cb = e->data;
+    if ( TIMESPEC_LESS_THEN( &cb->expires_at, &new_cb->expires_at ) ) {
+      insert_after_dlist( timer_callbacks, e, new_cb );
       return;
     }
-    last = element;
   }
-  insert_after_dlist( last, new_cb );
+  insert_after_dlist( timer_callbacks, timer_callbacks, new_cb );
 }
 
 
@@ -190,14 +190,14 @@ _execute_timer_events( int *next_timeout_usec ) {
   assert( next_timeout_usec != NULL );
   struct timespec now;
   timer_callback_info *callback;
-  dlist_element *element, *element_next;
 
   debug( "Executing timer events ( timer_callbacks = %p ).", timer_callbacks );
 
   assert( clock_gettime( CLOCK_MONOTONIC, &now ) == 0 );
   assert( timer_callbacks != NULL );
 
-  for ( element = timer_callbacks->next; element; element = element_next ) {
+  dlist_element *element_next, *sentinel = timer_callbacks;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element_next ) {
     element_next = element->next;
     callback = element->data;
     if ( callback->function != NULL ) {
@@ -206,7 +206,7 @@ _execute_timer_events( int *next_timeout_usec ) {
       }
       on_timer( callback, &now );
     }
-    delete_dlist_element( element );
+    delete_dlist_element( sentinel, element );
     if ( callback->function == NULL ) {
       xfree( callback );
     }
@@ -319,7 +319,7 @@ _delete_timer_event( timer_callback callback, void *user_data ) {
     return false;
   }
 
-  for ( e = timer_callbacks->next; e; e = e->next ) {
+  for ( e = timer_callbacks->next; e != timer_callbacks; e = e->next ) {
     timer_callback_info *cb = e->data;
     if ( cb->function == callback && cb->user_data == user_data ) {
       debug( "Deleting a callback ( callback = %p, user_data = %p ).", callback, user_data );

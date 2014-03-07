@@ -223,12 +223,14 @@ void
 delete_action_list( action_list *list ) {
   assert( list != NULL );
 
-  for ( dlist_element *element = get_first_element( list ); element != NULL; element = element->next ) {
+  dlist_element *sentinel = list;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     action *action = element->data;
     if ( action != NULL ) {
       delete_action( action );
     }
   }
+
   delete_dlist( list );
 }
 
@@ -261,7 +263,7 @@ append_action( action_list *list, action *action ) {
       return ERROR_OFDPE_BAD_ACTION_BAD_TYPE;
   }
 
-  list = insert_before_dlist( list, ( void * ) action );
+  list = insert_before_dlist( list, list, ( void * ) action );
   if ( list == NULL ) {
     return ERROR_APPEND_TO_LIST;
   }
@@ -274,13 +276,13 @@ OFDPE
 remove_action( action_list *list, action *action ) {
   assert( list != NULL );
   assert( action != NULL );
-  
+
   dlist_element *element = find_element( get_first_element( list ), action );
   if ( element == NULL ) {
     return ERROR_NOT_FOUND;
   }
   delete_action( action );
-  delete_dlist_element( element );
+  delete_dlist_element( list, element );
 
   return OFDPE_SUCCESS;
 }
@@ -307,11 +309,12 @@ duplicate_action_list( action_list *list ) {
   }
 
   dlist_element *dst = create_action_list();
-  for ( dlist_element *element = get_first_element( list ); element != NULL; element = element->next ) {
+  dlist_element *sentinel = list;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     action *src_action = element->data;
     if ( src_action != NULL ) {
       action *dst_action = duplicate_action( src_action );
-      insert_before_dlist( dst, dst_action );
+      insert_before_dlist( dst, dst, dst_action );
     }
   }
 
@@ -336,7 +339,8 @@ validate_action_set( action_list *list ) {
   bool output = false;
 
   bool ret = true;
-  for ( dlist_element *element = get_first_element( list ); element != NULL; element = element->next ) {
+  dlist_element *sentinel = list;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     action *action = element->data;
     if ( action == NULL ) {
       continue;
@@ -474,7 +478,8 @@ validate_action_list( action_list *list ) {
   }
 
   OFDPE ret = OFDPE_SUCCESS;
-  for ( dlist_element *element = get_first_element( list ); element != NULL; element = element->next ) {
+  dlist_element *sentinel = list;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     if ( element->data == NULL ) {
       continue;
     }
@@ -536,7 +541,8 @@ write_action_set( action_list *list, action_set *set ) {
   assert( set != NULL );
 
   OFDPE ret = OFDPE_SUCCESS;
-  for ( dlist_element *element = get_first_element( list ); element != NULL; element = element->next ) {
+  dlist_element *sentinel = list;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     if ( element->data == NULL ) {
       continue;
     }
@@ -821,7 +827,8 @@ void
 dump_action_list( action_list *list, void dump_function( const char *format, ... ) ) {
   assert( dump_function != NULL );
 
-  for ( dlist_element *e = get_first_element( list ); e != NULL; e = e->next ) {
+  dlist_element *sentinel = list;
+  for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
     if ( e->data == NULL ) {
       continue;
     }

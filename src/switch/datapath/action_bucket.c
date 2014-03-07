@@ -55,14 +55,14 @@ void
 delete_action_bucket_list( bucket_list *list ) {
   assert( list != NULL );
 
-  dlist_element *element = get_first_element( list );
-  while ( element != NULL ) {
+  dlist_element *sentinel = list;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     bucket *b = element->data;
     if ( b != NULL ) {
       delete_action_bucket( b );
     }
-    element = element->next;
   }
+
   delete_dlist( list );
 }
 
@@ -72,7 +72,7 @@ append_action_bucket( bucket_list *list, bucket *bucket ) {
   assert( list != NULL );
   assert( bucket != NULL );
 
-  list = insert_before_dlist( list, ( void * ) bucket );
+  list = insert_before_dlist( list, list, ( void * ) bucket );
   if ( list == NULL ) {
     return ERROR_NO_MEMORY;
   }
@@ -91,7 +91,7 @@ remove_action_bucket( bucket_list *list, bucket *bucket ) {
     return ERROR_NOT_FOUND;
   }
   delete_action_bucket( bucket );
-  delete_dlist_element( elemenet );
+  delete_dlist_element( list, elemenet );
 
   return OFDPE_SUCCESS;
 }
@@ -110,8 +110,9 @@ validate_action_bucket_list( bucket_list *buckets ) {
   assert( buckets != NULL );
 
   OFDPE ret = OFDPE_SUCCESS;
-  dlist_element *element = get_first_element( buckets );
-  while ( element != NULL ) {
+
+  dlist_element *sentinel = buckets;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     bucket *b = element->data;
     if ( b != NULL ) {
       ret = validate_action_bucket( b );
@@ -119,7 +120,6 @@ validate_action_bucket_list( bucket_list *buckets ) {
         break;
       }
     }
-    element = element->next;
   }
 
   return ret;
@@ -132,12 +132,11 @@ get_bucket_count( bucket_list *list ) {
 
   uint32_t count = 0;
 
-  dlist_element *element = get_first_element ( list );
-  while ( element != NULL ) {
+  dlist_element *sentinel = list;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     if ( element->data != NULL ) {
       count++;
     }
-    element = element->next;
   }
 
   return count;
@@ -165,7 +164,8 @@ duplicate_bucket_list( bucket_list *buckets ) {
   }
 
   bucket_list *duplicated = create_action_bucket_list();
-  for ( dlist_element *e = get_first_element( buckets ); e != NULL; e = e->next ) {
+  dlist_element *sentinel = buckets;
+  for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
     if ( e->data == NULL ) {
       continue;
     }
@@ -198,7 +198,8 @@ dump_buckets( bucket_list *buckets, void dump_function( const char *format, ... 
   assert( buckets != NULL );
   assert( dump_function != NULL );
 
-  for ( dlist_element *element = get_first_element( buckets ); element != NULL; element = element->next ) {
+  dlist_element *sentinel = buckets;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     if ( element->data == NULL ) {
       continue;
     }

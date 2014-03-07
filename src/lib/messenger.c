@@ -423,18 +423,21 @@ delete_receive_queue( void *service_name, void *_rq, void *user_data ) {
 
   receive_queue *rq = _rq;
   messenger_socket *client_socket;
-  dlist_element *element;
+  dlist_element *sentinel;
   receive_queue_callback *cb;
 
   assert( rq != NULL );
-  for ( element = rq->message_callbacks->next; element; element = element->next ) {
+
+  sentinel = rq->message_callbacks;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     cb = element->data;
     debug( "Deleting a callback ( function = %p, message_type = %#x ).", cb->function, cb->message_type );
     xfree( cb );
   }
   delete_dlist( rq->message_callbacks );
 
-  for ( element = rq->client_sockets->next; element; element = element->next ) {
+  sentinel = rq->client_sockets;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     client_socket = element->data;
 
     debug( "Closing a client socket ( fd = %d ).", client_socket->fd );
@@ -622,7 +625,7 @@ add_message_callback( const char *service_name, uint8_t message_type, void *call
   receive_queue_callback *cb = xmalloc( sizeof( receive_queue_callback ) );
   cb->message_type = message_type;
   cb->function = callback;
-  insert_after_dlist( rq->message_callbacks, cb );
+  insert_after_dlist( rq->message_callbacks, rq->message_callbacks, cb );
 
   return true;
 }
@@ -685,13 +688,13 @@ delete_message_callback( const char *service_name, uint8_t message_type, void ( 
   receive_queue_callback *cb;
 
   if ( NULL != rq ) {
-    dlist_element *e;
-    for ( e = rq->message_callbacks->next; e; e = e->next ) {
+    dlist_element *sentinel = rq->message_callbacks;
+    for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
       cb = e->data;
       if ( ( cb->function == callback ) && ( cb->message_type == message_type ) ) {
         debug( "Deleting a callback ( message_type = %#x, callback = %p ).", message_type, callback );
         xfree( cb );
-        delete_dlist_element( e );
+        delete_dlist_element( sentinel, e );
         if ( rq->message_callbacks->next == NULL ) {
           debug( "No more callback for message_type = %#x.", message_type );
           delete_receive_queue( rq->service_name, rq, NULL );
@@ -758,8 +761,6 @@ _rename_message_received_callback( const char *old_service_name, const char *new
 
   receive_queue *old_rq = lookup_hash_entry( receive_queues, old_service_name );
   receive_queue *new_rq = lookup_hash_entry( receive_queues, new_service_name );
-  dlist_element *element;
-  receive_queue_callback *cb;
 
   if ( old_rq == NULL ) {
     error( "No receive queue for old service name ( %s ) found.", old_service_name );
@@ -770,8 +771,9 @@ _rename_message_received_callback( const char *old_service_name, const char *new
     return false;
   }
 
-  for ( element = old_rq->message_callbacks->next; element; element = element->next ) {
-    cb = element->data;
+  dlist_element *sentinel = old_rq->message_callbacks;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
+    receive_queue_callback *cb = element->data;
     add_message_callback( new_service_name, cb->message_type, cb->function );
   }
 
@@ -1250,7 +1252,7 @@ add_recv_queue_client_fd( receive_queue *rq, int fd ) {
 
   socket = xmalloc( sizeof( messenger_socket ) );
   socket->fd = fd;
-  insert_after_dlist( rq->client_sockets, socket );
+  insert_after_dlist( rq->client_sockets, rq->client_sockets, socket );
 
   set_fd_handler( fd, on_recv, rq, NULL, NULL );
   set_readable( fd, true );
@@ -1300,18 +1302,18 @@ del_recv_queue_client_fd( receive_queue *rq, int fd ) {
   assert( fd >= 0 );
 
   messenger_socket *socket;
-  dlist_element *element;
 
   debug( "Deleting a client fd from receive queue ( fd = %d, service_name = %s ).", fd, rq->service_name );
 
-  for ( element = rq->client_sockets->next; element; element = element->next ) {
+  dlist_element *sentinel = rq->client_sockets;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
     socket = element->data;
     if ( socket->fd == fd ) {
       set_readable( fd, false );
       delete_fd_handler( fd );
 
       debug( "Deleting fd ( %d ).", fd );
-      delete_dlist_element( element );
+      delete_dlist_element( sentinel, element );
       xfree( socket );
       return 1;
     }
@@ -1401,14 +1403,12 @@ static void
 call_message_callbacks( receive_queue *rq, const uint8_t message_type, const uint16_t tag, void *data, size_t len ) {
   assert( rq != NULL );
 
-  dlist_element *element;
-  receive_queue_callback *cb;
-
   debug( "Calling message callbacks ( service_name = %s, message_type = %#x, tag = %#x, data = %p, len = %u ).",
          rq->service_name, message_type, tag, data, len );
 
-  for ( element = rq->message_callbacks->next; element; element = element->next ) {
-    cb = element->data;
+  dlist_element *sentinel = rq->message_callbacks;
+  for ( dlist_element *element = sentinel->next; element != sentinel; element = element->next ) {
+    receive_queue_callback *cb = element->data;
     if ( cb->message_type != message_type ) {
       continue;
     }

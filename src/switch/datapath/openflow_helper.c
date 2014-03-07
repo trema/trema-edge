@@ -469,7 +469,8 @@ get_ofp_bucket_length( const bucket *bucket ) {
   size_t length = offsetof( struct ofp_bucket, actions );
 
   if ( bucket->actions != NULL ) {
-    for ( dlist_element *e = get_first_element( bucket->actions ); e != NULL; e = e->next ) {
+    dlist_element *sentinel = bucket->actions;
+    for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
       if ( e->data == NULL ) {
         continue;
       }
@@ -487,7 +488,8 @@ get_ofp_buckets_length( bucket_list *buckets ) {
 
   size_t length = 0;
 
-  for ( dlist_element *e = get_first_element( buckets ); e != NULL; e = e->next ) {
+  dlist_element *sentinel = buckets;
+  for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
     if ( e->data == NULL ) {
       continue;
     }
@@ -628,7 +630,8 @@ get_ofp_bucket( const bucket *bucket, struct ofp_bucket **translated, size_t *le
 
   bool ret = true;
   struct ofp_action_header *actions = ( *translated )->actions;
-  for ( dlist_element *e = get_first_element( bucket->actions ); e != NULL; e = e->next ) {
+  dlist_element *sentinel = bucket->actions;
+  for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
     if ( e->data == NULL ) {
       continue;
     }

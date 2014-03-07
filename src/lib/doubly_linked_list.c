@@ -24,41 +24,31 @@
 #include "wrapper.h"
 
 
-typedef struct private_dlist_element {
+typedef struct dlist_element_sentinel {
   dlist_element public;
   pthread_mutex_t *mutex;
-} private_dlist_element;
-
-
-static dlist_element *
-create_dlist_with_mutex( pthread_mutex_t *mutex ) {
-  private_dlist_element *element = xmalloc( sizeof( private_dlist_element ) );
-
-  element->public.data = NULL;
-  element->public.prev = NULL;
-  element->public.next = NULL;
-  element->mutex = mutex;
-
-  return ( dlist_element * ) element;
-}
+} dlist_element_sentinel;
 
 
 /**
  * Allocates space for one dlist_element.
  *
- * @return a pointer to the newly-allocated dlist_element.
+ * @return a pointer to the newly-allocated dlist_element, as a sentinel.
  */
 dlist_element *
 create_dlist() {
-  private_dlist_element *element = ( private_dlist_element * ) create_dlist_with_mutex( NULL );
+  dlist_element_sentinel *sentinel = ( dlist_element_sentinel * ) xmalloc( sizeof( dlist_element_sentinel ) );
+  sentinel->public.data = NULL;
+  sentinel->public.prev = ( dlist_element * ) sentinel;
+  sentinel->public.next = ( dlist_element * ) sentinel;
 
   pthread_mutexattr_t attr;
   pthread_mutexattr_init( &attr );
   pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE_NP );
-  element->mutex = xmalloc( sizeof( pthread_mutex_t ) );
-  pthread_mutex_init( element->mutex, &attr );
+  sentinel->mutex = xmalloc( sizeof( pthread_mutex_t ) );
+  pthread_mutex_init( sentinel->mutex, &attr );
 
-  return ( dlist_element * ) element;
+  return ( dlist_element * ) sentinel;
 }
 
 
@@ -70,15 +60,16 @@ create_dlist() {
  * @return a pointer to newly inserted element.
  */
 dlist_element *
-insert_before_dlist( dlist_element *element, void *data ) {
-  if ( element == NULL ) {
-    die( "element must not be NULL" );
+insert_before_dlist( dlist_element *sentinel, dlist_element *element, void *data ) {
+  if ( sentinel == NULL ) {
+    die( "sentinel element must not be NULL" );
   }
+  assert( data != NULL ); // only sentinel can have NULL data
 
-  pthread_mutex_lock( ( ( private_dlist_element * ) element )->mutex );
-  pthread_mutex_t *mutex = ( ( private_dlist_element * ) element )->mutex;
+  pthread_mutex_t *mutex = ( ( dlist_element_sentinel * ) sentinel )->mutex;
+  pthread_mutex_lock( mutex );
 
-  dlist_element *new_prev = create_dlist_with_mutex( mutex );
+  dlist_element *new_prev = ( dlist_element * ) xmalloc( sizeof( dlist_element ) );
 
   if ( element->prev ) {
     dlist_element *old_prev = element->prev;
@@ -104,15 +95,16 @@ insert_before_dlist( dlist_element *element, void *data ) {
  * @return a pointer to newly inserted element.
  */
 dlist_element *
-insert_after_dlist( dlist_element *element, void *data ) {
-  if ( element == NULL ) {
-    die( "element must not be NULL" );
+insert_after_dlist( dlist_element *sentinel, dlist_element *element, void *data ) {
+  if ( sentinel == NULL ) {
+    die( "sentinel element must not be NULL" );
   }
+  assert( data != NULL ); // only sentinel can have NULL data
 
-  pthread_mutex_lock( ( ( private_dlist_element * ) element )->mutex );
-  pthread_mutex_t *mutex = ( ( private_dlist_element * ) element )->mutex;
+  pthread_mutex_t *mutex = ( ( dlist_element_sentinel * ) sentinel )->mutex;
+  pthread_mutex_lock( mutex );
 
-  dlist_element *new_next = create_dlist_with_mutex( mutex );
+  dlist_element *new_next = ( dlist_element * ) xmalloc( sizeof( dlist_element ) );
 
   if ( element->next ) {
     dlist_element *old_next = element->next;
@@ -137,20 +129,11 @@ insert_after_dlist( dlist_element *element, void *data ) {
  * @return the first element in the list.
  */
 dlist_element *
-get_first_element( dlist_element *element ) {
-  if ( element == NULL ) {
-    die( "element must not be NULL" );
+get_first_element( dlist_element *sentinel ) {
+  if ( sentinel == NULL ) {
+    die( "sentinel element must not be NULL" );
   }
-
-  pthread_mutex_lock( ( ( private_dlist_element * ) element )->mutex );
-
-  while ( element->prev != NULL ) {
-    element = element->prev;
-  }
-
-  pthread_mutex_unlock( ( ( private_dlist_element * ) element )->mutex );
-
-  return element;
+  return sentinel->next;
 }
 
 
@@ -161,20 +144,11 @@ get_first_element( dlist_element *element ) {
  * @return the last element in the list.
  */
 dlist_element *
-get_last_element( dlist_element *element ) {
-  if ( element == NULL ) {
-    die( "element must not be NULL" );
+get_last_element( dlist_element *sentinel ) {
+  if ( sentinel == NULL ) {
+    die( "sentinel element must not be NULL" );
   }
-
-  pthread_mutex_lock( ( ( private_dlist_element * ) element )->mutex );
-
-  while ( element->next != NULL ) {
-    element = element->next;
-  }
-
-  pthread_mutex_unlock( ( ( private_dlist_element * ) element )->mutex );
-
-  return element;
+  return sentinel->prev;
 }
 
 
@@ -186,32 +160,33 @@ get_last_element( dlist_element *element ) {
  * @return the found list element, or NULL if it is not found.
  */
 dlist_element *
-find_element( dlist_element *element, const void *data ) {
-  if ( element == NULL ) {
-    die( "element must not be NULL" );
+find_element( dlist_element *sentinel, const void *data ) {
+  if ( sentinel == NULL ) {
+    die( "sentinel element must not be NULL" );
   }
 
-  pthread_mutex_lock( ( ( private_dlist_element * ) element )->mutex );
+  pthread_mutex_lock( ( ( dlist_element_sentinel * ) sentinel )->mutex );
 
   dlist_element *e = NULL;
-  for ( e = element; e; e = e->next ) {
+  for ( e = sentinel->next; e != sentinel; e = e->next ) {
     if ( e->data == data ) {
-      pthread_mutex_unlock( ( ( private_dlist_element * ) element )->mutex );
-      return e;
-    }
-  }
-  for ( e = element->prev; e; e = e->prev ) {
-    if ( e->data == data ) {
-      pthread_mutex_unlock( ( ( private_dlist_element * ) element )->mutex );
+      pthread_mutex_unlock( ( ( dlist_element_sentinel * ) sentinel )->mutex );
       return e;
     }
   }
 
-  pthread_mutex_unlock( ( ( private_dlist_element * ) element )->mutex );
+  pthread_mutex_unlock( ( ( dlist_element_sentinel * ) sentinel )->mutex );
 
   return NULL;
 }
 
+
+static void
+_delete_dlist_element( dlist_element *element ) {
+  element->prev->next = element->next;
+  element->next->prev = element->prev;
+  xfree( element );
+}
 
 /**
  * Removes an element from a list. If two elements contain the same
@@ -222,21 +197,15 @@ find_element( dlist_element *element, const void *data ) {
  * @return true on success; false otherwise.
  */
 bool
-delete_dlist_element( dlist_element *element ) {
-  if ( element == NULL ) {
+delete_dlist_element( dlist_element *sentinel, dlist_element *element ) {
+  if ( sentinel == NULL || element == NULL ) {
     die( "element must not be NULL" );
   }
 
-  pthread_mutex_lock( ( ( private_dlist_element * ) element )->mutex );
-  pthread_mutex_t *mutex = ( ( private_dlist_element * ) element )->mutex;
+  pthread_mutex_t *mutex = ( ( dlist_element_sentinel * ) sentinel )->mutex;
+  pthread_mutex_lock( mutex );
 
-  if ( element->prev != NULL ) {
-    element->prev->next = element->next;
-  }
-  if ( element->next != NULL ) {
-    element->next->prev = element->prev;
-  }
-  xfree( ( private_dlist_element * ) element );
+  _delete_dlist_element( element );
 
   pthread_mutex_unlock( mutex );
 
@@ -251,28 +220,24 @@ delete_dlist_element( dlist_element *element ) {
  * @return true on success; false otherwise.
  */
 bool
-delete_dlist( dlist_element *element ) {
-  if ( element == NULL ) {
-    die( "element must not be NULL" );
+delete_dlist( dlist_element *sentinel ) {
+  if ( sentinel == NULL ) {
+    die( "sentinel element must not be NULL" );
   }
 
-  pthread_mutex_lock( ( ( private_dlist_element * ) element )->mutex );
-  pthread_mutex_t *mutex = ( ( private_dlist_element * ) element )->mutex;
+  pthread_mutex_t *mutex = ( ( dlist_element_sentinel * ) sentinel )->mutex;
+  pthread_mutex_lock( mutex );
 
-  dlist_element *e = NULL;
-
-  while ( element->prev != NULL ) {
-    element = element->prev;
+  dlist_element *e_next;
+  for ( dlist_element *e = sentinel->next; e != sentinel; e = e_next ) {
+    e_next = e->next;
+    _delete_dlist_element( e );
   }
-
-  for ( e = element; e != NULL; ) {
-    dlist_element *delete_me = e;
-    e = e->next;
-    xfree( ( private_dlist_element * ) delete_me );
-  }
+  xfree( sentinel );
 
   pthread_mutex_unlock( mutex );
-  xfree( mutex );
+  pthread_mutex_destroy( mutex );
+  xfree(mutex);
 
   return true;
 }

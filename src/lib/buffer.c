@@ -133,7 +133,7 @@ buffer *
 alloc_buffer_with_length( size_t length ) {
   assert( length != 0 );
 
-  private_buffer *new_buf = xcalloc( 1, sizeof( private_buffer ) );
+  private_buffer *new_buf = xmalloc( sizeof( private_buffer ) );
   new_buf->public.data = xmalloc( length );
   new_buf->public.length = 0;
   new_buf->public.user_data = NULL;

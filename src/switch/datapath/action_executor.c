@@ -2076,18 +2076,16 @@ execute_group_select( buffer *frame, bucket_list *buckets ) {
   create_list( &candidates );
   uint32_t candidates_weight_total = 0;
 
-  dlist_element *bucket_element = get_first_element( buckets );
-
-  while ( bucket_element != NULL ) {
-    bucket *b = bucket_element->data;
+  dlist_element *sentinel = buckets;
+  for ( dlist_element *e = sentinel->next; e != sentinel; e = e->next ) {
+    bucket *b = e->data;
     if ( b != NULL ) {
       if ( !check_bucket( b->actions ) ) {
         continue;
       }
       candidates_weight_total += b->weight;
-      append_to_tail( &candidates, bucket_element );
+      append_to_tail( &candidates, b );
     }
-    bucket_element = bucket_element->next;
   }
 
   uint32_t length_of_candidates = list_length_of( candidates );
@@ -2104,20 +2102,18 @@ execute_group_select( buffer *frame, bucket_list *buckets ) {
 
   uint32_t candidate_index = 0;
   list_element *target = candidates;
-  for ( uint32_t i = 0; target != NULL && i < length_of_candidates; i++ ) {
+  for ( ; target != NULL ; target = target->next ) {
     bucket *b = target->data;
     if ( candidate_weight < b->weight ) {
       break;
     }
     candidate_index++;
     candidate_weight -= b->weight;
-    target = target->next;
   }
   debug( "execute group select. bucket=%u(/%u)", candidate_index, length_of_candidates );
 
   if ( target != NULL ) {
-    bucket_element = target->data;
-    bucket *b = bucket_element->data;
+    bucket *b = target->data;
     if ( b != NULL ) {
       b->packet_count++;
       b->byte_count += frame->length;
@@ -2298,7 +2294,7 @@ execute_action_list( action_list *list, buffer *frame ) {
 
   debug( "Executing action list ( list = %p, frame = %p ).", list, frame );
 
-  for ( action_list *element = get_first_element( list ); element != NULL; element = element->next ) {
+  for ( action_list *element = get_first_element( list ); element != list; element = element->next ) {
     action *action = element->data;
     if ( action == NULL ) {
       continue;
