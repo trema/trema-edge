@@ -210,41 +210,35 @@ create_error_experimenter( const uint32_t transaction_id, const uint16_t type,
 
 
 buffer *
-create_hello_elem_versionbitmap( const uint32_t transaction_id, const uint32_t ofp_versions[],
-  const uint16_t nr_versions ) {
-  uint32_t i;
-  uint32_t nr_bitmaps = 0;
+create_hello_elem_versionbitmap( const uint8_t *ofp_versions, const uint16_t n_versions ) {
+  assert( ofp_versions != NULL );
+  assert( n_versions > 0 );
 
-  // figure out how many bitmaps necessary to store the ofp_versions
-  for ( i = 0; i < nr_versions; i++ ) {
-    assert( ofp_versions[ i ] != 0 );
-    if ( nr_bitmaps < ofp_versions[ i ] / 32 ) {
-      nr_bitmaps = ofp_versions[ i ] / 32;
+  int max_version = 0;
+  for ( int i = 0; i < n_versions; i++ ) {
+    if ( ofp_versions[ i ] > max_version ) {
+      max_version = ofp_versions[ i ];
     }
   }
-  if ( !nr_bitmaps ) {
-    nr_bitmaps = 1;
+  size_t n_bitmaps = ( size_t ) ( max_version / 32 + 1 );
+
+  uint16_t element_length = ( uint16_t ) ( offsetof( struct ofp_hello_elem_versionbitmap, bitmaps ) + n_bitmaps * sizeof( uint32_t ) );
+
+  size_t buffer_length = ( size_t ) element_length + PADLEN_TO_64( element_length );
+  buffer *buf = alloc_buffer_with_length( buffer_length );
+  struct ofp_hello_elem_versionbitmap *element = append_back_buffer( buf, buffer_length );
+  memset( element, 0, buffer_length );
+
+  element->type = htons( OFPHET_VERSIONBITMAP );
+  element->length = htons( element_length );
+
+  for ( int i = 0; i < n_versions; i++ ) {
+    int index = ofp_versions[ i ] / 32;
+    uint32_t bit = ( uint32_t ) 1 << ( ofp_versions[ i ] - index * 32 );
+    element->bitmaps[ index ] |= htonl( bit );
   }
 
-  buffer *hello_buf = create_header( transaction_id, OFPT_HELLO,
-    ( uint16_t ) ( sizeof( struct ofp_hello ) + sizeof( struct ofp_hello_elem_versionbitmap )
-    + nr_bitmaps * offsetof( struct ofp_hello_elem_versionbitmap, bitmaps ) ) );
-
-  assert( hello_buf != NULL );
-  struct ofp_hello *hello = ( struct ofp_hello * ) hello_buf->data;
-  struct ofp_hello_elem_versionbitmap *hello_elem_versionbitmap = ( struct ofp_hello_elem_versionbitmap * ) hello->elements;
-  hello_elem_versionbitmap->type = htons( OFPHET_VERSIONBITMAP );
-  hello_elem_versionbitmap->length = htons( ( uint16_t ) ( sizeof( struct ofp_hello_elem_header )
-          + nr_bitmaps * offsetof( struct ofp_hello_elem_versionbitmap, bitmaps ) ) );
-
-#define BIT_SET( bit ) ( ( ( uint32_t ) 1 ) << ( bit ) )
-#define SEGMENT( x ) ( ( x ) / 32 )
-
-  for ( i = 0; i < nr_versions; i++ ) {
-    hello_elem_versionbitmap->bitmaps[ SEGMENT( ofp_versions[ i ] ) ] |= htonl( BIT_SET( ofp_versions[ i ] ) );
-  }
-
-  return hello_buf;
+  return buf;
 }
 
 
@@ -262,7 +256,7 @@ create_hello( const uint32_t transaction_id, const buffer *elements ) {
   assert( hello != NULL );
 
   if ( elements_length > 0 ) {
-    memcpy( ( char * ) hello->data + sizeof( struct ofp_hello ), elements->data, elements_length );
+    memcpy( ( char * ) hello->data + offsetof( struct ofp_hello, elements ), elements->data, elements_length );
   }
 
   return hello;
@@ -910,7 +904,7 @@ create_table_mod( const uint32_t transaction_id, const uint8_t table_id, uint32_
 
 static buffer *
 create_multipart_request( const uint32_t transaction_id, const uint16_t type,
-                      const uint16_t length, const uint16_t flags ) {
+                          const uint16_t length, const uint16_t flags ) {
   buffer *buffer;
   struct ofp_multipart_request *multipart_request;
 
@@ -1108,7 +1102,7 @@ create_group_desc_multipart_request( const uint32_t transaction_id, const uint16
   debug( "Creating a group desc multipart request ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   return create_multipart_request( transaction_id, OFPMP_GROUP_DESC,
-                               sizeof( struct ofp_multipart_request ), flags );
+                                   sizeof( struct ofp_multipart_request ), flags );
 }
 
 
@@ -1117,7 +1111,7 @@ create_group_features_multipart_request( const uint32_t transaction_id, const ui
   debug( "Creating a group features multipart request ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   return create_multipart_request( transaction_id, OFPMP_GROUP_FEATURES,
-                               sizeof( struct ofp_multipart_request ), flags );
+                                   sizeof( struct ofp_multipart_request ), flags );
 }
 
 
@@ -1235,7 +1229,7 @@ create_port_desc_multipart_request( const uint32_t transaction_id, const uint16_
   debug( "Creating a port desc multipart request ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   return create_multipart_request( transaction_id, OFPMP_PORT_DESC,
-                               sizeof( struct ofp_multipart_request ), flags );
+                                   sizeof( struct ofp_multipart_request ), flags );
 }
 
 
@@ -1278,7 +1272,7 @@ create_experimenter_multipart_request( const uint32_t transaction_id, const uint
 
 static buffer *
 create_multipart_reply( const uint32_t transaction_id, const uint16_t type,
-                    const uint16_t length, const uint16_t flags ) {
+                        const uint16_t length, const uint16_t flags ) {
   buffer *buffer;
   struct ofp_multipart_reply *multipart_reply;
 
@@ -1298,11 +1292,11 @@ create_multipart_reply( const uint32_t transaction_id, const uint16_t type,
 
 buffer *
 create_desc_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                         const char mfr_desc[ DESC_STR_LEN ],
-                         const char hw_desc[ DESC_STR_LEN ],
-                         const char sw_desc[ DESC_STR_LEN ],
-                         const char serial_num[ SERIAL_NUM_LEN ],
-                         const char dp_desc[ DESC_STR_LEN ] ) {
+                             const char mfr_desc[ DESC_STR_LEN ],
+                             const char hw_desc[ DESC_STR_LEN ],
+                             const char sw_desc[ DESC_STR_LEN ],
+                             const char serial_num[ SERIAL_NUM_LEN ],
+                             const char dp_desc[ DESC_STR_LEN ] ) {
   uint16_t length;
   buffer *buffer;
   struct ofp_multipart_reply *stats_reply;
@@ -1331,8 +1325,9 @@ create_desc_multipart_reply( const uint32_t transaction_id, const uint16_t flags
 
 buffer *
 create_flow_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                         const list_element *flows_stats_head ) {
+                             const list_element *flows_stats_head, int *more, int *offset ) {
   int n_flows = 0;
+  uint16_t msg_flags = flags;
   uint16_t length = 0;
   buffer *buffer;
   list_element *f = NULL;
@@ -1343,13 +1338,25 @@ create_flow_multipart_reply( const uint32_t transaction_id, const uint16_t flags
   debug( "Creating a flow multipart reply ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   if ( flows_stats_head != NULL ) {
+    int cur = 0;
+    while ( offset != NULL && cur < *offset ) {
+      flows_stats_head = flows_stats_head->next;
+      cur++;
+    }
     f = ( list_element * ) xmalloc( sizeof( list_element ) );
     memcpy( f, flows_stats_head, sizeof( list_element ) );
   }
 
   flow = f;
+  *more = 0;
   while ( flow != NULL ) {
     flow_stats = flow->data;
+    if ( offsetof( struct ofp_multipart_reply, body )
+         + length + flow_stats->length > ( size_t ) UINT16_MAX ) {
+      *more = 1;
+      msg_flags |= OFPMPF_REPLY_MORE;
+      break;
+    }
     length = ( uint16_t ) ( length + flow_stats->length );
     n_flows++;
     flow = flow->next;
@@ -1359,20 +1366,23 @@ create_flow_multipart_reply( const uint32_t transaction_id, const uint16_t flags
 
   length = ( uint16_t ) ( offsetof( struct ofp_multipart_reply, body ) + length );
 
-  buffer = create_multipart_reply( transaction_id, OFPMP_FLOW, length, flags );
+  buffer = create_multipart_reply( transaction_id, OFPMP_FLOW, length, msg_flags );
   assert( buffer != NULL );
 
   stats_reply = ( struct ofp_multipart_reply * ) buffer->data;
   flow_stats = ( struct ofp_flow_stats * ) stats_reply->body;
 
   flow = f;
-  while ( flow != NULL ) {
+  int n_data = 0;
+  while ( flow != NULL && n_data < n_flows ) {
     fs = ( struct ofp_flow_stats * ) flow->data;
     hton_flow_stats( flow_stats, fs );
     flow_stats = ( struct ofp_flow_stats * ) ( ( char * ) flow_stats + fs->length );
     flow = flow->next;
+    n_data++;
   }
 
+  *offset += n_flows;
   if ( f != NULL ) {
     xfree( f );
   }
@@ -1383,8 +1393,8 @@ create_flow_multipart_reply( const uint32_t transaction_id, const uint16_t flags
 
 buffer *
 create_aggregate_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                              const uint64_t packet_count, const uint64_t byte_count,
-                              const uint32_t flow_count ) {
+                                  const uint64_t packet_count, const uint64_t byte_count,
+                                  const uint32_t flow_count ) {
   uint16_t length;
   buffer *buffer;
   struct ofp_multipart_reply *stats_reply;
@@ -1412,8 +1422,9 @@ create_aggregate_multipart_reply( const uint32_t transaction_id, const uint16_t 
 
 buffer *
 create_table_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                          const list_element *table_stats_head ) {
+                              const list_element *table_stats_head, int *more, int *offset ) {
   uint16_t length;
+  uint16_t msg_flags = flags;
   uint16_t n_tables = 0;
   buffer *buffer;
   list_element *t = NULL;
@@ -1424,12 +1435,24 @@ create_table_multipart_reply( const uint32_t transaction_id, const uint16_t flag
   debug( "Creating a table multipart reply ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   if ( table_stats_head != NULL ) {
+    int cur = 0;
+    while ( offset != NULL && cur < *offset ) {
+      table_stats_head = table_stats_head->next;
+      cur++;
+    }
     t = ( list_element * ) xmalloc( sizeof( list_element ) );
     memcpy( t, table_stats_head, sizeof( list_element ) );
   }
 
   table = t;
+  *more = 0;
   while ( table != NULL ) {
+    if ( offsetof( struct ofp_multipart_reply, body )
+         + sizeof( struct ofp_table_stats ) * ( ( size_t ) n_tables + 1 ) > ( size_t ) UINT16_MAX ) {
+      *more = 1;
+      msg_flags |= OFPMPF_REPLY_MORE;
+      break;
+    }
     n_tables++;
     table = table->next;
   }
@@ -1438,20 +1461,23 @@ create_table_multipart_reply( const uint32_t transaction_id, const uint16_t flag
 
   length = ( uint16_t ) ( offsetof( struct ofp_multipart_reply, body )
                         + sizeof( struct ofp_table_stats ) * n_tables );
-  buffer = create_multipart_reply( transaction_id, OFPMP_TABLE, length, flags );
+  buffer = create_multipart_reply( transaction_id, OFPMP_TABLE, length, msg_flags );
   assert( buffer != NULL );
 
   stats_reply = ( struct ofp_multipart_reply * ) buffer->data;
   table_stats = ( struct ofp_table_stats * ) stats_reply->body;
 
   table = t;
-  while ( table != NULL ) {
+  int n_data = 0;
+  while ( table != NULL && n_data < n_tables ) {
     ts = ( struct ofp_table_stats * ) table->data;
     hton_table_stats( table_stats, ts );
     table = table->next;
     table_stats++;
+    n_data++;
   }
 
+  *offset += n_tables;
   if ( t != NULL ) {
     xfree( t );
   }
@@ -1462,8 +1488,9 @@ create_table_multipart_reply( const uint32_t transaction_id, const uint16_t flag
 
 buffer *
 create_port_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                         const list_element *port_stats_head ) {
+                             const list_element *port_stats_head, int *more, int *offset ) {
   uint16_t length;
+  uint16_t msg_flags = flags;
   uint16_t n_ports = 0;
   buffer *buffer;
   list_element *p = NULL;
@@ -1474,12 +1501,24 @@ create_port_multipart_reply( const uint32_t transaction_id, const uint16_t flags
   debug( "Creating a port multipart reply ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   if ( port_stats_head != NULL ) {
+    int cur = 0;
+    while ( offset != NULL && cur < *offset ) {
+      port_stats_head = port_stats_head->next;
+      cur++;
+    }
     p = ( list_element * ) xmalloc( sizeof( list_element ) );
     memcpy( p, port_stats_head, sizeof( list_element ) );
   }
 
   port = p;
+  *more = 0;
   while ( port != NULL ) {
+    if ( offsetof( struct ofp_multipart_reply, body )
+         + sizeof( struct ofp_port_stats ) * ( ( size_t ) n_ports + 1 ) > ( size_t ) UINT16_MAX ) {
+      *more = 1;
+      msg_flags |= OFPMPF_REPLY_MORE;
+      break;
+    }
     n_ports++;
     port = port->next;
   }
@@ -1488,20 +1527,23 @@ create_port_multipart_reply( const uint32_t transaction_id, const uint16_t flags
 
   length = ( uint16_t ) ( offsetof( struct ofp_multipart_reply, body )
                           + sizeof( struct ofp_port_stats ) * n_ports );
-  buffer = create_multipart_reply( transaction_id, OFPMP_PORT_STATS, length, flags );
+  buffer = create_multipart_reply( transaction_id, OFPMP_PORT_STATS, length, msg_flags );
   assert( buffer != NULL );
 
   stats_reply = ( struct ofp_multipart_reply * ) buffer->data;
   port_stats = ( struct ofp_port_stats * ) stats_reply->body;
 
   port = p;
-  while ( port != NULL ) {
+  int n_data = 0;
+  while ( port != NULL && n_data < n_ports ) {
     ps = ( struct ofp_port_stats * ) port->data;
     hton_port_stats( port_stats, ps );
     port = port->next;
     port_stats++;
+    n_data++;
   }
 
+  *offset += n_ports;
   if ( p != NULL ) {
     xfree( p );
   }
@@ -1512,8 +1554,9 @@ create_port_multipart_reply( const uint32_t transaction_id, const uint16_t flags
 
 buffer *
 create_queue_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                          const list_element *queue_stats_head ) {
+                              const list_element *queue_stats_head, int *more, int *offset ) {
   uint16_t length;
+  uint16_t msg_flags = flags;
   uint16_t n_queues = 0;
   buffer *buffer;
   list_element *q = NULL;
@@ -1524,12 +1567,24 @@ create_queue_multipart_reply( const uint32_t transaction_id, const uint16_t flag
   debug( "Creating a queue multipart reply ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   if ( queue_stats_head != NULL ) {
+    int cur = 0;
+    while ( offset != NULL && cur < *offset ) {
+      queue_stats_head = queue_stats_head->next;
+      cur++;
+    }
     q = ( list_element * ) xmalloc( sizeof( list_element ) );
     memcpy( q, queue_stats_head, sizeof( list_element ) );
   }
 
   queue = q;
+  *more = 0;
   while ( queue != NULL ) {
+    if ( offsetof( struct ofp_multipart_reply, body )
+         + sizeof( struct ofp_queue_stats ) * ( ( size_t ) n_queues + 1 ) > ( size_t ) UINT16_MAX ) {
+      *more = 1;
+      msg_flags |= OFPMPF_REPLY_MORE;
+      break;
+    }
     n_queues++;
     queue = queue->next;
   }
@@ -1538,20 +1593,23 @@ create_queue_multipart_reply( const uint32_t transaction_id, const uint16_t flag
 
   length = ( uint16_t ) ( offsetof( struct ofp_multipart_reply, body )
                           + sizeof( struct ofp_queue_stats ) * n_queues );
-  buffer = create_multipart_reply( transaction_id, OFPMP_QUEUE, length, flags );
+  buffer = create_multipart_reply( transaction_id, OFPMP_QUEUE, length, msg_flags );
   assert( buffer != NULL );
 
   stats_reply = ( struct ofp_multipart_reply * ) buffer->data;
   queue_stats = ( struct ofp_queue_stats * ) stats_reply->body;
 
   queue = q;
-  while ( queue != NULL ) {
+  int n_data = 0;
+  while ( queue != NULL && n_data < n_queues ) {
     qs = ( struct ofp_queue_stats * ) queue->data;
     hton_queue_stats( queue_stats, qs );
     queue = queue->next;
     queue_stats++;
+    n_data++;
   }
 
+  *offset += n_queues;
   if ( q != NULL ) {
     xfree( q );
   }
@@ -1562,8 +1620,9 @@ create_queue_multipart_reply( const uint32_t transaction_id, const uint16_t flag
 
 buffer *
 create_group_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                              const list_element *group_multipart_head ) {
+                              const list_element *group_multipart_head, int *more, int *offset ) {
   uint16_t length;
+  uint16_t msg_flags = flags;
   uint16_t n_queues = 0;
   uint16_t queues_len = 0;
   buffer *buffer;
@@ -1575,36 +1634,51 @@ create_group_multipart_reply( const uint32_t transaction_id, const uint16_t flag
   debug( "Creating a group multipart reply ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   if ( group_multipart_head != NULL ) {
+    int cur = 0;
+    while ( offset != NULL && cur < *offset ){
+      group_multipart_head = group_multipart_head->next;
+      cur++;
+    }
     q = ( list_element * ) xmalloc( sizeof( list_element ) );
     memcpy( q, group_multipart_head, sizeof( list_element ) );
   }
 
   queue = q;
+  *more = 0;
   while ( queue != NULL ) {
-    n_queues++;
     group_stats = ( struct ofp_group_stats * ) queue->data;
+    if ( offsetof( struct ofp_multipart_reply, body )
+         + queues_len + group_stats->length > UINT16_MAX ) {
+      *more = 1;
+      msg_flags |= OFPMPF_REPLY_MORE;
+      break;
+    }
     queues_len = ( uint16_t ) ( queues_len + group_stats->length );
     queue = queue->next;
+    n_queues++;
   }
 
   debug( "# of groups = %u.", n_queues );
 
   length = ( uint16_t ) ( offsetof( struct ofp_multipart_reply, body )
                           + queues_len );
-  buffer = create_multipart_reply( transaction_id, OFPMP_GROUP, length, flags );
+  buffer = create_multipart_reply( transaction_id, OFPMP_GROUP, length, msg_flags );
   assert( buffer != NULL );
 
   stats_reply = ( struct ofp_multipart_reply * ) buffer->data;
   group_stats = ( struct ofp_group_stats * ) stats_reply->body;
 
   queue = q;
-  while ( queue != NULL ) {
+  int n_data = 0;
+  while ( queue != NULL && n_data < n_queues) {
     qs = ( struct ofp_group_stats * ) queue->data;
     hton_group_stats( group_stats, qs );
     queue = queue->next;
     group_stats = ( struct ofp_group_stats * ) ( ( char * ) group_stats + qs->length );
+    n_data++;
   }
 
+  *offset += n_queues;
   if ( q != NULL ) {
     xfree( q );
   }
@@ -1615,49 +1689,65 @@ create_group_multipart_reply( const uint32_t transaction_id, const uint16_t flag
 
 buffer *
 create_group_desc_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                   const list_element *group_desc_multipart_head ) {
+                                   const list_element *group_desc_multipart_head, int *more, int *offset ) {
   uint16_t length;
+  uint16_t msg_flags = flags;
   uint16_t n_queues = 0;
   uint16_t group_descs_len = 0;
   buffer *buffer;
   list_element *q = NULL;
   list_element *queue = NULL;
   struct ofp_multipart_reply *stats_reply;
-  struct ofp_group_desc_stats *qs, *group_desc_stats;
+  struct ofp_group_desc *qs, *group_desc;
 
   debug( "Creating a group desc multipart reply ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   if ( group_desc_multipart_head != NULL ) {
+    int cur = 0;
+    while ( offset != NULL && cur < *offset ) {
+      group_desc_multipart_head = group_desc_multipart_head->next;
+      cur++;
+    }
     q = ( list_element * ) xmalloc( sizeof( list_element ) );
     memcpy( q, group_desc_multipart_head, sizeof( list_element ) );
   }
 
   queue = q;
+  *more = 0;
   while ( queue != NULL ) {
-    n_queues++;
-    group_desc_stats = ( struct ofp_group_desc_stats * ) queue->data;
-    group_descs_len = ( uint16_t ) ( group_descs_len + group_desc_stats->length );
+    group_desc = ( struct ofp_group_desc * ) queue->data;
+    if ( offsetof( struct ofp_multipart_reply, body )
+         + group_descs_len + group_desc->length > UINT16_MAX ) {
+      *more = 1;
+      msg_flags |= OFPMPF_REPLY_MORE;
+      break;
+    }
+    group_descs_len = ( uint16_t ) ( group_descs_len + group_desc->length );
     queue = queue->next;
+    n_queues++;
   }
 
   debug( "# of group_descs = %u.", n_queues );
 
   length = ( uint16_t ) ( offsetof( struct ofp_multipart_reply, body )
                           + group_descs_len );
-  buffer = create_multipart_reply( transaction_id, OFPMP_GROUP_DESC, length, flags );
+  buffer = create_multipart_reply( transaction_id, OFPMP_GROUP_DESC, length, msg_flags );
   assert( buffer != NULL );
 
   stats_reply = ( struct ofp_multipart_reply * ) buffer->data;
-  group_desc_stats = ( struct ofp_group_desc_stats * ) stats_reply->body;
+  group_desc = ( struct ofp_group_desc * ) stats_reply->body;
 
   queue = q;
-  while ( queue != NULL ) {
-    qs = ( struct ofp_group_desc_stats * ) queue->data;
-    hton_group_desc_stats( group_desc_stats, qs );
+  int n_data = 0;
+  while ( queue != NULL && n_data < n_queues ) {
+    qs = ( struct ofp_group_desc * ) queue->data;
+    hton_group_desc( group_desc, qs );
     queue = queue->next;
-    group_desc_stats = ( struct ofp_group_desc_stats * ) ( ( char * ) group_desc_stats + qs->length );
+    group_desc = ( struct ofp_group_desc * ) ( ( char * ) group_desc + qs->length );
+    n_data++;
   }
 
+  *offset += n_queues;
   if ( q != NULL ) {
     xfree( q );
   }
@@ -1701,8 +1791,9 @@ create_group_features_multipart_reply( const uint32_t transaction_id, const uint
 
 buffer *
 create_meter_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                              const list_element *meter_multipart_head ) {
+                              const list_element *meter_multipart_head, int *more, int *offset ) {
   uint16_t length;
+  uint16_t msg_flags = flags;
   uint16_t n_queues = 0;
   uint16_t meter_len = 0;
   buffer *buffer;
@@ -1714,36 +1805,51 @@ create_meter_multipart_reply( const uint32_t transaction_id, const uint16_t flag
   debug( "Creating a meter multipart reply ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   if ( meter_multipart_head != NULL ) {
+    int cur = 0;
+    while ( offset != NULL && cur < *offset ) {
+      meter_multipart_head = meter_multipart_head->next;
+      cur++;
+    }
     q = ( list_element * ) xmalloc( sizeof( list_element ) );
     memcpy( q, meter_multipart_head, sizeof( list_element ) );
   }
 
   queue = q;
+  *more = 0;
   while ( queue != NULL ) {
-    n_queues++;
     meter_stats = ( struct ofp_meter_stats * ) queue->data;
+    if ( offsetof( struct ofp_multipart_reply, body )
+         + meter_len + meter_stats->len > UINT16_MAX ) {
+      *more = 1;
+      msg_flags |= OFPMPF_REPLY_MORE;
+      break;
+    }
     meter_len = ( uint16_t ) ( meter_len + meter_stats->len );
     queue = queue->next;
+    n_queues++;
   }
 
   debug( "# of meters = %u.", n_queues );
 
   length = ( uint16_t ) ( offsetof( struct ofp_multipart_reply, body )
                           + meter_len );
-  buffer = create_multipart_reply( transaction_id, OFPMP_METER, length, flags );
+  buffer = create_multipart_reply( transaction_id, OFPMP_METER, length, msg_flags );
   assert( buffer != NULL );
 
   stats_reply = ( struct ofp_multipart_reply * ) buffer->data;
   meter_stats = ( struct ofp_meter_stats * ) stats_reply->body;
 
   queue = q;
-  while ( queue != NULL ) {
+  int n_data = 0;
+  while ( queue != NULL && n_data < n_queues ) {
     qs = ( struct ofp_meter_stats * ) queue->data;
     hton_meter_stats( meter_stats, qs );
     queue = queue->next;
     meter_stats = ( struct ofp_meter_stats * ) ( ( char * ) meter_stats + qs->len );
+    n_data++;
   }
 
+  *offset += n_queues;
   if ( q != NULL ) {
     xfree( q );
   }
@@ -1754,8 +1860,9 @@ create_meter_multipart_reply( const uint32_t transaction_id, const uint16_t flag
 
 buffer *
 create_meter_config_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                     const list_element *meter_config_multipart_head ) {
+                                     const list_element *meter_config_multipart_head, int *more, int *offset ) {
   uint16_t length;
+  uint16_t msg_flags = flags;
   uint16_t n_queues = 0;
   uint16_t meter_len = 0;
   buffer *buffer;
@@ -1767,36 +1874,51 @@ create_meter_config_multipart_reply( const uint32_t transaction_id, const uint16
   debug( "Creating a meter config multipart reply ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   if ( meter_config_multipart_head != NULL ) {
+    int cur = 0;
+    while ( offset != NULL && cur < *offset ) {
+      meter_config_multipart_head = meter_config_multipart_head->next;
+      cur++;
+    }
     q = ( list_element * ) xmalloc( sizeof( list_element ) );
     memcpy( q, meter_config_multipart_head, sizeof( list_element ) );
   }
 
   queue = q;
+  *more = 0;
   while ( queue != NULL ) {
-    n_queues++;
     meter_config = ( struct ofp_meter_config * ) queue->data;
+    if ( offsetof( struct ofp_multipart_reply, body )
+         + meter_len + meter_config->length > UINT16_MAX ) {
+      *more = 1;
+      msg_flags |= OFPMPF_REPLY_MORE;
+      break;
+    }
     meter_len = ( uint16_t ) ( meter_len + meter_config->length );
     queue = queue->next;
+    n_queues++;
   }
 
   debug( "# of meter_configs = %u.", n_queues );
 
   length = ( uint16_t ) ( offsetof( struct ofp_multipart_reply, body )
                           + meter_len );
-  buffer = create_multipart_reply( transaction_id, OFPMP_METER_CONFIG, length, flags );
+  buffer = create_multipart_reply( transaction_id, OFPMP_METER_CONFIG, length, msg_flags );
   assert( buffer != NULL );
 
   stats_reply = ( struct ofp_multipart_reply * ) buffer->data;
   meter_config = ( struct ofp_meter_config * ) stats_reply->body;
 
   queue = q;
-  while ( queue != NULL ) {
+  int n_data = 0;
+  while ( queue != NULL && n_data < n_queues ) {
     qs = ( struct ofp_meter_config * ) queue->data;
     hton_meter_config( meter_config, qs );
     queue = queue->next;
     meter_config = ( struct ofp_meter_config * ) ( ( char * ) meter_config + qs->length );
+    n_data++;
   }
 
+  *offset += n_queues;
   if ( q != NULL ) {
     xfree( q );
   }
@@ -1838,8 +1960,9 @@ create_meter_features_multipart_reply( const uint32_t transaction_id, const uint
 
 buffer *
 create_table_features_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                       const list_element *table_features_multipart_head ) {
+                                       const list_element *table_features_multipart_head, int *more, int *offset ) {
   uint16_t length;
+  uint16_t msg_flags = flags;
   uint16_t n_tblftrs = 0;
   uint16_t tblftrs_len = 0;
   buffer *buffer;
@@ -1850,36 +1973,50 @@ create_table_features_multipart_reply( const uint32_t transaction_id, const uint
   debug( "Creating a table features multipart reply ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   if ( table_features_multipart_head != NULL ) {
+    int cur = 0;
+    while ( offset != NULL && cur < *offset ) {
+      table_features_multipart_head = table_features_multipart_head->next;
+      cur++;
+    }
     l = ( list_element * ) xmalloc( sizeof( list_element ) );
     memcpy( l, table_features_multipart_head, sizeof( list_element ) );
   }
 
   list = l;
+  *more = 0;
   while ( list != NULL ) {
-    n_tblftrs++;
     table_features = ( struct ofp_table_features * ) list->data;
+    if ( offsetof( struct ofp_multipart_reply, body )
+         + tblftrs_len + table_features->length > UINT16_MAX ) {
+      *more = 1;
+      msg_flags |= OFPMPF_REPLY_MORE;
+      break;
+    }
     tblftrs_len = ( uint16_t ) ( tblftrs_len + table_features->length );
     list = list->next;
+    n_tblftrs++;
   }
 
   debug( "# of table_features = %u.", n_tblftrs );
 
   length = ( uint16_t ) ( offsetof( struct ofp_multipart_reply, body )
                           + tblftrs_len );
-  buffer = create_multipart_reply( transaction_id, OFPMP_TABLE_FEATURES, length, flags );
+  buffer = create_multipart_reply( transaction_id, OFPMP_TABLE_FEATURES, length, msg_flags );
   assert( buffer != NULL );
 
   stats_reply = ( struct ofp_multipart_reply * ) buffer->data;
   table_features = ( struct ofp_table_features * ) stats_reply->body;
 
   list = l;
-  while ( list != NULL ) {
+  int n_data = 0;
+  while ( list != NULL && n_data < n_tblftrs ) {
     tblftr = ( struct ofp_table_features * ) list->data;
     hton_table_features( table_features, tblftr );
     list = list->next;
     table_features = ( struct ofp_table_features * ) ( ( char * ) table_features + tblftr->length );
   }
 
+  *offset += n_tblftrs;
   if ( l != NULL ) {
     xfree( l );
   }
@@ -1890,8 +2027,9 @@ create_table_features_multipart_reply( const uint32_t transaction_id, const uint
 
 buffer *
 create_port_desc_multipart_reply( const uint32_t transaction_id, const uint16_t flags,
-                                  const list_element *port_desc_multipart_head  ) {
+                                  const list_element *port_desc_multipart_head, int *more, int *offset ) {
   uint16_t length;
+  uint16_t msg_flags = flags;
   uint16_t n_queues = 0;
   buffer *buffer;
   list_element *q = NULL;
@@ -1902,12 +2040,24 @@ create_port_desc_multipart_reply( const uint32_t transaction_id, const uint16_t 
   debug( "Creating a port desc multipart reply ( xid = %#x, flags = %#x ).", transaction_id, flags );
 
   if ( port_desc_multipart_head != NULL ) {
+    int cur = 0;
+    while ( offset != NULL && cur < *offset ) {
+      port_desc_multipart_head = port_desc_multipart_head->next;
+      cur++;
+    }
     q = ( list_element * ) xmalloc( sizeof( list_element ) );
     memcpy( q, port_desc_multipart_head, sizeof( list_element ) );
   }
 
   queue = q;
+  *more = 0;
   while ( queue != NULL ) {
+    if ( offsetof( struct ofp_multipart_reply, body )
+         + sizeof( struct ofp_port ) * ( ( size_t ) n_queues + 1 ) > ( size_t ) UINT16_MAX ) {
+      *more = 1;
+      msg_flags |= OFPMPF_REPLY_MORE;
+      break;
+    }
     n_queues++;
     queue = queue->next;
   }
@@ -1916,20 +2066,23 @@ create_port_desc_multipart_reply( const uint32_t transaction_id, const uint16_t 
 
   length = ( uint16_t ) ( offsetof( struct ofp_multipart_reply, body )
                           + sizeof( struct ofp_port ) * n_queues );
-  buffer = create_multipart_reply( transaction_id, OFPMP_PORT_DESC, length, flags );
+  buffer = create_multipart_reply( transaction_id, OFPMP_PORT_DESC, length, msg_flags );
   assert( buffer != NULL );
 
   stats_reply = ( struct ofp_multipart_reply * ) buffer->data;
   port_desc = ( struct ofp_port * ) stats_reply->body;
 
   queue = q;
-  while ( queue != NULL ) {
+  int n_data = 0;
+  while ( queue != NULL && n_data < n_queues ) {
     qs = ( struct ofp_port * ) queue->data;
     hton_port( port_desc, qs );
     queue = queue->next;
     port_desc++;
+    n_data++;
   }
 
+  *offset += n_queues;
   if ( q != NULL ) {
     xfree( q );
   }
@@ -2128,12 +2281,12 @@ create_get_async_reply( const uint32_t transaction_id, const uint32_t packet_in_
   struct ofp_async_config *get_async;
 
   debug( "Creating a get async reply ( xid = %#x,"
-                   " packet_in_mask[0] = %#x, packet_in_mask[1] = %#x,"
-                   " port_status_mask[0] = %#x, port_status_mask[1] = %#x,"
-                   " flow_removed_mask[0] = %#x, flow_removed_mask[1] = %#x ).",
-                   transaction_id, packet_in_mask[ 0 ],  packet_in_mask[ 1 ],
-                   port_status_mask[ 0 ],  port_status_mask[ 1 ],
-                   flow_removed_mask[ 0 ],  flow_removed_mask[ 1 ] );
+         " packet_in_mask[0] = %#x, packet_in_mask[1] = %#x,"
+         " port_status_mask[0] = %#x, port_status_mask[1] = %#x,"
+         " flow_removed_mask[0] = %#x, flow_removed_mask[1] = %#x ).",
+         transaction_id, packet_in_mask[ 0 ],  packet_in_mask[ 1 ],
+         port_status_mask[ 0 ],  port_status_mask[ 1 ],
+         flow_removed_mask[ 0 ],  flow_removed_mask[ 1 ] );
 
   buffer = create_header( transaction_id, OFPT_GET_ASYNC_REPLY, sizeof( struct ofp_async_config ) );
   assert( buffer != NULL );
@@ -2157,12 +2310,12 @@ create_set_async( const uint32_t transaction_id, const uint32_t packet_in_mask[ 
   struct ofp_async_config *set_async;
 
   debug( "Creating a set async ( xid = %#x,"
-                   " packet_in_mask[0] = %#x, packet_in_mask[1] = %#x,"
-                   " port_status_mask[0] = %#x, port_status_mask[1] = %#x,"
-                   " flow_removed_mask[0] = %#x, flow_removed_mask[1] = %#x ).",
-                   transaction_id, packet_in_mask[ 0 ],  packet_in_mask[ 1 ],
-                   port_status_mask[ 0 ],  port_status_mask[ 1 ],
-                   flow_removed_mask[ 0 ],  flow_removed_mask[ 1 ] );
+         " packet_in_mask[0] = %#x, packet_in_mask[1] = %#x,"
+         " port_status_mask[0] = %#x, port_status_mask[1] = %#x,"
+         " flow_removed_mask[0] = %#x, flow_removed_mask[1] = %#x ).",
+         transaction_id, packet_in_mask[ 0 ],  packet_in_mask[ 1 ],
+         port_status_mask[ 0 ],  port_status_mask[ 1 ],
+         flow_removed_mask[ 0 ],  flow_removed_mask[ 1 ] );
 
   buffer = create_header( transaction_id, OFPT_SET_ASYNC, sizeof( struct ofp_async_config ) );
   assert( buffer != NULL );
@@ -2191,7 +2344,7 @@ create_meter_mod( const uint32_t transaction_id, const uint16_t command,
   struct ofp_meter_band_header *pq, *packet_queue;
 
   debug( "Creating a meter modification ( xid = %#x, command = %#x, flags = %#x, meter_id = %#x ).",
-                                 transaction_id, command, flags, meter_id );
+         transaction_id, command, flags, meter_id );
 
   if ( bands != NULL ) {
     q = ( list_element * ) xmalloc( sizeof( list_element ) );
@@ -3118,7 +3271,8 @@ append_action_set_field_ipv6_src( openflow_actions *actions, const struct in6_ad
 
   if ( NULL != inet_ntop( AF_INET6, &ipv6_src, ipv6_src_str, sizeof( ipv6_src_str ) ) ) {
     debug( "Appending a set field ipv6 src action ( ipv6_src = %s ).", ipv6_src_str );
-  } else {
+  }
+  else {
     debug( "Appending a set field ipv6 src action ( inet_ntop error. )." );
   }
   
@@ -3138,7 +3292,8 @@ append_action_set_field_ipv6_dst( openflow_actions *actions, const struct in6_ad
 
   if ( NULL != inet_ntop( AF_INET6, &ipv6_dst, ipv6_dst_str, sizeof( ipv6_dst_str ) ) ) {
     debug( "Appending a set field ipv6 dst action ( ipv6_dst = %s ).", ipv6_dst_str );
-  } else {
+  }
+  else {
     debug( "Appending a set field ipv6 dst action ( inet_ntop error. )." );
   }
   
@@ -3200,7 +3355,8 @@ append_action_set_field_ipv6_nd_target( openflow_actions *actions, const struct 
 
   if (NULL != inet_ntop( AF_INET6, &ipv6_nd_target, ipv6_nd_target_str, sizeof( ipv6_nd_target_str ) ) ) {
     debug( "Appending a set field ipv6 nd target action ( ipv6_nd_target = %s ).", ipv6_nd_target_str );
-  } else {
+  }
+  else {
     debug( "Appending a set field ipv6 nd target action ( inet_ntop error. )." );
   }
   
@@ -3744,54 +3900,101 @@ validate_header( const buffer *message, const uint8_t type,
 }
 
 
-int
-validate_hello_versionbitmap( const buffer *buffer ) {
-  struct ofp_hello *hello = ( struct ofp_hello * ) buffer->data;
+static int
+validate_hello_elem_versionbitmap( struct ofp_hello_elem_versionbitmap *element ) {
+  size_t bitmaps_length;
 
-  if (  ntohs( hello->elements[ 0 ].type ) != OFPHET_VERSIONBITMAP ) {
-    return ERROR_INVALID_TYPE;
-  }
-  if ( ntohs( hello->elements[ 0 ].length ) <= ( sizeof( struct ofp_hello_elem_header ) ) ) {
-    return ERROR_TOO_SHORT_MESSAGE;
-  }
-  struct ofp_hello_elem_versionbitmap *versionbitmap = ( struct ofp_hello_elem_versionbitmap * ) hello->elements;
-  if ( ntohs( versionbitmap->type ) != OFPHET_VERSIONBITMAP ) {
-    return ERROR_INVALID_TYPE;
-  }
-  if ( ntohs( versionbitmap->length ) <= sizeof( struct ofp_hello_elem_header ) ) {
-    return ERROR_TOO_SHORT_MESSAGE;
-  }
-  if ( ( ntohs( versionbitmap->length ) - sizeof( uint32_t ) ) % 4 != 0 ) {
-    return ERROR_UNDEFINED_TYPE;
+  assert( element != NULL );
+  assert( ntohs( element->type ) == OFPHET_VERSIONBITMAP );
+
+  if ( ntohs( element->length ) < offsetof( struct ofp_hello_elem_versionbitmap, bitmaps ) ) {
+    return ERROR_TOO_SHORT_HELLO_ELEMENT;
   }
 
-  uint32_t nr_bitmaps = ( uint32_t ) ( ntohs( versionbitmap->length ) - 4 ) / sizeof( uint32_t );
-  uint32_t i;
-  bool ret = false;
-
-  for ( i = 0; i < nr_bitmaps; i++ ) {
-    uint32_t bitmap = ntohl( versionbitmap->bitmaps[ i ] );
-    ret |= ( bitmap & ( 1 << 1 ) ) != 0;
-    ret |= ( bitmap & ( 1 << 4 ) ) != 0;
+  bitmaps_length = ntohs( element->length ) - offsetof( struct ofp_hello_elem_versionbitmap, bitmaps );
+  if ( bitmaps_length % sizeof( uint32_t ) != 0 ) {
+    return ERROR_INVALID_HELLO_ELEMENT_LENGTH;
   }
-  if ( ret == false ) {
-    return ERROR_UNSUPPORTED_VERSION;
+
+  if ( bitmaps_length > 0 ) {
+    // FIXME: Since version negotiation is not implemented yet, we check OFP_VERSION here.
+    if ( ( ntohl( element->bitmaps[ 0 ] ) & ( ( uint32_t ) 1 << OFP_VERSION ) ) == 0 ) {
+      return ERROR_UNSUPPORTED_VERSION;
+    }
   }
 
   return 0;
 }
 
 
+static int
+validate_hello_elements( struct ofp_hello_elem_header *elements_head, const uint16_t length, bool *version_bitmap_found ) {
+  int ret;
+  size_t offset;
+  struct ofp_hello_elem_header *element;
+
+  assert( elements_head != NULL );
+
+  *version_bitmap_found = false;
+  ret = 0;
+  offset = 0;
+  while ( offset < length ) {
+    element = ( struct ofp_hello_elem_header * ) ( ( char * ) elements_head + offset );
+    switch ( ntohs( element->type ) ) {
+    case OFPHET_VERSIONBITMAP:
+      ret = validate_hello_elem_versionbitmap( ( struct ofp_hello_elem_versionbitmap * ) element );
+      *version_bitmap_found = true;
+      break;
+    default:
+      ret = ERROR_UNDEFINED_HELLO_ELEMENT_TYPE;
+      break;
+    }
+
+    if ( ret < 0 ) {
+      break;
+    }
+
+    offset += ( size_t ) ( ntohs( element->length ) + PADLEN_TO_64( ntohs( element->length ) ) );
+  }
+
+  return ret;
+}
+
+
 int
 validate_hello( const buffer *message ) {
-  assert( message != NULL );
+  bool version_bitmap_found;
   int ret;
+  size_t elements_length;
+  struct ofp_hello *hello;
 
-  if ( !( ret = validate_header( message, OFPT_HELLO, sizeof( struct ofp_header ), UINT16_MAX ) ) ) {
-    if ( message->length > sizeof( struct ofp_hello ) ) {
-      ret = validate_hello_versionbitmap( message );
-    }
+  assert( message != NULL );
+
+  ret = validate_header( message, OFPT_HELLO, sizeof( struct ofp_header ), UINT16_MAX );
+  if ( ret < 0 ) {
+    return ret;
   }
+
+  hello = ( struct ofp_hello * ) message->data;
+  if ( message->length != ntohs( hello->header.length ) ) {
+    return ERROR_INVALID_LENGTH;
+  }
+
+  elements_length = ntohs( hello->header.length ) - offsetof( struct ofp_hello, elements );
+
+  if ( elements_length > 0 && elements_length < sizeof( struct ofp_hello_elem_header ) ) {
+    return ERROR_INVALID_LENGTH;
+  }
+
+  version_bitmap_found = false;
+  if ( elements_length > 0 ) {
+    ret = validate_hello_elements( hello->elements, ( uint16_t ) elements_length, &version_bitmap_found );
+  }
+
+  if ( !version_bitmap_found && hello->header.version != OFP_VERSION ) {
+    ret = ERROR_UNSUPPORTED_VERSION;
+  }
+
   return ret;
 }
 
@@ -5764,7 +5967,7 @@ validate_group_desc_multipart_reply( const buffer *message ) {
   uint16_t group_length;
   uint16_t offset;
   struct ofp_multipart_reply *stats_reply;
-  struct ofp_group_desc_stats *group_desc_stats;
+  struct ofp_group_desc *group_desc;
 
   assert( message != NULL );
 
@@ -5784,22 +5987,22 @@ validate_group_desc_multipart_reply( const buffer *message ) {
                                 - offsetof( struct ofp_multipart_reply, body ) );
 
   offset = offsetof( struct ofp_multipart_reply, body );
-  group_desc_stats = ( struct ofp_group_desc_stats * ) ( ( char * ) message->data + offset );
+  group_desc = ( struct ofp_group_desc * ) ( ( char * ) message->data + offset );
 
   while ( group_length > 0 ) {
-    if ( group_length < ntohs( group_desc_stats->length ) ) {
+    if ( group_length < ntohs( group_desc->length ) ) {
       return ERROR_INVALID_LENGTH;
     }
 
-    if ( group_desc_stats->type > GROUP_TYPE_MAX ) {
+    if ( group_desc->type > GROUP_TYPE_MAX ) {
       return ERROR_INVALID_GROUP_TYPE;
     }
-    // group_desc_stats->group_id
+    // group_desc->group_id
 
-    if ( ntohs( group_desc_stats->length ) > offsetof( struct ofp_group_desc_stats, buckets ) ) {
-      uint16_t bucket_len = ( uint16_t ) ( ntohs( group_desc_stats->length ) - offsetof( struct ofp_group_desc_stats, buckets ) );
+    if ( ntohs( group_desc->length ) > offsetof( struct ofp_group_desc, buckets ) ) {
+      uint16_t bucket_len = ( uint16_t ) ( ntohs( group_desc->length ) - offsetof( struct ofp_group_desc, buckets ) );
       if ( bucket_len >= sizeof( struct ofp_bucket ) ) {
-        struct ofp_bucket *bucket = ( struct ofp_bucket * ) &group_desc_stats->buckets;
+        struct ofp_bucket *bucket = ( struct ofp_bucket * ) &group_desc->buckets;
         while ( bucket_len >= sizeof( struct ofp_bucket ) ) {
           ret = validate_bucket( bucket );
           if ( ret < 0 ) {
@@ -5811,8 +6014,8 @@ validate_group_desc_multipart_reply( const buffer *message ) {
       }
     }
 
-    group_length = ( uint16_t ) ( group_length - ntohs( group_desc_stats->length ) );
-    group_desc_stats = ( struct ofp_group_desc_stats * ) ( ( char * ) group_desc_stats + ntohs( group_desc_stats->length ) );
+    group_length = ( uint16_t ) ( group_length - ntohs( group_desc->length ) );
+    group_desc = ( struct ofp_group_desc * ) ( ( char * ) group_desc + ntohs( group_desc->length ) );
   }
 
   return 0;
@@ -6914,7 +7117,8 @@ validate_action_set_field( const struct ofp_action_set_field *action ) {
 
   if ( length < sizeof( struct ofp_action_set_field ) ) {
     return ERROR_TOO_SHORT_ACTION_SET_FIELD;
-  } else if ( length % 8 != 0 ) {
+  }
+  else if ( length % 8 != 0 ) {
     return ERROR_TOO_LONG_ACTION_SET_FIELD;
   }
 
@@ -7384,6 +7588,9 @@ static struct error_map {
       { ERROR_INVALID_LENGTH, OFPET_BAD_REQUEST, OFPBRC_BAD_LEN },
       { ERROR_UNDEFINED_TYPE, OFPET_BAD_REQUEST, OFPBRC_BAD_TYPE },
       { ERROR_INVALID_TYPE, OFPET_BAD_REQUEST, OFPBRC_BAD_TYPE },
+      { ERROR_TOO_SHORT_HELLO_ELEMENT, OFPET_BAD_REQUEST, OFPBRC_BAD_LEN },
+      { ERROR_INVALID_HELLO_ELEMENT_LENGTH, OFPET_BAD_REQUEST, OFPBRC_BAD_LEN },
+      { ERROR_UNDEFINED_HELLO_ELEMENT_TYPE, OFPET_HELLO_FAILED, OFPHFC_INCOMPATIBLE }, // FIXME
       { 0, 0, 0 },
     }
   },
@@ -8062,8 +8269,8 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
   struct in6_addr tmp_ipv6_mask;
   struct in6_addr no_ipv6_mask;
 
-  memset( no_mac_mask, 0, sizeof( no_mac_mask ) );
-  memset( &no_ipv6_mask, 0, sizeof( no_ipv6_mask ) );
+  memset( no_mac_mask, 0xff, sizeof( no_mac_mask ) );
+  memset( &no_ipv6_mask, 0xff, sizeof( no_ipv6_mask ) );
 
   if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_IN_PORT ) ) ) {
     append_oxm_match_in_port( match, in_port );
@@ -8073,7 +8280,8 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
   if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ETH_SRC ) ) ) {
     if ( no_mask ) {
       memcpy( tmp_mac_mask, no_mac_mask, sizeof( tmp_mac_mask ) );
-    } else {
+    }
+    else {
       memcpy( tmp_mac_mask, mask->mask_eth_src, sizeof( tmp_mac_mask ) );
     }
     append_oxm_match_eth_src( match, ( ( packet_info * ) packet->user_data )->eth_macsa, tmp_mac_mask );
@@ -8081,10 +8289,22 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
   if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ETH_DST ) ) ) {
     if ( no_mask ) {
       memcpy( tmp_mac_mask, no_mac_mask, sizeof( tmp_mac_mask ) );
-    } else {
+    }
+    else {
       memcpy( tmp_mac_mask, mask->mask_eth_dst, sizeof( tmp_mac_mask ) );
     }
     append_oxm_match_eth_dst( match, ( ( packet_info * ) packet->user_data )->eth_macda, tmp_mac_mask );
+  }
+  if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_PBB_ISID ) ) ) {
+    uint32_t pbb_isid = 0;
+    if ( packet_type_eth_pbb( packet ) ) {
+      pbb_isid = ( ( packet_info * ) packet->user_data )->pbb_isid;
+      if ( ( pbb_isid & ( uint32_t ) ~PBB_ISID_MASK ) != 0 ) {
+        warn( "Invalid pbb_isid ( change %#x to %#x )", pbb_isid, pbb_isid & PBB_ISID_MASK );
+        pbb_isid = ( uint32_t ) ( pbb_isid & PBB_ISID_MASK );
+      }
+    }
+    append_oxm_match_pbb_isid( match, pbb_isid, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_pbb_isid ) );
   }
   if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_VLAN_VID ) ) ) {
     uint16_t vlan_vid;
@@ -8099,7 +8319,7 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
     else {
       vlan_vid = OFPVID_NONE;
     }
-    append_oxm_match_vlan_vid( match, vlan_vid, ( uint16_t ) ( no_mask ? 0 : mask->mask_vlan_vid ) );
+    append_oxm_match_vlan_vid( match, vlan_vid, ( uint16_t ) ( no_mask ? UINT16_MAX : mask->mask_vlan_vid ) );
   }
   if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_VLAN_PCP ) ) ) {
     if ( packet_type_eth_vtag( packet ) ) {
@@ -8129,10 +8349,10 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
       append_oxm_match_ip_proto( match, ip_proto );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_IPV4_SRC ) ) ) {
-      append_oxm_match_ipv4_src( match, ( ( packet_info * ) packet->user_data )->ipv4_saddr, ( uint32_t ) ( no_mask ? 0 : mask->mask_ipv4_src ) );
+      append_oxm_match_ipv4_src( match, ( ( packet_info * ) packet->user_data )->ipv4_saddr, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_ipv4_src ) );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_IPV4_DST ) ) ) {
-      append_oxm_match_ipv4_dst( match, ( ( packet_info * ) packet->user_data )->ipv4_daddr, ( uint32_t ) ( no_mask ? 0 : mask->mask_ipv4_dst ) );
+      append_oxm_match_ipv4_dst( match, ( ( packet_info * ) packet->user_data )->ipv4_daddr, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_ipv4_dst ) );
     }
   }
   else if ( eth_type == ETH_ETHTYPE_IPV6 ) {
@@ -8149,7 +8369,8 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_IPV6_SRC ) ) ) {
       if ( no_mask ) {
         memcpy( &tmp_ipv6_mask, &no_ipv6_mask, sizeof( tmp_ipv6_mask ) );
-      } else {
+      }
+      else {
         memcpy( &tmp_ipv6_mask, &mask->mask_ipv6_src, sizeof( tmp_ipv6_mask ) );
       }
       append_oxm_match_ipv6_src( match, ( ( packet_info * ) packet->user_data )->ipv6_saddr, tmp_ipv6_mask );
@@ -8157,16 +8378,17 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_IPV6_DST ) ) ) {
       if ( no_mask ) {
         memcpy( &tmp_ipv6_mask, &no_ipv6_mask, sizeof( tmp_ipv6_mask ) );
-      } else {
+      }
+      else {
         memcpy( &tmp_ipv6_mask, &mask->mask_ipv6_dst, sizeof( tmp_ipv6_mask ) );
       }
       append_oxm_match_ipv6_dst( match, ( ( packet_info * ) packet->user_data )->ipv6_daddr, tmp_ipv6_mask );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_IPV6_FLABEL ) ) ) {
-      append_oxm_match_ipv6_flabel( match, ( ( packet_info * ) packet->user_data )->ipv6_flowlabel, ( uint32_t ) ( no_mask ? 0 : mask->mask_flabel ) );
+      append_oxm_match_ipv6_flabel( match, ( ( packet_info * ) packet->user_data )->ipv6_flowlabel, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_flabel ) );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_IPV6_EXTHDR ) ) ) {
-      append_oxm_match_ipv6_exthdr( match, ( ( packet_info * ) packet->user_data )->ipv6_exthdr, ( uint16_t ) ( no_mask ? 0 : mask->mask_ipv6_exthdr ) );
+      append_oxm_match_ipv6_exthdr( match, ( ( packet_info * ) packet->user_data )->ipv6_exthdr, ( uint16_t ) ( no_mask ? UINT32_MAX : mask->mask_ipv6_exthdr ) );
     }
   }
   else if ( eth_type == ETH_ETHTYPE_ARP ) {
@@ -8174,15 +8396,16 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
       append_oxm_match_arp_op( match, ( ( packet_info * ) packet->user_data )->arp_ar_op );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ARP_SPA ) ) ) {
-      append_oxm_match_arp_spa( match, ( ( packet_info * ) packet->user_data )->arp_spa, ( uint32_t ) ( no_mask ? 0 : mask->mask_arp_spa ) );
+      append_oxm_match_arp_spa( match, ( ( packet_info * ) packet->user_data )->arp_spa, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_arp_spa ) );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ARP_TPA ) ) ) {
-      append_oxm_match_arp_tpa( match, ( ( packet_info * ) packet->user_data )->arp_tpa, ( uint32_t ) ( no_mask ? 0 : mask->mask_arp_tpa ) );
+      append_oxm_match_arp_tpa( match, ( ( packet_info * ) packet->user_data )->arp_tpa, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_arp_tpa ) );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ARP_SHA ) ) ) {
       if ( no_mask ) {
         memcpy( tmp_mac_mask, no_mac_mask, sizeof( tmp_mac_mask ) );
-      } else {
+      }
+      else {
         memcpy( tmp_mac_mask, mask->mask_arp_sha, sizeof( tmp_mac_mask ) );
       }
       append_oxm_match_arp_sha( match, ( ( packet_info * ) packet->user_data )->arp_sha, tmp_mac_mask );
@@ -8190,7 +8413,8 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ARP_THA ) ) ) {
       if ( no_mask ) {
         memcpy( tmp_mac_mask, no_mac_mask, sizeof( tmp_mac_mask ) );
-      } else {
+      }
+      else {
         memcpy( tmp_mac_mask, mask->mask_arp_tha, sizeof( tmp_mac_mask ) );
       }
       append_oxm_match_arp_tha( match, ( ( packet_info * ) packet->user_data )->arp_tha, tmp_mac_mask );

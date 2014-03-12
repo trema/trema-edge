@@ -18,7 +18,7 @@
 
 module Trema
   module Messages
-    class PortMultipartReply < MultipartReply
+    class PortMultipartReply < Message
       unsigned_int32 :port_no
       unsigned_int64 :rx_packets, :tx_packets
       unsigned_int64 :rx_bytes, :tx_bytes
@@ -28,6 +28,9 @@ module Trema
       unsigned_int32 :duration_sec, :duration_nsec
     end
   end
+
+
+  PortMultipartReply = Messages::PortMultipartReply
 end
 
 

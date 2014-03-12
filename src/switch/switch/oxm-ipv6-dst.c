@@ -59,7 +59,14 @@ ipv6_dst_length( const match *match ) {
   
   if ( match->ipv6_dst[ 0 ].valid ) {
     length = oxm_ipv6_dst.length;
-    if ( match->ipv6_dst[ 0 ].mask != UINT8_MAX ) {
+
+    bool has_mask = false;
+    for ( int i = 0; i < IPV6_ADDRLEN; i++ ) {
+      if ( match->ipv6_dst[ i ].mask != UINT8_MAX ) {
+        has_mask = true;
+      }
+    }
+    if ( has_mask ) {
       length = ( uint16_t ) ( length * 2 );
     }
   }
@@ -72,7 +79,9 @@ pack_ipv6_dst( oxm_match_header *hdr, const match *match ) {
   if ( match->ipv6_dst[ 0 ].valid ) {
     *hdr = OXM_OF_IPV6_DST;
     uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
-    memcpy( value, &match->ipv6_dst[ 0 ].value, IPV6_ADDRLEN );
+    for ( int i = 0; i < IPV6_ADDRLEN; i++ ) {
+      value[ i ] = match->ipv6_dst[ i ].value;
+    }
     return oxm_ipv6_dst.length;
   }
   return 0;

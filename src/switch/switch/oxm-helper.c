@@ -218,24 +218,11 @@ static void
 assign_vlan_vid( const oxm_match_header *hdr, match *match ) {
   const uint16_t *value = ( const uint16_t * ) ( ( const char * ) hdr + sizeof ( oxm_match_header ) );
   if ( *hdr == OXM_OF_VLAN_VID ) {
-    if ( ( *value & OFPVID_PRESENT ) != 0 ) {
-      MATCH_ATTR_SET( vlan_vid, ( *value & ( uint16_t ) ~OFPVID_PRESENT ) )
-    }
-    else if ( *value == OFPVID_NONE ) {
-      MATCH_ATTR_SET( vlan_vid, 0 )
-    }
-    else {
-      MATCH_ATTR_SET( vlan_vid, *value )
-    }
+    MATCH_ATTR_SET( vlan_vid, *value )
   }
-  if ( *hdr == OXM_OF_VLAN_VID_W ) {
+  else if ( *hdr == OXM_OF_VLAN_VID_W ) {
     const uint16_t *mask = ( const uint16_t * ) ( ( const char * ) value + sizeof ( uint16_t ) );
-    if ( *value == OFPVID_PRESENT && *mask == OFPVID_PRESENT ) {
-      MATCH_ATTR_MASK_SET( vlan_vid, 0, 0 )
-    }
-    else {
-      MATCH_ATTR_MASK_SET( vlan_vid, *value, *mask )
-    }
+    MATCH_ATTR_MASK_SET( vlan_vid, *value, *mask )
   }
 }
 
@@ -280,6 +267,20 @@ assign_metadata( const oxm_match_header *hdr, match *match ) {
     value = ( const uint64_t * ) ( ( const char * ) hdr + sizeof ( oxm_match_header ) );
     const uint64_t *mask = ( const uint64_t * ) ( ( const char * ) value + sizeof ( uint64_t ) );
     MATCH_ATTR_MASK_SET( metadata, *value, *mask )
+  }
+}
+
+
+static void
+assign_pbb_isid( const oxm_match_header *hdr, match *match ) {
+  const uint8_t *v = ( const uint8_t * ) ( ( const char * ) hdr + sizeof( oxm_match_header ) );
+
+  uint32_t value = ( uint32_t ) ( ( v[ 0 ] << 16 ) + ( v[ 1 ] << 8 ) + v[ 2 ] );
+  if ( *hdr == OXM_OF_PBB_ISID ) {
+    MATCH_ATTR_SET( pbb_isid, value );
+  }
+  else if ( *hdr == OXM_OF_PBB_ISID_W ) {
+    MATCH_ATTR_MASK_SET( pbb_isid, value, ( uint32_t ) ( ( v[ 3 ] << 16 ) + ( v[ 4 ] << 8 ) + v[ 5 ] ) );
   }
 }
 
@@ -447,6 +448,11 @@ _assign_match( match *match, const oxm_match_header *hdr ) {
       assign_ipv6_exthdr( hdr, match );
     }
     break;
+    case OXM_OF_PBB_ISID:
+    case OXM_OF_PBB_ISID_W: {
+      assign_pbb_isid( hdr, match );
+    }
+    break;
     default:
       error( "Undefined oxm type ( header = %#x, type = %#x, has_mask = %u, length = %u ). ",
               *hdr, OXM_TYPE( *hdr ), OXM_HASMASK( *hdr ), OXM_LENGTH( *hdr ) );
@@ -454,6 +460,15 @@ _assign_match( match *match, const oxm_match_header *hdr ) {
   }
 }
 void ( *assign_match )( match *match, const oxm_match_header *hdr ) = _assign_match;
+
+
+static void
+byte_copy_match8( uint8_t *dst, uint8_t *dst_mask, match8 *src, const uint8_t len ) {
+  for ( uint8_t i = 0; i < len; i++, src++ ) {
+    dst[ i ] = src->value;
+    dst_mask[ i ] = src->mask;
+  }
+}
 
 
 static void
@@ -469,25 +484,32 @@ _construct_oxm( oxm_matches *oxm_match, match *match ) {
   APPEND_OXM_MATCH( icmpv4_type )
   APPEND_OXM_MATCH( icmpv6_type )
   APPEND_OXM_MATCH( arp_op )
+  uint8_t eth_addr[ ETH_ADDRLEN ];
+  uint8_t eth_addr_mask[ ETH_ADDRLEN ];
   if ( match->arp_sha[ 0 ].valid ) {
-    append_oxm_match_arp_sha( oxm_match, &match->arp_sha[ 0 ].value, &match->arp_sha[ 0 ].mask );
+    byte_copy_match8( eth_addr, eth_addr_mask, &match->arp_sha[ 0 ], ETH_ADDRLEN );
+    append_oxm_match_arp_sha( oxm_match, eth_addr, eth_addr_mask );
   }
   if ( match->arp_spa.valid ) {
     append_oxm_match_arp_spa( oxm_match, match->arp_spa.value, match->arp_spa.mask );
   }
   if ( match->arp_tha[ 0 ].valid ) {
-    append_oxm_match_arp_tha( oxm_match, &match->arp_tha[ 0 ].value, &match->arp_tha[ 0 ].mask );
+    byte_copy_match8( eth_addr, eth_addr_mask, &match->arp_tha[ 0 ], ETH_ADDRLEN );
+    append_oxm_match_arp_tha( oxm_match, eth_addr, eth_addr_mask );
   }
   if ( match->arp_tpa.valid ) {
     append_oxm_match_arp_tpa( oxm_match, match->arp_tpa.value, match->arp_tpa.mask );
   }
   if ( match->eth_dst[ 0 ].valid ) {
-    append_oxm_match_eth_dst( oxm_match, &match->eth_dst[ 0 ].value, &match->eth_dst[ 0 ].mask );
+    byte_copy_match8( eth_addr, eth_addr_mask, &match->eth_dst[ 0 ], ETH_ADDRLEN );
+    append_oxm_match_eth_dst( oxm_match, eth_addr, eth_addr_mask );
   }
   if ( match->eth_src[ 0 ].valid ) {
-    append_oxm_match_eth_src( oxm_match, &match->eth_src[ 0 ].value, &match->eth_dst[ 0 ].mask );
+    byte_copy_match8( eth_addr, eth_addr_mask, &match->eth_src[ 0 ], ETH_ADDRLEN );
+    append_oxm_match_eth_src( oxm_match, eth_addr, eth_addr_mask );
   }
   APPEND_OXM_MATCH( icmpv4_code )
+  APPEND_OXM_MATCH( icmpv6_code )
   APPEND_OXM_MATCH( ip_dscp )
   APPEND_OXM_MATCH( ip_ecn )
   if ( match->ipv4_dst.valid ) {
@@ -498,13 +520,11 @@ _construct_oxm( oxm_matches *oxm_match, match *match ) {
   }
   struct in6_addr ipv6_addr, ipv6_mask;
   if ( match->ipv6_src[ 0 ].valid ) {
-    memcpy( &ipv6_addr.s6_addr, &match->ipv6_src[ 0 ].value, IPV6_ADDRLEN );
-    memcpy( &ipv6_mask.s6_addr, &match->ipv6_src[ 0 ].mask, IPV6_ADDRLEN );
+    byte_copy_match8( ipv6_addr.s6_addr, ipv6_mask.s6_addr, &match->ipv6_src[ 0 ], IPV6_ADDRLEN );
     append_oxm_match_ipv6_src( oxm_match, ipv6_addr, ipv6_mask );
   }
   if ( match->ipv6_dst[ 0 ].valid ) {
-    memcpy( &ipv6_addr.s6_addr, &match->ipv6_dst[ 0 ].value, IPV6_ADDRLEN );
-    memcpy( &ipv6_mask.s6_addr, &match->ipv6_dst[ 0 ].mask, IPV6_ADDRLEN );
+    byte_copy_match8( ipv6_addr.s6_addr, ipv6_mask.s6_addr, &match->ipv6_dst[ 0 ], IPV6_ADDRLEN );
     append_oxm_match_ipv6_dst( oxm_match, ipv6_addr, ipv6_mask );
   }
   if ( match->ipv6_exthdr.valid ) {
@@ -514,14 +534,16 @@ _construct_oxm( oxm_matches *oxm_match, match *match ) {
     append_oxm_match_ipv6_flabel( oxm_match, match->ipv6_flabel.value, match->ipv6_flabel.mask );
   }
   if ( match->ipv6_nd_sll[ 0 ].valid ) {
-    append_oxm_match_ipv6_nd_sll( oxm_match, &match->ipv6_nd_sll[ 0 ].value );
+    byte_copy_match8( eth_addr, eth_addr_mask, &match->ipv6_nd_sll[ 0 ], ETH_ADDRLEN );
+    append_oxm_match_ipv6_nd_sll( oxm_match, eth_addr );
   }
   if ( match->ipv6_nd_target[ 0 ].valid ) {
-    memcpy( &ipv6_addr.s6_addr, &match->ipv6_nd_target[ 0 ].value, IPV6_ADDRLEN );
+    byte_copy_match8( ipv6_addr.s6_addr, ipv6_mask.s6_addr, &match->ipv6_nd_target[ 0 ], IPV6_ADDRLEN ) ;
     append_oxm_match_ipv6_nd_target( oxm_match, ipv6_addr );
   }
   if ( match->ipv6_nd_tll[ 0 ].valid ) {
-    append_oxm_match_ipv6_nd_tll( oxm_match, &match->ipv6_nd_tll[ 0 ].value );
+    byte_copy_match8( eth_addr, eth_addr_mask, &match->ipv6_nd_tll[ 0 ], ETH_ADDRLEN );
+    append_oxm_match_ipv6_nd_tll( oxm_match, eth_addr );
   }
   if ( match->metadata.valid ) {
     append_oxm_match_metadata( oxm_match, match->metadata.value, match->metadata.mask );
@@ -538,6 +560,9 @@ _construct_oxm( oxm_matches *oxm_match, match *match ) {
   }
   APPEND_OXM_MATCH( udp_dst )
   APPEND_OXM_MATCH( udp_src )
+  if ( match->pbb_isid.valid ) {
+    append_oxm_match_pbb_isid( oxm_match, match->pbb_isid.value, match->pbb_isid.mask );
+  }
 }
 void ( *construct_oxm )( oxm_matches *oxm_match, match *match ) = _construct_oxm;
 

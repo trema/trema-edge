@@ -27,6 +27,9 @@ module Trema
       unsigned_int8 :reason, presence: true
     end
   end
+
+
+  PortStatus = Messages::PortStatus
 end
 
 

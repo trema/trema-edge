@@ -18,8 +18,8 @@
 #
 
 
-require "trema/daemon"
-require "trema/executables"
+require_relative "daemon"
+require_relative "executables"
 
 
 module Trema

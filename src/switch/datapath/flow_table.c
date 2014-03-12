@@ -315,7 +315,7 @@ init_flow_table( const uint8_t table_id, const uint32_t max_flow_entries ) {
     return OFDPE_FAILED;
   }
 
-  memset( table, 0, sizeof( table ) );
+  memset( table, 0, sizeof( flow_table ) );
 
   table->counters.active_count = 0;
   table->counters.lookup_count = 0;
@@ -363,15 +363,15 @@ finalize_flow_table( const uint8_t table_id ) {
 
 
 static list_element *
-lookup_flow_entries_with_table_id( const uint8_t table_id, const match *match, const uint16_t priority,
+lookup_flow_entries_with_table_id( const uint8_t table_id, const match *match_key, const uint16_t priority,
                                    const bool strict, const bool update_counters ) {
   assert( valid_table_id( table_id ) );
 
   if ( get_logging_level() >= LOG_DEBUG ) {
     debug( "Looking up flow entries ( table_id = %#x, match = %p, priority = %u, strict = %s, update_counters = %s ).",
-           table_id, match, priority, strict ? "true" : "false", update_counters ? "true" : "false" );
-    if ( match != NULL ) {
-      dump_match( match, debug );
+           table_id, match_key, priority, strict ? "true" : "false", update_counters ? "true" : "false" );
+    if ( match_key != NULL ) {
+      dump_match( match_key, debug );
     }
   }
 
@@ -390,11 +390,21 @@ lookup_flow_entries_with_table_id( const uint8_t table_id, const match *match, c
   for ( list_element *e = table->entries; e != NULL; e = e->next ) {
     flow_entry *entry = e->data;
     assert( entry != NULL );
+    
+    const match *narrow, *wide;
+    if ( update_counters ) {
+      narrow = match_key;
+      wide = entry->match;
+    } else {
+      narrow = entry->match;
+      wide = match_key;
+    }
+    
     if ( strict ) {
       if ( entry->priority < priority ) {
         break;
       }
-      if ( priority == entry->priority && compare_match_strict( match, entry->match ) ) {
+      if ( priority == entry->priority && compare_match_strict( narrow, wide ) ) {
         if ( update_counters ) {
           increment_matched_count( table_id );
         }
@@ -403,7 +413,7 @@ lookup_flow_entries_with_table_id( const uint8_t table_id, const match *match, c
       }
     }
     else {
-      if ( compare_match( match, entry->match ) ) {
+      if ( compare_match( narrow, wide ) ) {
         if ( update_counters ) {
           increment_matched_count( table_id );
         }
@@ -552,6 +562,9 @@ insert_flow_entry( flow_table *table, flow_entry *entry, const uint16_t flags ) 
       break;
     }
     if ( e->priority == entry->priority ) {
+      if ( e->table_miss && !entry->table_miss ) {
+        break;
+      }
       if ( ( flags & OFPFF_CHECK_OVERLAP ) != 0 && compare_match( e->match, entry->match ) ) {
         return ERROR_OFDPE_FLOW_MOD_FAILED_OVERLAP;
       }
@@ -602,10 +615,16 @@ add_flow_entry( const uint8_t table_id, flow_entry *entry, const uint16_t flags 
 
   flow_table *table = get_flow_table( table_id );
   if ( table == NULL ) {
+    if ( !unlock_pipeline() ) {
+      return ERROR_UNLOCK;
+    }
     return ERROR_OFDPE_FLOW_MOD_FAILED_BAD_TABLE_ID;
   }
 
   if ( table->features.max_entries <= get_active_count( table_id ) ) {
+    if ( !unlock_pipeline() ) {
+      return ERROR_UNLOCK;
+    }
     return ERROR_OFDPE_FLOW_MOD_FAILED_TABLE_FULL;
   }
 
@@ -701,6 +720,9 @@ update_flow_entries( const uint8_t table_id, const match *match, const uint64_t 
   OFDPE ret = validate_instruction_set( instructions, table->features.metadata_write );
   if ( ret != OFDPE_SUCCESS ) {
     error( "Invalid instruction set ( ret = %#x, instructions = %p ).", ret, instructions );
+    if ( !unlock_pipeline() ) {
+      return ERROR_UNLOCK;
+    }
     return ret;
   }
 
@@ -756,6 +778,9 @@ update_flow_entry_strict( const uint8_t table_id, const match *match, const uint
   OFDPE ret = validate_instruction_set( instructions, table->features.metadata_write );
   if ( ret != OFDPE_SUCCESS ) {
     error( "Invalid instruction set ( ret = %#x, instructions = %p ).", ret, instructions );
+    if ( !unlock_pipeline() ) {
+      return ERROR_UNLOCK;
+    }
     return ret;
   }
 
@@ -809,7 +834,9 @@ update_or_add_flow_entry( const uint8_t table_id, const match *key,
   OFDPE ret = validate_instruction_set( instructions, table->features.metadata_write );
   if ( ret != OFDPE_SUCCESS ) {
     error( "Invalid instruction set ( ret = %#x, instructions = %p ).", ret, instructions );
-    unlock_pipeline();
+    if ( !unlock_pipeline() ) {
+      return ERROR_UNLOCK;
+    }
     return ret;
   }
 
@@ -1246,12 +1273,40 @@ get_flow_table_config( const uint8_t table_id, uint32_t *config ) {
 }
 
 
+static void
+dump_next_table_ids( const bool *next_table_ids, const char *name, void dump_function( const char *format, ... ) ) {
+  char ids[ 1024 ], *cur = ids, *end = &ids[ sizeof( ids ) - 1 ];
+  ids[ 0 ] = '\0';
+  bool id_not_found = true;
+  for ( uint8_t i = 0; i < N_FLOW_TABLES; i++ ) {
+    if ( ( i % 32 ) == 0 ) {
+      if ( ids[ 0 ] != 0 ) {
+        ( *dump_function )( "%s:%s", name, ids );
+        ids[ 0 ] = 0, cur = ids;
+      }
+    }
+    else if ( next_table_ids[ i ] ) {
+      id_not_found = false;
+      snprintf( cur, ( size_t ) ( end - cur ), " %#x", i );
+      cur += strlen( cur );
+    }
+  }
+  if ( ids[ 0 ] != 0 ) {
+    ( *dump_function )( "%s:%s", name, ids );
+  }
+  if ( id_not_found ) {
+    ( *dump_function )( "%s: not found", name );
+  }
+}
+
+
 void
 dump_flow_table( const uint8_t table_id, void dump_function( const char *format, ... ) ) {
   assert( valid_table_id( table_id ) );
   assert( dump_function != NULL );
 
   if ( !lock_pipeline() ) {
+    ( *dump_function )( "Cannot lock table %#x", table_id );
     return;
   }
 
@@ -1278,17 +1333,8 @@ dump_flow_table( const uint8_t table_id, void dump_function( const char *format,
   ( *dump_function )( "write_setfield_miss: %#" PRIx64, table->features.write_setfield_miss );
   ( *dump_function )( "apply_setfield: %#" PRIx64, table->features.apply_setfield );
   ( *dump_function )( "apply_setfield_miss: %#" PRIx64, table->features.apply_setfield_miss );
-  for ( uint8_t i = 0; i < N_FLOW_TABLES; i++ ) {
-    if ( !table->features.next_table_ids[ i ] ) {
-      ( *dump_function )( "next_table_id: %#x - %s", i, table->features.next_table_ids[ i ] ? "true" : "false" ); 
-    }
-  }
-  for ( uint8_t i = 0; i < N_FLOW_TABLES; i++ ) {
-    if ( !table->features.next_table_ids_miss[ i ] ) {
-      ( *dump_function )( "next_table_id_miss: %#x - %s", i, table->features.next_table_ids_miss[ i ] ? "true" : "false" ); 
-    }
-  }
-
+  dump_next_table_ids( table->features.next_table_ids, "next_table_ids", dump_function );
+  dump_next_table_ids( table->features.next_table_ids_miss, "next_table_ids_miss", dump_function );
   ( *dump_function )( "[Stats]" );
   ( *dump_function )( "active_count: %u", table->counters.active_count );
   ( *dump_function )( "lookup_count: %" PRIu64, table->counters.lookup_count );

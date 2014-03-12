@@ -29,7 +29,10 @@ extern "C" {
   do { \
     sleep( 1 ); \
   } while( 1 ) 
-  
+
+
+bool is_datapath();
+bool is_protocol(); 
 
 
 #ifdef __cplusplus

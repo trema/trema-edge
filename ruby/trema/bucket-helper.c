@@ -57,10 +57,8 @@ pack_buckets( VALUE r_bucket ) {
   if ( !NIL_P( r_bucket ) ) {
     switch ( TYPE( r_bucket ) ) {
       case T_ARRAY: {
-        VALUE *each = RARRAY_PTR( r_bucket );
-
         for ( int i = 0; i < RARRAY_LEN( r_bucket ); i++ ) {
-          pack_bucket( each[ i ], buckets );
+          pack_bucket( rb_ary_entry( r_bucket, i ), buckets );
         }
       }
       break;

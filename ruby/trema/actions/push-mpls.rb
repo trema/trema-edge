@@ -31,10 +31,10 @@ module Trema
     class PushMpls < Mpls
     end
   end
+
+
+  PushMpls = Actions::PushMpls
 end
-
-
-PushMpls = Trema::Actions::PushMpls
 
 
 ### Local variables:

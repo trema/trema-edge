@@ -1,8 +1,4 @@
 /*
- * Private functions that are only called from [chibach]/src/lib.
- *
- * Author: Yasuhito Takamiya <yasuhito@gmail.com>
- *
  * Copyright (C) 2008-2013 NEC Corporation
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,28 +16,27 @@
  */
 
 
-#ifndef CHIBACH_PRIVATE_H
-#define CHIBACH_PRIVATE_H
+#include "trema.h"
+#include "ruby.h"
+#include "hash-util.h"
 
 
-#include "bool.h"
+buffer *
+pack_meter_features_multipart_request( VALUE options ) {
+  uint32_t xid = get_transaction_id();
+  VALUE r_xid = HASH_REF( options, transaction_id );
+  if ( !NIL_P( r_xid ) ) {
+    xid = NUM2UINT( r_xid );
+  }
 
-
-void set_chibach_home( void );
-const char *get_chibach_home( void );
-void unset_chibach_home( void );
-
-void set_chibach_tmp( void );
-const char *get_chibach_tmp( void );
-void unset_chibach_tmp( void );
-
-const char *get_chibach_name( void );
-
-const char *_get_chibach_home( void );
-const char *_get_chibach_tmp( void );
-
-
-#endif // CHIBACH_PRIVATE_H
+  uint16_t flags = 0;
+  VALUE r_flags = HASH_REF( options, flags );
+  if ( !NIL_P( r_flags ) ) {
+    flags = ( uint16_t ) NUM2UINT( r_flags );
+  }
+  buffer *meter_features_multipart_request = create_meter_features_multipart_request( xid, flags );
+  return meter_features_multipart_request;
+}
 
 
 /*

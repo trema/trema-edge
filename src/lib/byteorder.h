@@ -39,6 +39,12 @@
 #endif
 
 
+void ntoh_hello_elem_versionbitmap( struct ofp_hello_elem_versionbitmap *dst, const struct ofp_hello_elem_versionbitmap *src );
+void hton_hello_elem_versionbitmap( struct ofp_hello_elem_versionbitmap *dst, const struct ofp_hello_elem_versionbitmap *src );
+
+void ntoh_hello_elem( struct ofp_hello_elem_header *dst, const struct ofp_hello_elem_header *src );
+void hton_hello_elem( struct ofp_hello_elem_header *dst, const struct ofp_hello_elem_header *src );
+
 void ntoh_port( struct ofp_port *dst, const struct ofp_port *src );
 #define hton_port ntoh_port
 
@@ -156,8 +162,8 @@ void ntoh_bucket_counter( struct ofp_bucket_counter *dst, const struct ofp_bucke
 void ntoh_group_stats( struct ofp_group_stats *dst, const struct ofp_group_stats *src );
 void hton_group_stats( struct ofp_group_stats *dst, const struct ofp_group_stats *src );
 
-void ntoh_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_group_desc_stats *src );
-void hton_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_group_desc_stats *src );
+void ntoh_group_desc( struct ofp_group_desc *dst, const struct ofp_group_desc *src );
+void hton_group_desc( struct ofp_group_desc *dst, const struct ofp_group_desc *src );
 
 void ntoh_group_features_stats( struct ofp_group_features *dst, const struct ofp_group_features *src );
 #define hton_group_features_stats ntoh_group_features_stats

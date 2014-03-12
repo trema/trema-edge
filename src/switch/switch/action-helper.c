@@ -152,6 +152,7 @@ _action_list_length( action_list **list ) {
     if ( action != NULL ) {
       length = ( uint16_t ) ( length + action_tlv_length_by_type( action->type ) );
       if ( action->type == OFPAT_SET_FIELD && action->match ) {
+        length = ( uint16_t ) ( length - sizeof( ( ( struct ofp_action_set_field * ) NULL )->field ) ); // // PADLEN_TO_64() below
         uint16_t m_len = match_length( action->match );
         length = ( uint16_t ) ( length + m_len );
         length = ( uint16_t ) ( length + PADLEN_TO_64( length ) );

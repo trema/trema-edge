@@ -25,12 +25,13 @@ module Trema
     # A match field to match an IPv6 neighbor target link-layer address
     #
     class Ipv6NdTll < EthAddr
+      mac :mac_address, alias: :ipv6_nd_tll
     end
   end
+
+
+  Ipv6NdTll = Actions::Ipv6NdTll
 end
-
-
-Ipv6NdTll = Trema::Actions::Ipv6NdTll
 
 
 ### Local variables:

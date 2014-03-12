@@ -32,7 +32,7 @@
 #include "bool.h"
 
 
-#define MESSENGER_SERVICE_NAME_LENGTH 32
+#define MESSENGER_SERVICE_NAME_LENGTH 64
 
 
 typedef struct message_header {

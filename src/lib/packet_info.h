@@ -46,6 +46,7 @@ enum {
   ETH_8023_SNAP = 0x00000008,
   ETH_8021Q = 0x00000010,
   MPLS = 0x00000020,
+  PBB = 0x00000040,
   NW_IPV4 = 0x00000100,
   NW_ICMPV4 = 0x00000200,
   NW_IPV6 = 0x00000400,
@@ -118,16 +119,9 @@ typedef struct {
 
   uint16_t vlan_tci;
   uint16_t vlan_tpid;
-  uint8_t vlan_prio;
+  uint8_t vlan_prio; // PCP
   uint8_t vlan_cfi;
   uint16_t vlan_vid;
-  uint8_t  vlan_pcp;
-  uint8_t  ip_dscp;
-  /*
-  * TODO not set in packet parsing but necessary to compile ofdp.
-  */
-  uint8_t  ip_ecn;
-  uint8_t  ip_proto;
 
   uint8_t snap_llc[ SNAP_LLC_LENGTH ];
   uint8_t snap_oui[ SNAP_OUI_LENGTH ];
@@ -143,9 +137,15 @@ typedef struct {
   uint8_t arp_tha[ ETH_ADDRLEN ];
   uint32_t arp_tpa;
 
+  uint8_t ip_proto;
+  uint8_t ip_dscp;
+  uint8_t ip_ecn;
+
   uint8_t ipv4_version;
   uint8_t ipv4_ihl;
   uint8_t ipv4_tos;
+  uint8_t ipv4_dscp;
+  uint8_t ipv4_ecn;
   uint16_t ipv4_tot_len;
   uint16_t ipv4_id;
   uint16_t ipv4_frag_off;
@@ -157,6 +157,8 @@ typedef struct {
 
   uint8_t ipv6_version;
   uint8_t ipv6_tc;
+  uint8_t ipv6_dscp;
+  uint8_t ipv6_ecn;
   uint32_t ipv6_flowlabel;
   uint16_t ipv6_plen;
   uint16_t ipv6_nexthdr;
@@ -227,6 +229,7 @@ typedef struct {
   void *l4_payload;
   size_t l4_payload_length;
   void *l2_vlan_header;
+  void *l2_pbb_header;
   void *l2_mpls_header;
 } packet_info;
 
@@ -235,6 +238,7 @@ bool parse_packet( buffer *buf );
 
 void calloc_packet_info( buffer *frame );
 void free_packet_info( buffer *frame );
+void copy_packet_info( buffer *dst, const buffer *src );
 packet_info get_packet_info( const buffer *frame );
 
 bool packet_type_eth_dix( const buffer *frame );
@@ -243,6 +247,7 @@ bool packet_type_eth_raw( const buffer *frame );
 bool packet_type_eth_llc( const buffer *frame );
 bool packet_type_eth_snap( const buffer *frame );
 bool packet_type_eth_mpls( const buffer *frame );
+bool packet_type_eth_pbb(const buffer *frame);
 bool packet_type_ether( const buffer *frame );
 bool packet_type_arp( const buffer *frame );
 bool packet_type_ipv4( const buffer *frame );
@@ -254,6 +259,8 @@ bool packet_type_ipv4_tcp( const buffer *frame );
 bool packet_type_ipv6_tcp( const buffer *frame );
 bool packet_type_ipv4_udp( const buffer *frame );
 bool packet_type_ipv6_udp( const buffer *frame );
+bool packet_type_ipv4_sctp( const buffer *frame );
+bool packet_type_ipv6_sctp( const buffer *frame );
 bool packet_type_ipv4_etherip( const buffer *frame );
 
 bool packet_type_arp_request( const buffer *frame );

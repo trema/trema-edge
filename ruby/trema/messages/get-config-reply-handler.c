@@ -34,7 +34,7 @@ handle_get_config_reply( uint64_t datapath_id,
   HASH_SET( attributes, "transaction_id", UINT2NUM( transaction_id ) );
   HASH_SET( attributes, "flags", UINT2NUM( flags ) );
   HASH_SET( attributes, "miss_send_len", UINT2NUM( miss_send_len ) );
-  VALUE r_get_config_reply = rb_funcall( rb_eval_string( "Messages::GetConfigReply" ), rb_intern( "new" ), 1, attributes );
+  VALUE r_get_config_reply = rb_funcall( rb_eval_string( "Trema::Messages::GetConfigReply" ), rb_intern( "new" ), 1, attributes );
   rb_funcall( ( VALUE ) controller, rb_intern( "get_config_reply" ), 2, ULL2NUM( datapath_id ), r_get_config_reply );
 }
 

@@ -41,6 +41,7 @@ struct outstanding_request {
 struct protocol_ctrl {
   struct outstanding_request outstanding_requests[ MAX_OUTSTANDING_REQUESTS ];
   uint32_t nr_requests;
+  uint32_t capabilities;
   bool controller_connected;
 };
 
@@ -59,6 +60,9 @@ struct protocol {
 
 pthread_t start_async_protocol( struct switch_arguments *args );
 void wakeup_datapath( struct protocol *protocol );
+
+struct protocol* get_protocol();
+void handle_datapath_packet( buffer *packet, struct protocol *protocol );
 
 
 #ifdef __cplusplus

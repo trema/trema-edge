@@ -19,13 +19,13 @@
 module Trema
   module Instructions
     class Meter < Instruction
-      unsigned_int32 :meter, :presence => true
+      unsigned_int32 :meter, presence: true
     end
   end
+
+
+  Meter = Instructions::Meter
 end
-
-
-Meter = Trema::Instructions::Meter
 
 
 ### Local variables:

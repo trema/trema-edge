@@ -24,7 +24,7 @@ module Trema
     # OXM_IN_PHY_PORT, OXM_METADATA
     #
     class SetField < BasicAction
-      array :action_set, :validate_with => :check_action_set
+      array :action_set, validate_with: :check_action_set
     end
 
 
@@ -32,10 +32,10 @@ module Trema
       # TODO validate argument
     end
   end
+
+
+  SetField = Actions::SetField
 end
-
-
-SetField = Trema::Actions::SetField
 
 
 ### Local variables:

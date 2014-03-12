@@ -23,10 +23,12 @@ module Trema
       unsigned_int16 :flags, :miss_send_len
     end
   end
+
+
+  GetConfigReply = Messages::GetConfigReply
 end
 
 
-GetConfigReply = Trema::Messages::GetConfigReply
 
 
 ### Local variables:

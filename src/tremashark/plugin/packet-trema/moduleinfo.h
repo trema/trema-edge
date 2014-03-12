@@ -1,8 +1,6 @@
 /*
  * Package name and version definition of tremashark
  *
- * Author: Yasunobu Chiba, Yasunori Nakazawa
- *
  * Copyright (C) 2008-2013 NEC Corporation
  *
  * This program is free software; you can redistribute it and/or modify

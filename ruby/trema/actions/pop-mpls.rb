@@ -31,10 +31,10 @@ module Trema
     class PopMpls < Mpls
     end
   end
+
+
+  PopMpls = Actions::PopMpls
 end
-
-
-PopMpls = Trema::Actions::PopMpls
 
 
 ### Local variables:

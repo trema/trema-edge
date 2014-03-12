@@ -20,10 +20,7 @@
 #
 
 
-$LOAD_PATH << "./src/examples/learning_switch/"
-
-
-require "fdb"
+require_relative "../learning_switch/fdb"
 
 
 #
@@ -40,10 +37,22 @@ class MultiLearningSwitch < Controller
   end
 
 
+  def switch_ready datapath_id
+    action = SendOutPort.new( port_number: OFPP_CONTROLLER, max_len: OFPCML_NO_BUFFER )
+    ins = ApplyAction.new( actions: [ action ] )
+    send_flow_mod_add( datapath_id,
+                       priority: OFP_LOW_PRIORITY,
+                       buffer_id: OFP_NO_BUFFER,
+                       flags: OFPFF_SEND_FLOW_REM,
+                       instructions: [ ins ]
+    )
+  end
+
+
   def packet_in datapath_id, message
     fdb = @fdbs[ datapath_id ]
-    fdb.learn message.macsa, message.in_port
-    port_no = fdb.port_no_of( message.macda )
+    fdb.learn message.eth_src, message.in_port
+    port_no = fdb.port_no_of( message.eth_dst )
     if port_no
       flow_mod datapath_id, message, port_no
       packet_out datapath_id, message, port_no
@@ -66,19 +75,22 @@ class MultiLearningSwitch < Controller
 
 
   def flow_mod datapath_id, message, port_no
+    action = SendOutPort.new( port_number: port_no )
+    ins = Instructions::ApplyAction.new( actions: [ action ] )
     send_flow_mod_add(
       datapath_id,
-      :match => ExactMatch.from( message ),
-      :actions => ActionOutput.new( :port => port_no )
+      match: ExactMatch.from( message ),
+      instructions: [ ins ]
     )
   end
 
 
   def packet_out datapath_id, message, port_no
+    action = Actions::SendOutPort.new( port_number: port_no )
     send_packet_out(
       datapath_id,
-      :packet_in => message,
-      :actions => ActionOutput.new( :port => port_no )
+      packet_in: message,
+      actions: [ action ]
     )
   end
 

@@ -19,9 +19,7 @@
 $LOAD_PATH.unshift File.expand_path( File.join File.dirname( __FILE__ ), "ruby" )
 
 
-require "paper-house/executable-task"
-require "paper-house/ruby-library-task"
-require "paper-house/static-library-task"
+require "paper_house"
 require "rake/clean"
 require "rspec/core"
 require "rspec/core/rake_task"
@@ -40,8 +38,7 @@ CFLAGS = [
   "-std=gnu99",
   "-D_GNU_SOURCE",
   "-fno-strict-aliasing",
-  # FIXME
-  # "-Werror",
+  "-Werror",
   "-Wall",
   "-Wextra",
   "-Wformat=2",
@@ -60,7 +57,9 @@ task :default => [
   :switch_daemon,
   :trema_switch,
   :packetin_filter,
-  "vendor:phost"
+  :tremashark,
+  :examples,
+  "vendor:phost",
 ]
 
 
@@ -75,7 +74,7 @@ end
 desc "Build Trema Ruby library."
 task :libruby => :libtrema
 
-PaperHouse::RubyLibraryTask.new :libruby do | task |
+PaperHouse::RubyExtensionTask.new :libruby do | task |
   task.library_name = "trema"
   task.target_directory = Trema.ruby
   task.sources = [
@@ -83,7 +82,7 @@ PaperHouse::RubyLibraryTask.new :libruby do | task |
     "#{ Trema.ruby }/trema/messages/*.c"
   ]
   task.includes = Trema.include
-  task.cflags = CFLAGS
+  task.cflags = CFLAGS + [ "-Wno-error=sign-conversion" ] # FIXME
   task.ldflags = [ "-Wl,-Bsymbolic", "-L#{ Trema.lib }" ]
   task.library_dependencies = [
     "trema",
@@ -157,6 +156,7 @@ PaperHouse::ExecutableTask.new :switch_daemon do | task |
     "src/switch_manager/service_interface.c",
     "src/switch_manager/switch.c",
     "src/switch_manager/xid_table.c",
+    "src/switch_manager/tls.c",
   ]
   task.includes = Trema.include
   task.cflags = CFLAGS
@@ -167,6 +167,8 @@ PaperHouse::ExecutableTask.new :switch_daemon do | task |
     "pthread",
     "rt",
     "dl",
+    "ssl",
+    "crypto",
   ]
 end
 
@@ -200,7 +202,7 @@ PaperHouse::ExecutableTask.new :packetin_filter do | task |
   task.sources = "src/packetin_filter/*.c"
   task.includes = Trema.include
   task.cflags = CFLAGS
-  task.ldflags = [ "-L#{ Trema.lib }", "-L#{ Trema.obj_datapath }" ]
+  task.ldflags = "-L#{ Trema.lib }"
   task.library_dependencies = [
     "trema",
     "sqlite3",
@@ -208,6 +210,151 @@ PaperHouse::ExecutableTask.new :packetin_filter do | task |
     "rt",
     "dl",
   ]
+end
+
+
+desc "Build Tremashark."
+
+task :tremashark => [
+  'tremashark:tremashark',
+  'tremashark:syslog_relay',
+  'tremashark:stdin_relay',
+  'tremashark:packet_capture',
+]
+
+tremashark_sources = {
+  'tremashark:tremashark' => [
+    'src/tremashark/queue.c',
+    'src/tremashark/pcap_queue.c',
+    'src/tremashark/tremashark.c',
+  ],
+  'tremashark:syslog_relay' => [
+    'src/tremashark/syslog_relay.c',
+  ],
+  'tremashark:stdin_relay' => [
+    'src/tremashark/stdin_relay.c',
+  ],
+  'tremashark:packet_capture' => [
+    'src/tremashark/queue.c',
+    'src/tremashark/pcap_queue.c',
+    'src/tremashark/packet_capture.c',
+  ],
+}
+
+Rake::Task[ :tremashark ].prerequisites.each do | utility |
+  begin
+    Rake::Task[ utility ]
+  rescue
+    desc "Build #{ utility }."
+    task utility => :libtrema
+
+    PaperHouse::ExecutableTask.new utility do | task |
+      task.target_directory = File.dirname( Trema::Executables.tremashark )
+      task.executable_name = utility.split(':')[1]
+      task.sources = tremashark_sources[utility]
+      task.includes = Trema.include
+      task.cflags = CFLAGS
+      task.ldflags = "-L#{ Trema.lib }"
+      task.library_dependencies = [
+        "trema",
+        "sqlite3",
+        "pthread",
+        "rt",
+        "dl",
+        "pcap",
+      ]
+    end
+  end
+end
+
+
+################################################################################
+# Examples.
+################################################################################
+
+def target_directory_of example
+  File.join Trema.objects, example
+end
+
+task :examples => [
+  'examples:cbench_switch',
+  'examples:dumper',
+  'examples:hello_trema',
+  'examples:learning_switch',
+  'examples:list_switches',
+  'examples:multi_learning_switch',
+  'examples:openflow_message',
+  #'examples:packetin_filter_config',
+  'examples:packet_in',
+  'examples:repeater_hub',
+  'examples:switch_info',
+  'examples:switch_monitor',
+  'examples:traffic_monitor'
+]
+
+
+task 'examples:openflow_message' => [
+  'examples:openflow_message:echo_reply',
+  'examples:openflow_message:echo_request',
+  'examples:openflow_message:features_request',
+  'examples:openflow_message:hello',
+  'examples:openflow_message:group_mod',
+  'examples:openflow_message:port_desc_multipart_request',
+  'examples:openflow_message:set_config'
+]
+
+
+Rake::Task[ :examples ].prerequisites.each do | example |
+  begin
+    Rake::Task[ example ]
+  rescue
+    desc "Build #{ example }."
+    task example => :libtrema
+
+    PaperHouse::ExecutableTask.new example do | task |
+      example_name = example.gsub(/:/,'/')
+      task.executable_name = File.basename example_name
+      task.target_directory = target_directory_of "#{ example_name }"
+      task.sources = "src/#{ example_name }/*.c"
+      task.includes = Trema.include
+      task.cflags = CFLAGS
+      task.ldflags = "-L#{ Trema.lib }"
+      task.library_dependencies = [
+        "trema",
+        "sqlite3",
+        "pthread",
+        "rt",
+        "dl",
+      ]
+    end
+  end
+end
+
+
+Rake::Task[ 'examples:openflow_message' ].prerequisites.each do | example |
+  begin
+    Rake::Task[ example ]
+  rescue
+    desc "Build #{ example }."
+    task example => :libtrema
+
+    PaperHouse::ExecutableTask.new example do | task |
+      example_name = example.gsub(/:/,'/')
+      task.executable_name = File.basename example_name
+      task.target_directory = target_directory_of "#{ File.dirname example_name }"
+      task.sources = "src/#{ example_name }.c"
+      task.includes = Trema.include
+      task.cflags = CFLAGS
+      task.ldflags = "-L#{ Trema.lib }"
+      task.library_dependencies = [
+        "trema",
+        "sqlite3",
+        "pthread",
+        "rt",
+        "dl",
+      ]
+    end
+  end
 end
 
 
@@ -240,7 +387,7 @@ end
 
 
 ################################################################################
-# UNITTESTS
+# Unit tests
 ################################################################################
 desc "Build Trema C unittest library."
 PaperHouse::StaticLibraryTask.new :libtrema do | task |
@@ -270,7 +417,8 @@ def switch_tests
       "#{ Trema.src_unittests }/switch/switch/group-helper-test.c",
       "#{ Trema.src_unittests }/switch/switch/mocks.c",
       "#{ Trema.src_trema_switch }/group-helper.c",
-      "#{ Trema.src_trema_switch }/action*.c"
+      "#{ Trema.src_trema_switch }/action*.c",
+      "#{ Trema.src_trema_switch }/oxm*.c"
     ]
   }
 end
@@ -311,15 +459,16 @@ task :run_unittests => switch_tests.keys do
     end
   end
 end
-################################################################################
 
+
+################################################################################
 # Tests
 ################################################################################
 
 task :spec => :libruby
 RSpec::Core::RakeTask.new do | task |
   task.verbose = $trace
-  task.pattern = FileList[ "spec/trema_spec.rb" ]
+  task.pattern = FileList[ "spec/trema_spec.rb", "spec/trema/messages/hello_spec.rb" ]
   task.rspec_opts = "--format documentation --color"
 end
 

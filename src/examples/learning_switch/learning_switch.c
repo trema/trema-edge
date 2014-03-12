@@ -259,7 +259,10 @@ handle_switch_ready( uint64_t datapath_id, void *user_data ) {
   );
   send_openflow_message( datapath_id, flow_mod );
   free_buffer( flow_mod );
+
   delete_instructions( insts );
+
+  delete_actions( actions );
 }
 
 

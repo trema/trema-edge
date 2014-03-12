@@ -25,6 +25,13 @@ VALUE mMessageConst;
 
 
 static VALUE
+ofp_version( VALUE self ) {
+  UNUSED( self );
+  return UINT2NUM( OFP_VERSION );
+}
+
+
+static VALUE
 frag_normal( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFPC_FRAG_NORMAL );
@@ -49,13 +56,6 @@ static VALUE
 frag_mask( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFPC_FRAG_MASK );
-}
-
-
-static VALUE
-controller_port( VALUE self ) {
-  UNUSED( self );
-  return UINT2NUM( OFPP_CONTROLLER );
 }
 
 
@@ -102,6 +102,13 @@ all_ports( VALUE self ) {
 
 
 static VALUE
+controller_port( VALUE self ) {
+  UNUSED( self );
+  return UINT2NUM( OFPP_CONTROLLER );
+}
+
+
+static VALUE
 local_port( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFPP_LOCAL );
@@ -112,6 +119,13 @@ static VALUE
 any_port( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFPP_ANY );
+}
+
+
+static VALUE
+any_group( VALUE self ) {
+  UNUSED( self );
+  return UINT2NUM( OFPG_ANY );
 }
 
 
@@ -137,6 +151,13 @@ no_buffer( VALUE self ) {
 
 
 static VALUE
+all_tables( VALUE self ) {
+  UNUSED( self );
+  return UINT2NUM( OFPTT_ALL );
+}
+
+
+static VALUE
 default_priority( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFP_DEFAULT_PRIORITY );
@@ -154,27 +175,6 @@ static VALUE
 low_priority( VALUE self ) {
   UNUSED( self );
   return UINT2NUM( OFP_LOW_PRIORITY );
-}
-
-
-static VALUE
-port_add( VALUE self ) {
-  UNUSED( self );
-  return UINT2NUM( OFPPR_ADD );
-}
-
-
-static VALUE
-port_delete( VALUE self ) {
-  UNUSED( self );
-  return UINT2NUM( OFPPR_DELETE );
-}
-
-
-static VALUE
-port_modify( VALUE self ) {
-  UNUSED( self );
-  return UINT2NUM( OFPPR_MODIFY );
 }
 
 
@@ -322,6 +322,9 @@ void
 Init_message_const( void ) {
   mMessageConst = rb_define_module_under( mTrema, "MessageConst" );
 
+  // openflow version
+  rb_define_module_function( mMessageConst, "ofp_version", ofp_version, 0 );
+
   rb_define_module_function( mMessageConst, "frag_normal", frag_normal, 0 );
   rb_define_module_function( mMessageConst, "frag_drop", frag_drop, 0 );
   rb_define_module_function( mMessageConst, "frag_reasm", frag_reasm, 0 );
@@ -338,6 +341,9 @@ Init_message_const( void ) {
   rb_define_module_function( mMessageConst, "local_port", local_port, 0 );
   rb_define_module_function( mMessageConst, "any_port", any_port, 0 );
 
+  // ofp_groups
+  rb_define_module_function( mMessageConst, "any_group", any_group, 0 );
+
   // controller_max_length
   rb_define_module_function( mMessageConst, "controller_max_len_max", controller_max_len_max, 0 );
   rb_define_module_function( mMessageConst, "controller_max_len_no_buffer", controller_max_len_no_buffer, 0 );
@@ -345,15 +351,13 @@ Init_message_const( void ) {
   // OFP_NO_BUFFER constant
   rb_define_module_function( mMessageConst, "no_buffer", no_buffer, 0 );
 
+  // OFP_TABLE values
+  rb_define_module_function( mMessageConst, "all_tables", all_tables, 0 );
+
   // OFP_PRIORITY values
   rb_define_module_function( mMessageConst, "default_priority", default_priority, 0 );
   rb_define_module_function( mMessageConst, "high_priority", high_priority, 0 );
   rb_define_module_function( mMessageConst, "low_priority", low_priority, 0 );
-
-  // ofp_port_reason
-  rb_define_module_function( mMessageConst, "port_add" , port_add, 0 );
-  rb_define_module_function( mMessageConst, "port_delete" , port_delete, 0 );
-  rb_define_module_function( mMessageConst, "port_modify" , port_modify, 0 );
 
   // experimental error code
   rb_define_module_function( mMessageConst, "experimenter_error", experimenter_error, 0 );

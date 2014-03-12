@@ -26,6 +26,9 @@ module Trema
       match :match
     end
   end
+
+
+  AggregateMultipartRequest = Messages::AggregateMultipartRequest
 end
 
 

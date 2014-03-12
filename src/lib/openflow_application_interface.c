@@ -1274,21 +1274,21 @@ handle_multipart_reply( const uint64_t datapath_id, buffer *data ) {
       break;
     case OFPMP_GROUP_DESC:
       {
-        struct ofp_group_desc_stats *src, *dst;
+        struct ofp_group_desc *src, *dst;
 
         body_h = alloc_buffer_with_length( body_length );
         append_back_buffer( body_h, body_length );
 
-        src = ( struct ofp_group_desc_stats * ) body->data;
-        dst = ( struct ofp_group_desc_stats * ) body_h->data;
+        src = ( struct ofp_group_desc * ) body->data;
+        dst = ( struct ofp_group_desc * ) body_h->data;
 
         while ( body_length > 0 ) {
-          ntoh_group_desc_stats( dst, src );
+          ntoh_group_desc( dst, src );
 
           body_length = ( uint16_t ) ( body_length - dst->length );
 
-          src = ( struct ofp_group_desc_stats * ) ( ( char * ) src + dst->length );
-          dst = ( struct ofp_group_desc_stats * ) ( ( char * ) dst + dst->length );
+          src = ( struct ofp_group_desc * ) ( ( char * ) src + dst->length );
+          dst = ( struct ofp_group_desc * ) ( ( char * ) dst + dst->length );
         }
       }
       break;

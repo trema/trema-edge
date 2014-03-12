@@ -175,13 +175,15 @@ update_device_status( ether_device *device ) {
       warn( "Failed to retrieve statuses of %s ( ret = %d, error = %s [%d] ).",
             device->name, ret, safe_strerror_r( errno, error_string, sizeof( error_string ) ), errno );
       warn( "Assuming 100Mbps/Full Duplex/Twisted Pair link ( device = %s ).", device->name );
-      ethtool_cmd_speed_set( &ec, SPEED_100 );
-      ec.duplex = DUPLEX_FULL;
-      ec.port = PORT_TP;
-      ec.advertising = SUPPORTED_100baseT_Full | SUPPORTED_TP;
-      ec.supported = ADVERTISED_100baseT_Full | ADVERTISED_TP;
       device->status.can_retrieve_link_status = false;
     }
+  }
+  if ( !device->status.can_retrieve_link_status ) {
+    ethtool_cmd_speed_set( &ec, SPEED_100 );
+    ec.duplex = DUPLEX_FULL;
+    ec.port = PORT_TP;
+    ec.advertising = ADVERTISED_100baseT_Full | ADVERTISED_TP;
+    ec.supported = SUPPORTED_100baseT_Full | SUPPORTED_TP;
   }
 
   struct ethtool_pauseparam ep;
@@ -340,9 +342,50 @@ receive_frame( int fd, void *user_data ) {
             get_packet_buffers_length( device->recv_queue ), max_queue_length );
       frame = device->recv_buffer; // Use recv_buffer as a trash.
     }
+    reset_buffer( frame );
     append_back_buffer( frame, device->mtu );
 
-    ssize_t length = recv( device->fd, frame->data, frame->length, MSG_DONTWAIT );
+#if WITH_PCAP
+    size_t length = 0;
+    struct pcap_pkthdr *header = NULL;
+    const u_char *packet = NULL;
+    int ret = pcap_next_ex( device->pcap, &header, &packet );
+    if ( ret == 1 ) {
+      length = header->caplen;
+      if ( length > frame->length ) {
+        append_back_buffer( frame, length - frame->length );
+      }
+      memcpy( frame->data, packet, length );
+    }
+    else {
+      if ( frame != device->recv_buffer ) {
+        mark_packet_buffer_as_used( device->recv_queue, frame );
+      }
+      if ( ret == -1 ) {
+        error( "Receive error ( device = %s, pcap_err = %s ).",
+               device->name, pcap_geterr( device->pcap ) );
+      }
+      break;
+    }
+#else // WITH_PCAP
+    struct msghdr msg;
+    msg.msg_name = NULL;
+    msg.msg_namelen = 0;
+
+    struct iovec iovec;
+    size_t headroom_length = sizeof( vlantag_header_t );
+    char *head = ( char * ) frame->data + headroom_length;
+    iovec.iov_base = head;
+    iovec.iov_len = frame->length - headroom_length;
+    msg.msg_iov = &iovec;
+    msg.msg_iovlen = 1;
+
+    char cmsg_buf[ CMSG_SPACE( sizeof( struct tpacket_auxdata ) ) ];
+    msg.msg_control = cmsg_buf;
+    msg.msg_controllen = sizeof( cmsg_buf );
+    msg.msg_flags = 0;
+
+    ssize_t length = recvmsg( device->fd, &msg, MSG_DONTWAIT );
     assert( length != 0 );
     if ( length < 0 ) {
       if ( frame != device->recv_buffer ) {
@@ -356,12 +399,35 @@ receive_frame( int fd, void *user_data ) {
              device->name, safe_strerror_r( errno, error_string, sizeof( error_string ) ), errno );
       break;
     }
+
+    for ( struct cmsghdr *cmsg = CMSG_FIRSTHDR( &msg ); cmsg != NULL; cmsg = CMSG_NXTHDR( &msg, cmsg ) ) {
+      if ( cmsg->cmsg_len < CMSG_LEN( sizeof( struct tpacket_auxdata ) ) ) {
+        continue;
+      }
+      if ( cmsg->cmsg_level != SOL_PACKET || cmsg->cmsg_type != PACKET_AUXDATA ) {
+        continue;
+      }
+      struct tpacket_auxdata *auxdata = ( struct tpacket_auxdata * ) CMSG_DATA( cmsg );
+      if ( auxdata->tp_vlan_tci == 0 ) {
+        continue;
+      }
+      head -= sizeof( vlantag_header_t );
+      if ( ( void * ) head < frame->data ) {
+        append_front_buffer( frame, sizeof( vlantag_header_t ) );
+        head = frame->data;
+      }
+      length += ( ssize_t ) sizeof( vlantag_header_t );
+      memmove( head, head + sizeof( vlantag_header_t ), ETH_ADDRLEN * 2 );
+      uint16_t *eth_type = ( uint16_t * ) ( head + ETH_ADDRLEN * 2 );
+      *eth_type = htons( ETH_ETHTYPE_TPID );
+      uint16_t *tci = ++eth_type;
+      *tci = htons( auxdata->tp_vlan_tci );
+    }
+    frame->data = head;
+#endif
     if ( frame != device->recv_buffer ) {
       frame->length = ( size_t ) length;
       enqueue_packet_buffer( device->recv_queue, frame );
-    }
-    else {
-      reset_buffer( frame );
     }
     count++;
   }
@@ -388,6 +454,13 @@ flush_send_queue( int fd, void *user_data ) {
   int count = 0;
   buffer *buf = NULL;
   while ( ( buf = peek_packet_buffer( device->send_queue ) ) != NULL && count < 256 ) {
+#if WITH_PCAP
+    if( pcap_sendpacket( device->pcap, buf->data, ( int ) buf->length ) < 0 ){
+      error( "Failed to send a message to ethernet device ( device = %s, pcap_err = %s ).",
+             device->name, pcap_geterr( device->pcap ) );
+    }
+    size_t length = buf->length;
+#else
     ssize_t length = sendto( device->fd, buf->data, buf->length, MSG_DONTWAIT, ( struct sockaddr * ) &sll, sizeof( sll ) );
     if ( length < 0 ) {
       if ( ( errno == EINTR ) || ( errno == EAGAIN ) || ( errno == EWOULDBLOCK ) ) {
@@ -398,6 +471,7 @@ flush_send_queue( int fd, void *user_data ) {
              device->name, safe_strerror_r( errno, error_string, sizeof( error_string ) ), errno );
       return;
     }
+#endif
 
     if ( ( size_t ) length < buf->length ) {
       remove_front_buffer( buf, ( size_t ) length );
@@ -464,6 +538,39 @@ create_ether_device( const char *name, const size_t max_send_queue, const size_t
 
   close( nfd );
 
+  size_t device_mtu = ( size_t ) mtu + MAX_L2_HEADER_LENGTH;
+#ifdef WITH_PCAP
+  char errbuf[ PCAP_ERRBUF_SIZE ];
+  pcap_t *handle = pcap_create( name, errbuf );
+  if( handle == NULL ){
+    error( "Failed to open %s ( %s ).", name, errbuf );
+    return NULL;
+  }
+  if ( pcap_set_snaplen( handle, ( int ) device_mtu ) < 0 ) {
+    warn( "Failed to set MTU for %s.", name );
+  }
+  if ( pcap_set_promisc( handle, 1 ) < 0 ) {
+    warn( "Failed to set PROMISC for %s.", name );
+  }
+  if ( pcap_set_timeout( handle, 100 ) < 0 ) {
+    warn( "Failed to set timeout for %s.", name );
+  }
+  #ifdef USE_PCAP_IMMEDIATE_MODE // TPACKET_V3 do buffers
+  if ( pcap_set_immediate_mode( handle, 1 ) < 0 ) {
+    warn( "Failed to set immediate mode for %s.", name );
+  }
+  #endif // USE_PCAP_IMMEDIATE_MODE
+  if ( pcap_setnonblock( handle, 1, errbuf ) == -1 ) {
+    warn( "Failed to setnonblock %s ( %s ).", name, errbuf );
+  }
+  if ( pcap_activate( handle ) < 0 ) {
+    error( "Failed to activate %s.", name );
+    pcap_close( handle );
+    return NULL;
+  }
+
+  int fd = pcap_get_selectable_fd( handle );
+#else // WITH_PCAP
   int fd = socket( PF_PACKET, SOCK_RAW, htons( ETH_P_ALL ) );
   if ( fd < 0 ) {
     char error_string[ ERROR_STRING_SIZE ];
@@ -486,6 +593,26 @@ create_ether_device( const char *name, const size_t max_send_queue, const size_t
     return NULL;
   }
 
+  int val = TPACKET_V2;
+  ret = setsockopt( fd, SOL_PACKET, PACKET_VERSION, &val, sizeof( val ) );
+  if ( ret < 0 ) {
+    char error_string[ ERROR_STRING_SIZE ];
+    error( "Failed to set PACKET_VERSION to %d ( fd = %d, ret = %d, errno = %s [%d] ).",
+           val, fd, ret, safe_strerror_r( errno, error_string, sizeof( error_string ) ), errno );
+    close( fd );
+    return NULL;
+  }
+
+  val = 1;
+  ret = setsockopt( fd, SOL_PACKET, PACKET_AUXDATA, &val, sizeof( val ) );
+  if ( ret < 0 ) {
+    char error_string[ ERROR_STRING_SIZE ];
+    error( "Failed to set PACKET_AUXDATA to %d ( fd = %d, ret = %d, errno = %s [%d] ).",
+           val, fd, ret, safe_strerror_r( errno, error_string, sizeof( error_string ) ), errno );
+    close( fd );
+    return NULL;
+  }
+
   while ( 1 ) {
     char buf;
     ssize_t length = recv( fd, &buf, 1, MSG_DONTWAIT );
@@ -493,17 +620,21 @@ create_ether_device( const char *name, const size_t max_send_queue, const size_t
       break;
     }
   }
+#endif // WITH_PCAP
 
   ether_device *device = xmalloc( sizeof( ether_device ) );
   memset( device, 0, sizeof( ether_device ) );
   strncpy( device->name, name, IFNAMSIZ );
   device->name[ IFNAMSIZ - 1 ] = '\0';
+#if WITH_PCAP
+  device->pcap = handle;
+#endif
   device->fd = fd;
   device->ifindex = ifindex;
   memcpy( device->hw_addr, ifr.ifr_hwaddr.sa_data, ETH_ADDRLEN );
   device->status.can_retrieve_link_status = true;
   device->status.can_retrieve_pause = true;
-  device->mtu = ( size_t ) mtu + MAX_L2_HEADER_LENGTH;
+  device->mtu = device_mtu;
   device->recv_buffer = alloc_buffer_with_length( device->mtu );
   device->send_queue = create_packet_buffers( ( unsigned int ) max_send_queue, device->mtu );
   device->recv_queue = create_packet_buffers( ( unsigned int ) max_recv_queue, device->mtu );
@@ -528,6 +659,12 @@ void
 delete_ether_device( ether_device *device ) {
   assert( device != NULL );
 
+#if WITH_PCAP
+  if ( device->pcap != NULL ) {
+    pcap_close( device->pcap );
+    device->pcap = NULL;
+  }
+#endif
   if ( device->fd >= 0 ) {
     set_readable_safe( device->fd, false );
     if ( get_packet_buffers_length( device->send_queue ) > 0 ) {
@@ -652,7 +789,7 @@ send_frame( ether_device *device, buffer *frame ) {
 
   debug( "Enqueueing a frame to send queue ( frame = %p, device = %s, queue length = %d, fd = %d ).",
          frame, device->name, get_packet_buffers_length( device->send_queue ), device->fd );
-  
+
   buffer *copy = get_free_packet_buffer( device->send_queue );
   assert( copy != NULL );
   copy_buffer( copy, frame );

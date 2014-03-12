@@ -27,6 +27,7 @@
 #include "message_queue.h"
 #include "ofpmsg_send.h"
 #include "secure_channel_sender.h"
+#include "tls.h"
 #include "trema.h"
 
 
@@ -64,19 +65,13 @@ append_to_writev_args( buffer *message, void *user_data ) {
 }
 
 
-int
-flush_secure_channel( struct switch_info *sw_info ) {
+static int
+flush_secure_channel_tcp( struct switch_info *sw_info ) {
   assert( sw_info != NULL );
-  assert( sw_info->send_queue != NULL );
-  assert( sw_info->secure_channel_fd >= 0 );
+  assert( !sw_info->tls );
+  assert( sw_info->ssl == NULL );
+  assert( sw_info->send_queue->length > 0 );
 
-  buffer *buf;
-  ssize_t write_length;
-
-  if ( sw_info->send_queue->length == 0 ) {
-    return 0;
-  }
-  set_writable( sw_info->secure_channel_fd, false );
   writev_args args;
   args.iov = xmalloc( sizeof( struct iovec ) * ( size_t ) sw_info->send_queue->length );
   args.iovcnt = 0;
@@ -85,7 +80,7 @@ flush_secure_channel( struct switch_info *sw_info ) {
     xfree( args.iov );
     return 0;
   }
-  write_length = writev( sw_info->secure_channel_fd, args.iov, args.iovcnt );
+  ssize_t write_length = writev( sw_info->secure_channel_fd, args.iov, args.iovcnt );
   xfree( args.iov );
   if ( write_length < 0 ) {
     if ( errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK ) {
@@ -99,6 +94,7 @@ flush_secure_channel( struct switch_info *sw_info ) {
   if ( write_length == 0 ) {
     return 0;
   }
+  buffer *buf = NULL;
   while ( ( buf = peek_message( sw_info->send_queue ) ) != NULL ) {
     if ( write_length == 0 ) {
       set_writable( sw_info->secure_channel_fd, true );
@@ -115,6 +111,71 @@ flush_secure_channel( struct switch_info *sw_info ) {
   }
 
   return 0;
+}
+
+
+static int
+flush_secure_channel_tls( struct switch_info *sw_info ) {
+  assert( sw_info != NULL );
+  assert( sw_info->tls );
+  assert( sw_info->ssl != NULL );
+  assert( sw_info->send_queue->length > 0 );
+
+  buffer *buf = NULL;
+  while ( ( buf = peek_message( sw_info->send_queue ) ) != NULL ) {
+    int write_length = SSL_write( sw_info->ssl, buf->data, ( int ) buf->length );
+    if ( write_length < 0 ) {
+      int error_no = SSL_get_error( sw_info->ssl, write_length );
+      switch ( error_no ) {
+        case SSL_ERROR_WANT_READ:
+          set_readable( sw_info->secure_channel_fd, true );
+        case SSL_ERROR_WANT_WRITE:
+          set_writable( sw_info->secure_channel_fd, true );
+          return 0;
+
+        default:
+          error( "Failed to send a message to secure channel ( error = %d ).", error_no );
+          return -1;
+      }
+    }
+    if ( write_length == 0 ) {
+      set_writable( sw_info->secure_channel_fd, true );
+      return 0;
+    }
+    if ( ( size_t ) write_length < buf->length ) {
+      remove_front_buffer( buf, ( size_t ) write_length );
+      set_writable( sw_info->secure_channel_fd, true );
+      return 0;
+    }
+    buf = dequeue_message( sw_info->send_queue );
+    free_buffer( buf );
+  }
+
+  return 0;
+}
+
+
+int
+flush_secure_channel( struct switch_info *sw_info ) {
+  assert( sw_info != NULL );
+  assert( sw_info->send_queue != NULL );
+  assert( sw_info->secure_channel_fd >= 0 );
+
+  if ( sw_info->send_queue->length == 0 ) {
+    return 0;
+  }
+
+  set_writable( sw_info->secure_channel_fd, false );
+
+  int ret = -1;
+  if ( sw_info->tls ) {
+    ret = flush_secure_channel_tls( sw_info );
+  }
+  else {
+    ret = flush_secure_channel_tcp( sw_info );
+  }
+
+  return ret;
 }
 
 

@@ -22,7 +22,9 @@
 #define SWITCHINFO_H
 
 
+#include <limits.h>
 #include "message_queue.h"
+#include "tls.h"
 
 
 #define SWITCH_STATE_CONNECTED           0
@@ -63,6 +65,11 @@ struct switch_info {
   bool running_timer;
 
   uint32_t echo_request_xid;
+
+  SSL *ssl;
+  bool tls;
+  char cert_file[ PATH_MAX ];
+  char key_file[ PATH_MAX ];
 };
 
 

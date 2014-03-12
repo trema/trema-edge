@@ -22,13 +22,13 @@ module Trema
     # A match field to match an input port
     #
     class InPort < FlexibleAction
-      unsigned_int32 :in_port, :presence => true
+      unsigned_int32 :in_port, presence: true
     end
   end
+
+
+  InPort = Actions::InPort
 end
-
-
-InPort = Trema::Actions::InPort
 
 
 ### Local variables:

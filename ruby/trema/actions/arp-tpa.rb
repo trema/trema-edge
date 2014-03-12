@@ -23,12 +23,13 @@ module Trema
     # a 32-bit Internet address
     #
     class ArpTpa < ActionIpAddr
+      ip_addr :ip_addr, alias: :arp_tpa
     end
   end
+
+
+  ArpTpa = Actions::ArpTpa
 end
-
-
-ArpTpa = Trema::Actions::ArpTpa
 
 
 ### Local variables:

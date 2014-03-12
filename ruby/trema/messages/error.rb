@@ -25,6 +25,9 @@ module Trema
       array :data
     end
   end
+
+
+  Error = Messages::Error
 end
 
 

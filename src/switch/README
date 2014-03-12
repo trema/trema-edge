@@ -25,7 +25,7 @@ The switch program can be run using the following steps:
 
   $ cd $TREMA_HOME
   $ sudo -E ./objects/switch/switch/switch --datapath_id=1 \
-  --server_ip=10.0.0.1 --server_port=6633 --switch_ports=eth0,eth1
+  --server_ip=10.0.0.1 --server_port=6653 --switch_ports=eth0,eth1
 
   This would create and use a datapath_id of 1 attempt to connect to
   controller with ip address 10.0.0.1 using the port 6333. Two switch

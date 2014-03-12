@@ -158,6 +158,40 @@ append_oxm_match_16w( oxm_matches *matches, oxm_match_header header, uint16_t va
 
 
 static bool
+append_oxm_match_24( oxm_matches *matches, oxm_match_header header, uint32_t value ) {
+  assert( matches != NULL );
+  assert( OXM_LENGTH( header ) == 3 );
+
+  oxm_match_header *buf = xmalloc( sizeof( oxm_match_header ) + 3 );
+  *buf = header;
+  uint8_t *v = ( uint8_t * ) ( ( char * ) buf + sizeof( oxm_match_header ) );
+  v[ 0 ] = ( uint8_t ) ( value >> 16 ) & 0xFF;
+  v[ 1 ] = ( uint8_t ) ( value >>  8 ) & 0xFF;
+  v[ 2 ] = ( uint8_t ) ( value >>  0 ) & 0xFF;
+
+  return append_oxm_match( matches, buf );
+}
+
+
+static bool
+append_oxm_match_24w( oxm_matches *matches, oxm_match_header header, uint32_t value, uint32_t mask ) {
+  assert( matches != NULL );
+  assert( OXM_LENGTH( header ) == ( 3 * 2 ) );
+
+  oxm_match_header *buf = xmalloc( sizeof( oxm_match_header ) + 3 * 2 );
+  *buf = header;
+  uint8_t *v = ( uint8_t * ) ( ( char * ) buf + sizeof( oxm_match_header ) );
+  v[ 0 ] = ( uint8_t ) ( value >> 16 ) & 0xFF;
+  v[ 1 ] = ( uint8_t ) ( value >>  8 ) & 0xFF;
+  v[ 2 ] = ( uint8_t ) ( value >>  0 ) & 0xFF;
+  v[ 3 ] = ( uint8_t ) ( mask  >> 16 ) & 0xFF;
+  v[ 4 ] = ( uint8_t ) ( mask  >>  8 ) & 0xFF;
+  v[ 5 ] = ( uint8_t ) ( mask  >>  0 ) & 0xFF;
+
+  return append_oxm_match( matches, buf );
+}
+
+static bool
 append_oxm_match_32( oxm_matches *matches, oxm_match_header header, uint32_t value ) {
   assert( matches != NULL );
   assert( OXM_LENGTH( header ) == sizeof( uint32_t ) );
@@ -287,7 +321,7 @@ bool
 append_oxm_match_metadata( oxm_matches *matches, uint64_t metadata, uint64_t mask ) {
   assert( matches != NULL );
 
-  if ( mask == 0 ) {
+  if ( mask == UINT64_MAX ) {
     return append_oxm_match_64( matches, OXM_OF_METADATA, metadata );
   }
 
@@ -299,8 +333,8 @@ bool
 append_oxm_match_eth_dst( oxm_matches *matches, uint8_t addr[ OFP_ETH_ALEN ], uint8_t mask[ OFP_ETH_ALEN ] ) {
   assert( matches != NULL );
 
-  uint8_t zero[ OFP_ETH_ALEN ] = { 0, 0, 0, 0, 0, 0 };
-  if ( memcmp( mask, zero, OFP_ETH_ALEN ) == 0 ) {
+  uint8_t all_one[ OFP_ETH_ALEN ] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+  if ( memcmp( mask, all_one, OFP_ETH_ALEN ) == 0 ) {
     return append_oxm_match_eth_addr( matches, OXM_OF_ETH_DST, addr );
   }
 
@@ -312,8 +346,8 @@ bool
 append_oxm_match_eth_src( oxm_matches *matches, uint8_t addr[ OFP_ETH_ALEN ], uint8_t mask[ OFP_ETH_ALEN ] ) {
   assert( matches != NULL );
 
-  uint8_t zero[ OFP_ETH_ALEN ] = { 0, 0, 0, 0, 0, 0 };
-  if ( memcmp( mask, zero, OFP_ETH_ALEN ) == 0 ) {
+  uint8_t all_one[ OFP_ETH_ALEN ] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+  if ( memcmp( mask, all_one, OFP_ETH_ALEN ) == 0 ) {
     return append_oxm_match_eth_addr( matches, OXM_OF_ETH_SRC, addr );
   }
 
@@ -333,7 +367,7 @@ bool
 append_oxm_match_vlan_vid( oxm_matches *matches, uint16_t value, uint16_t mask ) {
   assert( matches != NULL );
 
-  if ( mask == 0 ) {
+  if ( mask == UINT16_MAX ) {
     return append_oxm_match_16( matches, OXM_OF_VLAN_VID, value );
   }
 
@@ -377,7 +411,7 @@ bool
 append_oxm_match_ipv4_src( oxm_matches *matches, uint32_t addr, uint32_t mask ) {
   assert( matches != NULL );
 
-  if ( mask == 0 ) {
+  if ( mask == UINT32_MAX ) {
     return append_oxm_match_32( matches, OXM_OF_IPV4_SRC, addr );
   }
 
@@ -389,7 +423,7 @@ bool
 append_oxm_match_ipv4_dst( oxm_matches *matches, uint32_t addr, uint32_t mask ) {
   assert( matches != NULL );
 
-  if ( mask == 0 ) {
+  if ( mask == UINT32_MAX ) {
     return append_oxm_match_32( matches, OXM_OF_IPV4_DST, addr );
   }
 
@@ -473,7 +507,7 @@ bool
 append_oxm_match_arp_spa( oxm_matches *matches, uint32_t addr, uint32_t mask ) {
   assert( matches != NULL );
 
-  if ( mask == 0 ) {
+  if ( mask == UINT32_MAX ) {
     return append_oxm_match_32( matches, OXM_OF_ARP_SPA, addr );
   }
 
@@ -485,7 +519,7 @@ bool
 append_oxm_match_arp_tpa( oxm_matches *matches, uint32_t addr, uint32_t mask ) {
   assert( matches != NULL );
 
-  if ( mask == 0 ) {
+  if ( mask == UINT32_MAX ) {
     return append_oxm_match_32( matches, OXM_OF_ARP_TPA, addr );
   }
 
@@ -497,8 +531,8 @@ bool
 append_oxm_match_arp_sha( oxm_matches *matches, uint8_t addr[ OFP_ETH_ALEN ], uint8_t mask[ OFP_ETH_ALEN ] ) {
   assert( matches != NULL );
 
-  uint8_t zero[ OFP_ETH_ALEN ] = { 0, 0, 0, 0, 0, 0 };
-  if ( memcmp( mask, zero, OFP_ETH_ALEN ) == 0 ) {
+  uint8_t all_one[ OFP_ETH_ALEN ] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+  if ( memcmp( mask, all_one, OFP_ETH_ALEN ) == 0 ) {
     return append_oxm_match_eth_addr( matches, OXM_OF_ARP_SHA, addr );
   }
 
@@ -510,8 +544,8 @@ bool
 append_oxm_match_arp_tha( oxm_matches *matches, uint8_t addr[ OFP_ETH_ALEN ], uint8_t mask[ OFP_ETH_ALEN ] ) {
   assert( matches != NULL );
 
-  uint8_t zero[ OFP_ETH_ALEN ] = { 0, 0, 0, 0, 0, 0 };
-  if ( memcmp( mask, zero, OFP_ETH_ALEN ) == 0 ) {
+  uint8_t all_one[ OFP_ETH_ALEN ] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+  if ( memcmp( mask, all_one, OFP_ETH_ALEN ) == 0 ) {
     return append_oxm_match_eth_addr( matches, OXM_OF_ARP_THA, addr );
   }
 
@@ -523,7 +557,9 @@ bool
 append_oxm_match_ipv6_src( oxm_matches *matches, struct in6_addr addr, struct in6_addr mask ) {
   assert( matches != NULL );
 
-  if ( IN6_IS_ADDR_UNSPECIFIED( &mask ) ) {
+  struct in6_addr all_one;
+  memset( all_one.s6_addr, 0xff, sizeof( all_one.s6_addr ) );
+  if ( memcmp( mask.s6_addr, all_one.s6_addr, sizeof( mask.s6_addr ) ) == 0 ) {
     return append_oxm_match_ipv6_addr( matches, OXM_OF_IPV6_SRC, addr, mask );
   }
 
@@ -535,7 +571,9 @@ bool
 append_oxm_match_ipv6_dst( oxm_matches *matches, struct in6_addr addr, struct in6_addr mask ) {
   assert( matches != NULL );
 
-  if ( IN6_IS_ADDR_UNSPECIFIED( &mask ) ) {
+  struct in6_addr all_one;
+  memset( all_one.s6_addr, 0xff, sizeof( all_one.s6_addr ) );
+  if ( memcmp( mask.s6_addr, all_one.s6_addr, sizeof( mask.s6_addr ) ) == 0 ) {
     return append_oxm_match_ipv6_addr( matches, OXM_OF_IPV6_DST, addr, mask );
   }
 
@@ -547,7 +585,7 @@ bool
 append_oxm_match_ipv6_flabel( oxm_matches *matches, uint32_t value, uint32_t mask ) {
   assert( matches != NULL );
 
-  if ( mask == 0 ) {
+  if ( mask == UINT32_MAX ) {
     return append_oxm_match_32( matches, OXM_OF_IPV6_FLABEL, value );
   }
 
@@ -624,11 +662,11 @@ bool
 append_oxm_match_pbb_isid( oxm_matches *matches, uint32_t value, uint32_t mask ) {
   assert( matches != NULL );
 
-  if ( mask == 0 ) {
-    return append_oxm_match_32( matches, OXM_OF_PBB_ISID, value );
+  if ( mask == UINT32_MAX ) {
+    return append_oxm_match_24( matches, OXM_OF_PBB_ISID, value );
   }
 
-  return append_oxm_match_32w( matches, OXM_OF_PBB_ISID_W, value, mask );
+  return append_oxm_match_24w( matches, OXM_OF_PBB_ISID_W, value, mask );
 }
 
 
@@ -636,7 +674,7 @@ bool
 append_oxm_match_tunnel_id( oxm_matches *matches, uint64_t id, uint64_t mask ) {
   assert( matches != NULL );
 
-  if ( mask == 0 ) {
+  if ( mask == UINT64_MAX ) {
     return append_oxm_match_64( matches, OXM_OF_TUNNEL_ID, id );
   }
 
@@ -648,7 +686,7 @@ bool
 append_oxm_match_ipv6_exthdr( oxm_matches *matches, uint16_t value, uint16_t mask ) {
   assert( matches != NULL );
 
-  if ( mask == 0 ) {
+  if ( mask == UINT16_MAX ) {
     return append_oxm_match_16( matches, OXM_OF_IPV6_EXTHDR, value );
   }
 
@@ -823,7 +861,7 @@ compare_field( void *x, void *y, void *xm, void *ym, size_t len, bool strict ) {
   // mask all F set( exact match )
   xm_val = ym_val = 0xff;
 
-  for ( int i = 0; i < (int) len; i++ ) {
+  for ( int i = 0; i < ( int ) len; i++ ) {
     x_val = *x_p++;
     y_val = *y_p++;
 
@@ -840,7 +878,8 @@ compare_field( void *x, void *y, void *xm, void *ym, size_t len, bool strict ) {
       if ( xm_val != ym_val ) {
         return false;
       }
-    } else {
+    }
+    else {
       if ( ( ~xm_val | ~ym_val ) != ~xm_val ) {
         return false;
       }

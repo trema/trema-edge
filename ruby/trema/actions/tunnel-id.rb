@@ -22,13 +22,13 @@ module Trema
     # A match field to match a tunnel id. This for example applies to GRE packets
     #
     class TunnelId < FlexibleAction
-      unsigned_int64 :tunnel_id, :presence => true
+      unsigned_int64 :tunnel_id, presence: true
     end
   end
+
+
+  TunnelId = Actions::TunnelId
 end
-
-
-TunnelId = Trema::Actions::TunnelId
 
 
 ### Local variables:

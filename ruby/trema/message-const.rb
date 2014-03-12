@@ -16,7 +16,7 @@
 #
 
 
-require "trema/monkey-patch/kernel"
+require_relative "monkey-patch/kernel"
 
 
 module Trema
@@ -31,19 +31,29 @@ module Trema
     CONFIG_FLAGS = config_flags_hash.values.freeze
     
 
+    enum_hash( ofp_version: ofp_version )
+
     enum_step %w( ofpfc_add
                   ofpfc_modify
                   ofpfc_modify_strict
                   ofpfc_delete
                   ofpfc_delete_strict )
 
-    
     flow_mod_flags = %w( ofpff_send_flow_rem
                          ofpff_check_overlap
                          ofpff_reset_counts  
                          ofpff_no_pkt_counts 
                          ofpff_no_byt_counts )
     enum_range flow_mod_flags
+
+    port_config = %w( ofppc_port_down
+                      ofppc_reserved_1
+                      ofppc_no_recv
+                      ofppc_reserved_3
+                      ofppc_reserved_4
+                      ofppc_no_fwd
+                      ofppc_no_packet_in )
+    enum_range port_config
 
     enum_hash( ofpp_max: max_port,
                ofpp_in_port: in_port,
@@ -54,6 +64,28 @@ module Trema
                ofpp_controller: controller_port,
                ofpp_local: local_port,
                ofpp_any: any_port )
+
+    port_features = %w( ofppf_10mb_hd
+                        ofppf_10mb_fd
+                        ofppf_100mb_hd
+                        ofppf_100mb_fd
+                        ofppf_1gb_hd
+                        ofppf_1gb_fd
+                        ofppf_10gb_fd
+                        ofppf_40gb_fd
+                        ofppf_100gb_fd
+                        ofppf_1tb_fd
+                        ofppf_other
+                        ofppf_copper
+                        ofppf_fiber
+                        ofppf_autoneg
+                        ofppf_pause
+                        ofppf_pause_asym )
+    enum_range port_features
+
+    enum_hash( ofpg_any: any_group )
+
+    enum_hash( ofptt_all: all_tables )
 
     enum_hash( ofpcml_max: controller_max_len_max,
                ofpcml_no_buffer: controller_max_len_no_buffer )
@@ -69,9 +101,14 @@ module Trema
                      ofpps_live )
     enum_range port_state
 
-    enum_hash( ofppr_add: port_add,
-               ofppr_delete: port_delete,
-               ofppr_modify: port_modify )
+    enum_step %w( ofpr_no_match ofpr_action ofpr_invalid_ttl )
+
+    enum_step %w( ofprr_idle_timeout
+                  ofprr_hard_timeout
+                  ofprr_delete
+                  ofprr_group_delete )
+
+    enum_step %w( ofppr_add ofppr_delete ofppr_modify )
 
     group_type = %w( ofpgt_all
                      ofpgt_select

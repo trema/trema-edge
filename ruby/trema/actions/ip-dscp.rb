@@ -23,7 +23,7 @@ module Trema
     # within 0 to 63.
     #
     class IpDscp < FlexibleAction
-      unsigned_int8 :ip_dscp, :presence => true, :within => :check_ip_dscp_range
+      unsigned_int8 :ip_dscp, presence: true, within: :check_ip_dscp_range
 
 
       def check_ip_dscp_range ip_dscp, name
@@ -34,10 +34,10 @@ module Trema
       end
     end
   end
+
+
+  IpDscp = Actions::IpDscp
 end
-
-
-IpDscp = Trema::Actions::IpDscp
 
 
 ### Local variables:

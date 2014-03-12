@@ -630,16 +630,16 @@ handle_multipart_reply_group_stats(
 
 static void
 handle_multipart_reply_group_desc(
-  struct ofp_group_desc_stats *data,
+  struct ofp_group_desc *data,
   uint16_t body_length
 ) {
-  struct ofp_group_desc_stats *stats = data;
+  struct ofp_group_desc *stats = data;
   uint16_t rest_length = body_length;
   uint16_t i = 0;
 
-  while ( rest_length >= sizeof( struct ofp_group_desc_stats ) ) {
-    struct ofp_group_desc_stats *next;
-    next = ( struct ofp_group_desc_stats * ) ( ( char * ) stats + stats->length );
+  while ( rest_length >= sizeof( struct ofp_group_desc ) ) {
+    struct ofp_group_desc *next;
+    next = ( struct ofp_group_desc * ) ( ( char * ) stats + stats->length );
     
     i++;
     dump( "[multipart_reply_group_desc:%d]", i );
@@ -647,7 +647,7 @@ handle_multipart_reply_group_desc(
     dump( " type: %#x", stats->type );
     dump( " group_id: %#x", stats->group_id );
     uint16_t data_length = 
-    ( uint16_t ) ( stats->length - offsetof( struct ofp_group_desc_stats, buckets ) );
+    ( uint16_t ) ( stats->length - offsetof( struct ofp_group_desc, buckets ) );
     dump_bucket( stats->buckets, data_length );
     
     rest_length = ( uint16_t ) ( rest_length - stats->length );
@@ -1004,7 +1004,7 @@ handle_multipart_reply(
       handle_multipart_reply_group_stats( (struct ofp_group_stats *) multipart_data, body_length );
       break;
     case OFPMP_GROUP_DESC:
-      handle_multipart_reply_group_desc( (struct ofp_group_desc_stats *) multipart_data, body_length );
+      handle_multipart_reply_group_desc( (struct ofp_group_desc *) multipart_data, body_length );
       break;
     case OFPMP_GROUP_FEATURES:
       handle_multipart_reply_group_features( (struct ofp_group_features *) multipart_data );

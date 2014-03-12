@@ -45,7 +45,7 @@ module Trema
 
       def_delegators :@packet_info, :vtag?, :vlan_tci, :vlan_vid, :vlan_prio, :vlan_tpid
 
-      def_delegators :@packet_info, :ipv4?, :ip_proto, :ipv4_src, :ipv4_dst
+      def_delegators :@packet_info, :ipv4?, :ip_proto, :ipv4_src, :ipv4_dst, :ipv4_tos, :ipv4_tot_len, :ipv4_id
 
       def_delegators :@packet_info, :ipv6?, :ipv6_src, :ipv6_dst, :ipv6_flabel, :ipv6_exthdr
 
@@ -66,6 +66,9 @@ module Trema
       def_delegators :@packet_info, :pbb?, :pbb_isid
     end
   end
+
+
+  PacketIn = Messages::PacketIn
 end
 
 

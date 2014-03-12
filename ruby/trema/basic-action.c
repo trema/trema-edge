@@ -131,6 +131,14 @@ pack_set_ip_ttl( VALUE self, VALUE actions, VALUE options ) {
 
 
 static VALUE
+pack_dec_ip_ttl( VALUE self, VALUE actions, VALUE options ) {
+  UNUSED( options );
+  append_action_dec_nw_ttl( openflow_actions_ptr( actions ) );
+  return self;
+}
+
+
+static VALUE
 pack_push_pbb( VALUE self, VALUE actions, VALUE options ) {
   VALUE r_ether_type = HASH_REF( options, ether_type );
   append_action_push_pbb( openflow_actions_ptr( actions ), ( const uint16_t ) NUM2UINT( r_ether_type ) );
@@ -157,7 +165,7 @@ pack_experimenter( VALUE self, VALUE actions, VALUE options ) {
     buffer *body = alloc_buffer_with_length( length );
     void *p = append_back_buffer( body, length );
     for ( int i = 0; i < length; i++ ) {
-      ( ( uint8_t * ) p )[ i ] = ( uint8_t ) FIX2INT( RARRAY_PTR( r_body )[ i ] );
+      ( ( uint8_t * ) p )[ i ] = ( uint8_t ) FIX2INT( rb_ary_entry( r_body, i ) );
     }
     append_action_experimenter( openflow_actions_ptr( actions ), NUM2UINT( r_experimenter ), body );
     free_buffer( body );
@@ -183,6 +191,7 @@ Init_basic_action( void ) {
   rb_define_module_function( mActions, "pack_pop_mpls", push_pop_mpls, 2 );
   rb_define_module_function( mActions, "pack_set_queue", pack_set_queue, 2 );
   rb_define_module_function( mActions, "pack_set_ip_ttl", pack_set_ip_ttl, 2 );
+  rb_define_module_function( mActions, "pack_dec_ip_ttl", pack_dec_ip_ttl, 2 );
   rb_define_module_function( mActions, "pack_push_pbb", pack_push_pbb, 2 );
   rb_define_module_function( mActions, "pack_pop_pbb", pack_pop_pbb, 2 );
   rb_define_module_function( mActions, "pack_experimenter", pack_experimenter, 2 );

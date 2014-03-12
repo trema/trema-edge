@@ -34,6 +34,67 @@
 static const size_t RECEIVE_BUFFFER_SIZE = UINT16_MAX + sizeof(struct ofp_packet_in) - 2;
 
 
+static int
+recv_from_secure_channel_tcp( struct switch_info *sw_info ) {
+  assert( sw_info != NULL );
+  assert( sw_info->recv_queue != NULL );
+  assert( !sw_info->tls );
+  assert( sw_info->ssl == NULL );
+  assert( sw_info->fragment_buf != NULL );
+
+  size_t remaining_length = RECEIVE_BUFFFER_SIZE - sw_info->fragment_buf->length;
+  char *recv_buf = ( char * ) sw_info->fragment_buf->data + sw_info->fragment_buf->length;
+  ssize_t recv_length = read( sw_info->secure_channel_fd, recv_buf, remaining_length );
+  if ( recv_length < 0 ) {
+    if ( errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK ) {
+      return 0;
+    }
+    error( "Receive error: %s (%d).", strerror( errno ), errno );
+    return -1;
+  }
+  if ( recv_length == 0 ) {
+    debug( "Connection closed by peer." );
+    return -1;
+  }
+  sw_info->fragment_buf->length += ( size_t ) recv_length;
+
+  return 1;
+}
+
+
+static int
+recv_from_secure_channel_tls( struct switch_info *sw_info ) {
+  assert( sw_info != NULL );
+  assert( sw_info->recv_queue != NULL );
+  assert( sw_info->tls );
+  assert( sw_info->ssl != NULL );
+  assert( sw_info->fragment_buf != NULL );
+
+  size_t remaining_length = RECEIVE_BUFFFER_SIZE - sw_info->fragment_buf->length;
+  char *recv_buf = ( char * ) sw_info->fragment_buf->data + sw_info->fragment_buf->length;
+  int recv_length = SSL_read( sw_info->ssl, recv_buf, ( int ) remaining_length );
+  if ( recv_length < 0 ) {
+    int error_no = SSL_get_error( sw_info->ssl, recv_length );
+    switch ( error_no ) {
+    case SSL_ERROR_WANT_WRITE:
+      set_writable( sw_info->secure_channel_fd, true );
+    case SSL_ERROR_WANT_READ:
+      return 0;
+    default:
+      error( "Receive error: %d.", error_no );
+      return -1;
+    }
+  }
+  if ( recv_length == 0 ) {
+    debug( "Connection closed by peer." );
+    return -1;
+  }
+  sw_info->fragment_buf->length += ( size_t ) recv_length;
+
+  return 1;
+}
+
+
 int
 recv_from_secure_channel( struct switch_info *sw_info ) {
   assert( sw_info != NULL );
@@ -48,21 +109,17 @@ recv_from_secure_channel( struct switch_info *sw_info ) {
     sw_info->fragment_buf = alloc_buffer_with_length( RECEIVE_BUFFFER_SIZE );
   }
 
-  size_t remaining_length = RECEIVE_BUFFFER_SIZE - sw_info->fragment_buf->length;
-  char *recv_buf = ( char * ) sw_info->fragment_buf->data + sw_info->fragment_buf->length;
-  ssize_t recv_length = read( sw_info->secure_channel_fd, recv_buf, remaining_length );
-  if ( recv_length < 0 ) {
-    if ( errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK ) {
-      return 0;
-    }
-    error( "Receive error:%s(%d)", strerror( errno ), errno );
-    return -1;
+  int ret = -1;
+  if ( sw_info->tls ) {
+    ret = recv_from_secure_channel_tls( sw_info );
   }
-  if ( recv_length == 0 ) {
-    debug( "Connection closed by peer." );
-    return -1;
+  else {
+    ret = recv_from_secure_channel_tcp( sw_info );
   }
-  sw_info->fragment_buf->length += ( size_t ) recv_length;
+
+  if ( ret <= 0 ) {
+    return ret;
+  }
 
   size_t read_total = 0;
   while ( sw_info->fragment_buf->length >= sizeof( struct ofp_header ) ) {

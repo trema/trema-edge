@@ -32,14 +32,12 @@
 
 int
 ofpmsg_send_hello( struct switch_info *sw_info ) {
-  int ret;
-  buffer *buf;
+  const uint8_t ofp_versions[ 1 ] = { OFP_VERSION };
+  buffer *element = create_hello_elem_versionbitmap( ofp_versions, sizeof( ofp_versions ) / sizeof( ofp_versions[ 0 ] ) );
+  buffer *buf = create_hello( generate_xid(), element );
+  free_buffer( element );
 
-  const uint32_t ofp_versions[ 1 ] = { OFP_VERSION };
-  buf = create_hello_elem_versionbitmap( generate_xid(), ofp_versions,
-    sizeof( ofp_versions ) / sizeof( ofp_versions[ 1 ] ) );
-
-  ret = send_to_secure_channel( sw_info, buf );
+  int ret = send_to_secure_channel( sw_info, buf );
   if ( ret == 0 ) {
     debug( "Send 'hello' to a switch. fd:%d", sw_info->secure_channel_fd );
   }
@@ -139,7 +137,7 @@ ofpmsg_send_error_msg( struct switch_info *sw_info, uint16_t type, uint16_t code
 static int
 update_flowmod_cookie( buffer *buf, char *service_name ) {
   struct ofp_flow_mod *flow_mod = buf->data;
-  uint16_t command = ntohs( flow_mod->command );
+  uint8_t command = flow_mod->command;
   uint16_t flags = ntohs( flow_mod->flags );
   uint64_t cookie = ntohll( flow_mod->cookie );
 

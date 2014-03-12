@@ -73,6 +73,9 @@ module Trema
 
       ip_addr       :ipv4_src 
       ip_addr       :ipv4_dst
+      unsigned_int8 :ipv4_tos
+      unsigned_int16 :ipv4_tot_len
+      unsigned_int16 :ipv4_id
 
       unsigned_int16 :tcp_src
       unsigned_int16 :tcp_dst
@@ -105,6 +108,9 @@ module Trema
       alias_method :pbb?, :pbb
     end
   end
+
+
+  PacketInfo = Messages::PacketInfo
 end
 
 

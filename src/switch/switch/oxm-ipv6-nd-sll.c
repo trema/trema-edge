@@ -59,6 +59,16 @@ ipv6_nd_sll_length( const match *match ) {
   
   if ( match->ipv6_nd_sll[ 0 ].valid ) {
     length = oxm_ipv6_nd_sll.length;
+
+    bool has_mask = false;
+    for ( int i = 0; i < OFP_ETH_ALEN; i++ ) {
+      if ( match->ipv6_nd_sll[ i ].mask != UINT8_MAX ){
+        has_mask = true;
+      }
+    }
+    if ( has_mask ) {
+      length = ( uint16_t ) ( length * 2 );
+    }
   }
   return length;
 }
@@ -69,7 +79,9 @@ pack_ipv6_nd_sll( oxm_match_header *hdr, const match *match ) {
   if ( match->ipv6_nd_sll[ 0 ].valid ) {
     *hdr = OXM_OF_IPV6_ND_SLL;
     uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
-    memcpy( value, &match->ipv6_nd_sll[ 0 ].value, OFP_ETH_ALEN );
+    for ( int i = 0; i < OFP_ETH_ALEN; i++ ) {
+      value[ i ] = match->ipv6_nd_sll[ i ].value;
+    }
     return oxm_ipv6_nd_sll.length;
   }
   return 0;

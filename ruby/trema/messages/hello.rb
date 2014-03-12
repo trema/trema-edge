@@ -19,19 +19,24 @@
 module Trema
   module Messages
     class Hello < Message
-      unsigned_int32 :transaction_id
-      array :version, validate_with: :check_version
+      unsigned_int32 :transaction_id, default: lambda { next_transaction_id }, alias: :xid
+      array :version, validate_with: :check_version, default: [ OFP_VERSION ]
 
 
       def check_version version, name
-        raise ArgumentError, "Invalid #{ name } specified" if version.length > 1 
+        if version[ 0 ] != OFP_VERSION
+          raise ArgumentError, "Invalid #{ name } specified"
+        end
+        if version.length > 1
+          raise ArgumentError, "Multiple versions not supported"
+        end
       end
     end
   end
+
+
+  Hello = Messages::Hello
 end
-
-
-Hello = Trema::Messages::Hello
 
 
 ### Local variables:

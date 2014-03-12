@@ -62,7 +62,7 @@ typedef struct {
   uint8_t type;
   uint32_t group_id;
   bucket_list *buckets;
-} group_desc_stats;
+} group_desc;
 
 
 void init_group_table( void );
@@ -73,11 +73,12 @@ OFDPE update_group_entry( const uint32_t group_id, const uint8_t type, bucket_li
 OFDPE delete_group_entry( const uint32_t group_id );
 bool group_exists( const uint32_t group_id );
 OFDPE get_group_stats( const uint32_t group_id, group_stats **stats, uint32_t *n_groups );
-OFDPE get_group_desc_stats( group_desc_stats **stats, uint16_t *n_groups );
+OFDPE get_group_desc( group_desc **stats, uint16_t *n_groups );
 OFDPE get_group_features( group_table_features *features );
 OFDPE set_group_features( group_table_features *features );
 void increment_reference_count( const uint32_t group_id );
 void decrement_reference_count( const uint32_t group_id );
+void dump_group_table( void dump_function( const char *format, ... ) );
 
 
 #endif // GROUP_TABLE_H

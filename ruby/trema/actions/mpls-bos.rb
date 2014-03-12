@@ -22,7 +22,7 @@ module Trema
     # A match field to match an MPLS bottom of stack bit(bos)
     #
     class MplsBos < FlexibleAction
-      unsigned_int8 :mpls_bos, :presence => true, :within => :check_mpls_bos_range
+      unsigned_int8 :mpls_bos, presence: true, within: :check_mpls_bos_range
 
 
       def check_mpls_bos_range mpls_bos, name
@@ -33,10 +33,10 @@ module Trema
       end
     end
   end
+
+
+  MplsBos = Actions::MplsBos
 end
-
-
-MplsBos = Trema::Actions::MplsBos
 
 
 ### Local variables:

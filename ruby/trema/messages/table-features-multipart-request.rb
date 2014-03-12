@@ -21,10 +21,10 @@ module Trema
     class TableFeaturesMultipartRequest < MultipartRequest
     end
   end
+
+
+  TableFeaturesMultipartRequest = Messages::TableFeaturesMultipartRequest
 end
-
-
-TableFeaturesMultipartRequest = Trema::Messages::TableFeaturesMultipartRequest
 
 
 ### Local variables:

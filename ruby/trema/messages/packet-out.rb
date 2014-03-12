@@ -24,6 +24,9 @@ module Trema
       array :data
     end
   end
+
+
+  PacketOut = Messages::PacketOut
 end
 
 

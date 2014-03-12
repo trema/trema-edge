@@ -96,7 +96,7 @@ process_received_frame( const switch_port *port, buffer *frame ) {
   assert( frame != NULL );
   assert( frame->user_data != NULL );
 
-  action_set set;
+  action_set set = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   clear_action_set( &set );
 
   bool completed = false;
@@ -140,6 +140,7 @@ process_received_frame( const switch_port *port, buffer *frame ) {
       error( "Failed to execute action set ( set = %p, frame = %p ).", &set, frame );
     }
   }
+  clear_action_set( &set );
 }
 
 

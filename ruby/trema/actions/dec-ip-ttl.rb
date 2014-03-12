@@ -25,10 +25,10 @@ module Trema
       ofp_type OFPAT_DEC_NW_TTL
     end
   end
+
+
+  DecIpTtl = Actions::DecIpTtl
 end
-
-
-DecIpTtl = Trema::Actions::DecIpTtl
 
 
 ### Local variables:

@@ -26,7 +26,10 @@
 #include "packet_buffer.h"
 #include "port_manager.h"
 #include "table_manager.h"
+#include "pipeline.h"
 
+#define REMAINED_BUFFER_LENGTH( buf, ptr )  \
+  ( buf->length - ( size_t ) ( ( char * ) ptr - ( char * ) buf->data ) )
 
 OFDPE
 init_action_executor() {
@@ -59,7 +62,11 @@ get_sum( uint16_t *pos, size_t size ) {
     sum += *pos;
   }
   if ( size == 1 ) {
-    sum += *( uint8_t * ) pos;
+    union {
+      uint8_t buf[ 2 ];
+      uint16_t num;
+    } tail = { .buf = { *( uint8_t * ) pos, 0 } };
+    sum += tail.num;
   }
 
   return sum;
@@ -68,6 +75,7 @@ get_sum( uint16_t *pos, size_t size ) {
 
 static uint16_t
 get_checksum_from_sum( uint32_t sum ) {
+  // ones' complement: sum up carry
   while ( sum & 0xffff0000 ) {
     sum = ( sum & 0x0000ffff ) + ( sum >> 16 );
   }
@@ -84,8 +92,12 @@ get_ipv4_pseudo_header_sum( ipv4_header_t *header, uint8_t protocol, size_t payl
 
   sum += get_sum( ( uint16_t * ) &header->saddr, sizeof( header->saddr ) );
   sum += get_sum( ( uint16_t * ) &header->daddr, sizeof( header->saddr ) );
-  sum += ( ( uint32_t ) protocol ) << 8;
-  sum += ( uint32_t ) payload_size;
+  union {
+    uint8_t buf[ 2 ];
+    uint16_t num;
+  } protocol_field = { .buf = { 0, protocol } };
+  sum += protocol_field.num;
+  sum += htons( ( uint16_t ) payload_size );
 
   return sum;
 }
@@ -99,8 +111,12 @@ get_ipv6_pseudo_header_sum( ipv6_header_t *header, uint8_t protocol, size_t payl
 
   sum += get_sum( ( uint16_t * ) &header->saddr[ 0 ], sizeof( header->saddr ) );
   sum += get_sum( ( uint16_t * ) &header->daddr[ 0 ], sizeof( header->saddr ) );
-  sum += ( uint32_t ) payload_size;
-  sum += ( ( uint32_t ) protocol ) << 8;
+  union {
+    uint8_t buf[ 2 ];
+    uint16_t num;
+  } protocol_field = { .buf = { 0, protocol } };
+  sum += protocol_field.num;
+  sum += htons( ( uint16_t ) payload_size );
 
   return sum;
 }
@@ -114,8 +130,12 @@ get_icmpv6_pseudo_header_sum( ipv6_header_t *header, size_t payload_size ) {
 
   sum += get_sum( ( uint16_t * ) &header->saddr[ 0 ], sizeof( header->saddr ) );
   sum += get_sum( ( uint16_t * ) &header->daddr[ 0 ], sizeof( header->saddr ) );
-  sum += ( uint32_t ) ( IPPROTO_ICMPV6 ) << 8;
-  sum += ( uint32_t ) payload_size;
+  union {
+    uint8_t buf[ 2 ];
+    uint16_t num;
+  } protocol_field = { .buf = { 0, IPPROTO_ICMPV6 } };
+  sum += protocol_field.num;
+  sum += htons( ( uint16_t ) payload_size );
 
   return sum;
 }
@@ -128,7 +148,7 @@ set_ipv4_udp_checksum( ipv4_header_t *ipv4_header, udp_header_t *udp_header, voi
 
   uint32_t sum = 0;
 
-  sum += get_ipv4_pseudo_header_sum( ipv4_header, IPPROTO_UDP, udp_header->len );
+  sum += get_ipv4_pseudo_header_sum( ipv4_header, IPPROTO_UDP, ntohs( udp_header->len ) );
   udp_header->csum = 0;
   sum += get_sum( ( uint16_t * ) udp_header, sizeof( udp_header_t ) );
   if ( payload != NULL ) {
@@ -145,7 +165,7 @@ set_ipv6_udp_checksum( ipv6_header_t *ipv6_header, udp_header_t *udp_header, voi
 
   uint32_t sum = 0;
 
-  sum += get_ipv6_pseudo_header_sum( ipv6_header, IPPROTO_UDP, udp_header->len );
+  sum += get_ipv6_pseudo_header_sum( ipv6_header, IPPROTO_UDP, ntohs( udp_header->len ) );
   udp_header->csum = 0;
   sum += get_sum( ( uint16_t * ) udp_header, sizeof( udp_header_t ) );
   if ( payload != NULL ) {
@@ -156,59 +176,148 @@ set_ipv6_udp_checksum( ipv6_header_t *ipv6_header, udp_header_t *udp_header, voi
 
 
 static void
-set_ipv4_tcp_checksum( ipv4_header_t *ipv4_header, tcp_header_t *tcp_header, void *payload, size_t payload_length ) {
+set_ipv4_tcp_checksum( ipv4_header_t *ipv4_header, tcp_header_t *tcp_header, void *tcp_payload, size_t tcp_payload_length ) {
   assert( ipv4_header != NULL );
   assert( tcp_header != NULL );
 
   uint32_t sum = 0;
 
-  sum += get_ipv4_pseudo_header_sum( ipv4_header, IPPROTO_TCP, payload_length );
+  sum += get_ipv4_pseudo_header_sum( ipv4_header, IPPROTO_TCP, ( size_t ) tcp_header->offset * 4 + tcp_payload_length );
   tcp_header->csum = 0;
   sum += get_sum( ( uint16_t * ) tcp_header, sizeof( tcp_header_t ) );
-  if ( payload != NULL && payload_length > 0 ) {
-    sum += get_sum( payload, payload_length );
+  if ( tcp_payload != NULL && tcp_payload_length > 0 ) {
+    sum += get_sum( tcp_payload, tcp_payload_length );
   }
   tcp_header->csum = get_checksum_from_sum( sum );
 }
 
 
 static void
-set_ipv6_tcp_checksum( ipv6_header_t *ipv6_header, tcp_header_t *tcp_header, void *payload, size_t payload_length ) {
+set_ipv6_tcp_checksum( ipv6_header_t *ipv6_header, tcp_header_t *tcp_header, void *tcp_payload, size_t tcp_payload_length ) {
   assert( ipv6_header != NULL );
   assert( tcp_header != NULL );
 
   uint32_t sum = 0;
 
-  sum += get_ipv6_pseudo_header_sum( ipv6_header, IPPROTO_TCP, payload_length );
+  sum += get_ipv6_pseudo_header_sum( ipv6_header, IPPROTO_TCP, ( size_t ) tcp_header->offset * 4 + tcp_payload_length );
   tcp_header->csum = 0;
   sum += get_sum( ( uint16_t * ) tcp_header, sizeof( tcp_header_t ) );
-  if ( payload != NULL && payload_length > 0 ) {
-    sum += get_sum( payload, payload_length );
+  if ( tcp_payload != NULL && tcp_payload_length > 0 ) {
+    sum += get_sum( tcp_payload, tcp_payload_length );
   }
   tcp_header->csum = get_checksum_from_sum( sum );
 }
 
 
 static void
-set_icmpv4_checksum( icmp_header_t *header, size_t length ) {
-  assert( header != NULL );
+set_icmpv4_checksum( icmp_header_t *icmp_header, size_t icmp_length ) {
+  assert( icmp_header != NULL );
 
-  header->csum = 0;
-  header->csum = get_checksum( ( uint16_t * ) header, ( uint32_t ) length );
+  icmp_header->csum = 0;
+  icmp_header->csum = get_checksum( ( uint16_t * ) icmp_header, ( uint32_t ) icmp_length );
 }
 
 
 static void
-set_icmpv6_checksum( ipv6_header_t *ipv6_header, icmp_header_t *icmp_header, size_t length ) {
+set_icmpv6_checksum( ipv6_header_t *ipv6_header, icmpv6_header_t *icmp_header, size_t length ) {
   assert( ipv6_header != NULL );
   assert( icmp_header != NULL );
 
   uint32_t sum = 0;
 
-  sum += get_icmpv6_pseudo_header_sum( ipv6_header, length );
+  sum += get_icmpv6_pseudo_header_sum( ipv6_header, sizeof( icmpv6_header_t ) + length );
   icmp_header->csum = 0;
-  sum += get_sum( ( uint16_t * ) icmp_header, length );
+  sum += get_sum( ( uint16_t * ) icmp_header, sizeof( icmpv6_header_t ) + length );
   icmp_header->csum = get_checksum_from_sum( sum );
+}
+
+
+static void
+set_sctp_checksum( sctp_header_t *sctp_header, size_t sctp_length ) {
+  assert( sctp_header != NULL );
+
+  sctp_header->checksum = 0;
+
+  // RFC 3309
+  uint32_t crc_c[256] = {
+    0x00000000, 0xF26B8303, 0xE13B70F7, 0x1350F3F4,
+    0xC79A971F, 0x35F1141C, 0x26A1E7E8, 0xD4CA64EB,
+    0x8AD958CF, 0x78B2DBCC, 0x6BE22838, 0x9989AB3B,
+    0x4D43CFD0, 0xBF284CD3, 0xAC78BF27, 0x5E133C24,
+    0x105EC76F, 0xE235446C, 0xF165B798, 0x030E349B,
+    0xD7C45070, 0x25AFD373, 0x36FF2087, 0xC494A384,
+    0x9A879FA0, 0x68EC1CA3, 0x7BBCEF57, 0x89D76C54,
+    0x5D1D08BF, 0xAF768BBC, 0xBC267848, 0x4E4DFB4B,
+    0x20BD8EDE, 0xD2D60DDD, 0xC186FE29, 0x33ED7D2A,
+    0xE72719C1, 0x154C9AC2, 0x061C6936, 0xF477EA35,
+    0xAA64D611, 0x580F5512, 0x4B5FA6E6, 0xB93425E5,
+    0x6DFE410E, 0x9F95C20D, 0x8CC531F9, 0x7EAEB2FA,
+    0x30E349B1, 0xC288CAB2, 0xD1D83946, 0x23B3BA45,
+    0xF779DEAE, 0x05125DAD, 0x1642AE59, 0xE4292D5A,
+    0xBA3A117E, 0x4851927D, 0x5B016189, 0xA96AE28A,
+    0x7DA08661, 0x8FCB0562, 0x9C9BF696, 0x6EF07595,
+    0x417B1DBC, 0xB3109EBF, 0xA0406D4B, 0x522BEE48,
+    0x86E18AA3, 0x748A09A0, 0x67DAFA54, 0x95B17957,
+    0xCBA24573, 0x39C9C670, 0x2A993584, 0xD8F2B687,
+    0x0C38D26C, 0xFE53516F, 0xED03A29B, 0x1F682198,
+    0x5125DAD3, 0xA34E59D0, 0xB01EAA24, 0x42752927,
+    0x96BF4DCC, 0x64D4CECF, 0x77843D3B, 0x85EFBE38,
+    0xDBFC821C, 0x2997011F, 0x3AC7F2EB, 0xC8AC71E8,
+    0x1C661503, 0xEE0D9600, 0xFD5D65F4, 0x0F36E6F7,
+    0x61C69362, 0x93AD1061, 0x80FDE395, 0x72966096,
+    0xA65C047D, 0x5437877E, 0x4767748A, 0xB50CF789,
+    0xEB1FCBAD, 0x197448AE, 0x0A24BB5A, 0xF84F3859,
+    0x2C855CB2, 0xDEEEDFB1, 0xCDBE2C45, 0x3FD5AF46,
+    0x7198540D, 0x83F3D70E, 0x90A324FA, 0x62C8A7F9,
+    0xB602C312, 0x44694011, 0x5739B3E5, 0xA55230E6,
+    0xFB410CC2, 0x092A8FC1, 0x1A7A7C35, 0xE811FF36,
+    0x3CDB9BDD, 0xCEB018DE, 0xDDE0EB2A, 0x2F8B6829,
+    0x82F63B78, 0x709DB87B, 0x63CD4B8F, 0x91A6C88C,
+    0x456CAC67, 0xB7072F64, 0xA457DC90, 0x563C5F93,
+    0x082F63B7, 0xFA44E0B4, 0xE9141340, 0x1B7F9043,
+    0xCFB5F4A8, 0x3DDE77AB, 0x2E8E845F, 0xDCE5075C,
+    0x92A8FC17, 0x60C37F14, 0x73938CE0, 0x81F80FE3,
+    0x55326B08, 0xA759E80B, 0xB4091BFF, 0x466298FC,
+    0x1871A4D8, 0xEA1A27DB, 0xF94AD42F, 0x0B21572C,
+    0xDFEB33C7, 0x2D80B0C4, 0x3ED04330, 0xCCBBC033,
+    0xA24BB5A6, 0x502036A5, 0x4370C551, 0xB11B4652,
+    0x65D122B9, 0x97BAA1BA, 0x84EA524E, 0x7681D14D,
+    0x2892ED69, 0xDAF96E6A, 0xC9A99D9E, 0x3BC21E9D,
+    0xEF087A76, 0x1D63F975, 0x0E330A81, 0xFC588982,
+    0xB21572C9, 0x407EF1CA, 0x532E023E, 0xA145813D,
+    0x758FE5D6, 0x87E466D5, 0x94B49521, 0x66DF1622,
+    0x38CC2A06, 0xCAA7A905, 0xD9F75AF1, 0x2B9CD9F2,
+    0xFF56BD19, 0x0D3D3E1A, 0x1E6DCDEE, 0xEC064EED,
+    0xC38D26C4, 0x31E6A5C7, 0x22B65633, 0xD0DDD530,
+    0x0417B1DB, 0xF67C32D8, 0xE52CC12C, 0x1747422F,
+    0x49547E0B, 0xBB3FFD08, 0xA86F0EFC, 0x5A048DFF,
+    0x8ECEE914, 0x7CA56A17, 0x6FF599E3, 0x9D9E1AE0,
+    0xD3D3E1AB, 0x21B862A8, 0x32E8915C, 0xC083125F,
+    0x144976B4, 0xE622F5B7, 0xF5720643, 0x07198540,
+    0x590AB964, 0xAB613A67, 0xB831C993, 0x4A5A4A90,
+    0x9E902E7B, 0x6CFBAD78, 0x7FAB5E8C, 0x8DC0DD8F,
+    0xE330A81A, 0x115B2B19, 0x020BD8ED, 0xF0605BEE,
+    0x24AA3F05, 0xD6C1BC06, 0xC5914FF2, 0x37FACCF1,
+    0x69E9F0D5, 0x9B8273D6, 0x88D28022, 0x7AB90321,
+    0xAE7367CA, 0x5C18E4C9, 0x4F48173D, 0xBD23943E,
+    0xF36E6F75, 0x0105EC76, 0x12551F82, 0xE03E9C81,
+    0x34F4F86A, 0xC69F7B69, 0xD5CF889D, 0x27A40B9E,
+    0x79B737BA, 0x8BDCB4B9, 0x988C474D, 0x6AE7C44E,
+    0xBE2DA0A5, 0x4C4623A6, 0x5F16D052, 0xAD7D5351,
+  };
+
+  uint8_t *ptr = ( uint8_t * ) sctp_header;
+  uint32_t crc32 = 0xffffffff;
+  for ( size_t i = 0; i < sctp_length; i++ ) {
+    crc32 = ( crc32 >> 8 ) ^ crc_c[ ( crc32 ^ ( ptr[ i ] ) ) & 0xFF ];
+  }
+  crc32 = ( ~crc32 ) & 0xffffffff;
+
+  uint8_t *csum = ( uint8_t * ) &sctp_header->checksum;
+  csum[ 0 ] = ( uint8_t ) ( ( crc32 >> 0  ) & 0xFF );
+  csum[ 1 ] = ( uint8_t ) ( ( crc32 >> 8  ) & 0xFF );
+  csum[ 2 ] = ( uint8_t ) ( ( crc32 >> 16 ) & 0xFF );
+  csum[ 3 ] = ( uint8_t ) ( ( crc32 >> 24 ) & 0xFF );
 }
 
 
@@ -218,10 +327,13 @@ parse_frame( buffer *frame ) {
 
   uint32_t eth_in_port = 0;
   uint64_t metadata = 0;
+  uint64_t tunnel_id = 0;
 
   if ( frame->user_data != NULL ) {
-    eth_in_port = ( ( packet_info * ) frame->user_data )->eth_in_port;
-    metadata = ( ( packet_info * ) frame->user_data )->metadata;
+    packet_info *info =  ( packet_info * ) frame->user_data;
+    eth_in_port = info->eth_in_port;
+    metadata    = info->metadata;
+    tunnel_id   = info->tunnel_id;
     free_packet_info( frame );
   }
 
@@ -233,8 +345,12 @@ parse_frame( buffer *frame ) {
 
   assert( frame->user_data != NULL );
 
-  ( ( packet_info * ) frame->user_data )->eth_in_port = eth_in_port;
-  ( ( packet_info * ) frame->user_data )->metadata = metadata;
+  {
+    packet_info *info =  ( packet_info * ) frame->user_data;
+    info->eth_in_port = eth_in_port;
+    info->metadata = metadata;
+    info->tunnel_id = tunnel_id;
+  }
 
   return true;
 }
@@ -347,7 +463,7 @@ set_vlan_vid( buffer *frame, uint16_t value ) {
   }
 
   vlantag_header_t *header = info->l2_vlan_header;
-  header->tci = ( uint16_t ) ( ( header->tci & htons( 0xf000 ) ) | ( value & 0x0fff ) );
+  header->tci = ( uint16_t ) ( ( header->tci & htons( 0xf000 ) ) | htons( value & 0x0fff ) );
 
   return parse_frame( frame );
 }
@@ -365,7 +481,8 @@ set_vlan_pcp( buffer *frame, uint8_t value ) {
   }
 
   vlantag_header_t *header = info->l2_vlan_header;
-  header->tci = ( uint16_t ) ( ( header->tci & htons( 0x1fff ) ) | ( ( value & 0x07 ) << 5 ) );
+  uint16_t tci = ( uint16_t ) ( ( value & 0x07 ) << 13 );
+  header->tci = ( uint16_t ) ( ( header->tci & htons( 0x1fff ) ) | htons( tci ) );
 
   return parse_frame( frame );
 }
@@ -377,15 +494,21 @@ set_nw_dscp( buffer *frame, uint8_t value ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  if ( !packet_type_ipv4( frame ) ) {
-    warn( "A non-ipv4 packet (%#x) found while setting the dscp field.", info->format );
+  if ( packet_type_ipv4( frame ) ){
+    ipv4_header_t *header = info->l3_header;
+    header->tos = ( uint8_t ) ( ( header->tos & 0x03 ) | ( ( value << 2 ) & 0xFC ) );
+    // no tcp/udp/icmp checksum caculation here because tos field is not included in pseudo header
+    set_ipv4_checksum( header );
+  }
+  else if ( packet_type_ipv6( frame ) ) {
+    ipv6_header_t *header = info->l3_header;
+    uint32_t hdrctl = ntohl( header->hdrctl );
+    header->hdrctl = htonl( ( hdrctl & 0xF03FFFFF ) + ( ( 0x3FU & value ) << 22 ) );
+  }
+  else {
+    warn( "A non-ipv4,ipv6 packet (%#x) found while setting the dscp field.", info->format );
     return true;
   }
-
-  ipv4_header_t *header = info->l3_header;
-  header->tos = ( uint8_t ) ( ( header->tos & 0x03 ) | ( ( value << 2 ) & 0xFC ) );
-  set_ipv4_checksum( header );
-
   return parse_frame( frame );
 }
 
@@ -396,14 +519,22 @@ set_nw_ecn( buffer *frame, uint8_t value ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  if ( !packet_type_ipv4( frame ) ) {
-    warn( "A non-ipv4 packet (%#x) found while setting the ecn field.", info->format );
+  if ( packet_type_ipv4( frame ) ) {
+    ipv4_header_t *header = info->l3_header;
+    header->tos = ( uint8_t ) ( ( header->tos & 0xFC ) | ( value & 0x03 ) );
+    // no tcp/udp/icmp checksum caculation here because tos field is not included in pseudo header
+    set_ipv4_checksum( header );
+  }
+  else if ( packet_type_ipv6( frame ) ) {
+    ipv6_header_t *header = info->l3_header;
+    // set Traffic Class
+    uint32_t hdrctl = ntohl(header->hdrctl);
+    header->hdrctl = htonl( ( hdrctl & 0xFFcFFFFF ) + ( ( 0x03U & value ) << 20 ) );
+  }
+  else {
+    warn( "A non-ipv4,ipv6 packet (%#x) found while setting the ecn field.", info->format );
     return true;
   }
-
-  ipv4_header_t *header = info->l3_header;
-  header->tos = ( uint8_t ) ( ( header->tos & 0xFC ) | ( value & 0x03 ) );
-  set_ipv4_checksum( header );
 
   return parse_frame( frame );
 }
@@ -415,14 +546,21 @@ set_ip_proto( buffer *frame, uint8_t value ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  if ( !packet_type_ipv4( frame ) ) {
-    warn( "A non-ipv4 packet (%#x) found while setting the ip_proto field.", info->format );
+  if ( packet_type_ipv4( frame ) ) {
+    ipv4_header_t *header = info->l3_header;
+    header->protocol = value;
+    set_ipv4_checksum( header );
+    // It is hard to calculate tcp/udp/icmp checksum caculation here, as we might break the payload.
+  }
+  else if ( packet_type_ipv6( frame ) ) {
+    ipv6_header_t *header = info->l3_header;
+    header->nexthdr = value;
+    // It is hard to calculate tcp/udp/icmp checksum caculation here, as we might break the payload.
+  }
+  else {
+    warn( "A non-ipv4,ipv6 packet (%#x) found while setting the ip_proto field.", info->format );
     return true;
   }
-
-  ipv4_header_t *header = info->l3_header;
-  header->protocol = value;
-  set_ipv4_checksum( header );
 
   return parse_frame( frame );
 }
@@ -441,6 +579,15 @@ set_ipv4_src( buffer *frame, uint32_t value ) {
 
   ipv4_header_t *header = info->l3_header;
   header->saddr = htonl( value );
+  if ( packet_type_ipv4_tcp( frame ) ) {
+    set_ipv4_tcp_checksum( info->l3_header, ( tcp_header_t * ) info->l4_header, info->l4_payload, info->l4_payload_length );
+  }
+  else if ( packet_type_ipv4_udp( frame ) ) {
+    set_ipv4_udp_checksum( info->l3_header, ( udp_header_t * ) info->l4_header, info->l4_payload );
+  }
+  else if ( packet_type_icmpv4( frame ) ) {
+    set_icmpv4_checksum( ( icmp_header_t * ) info->l4_header, info->l3_payload_length );
+  }
   set_ipv4_checksum( header );
 
   return parse_frame( frame );
@@ -460,6 +607,15 @@ set_ipv4_dst( buffer *frame, uint32_t value ) {
 
   ipv4_header_t *header = info->l3_header;
   header->daddr = htonl( value );
+  if ( packet_type_ipv4_tcp( frame ) ) {
+    set_ipv4_tcp_checksum( info->l3_header, ( tcp_header_t * ) info->l4_header, info->l4_payload, info->l4_payload_length );
+  }
+  else if ( packet_type_ipv4_udp( frame ) ) {
+    set_ipv4_udp_checksum( info->l3_header, ( udp_header_t * ) info->l4_header, info->l4_payload );
+  }
+  else if ( packet_type_icmpv4( frame ) ) {
+    set_icmpv4_checksum( ( icmp_header_t * ) info->l4_header, info->l3_payload_length );
+  }
   set_ipv4_checksum( header );
 
   return parse_frame( frame );
@@ -567,6 +723,58 @@ set_udp_dst( buffer *frame, uint16_t value ) {
 
 
 static bool
+set_sctp_src( buffer *frame, uint16_t value ) {
+  assert( frame != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+  sctp_header_t *sctp_header = info->l4_header;
+
+  if ( packet_type_ipv4_sctp( frame ) ) {
+    sctp_header->src_port = htons( value );
+    set_sctp_checksum( sctp_header, info->l3_payload_length );
+    set_ipv4_checksum( ( ipv4_header_t * ) info->l3_header );
+  }
+  else if ( packet_type_ipv6_sctp( frame ) ) {
+    sctp_header->src_port = htons( value );
+    set_sctp_checksum( sctp_header, info->l3_payload_length );
+  }
+  else {
+    warn( "A non-sctp packet (%#x) found while setting the sctp source port.", info->format );
+    return true;
+  }
+
+  return parse_frame( frame );
+}
+
+
+static bool
+set_sctp_dst( buffer *frame, uint16_t value ) {
+  assert( frame != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+  sctp_header_t *sctp_header = info->l4_header;
+
+  if ( packet_type_ipv4_sctp( frame ) ) {
+    sctp_header->dst_port = htons( value );
+    set_sctp_checksum( sctp_header, info->l3_payload_length );
+    set_ipv4_checksum( ( ipv4_header_t * ) info->l3_header );
+  }
+  else if ( packet_type_ipv6_sctp( frame ) ) {
+    sctp_header->dst_port = htons( value );
+    set_sctp_checksum( sctp_header, info->l3_payload_length );
+  }
+  else {
+    warn( "A non-sctp packet (%#x) found while setting the sctp destination port.", info->format );
+    return true;
+  }
+
+  return parse_frame( frame );
+}
+
+
+static bool
 set_icmpv4_type( buffer *frame, uint8_t value ) {
   assert( frame != NULL );
 
@@ -580,7 +788,7 @@ set_icmpv4_type( buffer *frame, uint8_t value ) {
   icmp_header_t *icmp_header = info->l4_header;
   icmp_header->type = value;
 
-  set_icmpv4_checksum( icmp_header, info->l4_payload_length );
+  set_icmpv4_checksum( icmp_header, info->l3_payload_length );
 
   return parse_frame( frame );
 }
@@ -600,7 +808,7 @@ set_icmpv4_code( buffer *frame, uint8_t value ) {
   icmp_header_t *icmp_header = info->l4_header;
   icmp_header->code = value;
 
-  set_icmpv4_checksum( icmp_header, info->l4_payload_length );
+  set_icmpv4_checksum( icmp_header, info->l3_payload_length );
 
   return parse_frame( frame );
 }
@@ -713,6 +921,16 @@ set_ipv6_src( buffer *frame, match8 *value ) {
   ipv6_header_t *header = info->l3_header;
   set_ipv6_address( header->saddr, value );
 
+  if ( packet_type_ipv6_tcp( frame ) ) {
+    set_ipv6_tcp_checksum( info->l3_header, ( tcp_header_t * ) info->l4_header, info->l4_payload, info->l4_payload_length );
+  }
+  else if ( packet_type_ipv6_udp( frame ) ) {
+    set_ipv6_udp_checksum( info->l3_header, ( udp_header_t * ) info->l4_header, info->l4_payload );
+  }
+  else if ( packet_type_icmpv6( frame ) ) {
+    set_icmpv6_checksum( info->l3_header, ( icmpv6_header_t * ) info->l4_header, info->l4_payload_length );
+  }
+
   return parse_frame( frame );
 }
 
@@ -731,6 +949,16 @@ set_ipv6_dst( buffer *frame, match8 value[] ) {
 
   ipv6_header_t *header = info->l3_header;
   set_ipv6_address( header->daddr, value );
+
+  if ( packet_type_ipv6_tcp( frame ) ) {
+    set_ipv6_tcp_checksum( info->l3_header, ( tcp_header_t * ) info->l4_header, info->l4_payload, info->l4_payload_length );
+  }
+  else if ( packet_type_ipv6_udp( frame ) ) {
+    set_ipv6_udp_checksum( info->l3_header, ( udp_header_t * ) info->l4_header, info->l4_payload );
+  }
+  else if ( packet_type_icmpv6( frame ) ) {
+    set_icmpv6_checksum( info->l3_header, ( icmpv6_header_t * ) info->l4_header, info->l4_payload_length );
+  }
 
   return parse_frame( frame );
 }
@@ -765,7 +993,7 @@ set_icmpv6_type( buffer *frame, uint8_t value ) {
     return true;
   }
 
-  icmp_header_t *icmp_header = info->l4_header;
+  icmpv6_header_t *icmp_header = info->l4_header;
   icmp_header->type = value;
   set_icmpv6_checksum( info->l3_header, icmp_header, info->l4_payload_length );
 
@@ -784,7 +1012,7 @@ set_icmpv6_code( buffer *frame, uint8_t value ) {
     return true;
   }
 
-  icmp_header_t *icmp_header = info->l4_header;
+  icmpv6_header_t *icmp_header = info->l4_header;
   icmp_header->code = value;
   set_icmpv6_checksum( info->l3_header, icmp_header, info->l4_payload_length );
 
@@ -813,6 +1041,7 @@ set_ipv6_nd_target( buffer *frame, match8 *value ) {
   icmpv6_header_t *header = info->l3_payload;
   icmpv6data_ndp_t *icmpv6data_ndp = ( icmpv6data_ndp_t * ) header->data;
   set_ipv6_address( icmpv6data_ndp->nd_target, value );
+  set_icmpv6_checksum( info->l3_header, header, info->l4_payload_length );
 
   return parse_frame( frame );
 }
@@ -844,6 +1073,7 @@ set_ipv6_nd_sll( buffer *frame, match8 *value ) {
     return true;
   }
   set_dl_address( icmpv6data_ndp->ll_addr, value );
+  set_icmpv6_checksum( info->l3_header, header, info->l4_payload_length );
 
   return parse_frame( frame );
 }
@@ -875,6 +1105,7 @@ set_ipv6_nd_tll( buffer *frame, match8 *value ) {
     return true;
   }
   set_dl_address( icmpv6data_ndp->ll_addr, value );
+  set_icmpv6_checksum( info->l3_header, header, info->l4_payload_length );
 
   return parse_frame( frame );
 }
@@ -891,8 +1122,8 @@ set_mpls_label( buffer *frame, uint32_t value ) {
     return true;
   }
 
-  uint32_t *mpls = info->l2_mpls_header;
-  *mpls = ( *mpls & htonl( 0x00000fff ) ) | htonl( ( value & 0x000fffff ) << 12 );
+  mpls_header_t *mpls_header = info->l2_mpls_header;
+  mpls_header->label = ( mpls_header->label & htonl( 0x00000fff ) ) | htonl( ( value << 12 ) & 0xfffff000 );
 
   return parse_frame( frame );
 }
@@ -909,8 +1140,8 @@ set_mpls_tc( buffer *frame, uint8_t value ) {
     return true;
   }
 
-  uint32_t *mpls = info->l2_mpls_header;
-  *mpls = ( *mpls & htonl( 0xfffff1ff ) ) | htonl( ( uint32_t ) ( value & 0x07 ) << 9 );
+  mpls_header_t *mpls_header = info->l2_mpls_header;
+  mpls_header->label = ( mpls_header->label & htonl( 0xfffff1ff ) ) | htonl( ( ( uint32_t ) value << 9 ) & 0x00000e00 );
 
   return parse_frame( frame );
 }
@@ -927,24 +1158,57 @@ set_mpls_bos( buffer *frame, uint8_t value ) {
     return true;
   }
 
-  uint32_t *mpls = info->l2_mpls_header;
-  *mpls = ( *mpls & htonl( 0xfffffeff ) ) | htonl( ( uint32_t )( value & 0x01 ) << 8 );
+  mpls_header_t *mpls_header = info->l2_mpls_header;
+  mpls_header->label = ( mpls_header->label & htonl( 0xfffffeff ) ) | htonl( ( ( uint32_t ) value << 8 ) & 0x00000100 );
 
   return parse_frame( frame );
 }
 
 
-static void
+static bool
+set_pbb_isid( buffer *frame, uint32_t value ) {
+  assert( frame != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+  if ( info->l2_pbb_header == NULL ) {
+    warn( "A non-pbb packet (%#x) found while setting pbb sid.", info->format );
+    return true;
+  }
+
+  pbb_header_t *pbb_header = info->l2_pbb_header;
+  pbb_header->isid = ( pbb_header->isid & htonl( 0xFF000000 ) ) | htonl( value & 0x00FFFFFF );
+
+  return parse_frame( frame );
+}
+
+
+static bool
+set_tunnel_id( buffer *frame, uint64_t value ) {
+  assert( frame != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+
+  info->tunnel_id = value;
+
+  return true;
+}
+
+
+static void*
 push_linklayer_tag( buffer *frame, void *head, size_t tag_size ) {
   assert( frame != NULL );
   assert( head != NULL );
 
-  char *tail = ( char * ) head + tag_size;
-  size_t length = frame->length - ( size_t ) ( ( char * ) head - ( char * ) frame->data );
-  // FIXME: this is not safe since append_back_buffer() may reallocate memory
+  size_t insert_offset = ( size_t ) ( ( char * ) head - ( char * ) frame->data );
   append_back_buffer( frame, tag_size );
-  memmove( tail, head, length );
+  // head would be moved because append_back_buffer() may reallocate memory
+  head = ( char * ) frame->data + insert_offset;
+  memmove( ( char * ) head + tag_size, head, frame->length - insert_offset - tag_size );
   memset( head, 0, tag_size );
+
+  return head;
 }
 
 
@@ -960,12 +1224,12 @@ pop_linklayer_tag( buffer *frame, void *head, size_t tag_size ) {
 }
 
 
-static void
+static void*
 push_vlan_tag( buffer *frame, void *head ) {
   assert( frame != NULL );
   assert( head != NULL );
 
-  push_linklayer_tag( frame, head, sizeof( vlantag_header_t ) );
+  return push_linklayer_tag( frame, head, sizeof( vlantag_header_t ) );
 }
 
 
@@ -978,12 +1242,12 @@ pop_vlan_tag( buffer *frame, void *head ) {
 }
 
 
-static void
+static void*
 push_mpls_tag( buffer *frame, void *head ) {
   assert( frame != NULL );
   assert( head != NULL );
 
-  push_linklayer_tag( frame, head, sizeof( uint32_t ) );
+  return push_linklayer_tag( frame, head, sizeof( uint32_t ) );
 }
 
 
@@ -993,6 +1257,24 @@ pop_mpls_tag( buffer *frame, void *head ) {
   assert( head != NULL );
 
   pop_linklayer_tag( frame, head, sizeof( uint32_t ) );
+}
+
+
+static void*
+push_pbb_tag( buffer *frame, void *head ) {
+  assert( frame != NULL );
+  assert( head != NULL );
+
+  return push_linklayer_tag( frame, head, sizeof( pbb_header_t ) );
+}
+
+
+static void
+pop_pbb_tag( buffer *frame, void *head ) {
+  assert( frame != NULL );
+  assert( head != NULL );
+
+  pop_linklayer_tag( frame, head, sizeof( pbb_header_t ) );
 }
 
 
@@ -1016,29 +1298,65 @@ execute_action_copy_ttl_in( buffer *frame, action *copy_ttl_in ) {
   assert( copy_ttl_in != NULL );
 
   packet_info *info = get_packet_info_data( frame );
-  assert( info != NULL );
-  if ( !packet_type_eth_mpls( frame ) ) {
-    warn( "A non-mpls packet (%#x) found while retrieving the ttl field.", info->format );
-    return true;
-  }
+  if ( packet_type_eth_mpls( frame ) ) {
+    void *ptr = ( char * ) info->l2_mpls_header + sizeof( mpls_header_t );
+    size_t length = REMAINED_BUFFER_LENGTH( frame, ptr );
 
-  uint32_t *mpls = ( uint32_t * ) info->l2_mpls_header;
-  assert( mpls != NULL );
-  uint8_t ttl = ( uint8_t ) ( *mpls >> 24 );
+    assert( info->l2_mpls_header != NULL );
+    mpls_header_t *mpls_header = info->l2_mpls_header;
+    uint32_t mpls = ntohl( mpls_header->label );
+    uint8_t mpls_bos = ( uint8_t ) ( ( mpls & 0x00000100 ) >>  8 );
 
-  if ( packet_type_ipv4( frame ) ) {
-    ipv4_header_t *ipv4_header = info->l3_header;
-    ipv4_header->ttl = ttl;
-    set_ipv4_checksum( ipv4_header );
+    uint8_t ttl = mpls & 0x000000FF;
+    if ( mpls_bos == 1 ) { // MPLS-to-IP copy
+      if ( length < sizeof( ipv4_header_t ) ) {
+        return false;
+      }
+      ipv4_header_t *ipv4_header = ptr;
+      // Inner payload MAY BE IPv4 or IPv6, below checks the first byte for version.
+      if ( ipv4_header->version == 4 ) {
+        if ( ipv4_header->ihl < 5 ) {
+          return false;
+        }
+        if ( length < ( size_t ) ipv4_header->ihl * 4 ) {
+          return false;
+        }
+        ipv4_header->ttl = ttl;
+        // no tcp/udp/icmp checksum caculation here because tos field is not included in pseudo header
+        set_ipv4_checksum( ipv4_header );
+      }
+      else if ( ipv4_header->version == 6 ) {
+        if ( length < sizeof( ipv6_header_t ) ) {
+          return false;
+        }
+        ipv6_header_t *ipv6_header = ptr;
+        ipv6_header->hoplimit = ttl;
+      }
+      else {
+        warn( "MPLS inner payload was not ipv4 or ipv6 (%#x) while setting the ttl field.", info->format );
+        return true;
+      }
+    }
+    else { // MPLS-to-MPLS copy
+      if ( length < sizeof( mpls_header_t ) ) {
+        debug("incomplete mpls");
+        return false;
+      }
+      mpls_header_t *inner_header = ( mpls_header_t * ) ( mpls_header + 1 );
+      //uint32_t inner_mpls = ntohl( inner_header->label ); // unused variable
+      uint8_t *inner_mpls_ttl = ( uint8_t * ) inner_header + 3;
+      *inner_mpls_ttl = ttl;
+    }
   }
-  else if ( packet_type_ipv6( frame ) ) {
-    ipv6_header_t *ipv6_header = info->l3_header;
-    ipv6_header->hoplimit = ttl;
+  else if ( packet_type_ipv4( frame ) || packet_type_ipv6( frame ) ) {
+    warn( "IP-to-IP TTL copy not supported yet." );
   }
   else {
-    warn( "A non-ip packet (%#x) found while setting the ttl field.", info->format );
+    warn( "A non-ip,mpls packet (%#x) found while setting the ttl field.", info->format );
     return true;
   }
+
+
 
   return parse_frame( frame );
 }
@@ -1058,20 +1376,7 @@ execute_action_pop_mpls( buffer *frame, action *pop_mpls ) {
 
   pop_mpls_tag( frame, info->l2_mpls_header );
 
-  uint16_t next_type = 0;
-  if ( packet_type_ipv4( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV4;
-  }
-  else if ( packet_type_ipv6( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV6;
-  }
-  else {
-    warn( "Unsupported packet found (%#x) while popping a mpls label.", info->format );
-    return true;
-  }
-
-  ether_header_t *ether_header = frame->data;
-  ether_header->type = htons( next_type );
+  * ( uint16_t * ) ( ( char * ) info->l2_mpls_header - 2 ) = htons( pop_mpls->ethertype );
 
   return parse_frame( frame );
 }
@@ -1089,22 +1394,7 @@ execute_action_pop_vlan( buffer *frame, action *pop_vlan ) {
     return true;
   }
 
-  pop_vlan_tag( frame, info->l2_vlan_header );
-
-  uint16_t next_type = 0;
-  if ( packet_type_ipv4( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV4;
-  }
-  else if ( packet_type_ipv6( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV6;
-  }
-  else {
-    warn( "Unsupported packet found (%#x) while popping a vlan tag.", info->format );
-    return true;
-  }
-
-  ether_header_t *ether_header = frame->data;
-  ether_header->type = htons( next_type );
+  pop_vlan_tag( frame, ( char * ) info->l2_vlan_header - 2 ); // remove TPID ethertype and tci
 
   return parse_frame( frame );
 }
@@ -1117,17 +1407,27 @@ execute_action_push_mpls( buffer *frame, action *push_mpls ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  void *start = info->l2_mpls_header;
-  if ( start == NULL ) {
-    start = info->l2_payload;
+
+  void *start = info->l2_payload;
+  uint32_t default_mpls = htonl( 0x00000100 );
+  if ( info->l2_mpls_header != NULL ) {
+    start = info->l2_mpls_header;
+    default_mpls = htonl( 0xFFFFFEFF ) & *( uint32_t * ) info->l2_mpls_header;
+  }
+  else if ( packet_type_ipv4( frame ) ) {
+    ipv4_header_t *ipv4_header = info->l3_header;
+    default_mpls = htonl( 0x00000100 | ( uint32_t ) ipv4_header->ttl );
+  }
+  else if ( packet_type_ipv6( frame ) ) {
+    ipv6_header_t *ipv6_header = info->l3_header;
+    default_mpls = htonl( 0x00000100 | ( uint32_t ) ipv6_header->hoplimit );
   }
 
-  push_mpls_tag( frame, start );
-  ether_header_t *ether_header = frame->data;
-  ether_header->type = htons( push_mpls->ethertype );
+  void *mpls = push_mpls_tag( frame, start );
 
-  uint32_t *mpls = ( uint32_t * ) start;
-  *mpls = *mpls | htonl( 0x00000100 );
+  * ( uint16_t * )( ( char * ) mpls - 2 ) = htons( push_mpls->ethertype );
+  mpls_header_t *mpls_header = mpls;
+  mpls_header->label = default_mpls;
 
   return parse_frame( frame );
 }
@@ -1140,29 +1440,19 @@ execute_action_push_vlan( buffer *frame, action *push_vlan ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  void *start = info->l2_vlan_header;
-  if ( start == NULL ) {
-    start = info->l2_payload;
+  
+  char *start = info->l2_payload;
+  uint16_t default_tci = 0;
+  if ( info->l2_vlan_header != NULL ) {
+    start = info->l2_vlan_header;
+    default_tci = ( ( vlantag_header_t * ) ( info->l2_vlan_header ) )-> tci;
   }
 
-  push_vlan_tag( frame, start );
+  void *vlan = push_vlan_tag( frame, start - 2 ); // push vlan tag between source mac and ethertype
+
   ether_header_t *ether_header = ( ether_header_t * ) frame->data;
   ether_header->type = htons( push_vlan->ethertype );
-  vlantag_header_t *vlan_header = ( vlantag_header_t * ) start;
-
-  uint16_t next_type = 0;
-  if ( packet_type_ipv4( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV4;
-  }
-  else if ( packet_type_ipv6( frame ) ) {
-    next_type = ETH_ETHTYPE_IPV6;
-  }
-  else {
-    warn( "Unsupported packet found (%#x) while pushing a vlan tag.", info->format );
-    return true;
-  }
-
-  vlan_header->type = htons( next_type );
+  ( ( vlantag_header_t * )( ( char * ) vlan + 2 ) )->tci = default_tci;
 
   return parse_frame( frame );
 }
@@ -1175,28 +1465,64 @@ execute_action_copy_ttl_out( buffer *frame, action *copy_ttl_out ) {
 
   packet_info *info = get_packet_info_data( frame );
   assert( info != NULL );
-  if ( !packet_type_eth_mpls( frame ) ) {
-    warn( "A non-mpls packet (%#x) found while replacing the mpls ttl.", info->format );
-    return true;
-  }
 
-  uint8_t ttl = 0;
-  if ( packet_type_ipv4( frame ) ) {
-    ipv4_header_t *ipv4_header = info->l3_header;
-    ttl = ipv4_header->ttl;
+  if ( packet_type_eth_mpls( frame ) ) {
+    void *ptr = ( char * ) info->l2_mpls_header + sizeof( mpls_header_t );
+    size_t length = REMAINED_BUFFER_LENGTH( frame, ptr );
+
+    assert( info->l2_mpls_header != NULL );
+    mpls_header_t *mpls_header = info->l2_mpls_header;
+    uint32_t mpls = ntohl( mpls_header->label );
+    uint8_t mpls_bos = ( uint8_t ) ( ( mpls & 0x00000100 ) >>  8 );
+
+    uint8_t ttl = 0;
+    if ( mpls_bos == 1 ) { // IP-to-MPLS copy
+      if ( length < sizeof( ipv4_header_t ) ) {
+        return false;
+      }
+      ipv4_header_t *ipv4_header = ptr;
+      // Inner payload MAY BE IPv4 or IPv6, below checks the first byte for version.
+      if ( ipv4_header->version == 4 ) {
+        if ( ipv4_header->ihl < 5 ) {
+          return false;
+        }
+        if ( length < ( size_t ) ipv4_header->ihl * 4 ) {
+          return false;
+        }
+        ttl = ipv4_header->ttl;
+      }
+      else if ( ipv4_header->version == 6 ) {
+        if ( length < sizeof( ipv6_header_t ) ) {
+          return false;
+        }
+        ipv6_header_t *ipv6_header = ptr;
+        ttl = ipv6_header->hoplimit;
+      }
+      else {
+        warn( "MPLS inner payload was not ipv4 or ipv6 (%#x) while setting the ttl field.", info->format );
+        return true;
+      }
+    }
+    else { // MPLS-to-MPLS copy
+      if ( length < sizeof( mpls_header_t ) ) {
+        debug("incomplete mpls");
+        return false;
+      }
+      mpls_header_t *inner_header = ( mpls_header_t * ) ( mpls_header + 1 );
+      uint32_t inner_mpls = ntohl( inner_header->label );
+      ttl = inner_mpls & 0x000000FF;
+    }
+
+    uint8_t *mpls_ttl = ( ( uint8_t * ) info->l2_mpls_header ) + 3;
+    *mpls_ttl = ttl;
   }
-  else if ( packet_type_ipv6( frame ) ) {
-    ipv6_header_t *ipv6_header = info->l3_header;
-    ttl = ipv6_header->hoplimit;
+  else if ( packet_type_ipv4( frame ) || packet_type_ipv6( frame ) ) {
+    warn( "IP-IP TTL copy not supported yet." );
   }
   else {
-    warn( "A non-ip packet (%#x) found while setting the ttl field.", info->format );
+    warn( "A non-ip,mpls packet (%#x) found while setting the ttl field.", info->format );
     return true;
   }
-
-  assert( info->l2_mpls_header != NULL );
-  uint8_t *mpls_ttl = ( ( uint8_t * ) info->l2_mpls_header ) + 3;
-  *mpls_ttl = ttl;
 
   return parse_frame( frame );
 }
@@ -1226,6 +1552,15 @@ execute_action_dec_mpls_ttl( buffer *frame, action *dec_mpls_ttl ) {
       match->in_phy_port.value = info->eth_in_phy_port;
       match->in_phy_port.valid = true;
     }
+    if ( info->metadata != 0 ) {
+      match->metadata.value = info->metadata;
+      match->metadata.valid = true;
+    }
+    if ( info->tunnel_id != 0 ) {
+      match->tunnel_id.value = info->tunnel_id;
+      match->tunnel_id.valid = true;
+    }
+
     notify_packet_in( OFPR_INVALID_TTL, dec_mpls_ttl->entry->table_id, dec_mpls_ttl->entry->cookie, match, frame, MISS_SEND_LEN );
     delete_match( match );
   }
@@ -1248,6 +1583,7 @@ execute_action_dec_nw_ttl( buffer *frame, action *dec_nw_ttl ) {
     ipv4_header_t *header = info->l3_header;
     ttl = &header->ttl;
     ttl_exceeded = !decrement_ttl( ttl );
+    // no tcp/udp/icmp checksum caculation here because ttl field is not included in pseudo header
     set_ipv4_checksum( header );
   }
   else if ( packet_type_ipv6( frame ) ) {
@@ -1268,6 +1604,14 @@ execute_action_dec_nw_ttl( buffer *frame, action *dec_nw_ttl ) {
     if ( info->eth_in_phy_port != match->in_port.value ) {
       match->in_phy_port.value = info->eth_in_phy_port;
       match->in_phy_port.valid = true;
+    }
+    if ( info->metadata != 0 ) {
+      match->metadata.value = info->metadata;
+      match->metadata.valid = true;
+    }
+    if ( info->tunnel_id != 0 ) {
+      match->tunnel_id.value = info->tunnel_id;
+      match->tunnel_id.valid = true;
     }
     notify_packet_in( OFPR_INVALID_TTL, dec_nw_ttl->entry->table_id, dec_nw_ttl->entry->cookie, match, frame, MISS_SEND_LEN );
     delete_match( match );
@@ -1415,6 +1759,18 @@ execute_action_set_field( buffer *frame, action *set_field ) {
     }
   }
 
+  if ( match->sctp_src.valid ) {
+    if ( !set_sctp_src( frame, match->sctp_src.value ) ) {
+      return false;
+    }
+  }
+
+  if ( match->sctp_dst.valid ) {
+    if ( !set_sctp_dst( frame, match->sctp_dst.value ) ) {
+      return false;
+    }
+  }
+
   if ( match->icmpv4_type.valid ) {
     if ( !set_icmpv4_type( frame, match->icmpv4_type.value ) ) {
       return false;
@@ -1523,6 +1879,18 @@ execute_action_set_field( buffer *frame, action *set_field ) {
     }
   }
 
+  if ( match->pbb_isid.valid ) {
+    if ( !set_pbb_isid( frame, match->pbb_isid.value ) ) {
+      return false;
+    }
+  }
+
+  if ( match->tunnel_id.valid ) {
+    if ( !set_tunnel_id( frame, match->tunnel_id.value ) ) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -1550,6 +1918,65 @@ execute_group_all( buffer *frame, bucket_list *buckets ) {
 
 
 static bool
+execute_action_push_pbb( buffer *frame, action *push_pbb ) {
+  assert( frame != NULL );
+  assert( push_pbb != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+
+  char *start = info->l2_payload;
+  uint32_t default_isid = 0;
+  if ( info->l2_pbb_header != NULL ) {
+    // PBB I-SID <- PBB I-SID
+    start = info->l2_pbb_header;
+    pbb_header_t *pbb = info->l2_pbb_header;
+    default_isid |= ntohl( pbb->isid ) & 0x00FFFFFF;
+  }
+  if ( info->l2_vlan_header != NULL ) {
+    // PBB I-PCP <- VLAN PCP
+    vlantag_header_t *vlan = info->l2_vlan_header;
+    default_isid |= ( ( ( uint32_t ) ntohs( vlan->tci ) >> 13 ) << 29 ) & 0xE0000000;
+  }
+
+  void *new = push_pbb_tag( frame, start - 2 ); // push pbb before ethertype
+
+  *( ( uint16_t * ) new ) = htons( push_pbb->ethertype );
+
+  ether_header_t *ether = ( ether_header_t * ) frame->data;
+  pbb_header_t *pbb = ( pbb_header_t * ) ( ( char * ) new + 2 );
+  pbb->isid = htonl( default_isid );
+  memcpy( pbb->cda, ether->macda, ETH_ADDRLEN );
+  memcpy( pbb->csa, ether->macsa, ETH_ADDRLEN );
+
+  return parse_frame( frame );
+}
+
+
+static bool
+execute_action_pop_pbb( buffer *frame, action *pop_pbb ) {
+  assert( frame != NULL );
+  assert( pop_pbb != NULL );
+
+  packet_info *info = get_packet_info_data( frame );
+  assert( info != NULL );
+  if ( info->l2_pbb_header == NULL ) {
+    warn( "A non-pbb frame (%#x) found while popping a pbb tag.", info->format );
+    return true;
+  }
+
+  pbb_header_t *pbb_header = info->l2_pbb_header;
+  ether_header_t *ether_header = frame->data;
+  memcpy( ether_header->macda, pbb_header->cda, ETH_ADDRLEN );
+  memcpy( ether_header->macsa, pbb_header->csa, ETH_ADDRLEN );
+
+  pop_pbb_tag( frame, ( char * ) info->l2_pbb_header - 2 ); // remove PBB ethertype and I-TAG
+
+  return parse_frame( frame );
+}
+
+
+static bool
 check_bucket( action_list *actions ) {
   assert( actions != NULL );
 
@@ -1573,6 +2000,73 @@ check_bucket( action_list *actions ) {
 }
 
 
+#ifdef GROUP_SELECT_BY_HASH
+static inline uint32_t
+group_select_by_hash_core( uint32_t value, const void *key, int size ) {
+  // 32 bit FNV_prime
+  const uint32_t prime = 0x01000193UL;
+  const unsigned char *c = key;
+
+  for ( int i = 0; i < size; i++ ) {
+    value ^= ( const uint32_t ) c[ i ];
+    value *= prime;
+  }
+
+  return value;
+}
+
+
+static uint32_t
+group_select_by_hash( const buffer *frame ) {
+  assert( frame != NULL );
+  assert( frame->user_data != NULL );
+  const packet_info *info = ( packet_info * ) frame->user_data;
+
+  if ( ( info->format & ( ETH_DIX | ETH_8023_SNAP ) ) == 0 ) {
+    return ( uint32_t ) rand();
+  }
+
+  // 32 bit offset_basis
+  uint32_t value = 0x811c9dc5UL;
+
+  value = group_select_by_hash_core( value, info->eth_macda, sizeof( info->eth_macda ) );
+  value = group_select_by_hash_core( value, info->eth_macsa, sizeof( info->eth_macsa ) );
+  value = group_select_by_hash_core( value, &info->eth_type, sizeof( info->eth_type ) );
+  if ( ( info->format & ETH_8021Q ) == ETH_8021Q ) {
+    value = group_select_by_hash_core( value, &info->vlan_vid, sizeof( info->vlan_vid ) );
+  }
+  if ( ( info->format & MPLS ) == MPLS ) {
+    value = group_select_by_hash_core( value, &info->mpls_label, sizeof( info->mpls_label ) );
+  }
+
+  if ( ( info->format & NW_IPV4 ) == NW_IPV4 ) {
+    value = group_select_by_hash_core( value, &info->ipv4_protocol, sizeof( info->ipv4_protocol ) );
+    value = group_select_by_hash_core( value, &info->ipv4_saddr, sizeof( info->ipv4_saddr ) );
+    value = group_select_by_hash_core( value, &info->ipv4_daddr, sizeof( info->ipv4_daddr ) );
+  }
+  else if ( ( info->format & NW_IPV6 ) == NW_IPV6 ) {
+    value = group_select_by_hash_core( value, &info->ipv6_protocol, sizeof( info->ipv6_protocol ) );
+    value = group_select_by_hash_core( value, &info->ipv6_saddr, sizeof( info->ipv6_saddr ) );
+    value = group_select_by_hash_core( value, &info->ipv6_daddr, sizeof( info->ipv6_daddr ) );
+  }
+  else {
+    return value;
+  }
+
+  if ( ( info->format & TP_TCP ) == TP_TCP ) {
+    value = group_select_by_hash_core( value, &info->tcp_src_port, sizeof( info->tcp_src_port ) );
+    value = group_select_by_hash_core( value, &info->tcp_dst_port, sizeof( info->tcp_dst_port ) );
+  }
+  else if ( ( info->format & TP_UDP ) == TP_UDP ) {
+    value = group_select_by_hash_core( value, &info->udp_src_port, sizeof( info->udp_src_port ) );
+    value = group_select_by_hash_core( value, &info->udp_dst_port, sizeof( info->udp_dst_port ) );
+  }
+
+  return value;
+}
+#endif
+
+
 static bool
 execute_group_select( buffer *frame, bucket_list *buckets ) {
   assert( frame != NULL );
@@ -1580,6 +2074,7 @@ execute_group_select( buffer *frame, bucket_list *buckets ) {
 
   list_element *candidates = NULL;
   create_list( &candidates );
+  uint32_t candidates_weight_total = 0;
 
   dlist_element *bucket_element = get_first_element( buckets );
 
@@ -1589,26 +2084,36 @@ execute_group_select( buffer *frame, bucket_list *buckets ) {
       if ( !check_bucket( b->actions ) ) {
         continue;
       }
+      candidates_weight_total += b->weight;
       append_to_tail( &candidates, bucket_element );
     }
     bucket_element = bucket_element->next;
   }
 
   uint32_t length_of_candidates = list_length_of( candidates );
-  if ( length_of_candidates == 0 ) {
+  if ( length_of_candidates == 0 || candidates_weight_total == 0 ) {
     delete_list( candidates );
     return true;
   }
 
-  uint32_t candidate_index = ( ( uint32_t ) rand() ) % length_of_candidates;
-  debug( "execute group select. bucket=%u(/%u)", candidate_index, length_of_candidates );
+#ifdef GROUP_SELECT_BY_HASH
+  uint32_t candidate_weight = group_select_by_hash( frame ) % candidates_weight_total;
+#else
+  uint32_t candidate_weight = ( ( uint32_t ) rand() ) % candidates_weight_total;
+#endif
+
+  uint32_t candidate_index = 0;
   list_element *target = candidates;
   for ( uint32_t i = 0; target != NULL && i < length_of_candidates; i++ ) {
-    if ( i == candidate_index ) {
+    bucket *b = target->data;
+    if ( candidate_weight < b->weight ) {
       break;
     }
+    candidate_index++;
+    candidate_weight -= b->weight;
     target = target->next;
   }
+  debug( "execute group select. bucket=%u(/%u)", candidate_index, length_of_candidates );
 
   if ( target != NULL ) {
     bucket_element = target->data;
@@ -1721,23 +2226,59 @@ execute_action_output( buffer *frame, action *output ) {
     packet_info *info = ( packet_info * ) frame->user_data;
     uint32_t in_port = info->eth_in_port;
     switch_port *port = lookup_switch_port( in_port );
-    assert( port != NULL );
 
-    if ( ( port->config & OFPPC_NO_PACKET_IN ) == 0 ) {
-      match *match = duplicate_match( output->entry->match );
-      match->in_port.value = info->eth_in_port;
-      match->in_port.valid = true;
-      if ( info->eth_in_phy_port != match->in_port.value ) {
-        match->in_phy_port.value = info->eth_in_phy_port;
-        match->in_phy_port.valid = true;
+    match *match = NULL;
+    uint8_t table_id = 0;
+    uint64_t cookie = 0;
+    if ( output->entry != NULL ) {
+      match = duplicate_match( output->entry->match );
+      cookie = output->entry->cookie;
+      table_id = output->entry->table_id;
+    } else {
+      match = create_match();
+    }
+    match->in_port.value = info->eth_in_port;
+    match->in_port.valid = true;
+    if ( info->eth_in_phy_port != match->in_port.value ) {
+      match->in_phy_port.value = info->eth_in_phy_port;
+      match->in_phy_port.valid = true;
+    }
+    if ( info->metadata != 0 ) {
+      match->metadata.value = info->metadata;
+      match->metadata.valid = true;
+    }
+    if ( info->tunnel_id != 0 ) {
+      match->tunnel_id.value = info->tunnel_id;
+      match->tunnel_id.valid = true;
+    }
+    if ( output->entry != NULL && output->entry->table_miss ) {
+      if ( port == NULL || ( port->config & OFPPC_NO_PACKET_IN ) == 0 ){
+        notify_packet_in( OFPR_NO_MATCH, table_id, cookie, match, frame, MISS_SEND_LEN );
       }
-      if ( table_miss_flow_entry( output->entry ) ) {
-        notify_packet_in( OFPR_NO_MATCH, output->entry->table_id, output->entry->cookie, match, frame, MISS_SEND_LEN );
-      }
-      else {
-        notify_packet_in( OFPR_ACTION, output->entry->table_id, output->entry->cookie, match, frame, output->max_len );
-      }
-      delete_match( match );
+    }
+    else {
+      notify_packet_in( OFPR_ACTION, table_id, cookie, match, frame, output->max_len );
+    }
+    delete_match( match );
+  }
+  else if ( output->port == OFPP_TABLE ) {
+    packet_info *info = ( packet_info * ) frame->user_data;
+    uint32_t in_port = info->eth_in_port;
+
+    // port is valid standard switch port or OFPP_CONTROLLER
+    switch_port *port = lookup_switch_port( in_port );
+    bool free_port = false;
+    if ( port == NULL ){
+      port = ( switch_port * ) xmalloc( sizeof( switch_port ) );
+      memset( port, 0, sizeof( switch_port ) );
+      port->port_no = OFPP_CONTROLLER;
+      free_port = true;
+    }
+
+    handle_received_frame( port, frame );
+
+    if ( free_port ) {
+      xfree( port );
     }
   }
   else {
@@ -1867,16 +2408,14 @@ execute_action_list( action_list *list, buffer *frame ) {
       case OFPAT_PUSH_PBB:
       {
         debug( "Executing action (OFPAT_PUSH_PBB)." );
-        warn( "OFPAT_PUSH_PBB is not supported." );
-        ret = false;
+        ret = execute_action_push_pbb( frame, action );
       }
       break;
 
       case OFPAT_POP_PBB:
       {
         debug( "Executing action (OFPAT_POP_PBB)." );
-        warn( "OFPAT_POP_PBB is not supported." );
-        ret = false;
+        ret = execute_action_pop_pbb( frame, action );
       }
       break;
 
@@ -1919,22 +2458,23 @@ execute_action_set( action_set *set, buffer *frame ) {
     }
   }
 
-  if ( set->pop_mpls != NULL ) {
-    debug( "Executing action (OFPAT_POP_MPLS)." );
-    if ( !execute_action_pop_mpls( frame, set->pop_mpls ) ) {
+  if ( set->pop_vlan != NULL ) {
+    debug( "Executing action (OFPAT_POP_VLAN)." );
+    if ( !execute_action_pop_vlan( frame, set->pop_vlan ) ) {
       return OFDPE_FAILED;
     }
   }
 
   if ( set->pop_pbb != NULL ) {
     debug( "Executing action (OFPAT_POP_PBB)." );
-    warn( "OFPAT_POP_PBB is not supported" );
-    return OFDPE_FAILED;
+    if ( !execute_action_pop_pbb( frame, set->pop_pbb ) ) {
+      return OFDPE_FAILED;
+    }
   }
 
-  if ( set->pop_vlan != NULL ) {
-    debug( "Executing action (OFPAT_POP_VLAN)." );
-    if ( !execute_action_pop_vlan( frame, set->pop_vlan ) ) {
+  if ( set->pop_mpls != NULL ) {
+    debug( "Executing action (OFPAT_POP_MPLS)." );
+    if ( !execute_action_pop_mpls( frame, set->pop_mpls ) ) {
       return OFDPE_FAILED;
     }
   }
@@ -1948,8 +2488,9 @@ execute_action_set( action_set *set, buffer *frame ) {
 
   if ( set->push_pbb != NULL ) {
     debug( "Executing action (OFPAT_PUSH_PBB)." );
-    warn( "OFPAT_PUSH_PBB is not supported" );
-    return OFDPE_FAILED;
+    if ( !execute_action_push_pbb( frame, set->push_pbb ) ) {
+      return OFDPE_FAILED;
+    }
   }
 
   if ( set->push_vlan != NULL ) {

@@ -41,6 +41,7 @@ parse_ether( buffer *buf ) {
   // Check the length of remained buffer
   size_t length = REMAINED_BUFFER_LENGTH( buf, ptr );
   if ( length < sizeof( ether_header_t ) ) {
+    debug("incomplete ether_header_t");
     return;
   }
 
@@ -48,107 +49,70 @@ parse_ether( buffer *buf ) {
   ether_header_t *ether_header = ptr;
   memcpy( packet_info->eth_macsa, ether_header->macsa, ETH_ADDRLEN );
   memcpy( packet_info->eth_macda, ether_header->macda, ETH_ADDRLEN );
-  packet_info->eth_type = ntohs( ether_header->type );
+  uint16_t ethertype = ntohs( ether_header->type );
 
   ptr = ( void * ) ( ether_header + 1 );
 
-  // TODO This packet parsing source looks horible. Must fix later
-  // PBB(MAC-in-MAC) VLAN
-  if (packet_info->eth_type == ETH_ETHTYPE_PBB ) {
-      const uint8_t sizeof_pbb_header = 22;
-      length = REMAINED_BUFFER_LENGTH( buf, ptr );
-      if ( length < sizeof_pbb_header ) {
-        return;
+  int tagged = 0;
+  do {
+    tagged = 0;
+    length = REMAINED_BUFFER_LENGTH( buf, ptr );
+
+    if ( ethertype <= ETH_MTU ) {
+      snap_header_t *snap_header = ptr;
+      if ( length > sizeof( snap_header_t ) &&
+           snap_header->llc[0]==0xAA &&
+           snap_header->llc[1]==0xAA &&
+           snap_header->oui[0]==0 &&
+           snap_header->oui[1]==0 &&
+           snap_header->oui[2]==0 ) {
+
+        memcpy( packet_info->snap_llc, snap_header->llc, SNAP_LLC_LENGTH );
+        memcpy( packet_info->snap_oui, snap_header->oui, SNAP_OUI_LENGTH );
+        packet_info->snap_type = ntohs( snap_header->type );
+        packet_info->format |= ETH_8023_SNAP;
+
+        ethertype = ntohs( snap_header->type );
+        ptr = ( void * ) ( snap_header + 1 );
+        tagged = 1;
       }
-      packet_info->pbb_isid = ntohl(*((uint32_t *)ptr + 3)) & 0x00FFFFFF;
-      ptr = ( void * ) ( (char *)ptr + 2 + 6 + 6 + 6 ); // B-TAG/B-VID = 2, ethertype(0x88E7) + Flag + I-SID = 6, C-MAC SA = 6, C-MAC DA = 6
-      packet_info->eth_type = ntohs(*((uint16_t *)ptr)); // maybe TPID = 0x8100
-      ptr = ( void * ) ( (char *)ptr + 2);
-  }
-
-  // vlan tag
-  if ( packet_info->eth_type == ETH_ETHTYPE_TPID ) {
-    // Check the length of remained buffer
-    length = REMAINED_BUFFER_LENGTH( buf, ptr );
-    if ( length < sizeof( vlantag_header_t ) ) {
-      return;
-    }
-    vlantag_header_t *vlantag_header = ptr;
-
-    packet_info->vlan_tci = ntohs( vlantag_header->tci );
-    packet_info->vlan_tpid = packet_info->eth_type;
-    packet_info->vlan_prio =TCI_GET_PRIO( packet_info->vlan_tci );
-    packet_info->vlan_cfi = TCI_GET_CFI( packet_info->vlan_tci );
-    packet_info->vlan_vid = TCI_GET_VID( packet_info->vlan_tci );
-
-    // Rewrite eth_type
-    packet_info->eth_type = ntohs( vlantag_header->type );
-
-    packet_info->format |= ETH_8021Q;
-
-    ptr = ( void * ) ( vlantag_header + 1 );
-  }
-
-  // Skip nested vlan headers.
-  while (  packet_info->eth_type == ETH_ETHTYPE_TPID ) {
-    // Check the length of remained buffer
-    length = REMAINED_BUFFER_LENGTH( buf, ptr );
-    if ( length < sizeof( vlantag_header_t ) ) {
-      return;
-    }
-    vlantag_header_t *vlantag_header = ptr;
-
-    // Rewrite eth_type
-    packet_info->eth_type = ntohs( vlantag_header->type );
-    ptr = ( void * ) ( vlantag_header + 1 );
-  }
-
-  // snap header.
-  if ( packet_info->eth_type <= ETH_MTU ) {
-    // Check the length of remained buffer
-    length = REMAINED_BUFFER_LENGTH( buf, ptr );
-    if ( length < sizeof( snap_header_t ) ) {
-      return;
-    }
-    snap_header_t *snap_header = ptr;
-
-    memcpy( packet_info->snap_llc, snap_header->llc, SNAP_LLC_LENGTH );
-    memcpy( packet_info->snap_oui, snap_header->oui, SNAP_OUI_LENGTH );
-    packet_info->snap_type = ntohs( snap_header->type );
-
-    packet_info->format |= ETH_8023_SNAP;
-
-    ptr = ( void * ) ( snap_header + 1 );
-  }
-  else {
-    packet_info->format |= ETH_DIX;
-  }
-
-
-  // TODO fix coding formatting and check source.
-  // Parse MPLS Header
-  if ( packet_info -> eth_type == ETH_ETHTYPE_MPLS_UNI ) {
-    packet_info -> eth_type   = ETH_ETHTYPE_IPV4;
-    packet_info -> format    |= MPLS;
-    packet_info->l2_mpls_header = ptr;
-
-    for (;;) {
-      const uint8_t sizeof_mpls_header = 4;
-      length = REMAINED_BUFFER_LENGTH( buf, ptr );
-      if ( length < sizeof_mpls_header ) {
-        return;
-      }
-      uint32_t mpls = 0;
-      mpls = ntohl( *( ( uint32_t * )ptr ) );
-      packet_info -> mpls_label = ( mpls & 0xFFFFF000 ) >> 12;
-      packet_info -> mpls_tc    = ( uint8_t ) ( mpls & 0x00000E00 ) >>  9;
-      packet_info -> mpls_bos   = ( uint8_t ) ( mpls & 0x00000100 ) >>  8;
-      ptr = ( void * ) ( ( char * ) ptr + 4 );
-      if (packet_info->mpls_bos == 1) {
-        break;
+      else{
+        ethertype = 0x05FF; // beacon
       }
     }
-  }
+    else {
+      packet_info->format |= ETH_DIX;
+
+      if ( ethertype == ETH_ETHTYPE_TPID  ||
+           ethertype == ETH_ETHTYPE_TPID1 ||
+           ethertype == ETH_ETHTYPE_TPID2 ||
+           ethertype == ETH_ETHTYPE_TPID3 ||
+           ethertype == ETH_ETHTYPE_TPID4 ) {
+        if ( length < sizeof( vlantag_header_t ) ) {
+          debug("incomplete vlantag_header_t");
+          return;
+        }
+        vlantag_header_t *vlantag_header = ptr;
+
+        if ( packet_info->l2_vlan_header == NULL ) {
+          // capture the outermost information
+          packet_info->vlan_tci  = ntohs( vlantag_header->tci );
+          packet_info->vlan_tpid = ethertype;
+          packet_info->vlan_prio = TCI_GET_PRIO( packet_info->vlan_tci );
+          packet_info->vlan_cfi  = TCI_GET_CFI( packet_info->vlan_tci );
+          packet_info->vlan_vid  = TCI_GET_VID( packet_info->vlan_tci );
+          packet_info->format |= ETH_8021Q;
+          packet_info->l2_vlan_header = vlantag_header;
+        }
+
+        ethertype = ntohs( vlantag_header->type );
+        ptr = ( void * ) ( vlantag_header + 1 );
+        tagged = 1;
+      }
+    }
+  } while ( tagged == 1 );
+
+  packet_info->eth_type = ethertype;
 
   size_t payload_length = REMAINED_BUFFER_LENGTH( buf, ptr );
   if ( payload_length > 0 ) {
@@ -219,6 +183,8 @@ parse_ipv4( buffer *buf ) {
   packet_info->ipv4_version = ipv4_header->version;
   packet_info->ipv4_ihl = ipv4_header->ihl;
   packet_info->ipv4_tos = ipv4_header->tos;
+  packet_info->ipv4_dscp = ( IPTOS_DSCP_MASK & ipv4_header->tos ) >> IPTOS_DSCP_SHIFT;
+  packet_info->ipv4_ecn = IPTOS_ECN_MASK & ipv4_header->tos;
   packet_info->ipv4_tot_len = ntohs( ipv4_header->tot_len );
   packet_info->ipv4_id = ntohs( ipv4_header->id );
   packet_info->ipv4_frag_off = ntohs( ipv4_header->frag_off );
@@ -260,6 +226,8 @@ parse_ipv6( buffer *buf ) {
   uint32_t hdrctl = ntohl( ipv6_header->hdrctl );
   packet_info->ipv6_version = ( uint8_t )( hdrctl >> 28 );
   packet_info->ipv6_tc = ( uint8_t )( hdrctl >> 20 & 0xFF );
+  packet_info->ipv6_dscp = ( IPTOS_DSCP_MASK & packet_info->ipv6_tc ) >> IPTOS_DSCP_SHIFT;
+  packet_info->ipv6_ecn = IPTOS_ECN_MASK & packet_info->ipv6_tc;
   packet_info->ipv6_flowlabel = hdrctl & 0xFFFFF;
   packet_info->ipv6_plen = ntohs( ipv6_header->plen );
   packet_info->ipv6_nexthdr = ipv6_header->nexthdr;
@@ -361,26 +329,48 @@ parse_mpls( buffer *buf ) {
   assert( buf != NULL );
 
   packet_info *packet_info = buf->user_data;
-  void *ptr = packet_info->l3_header;
+  void *ptr = packet_info->l2_payload;
   assert( ptr != NULL );
 
   // Check the length of remained buffer
   size_t length = REMAINED_BUFFER_LENGTH( buf, ptr );
   if ( length < sizeof( mpls_header_t ) ) {
+    debug("incomplete mpls");
     return;
   }
 
+  // We only parse the outer most one.
   mpls_header_t *mpls_header = ptr;
-  packet_info->mpls_label = ntohl( mpls_header->label );
+  uint32_t mpls = ntohl( mpls_header->label );
+  packet_info->mpls_label =             ( ( mpls & 0xFFFFF000 ) >> 12 );
+  packet_info->mpls_tc    = ( uint8_t ) ( ( mpls & 0x00000E00 ) >>  9 );
+  packet_info->mpls_bos   = ( uint8_t ) ( ( mpls & 0x00000100 ) >>  8 );
+  packet_info->format |= MPLS;
+  packet_info->l2_mpls_header = ptr;
 
-  ptr = ( void * ) ( mpls_header + 1 );
-  size_t payload_length = REMAINED_BUFFER_LENGTH( buf, ptr );
-  if ( payload_length > 0 ) {
-    packet_info->l3_payload = ptr;
-    packet_info->l3_payload_length = payload_length;
+  return;
+}
+
+
+static void
+parse_pbb( buffer *buf ) {
+  assert( buf != NULL );
+
+  packet_info *packet_info = buf->user_data;
+  void *ptr = packet_info->l2_payload;
+  assert( ptr != NULL );
+
+  // Check the length of remained buffer
+  size_t length = REMAINED_BUFFER_LENGTH( buf, ptr );
+  if ( length < sizeof( pbb_header_t ) ) {
+    debug("incomplete pbb_header_t");
+    return;
   }
 
-  packet_info->format |= MPLS;
+  pbb_header_t *pbb_header = ptr;
+  packet_info->pbb_isid = ntohl( pbb_header->isid ) & 0x00FFFFFF;
+  packet_info->l2_pbb_header = ptr;
+  packet_info->format |= PBB;
 
   return;
 }
@@ -491,6 +481,12 @@ parse_icmpv6( buffer *buf ) {
     break;
   }
 
+  ptr = ( void * ) ( icmpv6_header + 1 );
+  size_t payload_length = REMAINED_BUFFER_LENGTH( buf, ptr );
+  if ( payload_length > 0 ) {
+    packet_info->l4_payload = ptr;
+    packet_info->l4_payload_length = payload_length;
+  }
   packet_info->format |= NW_ICMPV6;
 
   return;
@@ -710,9 +706,12 @@ parse_packet( buffer *buf ) {
 
   case ETH_ETHTYPE_MPLS_UNI:
   case ETH_ETHTYPE_MPLS_MLT:
-    packet_info->l3_header = packet_info->l2_payload;
     parse_mpls( buf );
-    break;
+    return true;
+
+  case ETH_ETHTYPE_PBB:
+    parse_pbb( buf );
+    return true;
 
   default:
     // Unknown L3 type
@@ -726,9 +725,13 @@ parse_packet( buffer *buf ) {
       return true;
     }
     packet_info->ip_proto = packet_info->ipv4_protocol;
+    packet_info->ip_dscp = packet_info->ipv4_dscp;
+    packet_info->ip_ecn = packet_info->ipv4_ecn;
   }
   else if ( packet_info->format & NW_IPV6 ) {
     packet_info->ip_proto = packet_info->ipv6_protocol;
+    packet_info->ip_dscp = packet_info->ipv6_dscp;
+    packet_info->ip_ecn = packet_info->ipv6_ecn;
   }
   else {
     // Not IPv4/v6 type

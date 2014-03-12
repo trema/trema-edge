@@ -22,13 +22,13 @@ module Trema
     # A match field to match an IP protocol value.
     #
     class IpProto < FlexibleAction
-      unsigned_int8 :ip_proto, :presence => true
+      unsigned_int8 :ip_proto, presence: true
     end
   end
+
+
+  IpProto = Actions::IpProto
 end
-
-
-IpProto = Trema::Actions::IpProto
 
 
 ### Local variables:

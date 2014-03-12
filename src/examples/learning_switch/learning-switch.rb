@@ -21,7 +21,7 @@
 
 
 require "trema/exact-match"
-require "fdb"
+require_relative "fdb"
 
 
 #
@@ -37,15 +37,13 @@ class LearningSwitch < Controller
 
 
   def switch_ready datapath_id
-    @fdb = FDB.new
-
-    action = SendOutPort.new( :port_number => OFPP_CONTROLLER, :max_len => OFPCML_NO_BUFFER )
-    ins = ApplyAction.new( :actions => [ action ] )
+    action = SendOutPort.new( port_number: OFPP_CONTROLLER, max_len: OFPCML_NO_BUFFER )
+    ins = ApplyAction.new( actions: [ action ] )
     send_flow_mod_add( datapath_id,
-                       :priority => OFP_LOW_PRIORITY,
-                       :buffer_id => OFP_NO_BUFFER,
-                       :flags => OFPFF_SEND_FLOW_REM,
-                       :instructions => [ ins ]
+                       priority: OFP_LOW_PRIORITY,
+                       buffer_id: OFP_NO_BUFFER,
+                       flags: OFPFF_SEND_FLOW_REM,
+                       instructions: [ ins ]
     )
   end
 
@@ -73,22 +71,22 @@ class LearningSwitch < Controller
 
 
   def flow_mod datapath_id, message, port_no
-    action = SendOutPort.new( :port_number => port_no )
-    ins = Instructions::ApplyAction.new( :actions => [ action ] )
+    action = SendOutPort.new( port_number: port_no )
+    ins = Instructions::ApplyAction.new( actions: [ action ] )
     send_flow_mod_add(
       datapath_id,
-      :match => ExactMatch.from( message ),
-      :instructions => [ ins ]
+      match: ExactMatch.from( message ),
+      instructions: [ ins ]
     )
   end
 
 
   def packet_out datapath_id, message, port_no
-    action = Actions::SendOutPort.new( :port_number => port_no )
+    action = Actions::SendOutPort.new( port_number: port_no )
     send_packet_out(
       datapath_id,
-      :packet_in => message,
-      :actions => [ action ]
+      packet_in: message,
+      actions: [ action ]
     )
   end
 

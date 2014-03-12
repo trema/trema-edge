@@ -26,26 +26,31 @@ extern "C" {
 
 
 #define SEND_STATS( stats_type, transaction_id, flags, list ) \
+  int offset = 0; \
   do {                                                        \
-    buffer *msg = create_##stats_type##_multipart_reply( transaction_id, flags, list ); \
+    int more = 0; \
+    buffer *msg = create_##stats_type##_multipart_reply( transaction_id, flags, list, &more, &offset ); \
     switch_send_openflow_message( msg ); \
     free_buffer( msg );                  \
-  } while( 0 )
+    if ( more == 0) break; \
+  } while( 1 )
 
 
-void ( *request_send_flow_stats)( const struct ofp_flow_stats_request *req, const uint32_t transaction_id );
-struct ofp_aggregate_stats_reply * (* request_aggregate_stats)( const struct ofp_aggregate_stats_request *req );
-void ( *request_send_table_stats)( const uint32_t transaction_id );
-void ( *request_send_port_stats)( const struct ofp_port_stats_request *req, const uint32_t transaction_id );
-void ( *request_send_group_stats)( const struct ofp_group_stats_request *req, const uint32_t transaction_id );
-list_element * ( *request_group_desc_stats)( void );
-void ( *request_send_table_features_stats)( uint32_t transaction_id );
-list_element * ( *request_port_desc )( void );
-struct ofp_group_features * ( *request_group_features )( void );
-const char * ( *mfr_desc )( void );
-char * ( *hw_desc )( void );
-const char * ( *serial_num )( void );
-const char * ( *dp_desc )( void );
+void ( *handle_desc )( const uint32_t transaction_id, const char *progname );
+void ( *handle_flow_stats )( const struct ofp_flow_stats_request *req, const uint32_t transaction_id, const uint32_t capabilities );
+void ( *handle_aggregate_stats )( const struct ofp_aggregate_stats_request *req, const uint32_t transaction_id, const uint32_t capabilities );
+void ( *handle_table_stats )( const uint32_t transaction_id, const uint32_t capabilities );
+void ( *handle_port_stats )( const struct ofp_port_stats_request *req, const uint32_t transaction_id, const uint32_t capabilities );
+void ( *handle_group_stats )( const struct ofp_group_stats_request *req, const uint32_t transaction_id, const uint32_t capabilities );
+void ( *handle_group_desc )( const uint32_t transaction_id, const uint32_t capabilities );
+void ( *handle_table_features )( uint32_t transaction_id );
+void ( *handle_port_desc )( const uint32_t transaction_id );
+void ( *handle_queue_stats )( const struct ofp_queue_stats_request *req, const uint32_t transaction_id, uint32_t capabilities );
+void ( *handle_group_features )( const uint32_t transaction_id, const uint32_t capabilities );
+void ( *handle_meter_stats )( const struct ofp_meter_multipart_request *req, const uint32_t transaction_id );
+void ( *handle_meter_config )( const struct ofp_meter_multipart_request *req, const uint32_t transaction_id );
+void ( *handle_meter_features )( const uint32_t transaction_id );
+void ( *handle_experimenter_stats )( const struct ofp_experimenter_multipart_header *em_hdr, const uint32_t transaction_id );
 
 
 #ifdef __cplusplus

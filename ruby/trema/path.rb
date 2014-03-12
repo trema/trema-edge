@@ -16,7 +16,7 @@
 #
 
 
-require "trema/monkey-patch/module"
+require_relative "monkey-patch/module"
 
 
 module Trema

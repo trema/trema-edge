@@ -25,13 +25,14 @@ module Trema
     # A match field to match a UDP destination port
     #
     class UdpDstPort < TransportPort
+      unsigned_int16 :transport_port, alias: :udp_dst
       ofp_type OFPXMT_OFB_UDP_DST
     end
   end
+
+
+  UdpDstPort = Actions::UdpDstPort
 end
-
-
-UdpDstPort = Trema::Actions::UdpDstPort
 
 
 ### Local variables:

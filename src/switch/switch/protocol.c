@@ -137,6 +137,9 @@ handle_datapath_opf_packet( buffer *packet, struct protocol *protocol ) {
 }
 
 
+static struct protocol *active_protocol = NULL;
+
+
 static void
 handle_controller_connected( void *user_data ) {
   set_hello_handler( handle_hello, user_data );
@@ -151,6 +154,13 @@ handle_controller_connected( void *user_data ) {
   set_multipart_request_handler( handle_multipart_request, user_data );
   set_barrier_request_handler( handle_barrier_request, user_data );
   set_get_config_request_handler( handle_get_config_request, user_data );
+
+  active_protocol = user_data;
+}
+
+
+struct protocol* get_protocol() {
+  return active_protocol;
 }
 
 

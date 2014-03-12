@@ -25,10 +25,10 @@ module Trema
       unsigned_int16 :arp_op, presence: true
     end
   end
+
+
+  ArpOp = Actions::ArpOp
 end
-
-
-ArpOp = Trema::Actions::ArpOp
 
 
 ### Local variables:

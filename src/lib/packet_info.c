@@ -37,6 +37,12 @@ void
 calloc_packet_info( buffer *buf ) {
   die_if_NULL( buf );
 
+  if ( buf->user_data != NULL && buf->user_data_free_function != NULL ) {
+    ( *buf->user_data_free_function )( buf );
+    assert( buf->user_data == NULL );
+    assert( buf->user_data_free_function == NULL );
+  }
+
   void *user_data = xcalloc( 1, sizeof( packet_info ) );
   assert( user_data != NULL );
 
@@ -44,6 +50,32 @@ calloc_packet_info( buffer *buf ) {
 
   buf->user_data = user_data;
   buf->user_data_free_function = free_packet_info;
+}
+
+
+void
+copy_packet_info( buffer *dst, const buffer *src ) {
+  die_if_NULL( src );
+  die_if_NULL( dst );
+  
+  if ( src->user_data == NULL ) {
+    return;
+  }
+  calloc_packet_info( dst );
+  memcpy( dst->user_data, src->user_data, sizeof( packet_info ) );
+
+  packet_info *info = ( packet_info* ) dst->user_data;
+  ssize_t offset = ( ( char * ) dst->data - ( char * ) src->data);
+
+  if(info->l2_header      != NULL) info->l2_header      = ( char * ) info->l2_header      + offset;
+  if(info->l2_payload     != NULL) info->l2_payload     = ( char * ) info->l2_payload     + offset;
+  if(info->l3_header      != NULL) info->l3_header      = ( char * ) info->l3_header      + offset;
+  if(info->l3_payload     != NULL) info->l3_payload     = ( char * ) info->l3_payload     + offset;
+  if(info->l4_header      != NULL) info->l4_header      = ( char * ) info->l4_header      + offset;
+  if(info->l4_payload     != NULL) info->l4_payload     = ( char * ) info->l4_payload     + offset;
+  if(info->l2_vlan_header != NULL) info->l2_vlan_header = ( char * ) info->l2_vlan_header + offset;
+  if(info->l2_pbb_header  != NULL) info->l2_pbb_header  = ( char * ) info->l2_pbb_header  + offset;
+  if(info->l2_mpls_header != NULL) info->l2_mpls_header = ( char * ) info->l2_mpls_header + offset;
 }
 
 
@@ -125,6 +157,13 @@ packet_type_eth_mpls( const buffer *frame ) {
 
 
 bool
+packet_type_eth_pbb( const buffer *frame ) {
+  die_if_NULL( frame );
+  return if_packet_type( frame, PBB );
+}
+
+
+bool
 packet_type_arp( const buffer *frame ) {
   die_if_NULL( frame );
   return if_packet_type( frame, NW_ARP );
@@ -198,6 +237,20 @@ bool
 packet_type_ipv6_udp( const buffer *frame ) {
   die_if_NULL( frame );
   return if_packet_type( frame, NW_IPV6 | TP_UDP );
+}
+
+
+bool
+packet_type_ipv4_sctp( const buffer *frame ) {
+  die_if_NULL( frame );
+  return if_packet_type( frame, NW_IPV4 | TP_SCTP );
+}
+
+
+bool
+packet_type_ipv6_sctp( const buffer *frame ) {
+  die_if_NULL( frame );
+  return if_packet_type( frame, NW_IPV6 | TP_SCTP );
 }
 
 

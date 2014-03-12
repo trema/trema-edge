@@ -27,6 +27,9 @@ module Trema
       array :properties
     end
   end
+
+
+  TableFeaturesMultipartReply = Messages::TableFeaturesMultipartReply
 end
 
 

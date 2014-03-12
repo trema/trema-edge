@@ -16,13 +16,18 @@
 #
 
 
-require "trema/accessor"
+require_relative "accessor"
 
 
 module Trema
   class Message < Accessor
     include Messages
     include MessageConst
+
+
+    def self.next_transaction_id
+      Messages::next_xid
+    end
 
 
     def pack_msg datapath_id

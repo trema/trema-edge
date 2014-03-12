@@ -23,7 +23,7 @@ module Trema
     # The traffic class field is 3 bits.
     #
     class MplsTc < FlexibleAction
-      unsigned_int8 :mpls_tc, :presence => true, :within => :check_mpls_tc_range
+      unsigned_int8 :mpls_tc, presence: true, within: :check_mpls_tc_range
 
 
       def check_mpls_tc_range mpls_tc, name
@@ -34,10 +34,10 @@ module Trema
       end
     end
   end
+
+
+  MplsTc = Actions::MplsTc
 end
-
-
-MplsTc = Trema::Actions::MplsTc
 
 
 ### Local variables:

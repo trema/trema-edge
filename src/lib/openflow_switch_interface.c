@@ -22,7 +22,6 @@
 #include <inttypes.h>
 #include <arpa/inet.h>
 #include <syslog.h>
-#include "chibach_private.h"
 #include "hash_table.h"
 #include "log.h"
 #include "messenger.h"
@@ -62,12 +61,6 @@ bool mock_init_secure_channel( uint32_t ip, uint16_t port,
 #endif
 #define add_periodic_event_callback mock_add_periodic_event_callback
 bool mock_add_periodic_event_callback( const time_t seconds, timer_callback callback, void *user_data );
-
-#ifdef get_chibach_name
-#undef get_chibach_name
-#endif
-#define get_chibach_name mock_get_chibach_name
-const char *mock_get_chibach_name( void );
 
 #ifdef finalize_secure_channel
 #undef finalize_secure_channel
@@ -129,7 +122,7 @@ typedef struct {
 
 
 static bool openflow_switch_interface_initialized = false;
-static openflow_event_handlers event_handlers;
+static openflow_switch_event_handlers event_handlers;
 static openflow_switch_config config;
 static const int CONTEXT_LIFETIME = 5;
 static hash_table *contexts = NULL;
@@ -223,7 +216,7 @@ static void
 init_context() {
   assert( contexts == NULL );
 
-  contexts = create_hash_with_size( compare_context, hash_context, 16 );
+  contexts = create_hash_with_size( compare_context, hash_context, 128 );
 }
 
 
@@ -252,7 +245,7 @@ openflow_switch_interface_is_initialized() {
 
 
 bool
-switch_set_openflow_event_handlers( const openflow_event_handlers handlers ) {
+set_openflow_switch_event_handlers( const openflow_switch_event_handlers handlers ) {
   assert( openflow_switch_interface_initialized );
 
   memcpy( &event_handlers, &handlers, sizeof( event_handlers ) );
@@ -602,18 +595,26 @@ handle_hello( buffer *data ) {
   uint32_t transaction_id = ntohl( hello->header.xid );
   uint8_t version = hello->header.version;
 
-  buffer *body = NULL;
+  buffer *elements = NULL;
   if ( ntohs( hello->header.length ) > sizeof( struct ofp_hello ) ) {
-    body = duplicate_buffer( data );
-    remove_front_buffer( body, offsetof( struct ofp_hello, elements ) );
+    elements = duplicate_buffer( data );
+    remove_front_buffer( elements, offsetof( struct ofp_hello, elements ) );
+    struct ofp_hello_elem_header *element = elements->data;
+    size_t elements_length = ntohs( hello->header.length ) - offsetof( struct ofp_hello, elements );
+    while ( elements_length >= sizeof( struct ofp_hello_elem_header ) ) {
+      ntoh_hello_elem( element, element );
+      uint16_t element_length = ( uint16_t ) ( element->length + PADLEN_TO_64( element->length ) );
+      elements_length -= element_length;
+      element = ( struct ofp_hello_elem_header * ) ( ( char * ) element + element_length );
+    }
   }
 
   debug( "A hello message is received ( transaction_id = %#x, version = %#x ).", transaction_id, version );
 
   if ( event_handlers.hello_callback == NULL ) {
     debug( "Callback function for hello events is not set." );
-    if ( body != NULL ) {
-      free_buffer( body );
+    if ( elements != NULL ) {
+      free_buffer( elements );
     }
     return;
   }
@@ -623,10 +624,10 @@ handle_hello( buffer *data ) {
 
   event_handlers.hello_callback( transaction_id,
                                  version,
-                                 body,
+                                 elements,
                                  event_handlers.hello_user_data );
-  if ( body != NULL ) {
-    free_buffer( body );
+  if ( elements != NULL ) {
+    free_buffer( elements );
   }
 }
 
@@ -1699,7 +1700,7 @@ init_openflow_switch_interface( const uint64_t datapath_id, uint32_t controller_
   }
 
 
-  memset( &event_handlers, 0, sizeof( openflow_event_handlers ) );
+  memset( &event_handlers, 0, sizeof( openflow_switch_event_handlers ) );
   memset( &config, 0, sizeof( openflow_switch_config ) );
 
   config.datapath_id = datapath_id;

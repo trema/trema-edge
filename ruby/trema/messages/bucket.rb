@@ -25,10 +25,10 @@ module Trema
       array :actions
     end
   end
+
+
+  Bucket = Messages::Bucket
 end
-
-
-Bucket = Trema::Messages::Bucket
 
 
 ### Local variables:

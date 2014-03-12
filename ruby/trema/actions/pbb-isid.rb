@@ -23,13 +23,13 @@ module Trema
     # identifier
     #
     class PbbIsid < FlexibleAction
-      unsigned_int32 :pbb_isid, :presence => true
+      unsigned_int32 :pbb_isid, presence: true
     end
   end
+
+
+  PbbIsid  = Actions::PbbIsid
 end
-
-
-PbbIsid  = Trema::Actions::PbbIsid
 
 
 ### Local variables:

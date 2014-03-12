@@ -30,6 +30,9 @@ module Trema
       match :match
     end
   end
+
+
+  FlowRemoved = Messages::FlowRemoved
 end
 
 

@@ -479,15 +479,16 @@ int trx_rx()
 
 int trx_rx_one()
 {
+    int ret;
     uint32_t length = 0;
     uint8_t *buffer;
 
     buffer = (uint8_t *)malloc(sizeof(uint8_t)*PKT_BUF_SIZE);
     memset(buffer, 0, sizeof(uint8_t)*PKT_BUF_SIZE);
 
-    trx_read(buffer, &length);
+    ret = trx_read(buffer, &length);
 
-    if(length <= 0){
+    if(ret < 0 || length <= 0){
         free(buffer);
         return -1;
     }

@@ -30,6 +30,84 @@
 
 
 void
+ntoh_hello_elem_versionbitmap( struct ofp_hello_elem_versionbitmap *dst, const struct ofp_hello_elem_versionbitmap *src ) {
+  assert( src != NULL );
+  assert( dst != NULL );
+  assert( ntohs( src->type ) == OFPHET_VERSIONBITMAP );
+
+  dst->type = ntohs( src->type );
+  dst->length = ntohs( src->length );
+
+  size_t n_bitmaps = ( dst->length - offsetof( struct ofp_hello_elem_versionbitmap, bitmaps ) ) / sizeof( uint32_t );
+
+  for ( size_t i = 0; i < n_bitmaps; i++ ) {
+    dst->bitmaps[ i ] = ntohl( src->bitmaps[ i ] );
+  }
+}
+
+
+void
+hton_hello_elem_versionbitmap( struct ofp_hello_elem_versionbitmap *dst, const struct ofp_hello_elem_versionbitmap *src ) {
+  assert( src != NULL );
+  assert( dst != NULL );
+  assert( src->type == OFPHET_VERSIONBITMAP );
+
+  size_t n_bitmaps = ( src->length - offsetof( struct ofp_hello_elem_versionbitmap, bitmaps ) ) / sizeof( uint32_t );
+
+  dst->type = htons( src->type );
+  dst->length = htons( src->length );
+
+  for ( size_t i = 0; i < n_bitmaps; i++ ) {
+    dst->bitmaps[ i ] = htonl( src->bitmaps[ i ] );
+  }
+}
+
+
+void
+ntoh_hello_elem( struct ofp_hello_elem_header *dst, const struct ofp_hello_elem_header *src ) {
+  assert( src != NULL );
+  assert( dst != NULL );
+
+  switch ( ntohs( src->type ) ) {
+    case OFPHET_VERSIONBITMAP:
+    {
+      ntoh_hello_elem_versionbitmap( ( struct ofp_hello_elem_versionbitmap * ) dst,
+                                     ( const struct ofp_hello_elem_versionbitmap * ) src );
+    }
+    break;
+
+    default:
+    {
+      die( "Undefined hello element type ( type = %#x ).", ntohs( src->type ) );
+    }
+    break;
+  }
+}
+
+
+void
+hton_hello_elem( struct ofp_hello_elem_header *dst, const struct ofp_hello_elem_header *src ) {
+  assert( src != NULL );
+  assert( dst != NULL );
+
+  switch ( src->type ) {
+    case OFPHET_VERSIONBITMAP:
+    {
+      hton_hello_elem_versionbitmap( ( struct ofp_hello_elem_versionbitmap * ) dst,
+                                     ( const struct ofp_hello_elem_versionbitmap * ) src );
+    }
+    break;
+
+    default:
+    {
+      die( "Undefined hello element type ( type = %#x ).", src->type );
+    }
+    break;
+  }
+}
+
+
+void
 ntoh_port( struct ofp_port *dst, const struct ofp_port *src ) {
   assert( src != NULL );
   assert( dst != NULL );
@@ -1595,7 +1673,7 @@ void hton_group_stats( struct ofp_group_stats *dst, const struct ofp_group_stats
 }
 
 
-void ntoh_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_group_desc_stats *src ) {
+void ntoh_group_desc( struct ofp_group_desc *dst, const struct ofp_group_desc *src ) {
   assert( src != NULL );
   assert( dst != NULL );
   assert( ntohs( src->length ) != 0 );
@@ -1605,7 +1683,7 @@ void ntoh_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_g
   dst->pad = 0;
   dst->group_id = ntohl( src->group_id );
 
-  size_t offset = offsetof( struct ofp_group_desc_stats, buckets );
+  size_t offset = offsetof( struct ofp_group_desc, buckets );
   size_t buckets_length = dst->length - offset;
 
   while ( buckets_length >= sizeof( struct ofp_bucket ) ) {
@@ -1624,7 +1702,7 @@ void ntoh_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_g
 }
 
 
-void hton_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_group_desc_stats *src ) {
+void hton_group_desc( struct ofp_group_desc *dst, const struct ofp_group_desc *src ) {
   assert( src != NULL );
   assert( dst != NULL );
   assert( src->length != 0 );
@@ -1634,7 +1712,7 @@ void hton_group_desc_stats( struct ofp_group_desc_stats *dst, const struct ofp_g
   dst->pad = 0;
   dst->group_id = htonl( src->group_id );
 
-  size_t offset = offsetof( struct ofp_group_desc_stats, buckets );
+  size_t offset = offsetof( struct ofp_group_desc, buckets );
   size_t buckets_length = ntohs( dst->length ) - offset;
 
   while ( buckets_length >= sizeof( struct ofp_bucket ) ) {

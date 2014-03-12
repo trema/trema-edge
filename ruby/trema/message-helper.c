@@ -49,11 +49,9 @@ send_controller_message( VALUE self, VALUE datapath_id, VALUE message ) {
   if ( !NIL_P( message ) ) {
     switch ( TYPE( message ) ) {
       case T_ARRAY: {
-          VALUE *each = RARRAY_PTR( message );
-          
           for ( int i = 0; i < RARRAY_LEN( message ); i++ ) {
-            if ( rb_respond_to( each[ i ], id_pack_msg ) ) {
-              rb_funcall( each[ i ], id_pack_msg, 1, datapath_id );
+            if ( rb_respond_to( rb_ary_entry( message, i ), id_pack_msg ) ) {
+              rb_funcall( rb_ary_entry( message, i ), id_pack_msg, 1, datapath_id );
             }
           }
       }
@@ -79,7 +77,7 @@ send_flow_mod( int argc, VALUE *argv, VALUE self ) {
   rb_scan_args( argc, argv, "11", &datapath_id, &options );
 
   if ( !NIL_P( options ) ) {
-    VALUE flow_mod = rb_funcall( rb_eval_string( "Messages::FlowMod" ), rb_intern( "new" ), 1, options );
+    VALUE flow_mod = rb_funcall( rb_eval_string( "Trema::Messages::FlowMod" ), rb_intern( "new" ), 1, options );
 
     send_controller_message( self, datapath_id, flow_mod );
   }
@@ -159,7 +157,7 @@ send_group_mod( int argc, VALUE *argv, VALUE self ) {
   rb_scan_args( argc, argv, "11", &datapath_id, &options );
 
   if ( !NIL_P( options ) ) {
-    VALUE group_mod = rb_funcall( rb_eval_string( "Messages::GroupMod" ), rb_intern( "new" ), 1, options );
+    VALUE group_mod = rb_funcall( rb_eval_string( "Trema::Messages::GroupMod" ), rb_intern( "new" ), 1, options );
 
     send_controller_message( self, datapath_id, group_mod );
   }
@@ -241,6 +239,15 @@ send_group_desc_multipart_request( int argc, VALUE *argv, VALUE self ) {
 
 
 static VALUE
+send_group_features_multipart_request( int argc, VALUE *argv, VALUE self ) {
+  VALUE datapath_id = Qnil;
+  VALUE options = Qnil;
+  rb_scan_args( argc, argv, "11", &datapath_id, &options );
+  SEND_MULTIPART_REQUEST( group_features, "Messages::GroupFeaturesMultipartRequest", self, datapath_id, options );
+}
+
+
+static VALUE
 send_port_desc_multipart_request( int argc, VALUE *argv, VALUE self ) {
   VALUE datapath_id = Qnil;
   VALUE options = Qnil;
@@ -250,11 +257,56 @@ send_port_desc_multipart_request( int argc, VALUE *argv, VALUE self ) {
 
 
 static VALUE
+send_queue_multipart_request( int argc, VALUE *argv, VALUE self ) {
+  VALUE datapath_id = Qnil;
+  VALUE options = Qnil;
+  rb_scan_args( argc, argv, "11", &datapath_id, &options );
+  SEND_MULTIPART_REQUEST( queue, "Messages::QueueMultipartRequest", self, datapath_id, options );
+}
+
+
+static VALUE
+send_meter_multipart_request( int argc, VALUE *argv, VALUE self ) {
+  VALUE datapath_id = Qnil;
+  VALUE options = Qnil;
+  rb_scan_args( argc, argv, "11", &datapath_id, &options );
+  SEND_MULTIPART_REQUEST( meter, "Messages::MeterMultipartRequest", self, datapath_id, options );
+}
+
+
+static VALUE
+send_meter_config_multipart_request( int argc, VALUE *argv, VALUE self ) {
+  VALUE datapath_id = Qnil;
+  VALUE options = Qnil;
+  rb_scan_args( argc, argv, "11", &datapath_id, &options );
+  SEND_MULTIPART_REQUEST( meter_config, "Messages::MeterConfigMultipartRequest", self, datapath_id, options );
+}
+
+
+static VALUE
+send_meter_features_multipart_request( int argc, VALUE *argv, VALUE self ) {
+  VALUE datapath_id = Qnil;
+  VALUE options = Qnil;
+  rb_scan_args( argc, argv, "11", &datapath_id, &options );
+  SEND_MULTIPART_REQUEST( meter_features, "Messages::MeterFeaturesMultipartRequest", self, datapath_id, options );
+}
+
+
+static VALUE
+send_experimenter_multipart_request( int argc, VALUE *argv, VALUE self ) {
+  VALUE datapath_id = Qnil;
+  VALUE options = Qnil;
+  rb_scan_args( argc, argv, "11", &datapath_id, &options );
+  SEND_MULTIPART_REQUEST( experimenter, "Messages::ExperimenterMultipartRequest", self, datapath_id, options );
+}
+
+
+static VALUE
 send_barrier_request( int argc, VALUE *argv, VALUE self ) {
   VALUE datapath_id = Qnil;
   VALUE options = Qnil;
   rb_scan_args( argc, argv, "11", &datapath_id, &options );
-  VALUE r_barrier_request = rb_funcall( rb_eval_string( "Messages::BarrierRequest" ), rb_intern( "new" ), 1, options );
+  VALUE r_barrier_request = rb_funcall( rb_eval_string( "Trema::Messages::BarrierRequest" ), rb_intern( "new" ), 1, options );
   send_controller_message( self, datapath_id, r_barrier_request );
   return self;
 }
@@ -276,7 +328,13 @@ Init_message_helper( void ) {
   rb_define_module_function( mMessageHelper, "send_table_features_multipart_request", send_table_features_multipart_request, -1 );
   rb_define_module_function( mMessageHelper, "send_group_multipart_request", send_group_multipart_request, -1 );
   rb_define_module_function( mMessageHelper, "send_group_desc_multipart_request", send_group_desc_multipart_request, -1 );
+  rb_define_module_function( mMessageHelper, "send_group_features_multipart_request", send_group_features_multipart_request, -1 );
   rb_define_module_function( mMessageHelper, "send_port_desc_multipart_request", send_port_desc_multipart_request, -1 );
+  rb_define_module_function( mMessageHelper, "send_queue_multipart_request", send_queue_multipart_request, -1 );
+  rb_define_module_function( mMessageHelper, "send_meter_multipart_request", send_meter_multipart_request, -1 );
+  rb_define_module_function( mMessageHelper, "send_meter_config_multipart_request", send_meter_config_multipart_request, -1 );
+  rb_define_module_function( mMessageHelper, "send_meter_features_multipart_request", send_meter_features_multipart_request, -1 );
+  rb_define_module_function( mMessageHelper, "send_experimenter_multipart_request", send_experimenter_multipart_request, -1 );
   rb_define_module_function( mMessageHelper, "send_barrier_request", send_barrier_request, - 1 );
 }
 

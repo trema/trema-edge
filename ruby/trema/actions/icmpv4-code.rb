@@ -27,10 +27,10 @@ module Trema
       unsigned_int8 :icmpv4_code, presence: true
     end
   end
+
+
+  Icmpv4Code = Actions::Icmpv4Code
 end
-
-
-Icmpv4Code = Trema::Actions::Icmpv4Code
 
 
 ### Local variables:

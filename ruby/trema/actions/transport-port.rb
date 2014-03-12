@@ -23,7 +23,7 @@ module Trema
     # (TCP/UDP/SCTP)
     #
     class TransportPort < FlexibleAction
-      unsigned_int16 :transport_port, :presence => true
+      unsigned_int16 :transport_port, presence: true
     end
   end
 end

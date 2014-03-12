@@ -25,13 +25,14 @@ module Trema
     # A match field to match a SCTP destination port
     #
     class SctpDstPort < TransportPort
+      unsigned_int16 :transport_port, alias: :sctp_dst
       ofp_type OFPXMT_OFB_SCTP_DST
     end
   end
+
+
+  SctpDstPort = Actions::SctpDstPort
 end
-
-
-SctpDstPort = Trema::Actions::SctpDstPort
 
 
 ### Local variables:

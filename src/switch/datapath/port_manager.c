@@ -316,7 +316,7 @@ append_switch_port_to_list( switch_port *port, void *user_data ) {
 static list_element *
 get_switch_ports_to_output( const uint32_t port_no, const uint32_t in_port ) {
   assert( port_no > 0 );
-  assert( in_port <= OFPP_MAX );
+  assert( in_port <= OFPP_MAX || in_port == OFPP_CONTROLLER );
 
   switch_port_list ports;
   create_list( &ports.list );
@@ -396,7 +396,11 @@ send_frame_from_switch_port( const uint32_t port_no, buffer *frame ) {
   }
 
   OFDPE ret = OFDPE_SUCCESS;
-  if ( port_no != OFPP_TABLE ) {
+  if ( port_no == OFPP_IN_PORT && in_port == OFPP_CONTROLLER ) {
+    warn( "Packet-out with in_port = OFPP_CONTROLLER is not supported." );
+    ret = OFDPE_FAILED;
+  }
+  else if ( port_no != OFPP_TABLE ) {
     list_element *ports = get_switch_ports_to_output( port_no, in_port );
     for ( list_element *e = ports; e != NULL;  e = e->next ) {
       assert( e->data != NULL );
@@ -447,10 +451,15 @@ get_port_stats( const uint32_t port_no, port_stats **stats, uint32_t *n_ports ) 
   }
 
   list_element *ports = NULL;
+  *n_ports = 0;
+  *stats = NULL;
   if ( port_no != OFPP_ANY ) {
     switch_port *port = lookup_switch_port( port_no );
     if ( port == NULL ) {
-      return unlock_mutex( &mutex ) ? OFDPE_SUCCESS : ERROR_UNLOCK;
+      if ( unlock_mutex( &mutex ) !=  OFDPE_SUCCESS ) {
+        return ERROR_UNLOCK;
+      }
+      return ERROR_OFDPE_BAD_REQUEST_BAD_PORT;
     }
     create_list( &ports );
     append_to_tail( &ports, port );
@@ -462,8 +471,6 @@ get_port_stats( const uint32_t port_no, port_stats **stats, uint32_t *n_ports ) 
     }
   }
 
-  *n_ports = 0;
-  *stats = NULL;
 
   *n_ports = ( uint32_t ) list_length_of( ports );
   size_t length = ( *n_ports ) * sizeof( port_stats );
@@ -493,6 +500,8 @@ get_port_stats( const uint32_t port_no, port_stats **stats, uint32_t *n_ports ) 
     stat->duration_nsec = ( uint32_t ) duration.tv_nsec;
     stat++;
   }
+
+  delete_list( ports );
 
   if ( !unlock_mutex( &mutex ) ) {
     return ERROR_UNLOCK;
@@ -545,6 +554,8 @@ get_port_description( const uint32_t port_no, port_description **descriptions, u
     switch_port_to_ofp_port( description, port );
     description++;
   }
+
+  delete_list( ports );
 
   if ( !unlock_mutex( &mutex ) ) {
     return ERROR_UNLOCK;

@@ -142,7 +142,7 @@ ofpmsg_recv_error( struct switch_info *sw_info, buffer *buf ) {
         }
 
         if ( length >= offsetof( struct ofp_flow_mod, idle_timeout ) ) {
-          uint16_t command = ntohs( flow_mod->command );
+          uint8_t command = flow_mod->command;
           switch ( command ) {
           case OFPFC_ADD:
           {

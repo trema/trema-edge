@@ -16,9 +16,9 @@
 #
 
 
-require "trema/monkey-patch/module"
-require "trema/monkey-patch/string"
-require "trema/path"
+require_relative "monkey-patch/module"
+require_relative "monkey-patch/string"
+require_relative "path"
 
 
 #
@@ -88,6 +88,7 @@ class Trema::Executables
   path "switch/switch/switch"
   path "switch_manager/switch_daemon"
   path "switch_manager/switch_manager"
+  path "tremashark/tremashark"
 end
 
 

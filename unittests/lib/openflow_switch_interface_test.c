@@ -62,7 +62,7 @@ extern void handle_meter_mod( buffer *data );
 extern bool handle_openflow_message( buffer *message );
 
 extern bool openflow_switch_interface_initialized;
-extern openflow_event_handlers event_handlers;
+extern openflow_switch_event_handlers event_handlers;
 extern hash_table *contexts;
 
 #define CONTROLLER_CONNECTED_HANDLER ( ( void * ) 0x00020001 )
@@ -115,7 +115,7 @@ extern hash_table *contexts;
 static const pid_t PID = 12345;
 static char SERVICE_NAME[] = "learning switch application 0";
 
-static openflow_event_handlers NULL_EVENT_HANDLERS = {
+static openflow_switch_event_handlers NULL_EVENT_HANDLERS = {
   ( void * ) 0, ( void * ) 0, ( void * ) 0, ( void * ) 0,
   ( void * ) 0, ( void * ) 0, ( void * ) 0, ( void * ) 0,
   ( void * ) 0, ( void * ) 0, ( void * ) 0, ( void * ) 0,
@@ -189,12 +189,6 @@ mock_add_periodic_event_callback( const time_t seconds, timer_callback callback,
   UNUSED( user_data );
 
   return true;
-}
-
-
-const char *
-mock_get_chibach_name( void ) {
-  return SERVICE_NAME;
 }
 
 

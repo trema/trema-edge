@@ -23,13 +23,14 @@ module Trema
     #
     class Ipv6FlowLabel < FlexibleAction
       ofp_type OFPXMT_OFB_IPV6_FLABEL
-      unsigned_int32 :ipv6_flow_label, :presence => true
+      unsigned_int32 :ipv6_flow_label, presence: true, alias: :ipv6_flabel
+      alias :ipv6_flabel :ipv6_flow_label
     end
   end
+
+
+  Ipv6FlowLabel = Actions::Ipv6FlowLabel
 end
-
-
-Ipv6FlowLabel = Trema::Actions::Ipv6FlowLabel
 
 
 ### Local variables:

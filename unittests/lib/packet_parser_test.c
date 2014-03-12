@@ -97,7 +97,7 @@ test_parse_packet_snap_succeeds() {
   assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
   assert_true( packet_info->eth_type < ETH_MTU );
 
-  u_char llc[] = { 0xe0, 0xe0, 0x03 };
+  u_char llc[] = { 0xe0, 0xe0, 0x03 }; // XXX: This is not SNAP(0xAA), but Novell(=IPX, 0xE0)
   u_char oui[] = { 0xff, 0xff, 0x00 };
   assert_memory_equal( packet_info->snap_llc, llc, SNAP_LLC_LENGTH );
   assert_memory_equal( packet_info->snap_oui, oui, SNAP_OUI_LENGTH );
@@ -1226,12 +1226,9 @@ test_parse_packet_mpls_succeeds_unicast() {
   assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
   assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_MPLS_UNI );
 
-  uint32_t mpls_label = ( uint32_t ) ( packet_info->mpls_label >> 12 & 0xfffff );
-  uint8_t mpls_tc = ( uint8_t ) ( packet_info->mpls_label >> 9 & 0x7 );
-  uint8_t mpls_bos = ( uint8_t ) ( packet_info->mpls_label >> 8 & 0x1 );
-  assert_int_equal( mpls_label, 0x1234 );
-  assert_int_equal( mpls_tc, 0x5 );
-  assert_int_equal( mpls_bos, 0x1 );
+  assert_int_equal( packet_info->mpls_label, 0x1234 );
+  assert_int_equal( packet_info->mpls_tc, 0x5 );
+  assert_int_equal( packet_info->mpls_bos, 0x1 );
 
   assert_int_equal( packet_info->l3_payload_length, 44 );
 
@@ -1256,12 +1253,9 @@ test_parse_packet_mpls_succeeds_multicast() {
   assert_memory_equal( packet_info->eth_macsa, macsa, ETH_ADDRLEN );
   assert_int_equal( packet_info->eth_type, ETH_ETHTYPE_MPLS_MLT );
 
-  uint32_t mpls_label = ( uint32_t ) ( packet_info->mpls_label >> 12 & 0xfffff );
-  uint8_t mpls_tc = ( uint8_t ) ( packet_info->mpls_label >> 9 & 0x7 );
-  uint8_t mpls_bos = ( uint8_t ) ( packet_info->mpls_label >> 8 & 0x1 );
-  assert_int_equal( mpls_label, 0x1234 );
-  assert_int_equal( mpls_tc, 0x5 );
-  assert_int_equal( mpls_bos, 0x1 );
+  assert_int_equal( packet_info->mpls_label, 0x1234 );
+  assert_int_equal( packet_info->mpls_tc, 0x5 );
+  assert_int_equal( packet_info->mpls_bos, 0x1 );
 
   assert_int_equal( packet_info->l3_payload_length, 44 );
 
