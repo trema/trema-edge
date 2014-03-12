@@ -33,7 +33,7 @@ dl_addr_to_a( VALUE dl_addr, uint8_t *ret_dl_addr ) {
   int i;
 
   for ( i = 0; i < RARRAY_LEN( mac_arr ); i++ ) {
-    ret_dl_addr[ i ] = ( uint8_t ) ( NUM2INT( RARRAY_PTR( mac_arr )[ i ] ) );
+    ret_dl_addr[ i ] = ( uint8_t ) ( NUM2INT( rb_ary_entry( mac_arr,  i ) ) );
   }
   return ret_dl_addr;
 }
@@ -59,14 +59,12 @@ pack_basic_action( VALUE r_action ) {
   if ( !NIL_P( r_action ) ) {
     switch ( TYPE( r_action ) ) {
       case T_ARRAY: {
-          VALUE *each = RARRAY_PTR( r_action );
-
           r_action_ins = Data_Wrap_Struct( rb_obj_class( r_action ), NULL, NULL, actions );
 
           for ( int i = 0; i < RARRAY_LEN( r_action ); i++ ) {
-            if ( rb_respond_to( each[ i ], r_id ) ) {
-              r_action_ins = Data_Wrap_Struct( rb_obj_class( each[ i ] ), NULL, NULL, actions );
-              rb_funcall( each[ i ], r_id, 1, r_action_ins );
+            if ( rb_respond_to( rb_ary_entry( r_action, i ), r_id ) ) {
+              r_action_ins = Data_Wrap_Struct( rb_obj_class( rb_ary_entry( r_action, i ) ), NULL, NULL, actions );
+              rb_funcall( rb_ary_entry( r_action, i ), r_id, 1, r_action_ins );
             }
           }
       }
@@ -96,12 +94,10 @@ pack_flexible_action( VALUE r_action ) {
   if ( !NIL_P( r_action ) ) {
     switch ( TYPE( r_action ) ) {
       case T_ARRAY: {
-          VALUE *each = RARRAY_PTR( r_action );
-
           for ( int i = 0; i < RARRAY_LEN( r_action ); i++ ) {
-            if ( rb_respond_to( each[ i ], r_id ) ) {
-              r_oxm_ins = Data_Wrap_Struct( rb_obj_class( each[ i ] ), NULL, NULL, oxm_match );
-              rb_funcall( each[ i ], r_id, 1, r_oxm_ins );
+            if ( rb_respond_to( rb_ary_entry( r_action, i ), r_id ) ) {
+              r_oxm_ins = Data_Wrap_Struct( rb_obj_class( rb_ary_entry( r_action, i ) ), NULL, NULL, oxm_match );
+              rb_funcall( rb_ary_entry( r_action, i ), r_id, 1, r_oxm_ins );
             }
           }
       }
@@ -131,12 +127,10 @@ pack_instruction( VALUE r_instruction ) {
   if ( !NIL_P( r_instruction ) ) {
     switch ( TYPE( r_instruction ) ) {
       case T_ARRAY: {
-        VALUE *each = RARRAY_PTR( r_instruction );
-
         for ( int i = 0; i < RARRAY_LEN( r_instruction ); i++ ) {
-          if ( rb_respond_to( each[ i ], r_id ) ) {
-            r_ins_instance = Data_Wrap_Struct( rb_obj_class( each[ i ] ), NULL, NULL, instructions );
-            rb_funcall( each[ i ], r_id, 1, r_ins_instance );
+          if ( rb_respond_to( rb_ary_entry( r_instruction, i ), r_id ) ) {
+            r_ins_instance = Data_Wrap_Struct( rb_obj_class( rb_ary_entry( r_instruction, i ) ), NULL, NULL, instructions );
+            rb_funcall( rb_ary_entry( r_instruction, i ), r_id, 1, r_ins_instance );
           }
         }
       }

@@ -101,7 +101,7 @@ pack_experimenter_instruction( VALUE self, VALUE r_instructions, VALUE r_options
     buffer *user_data = alloc_buffer_with_length( length );
     void *p = append_back_buffer( user_data, length );
     for ( int i = 0; i < length; i++ ) {
-      ( ( uint8_t * ) p )[ i ] = ( uint8_t ) FIX2INT( RARRAY_PTR( r_user_data )[ i ] );
+      ( ( uint8_t * ) p )[ i ] = ( uint8_t ) FIX2INT( rb_ary_entry( r_user_data , i ) );
     }
     append_instructions_experimenter( instructions_ptr( r_instructions ), NUM2UINT( r_experimenter ), user_data );
     free_buffer( user_data );

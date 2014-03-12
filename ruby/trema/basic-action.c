@@ -165,7 +165,7 @@ pack_experimenter( VALUE self, VALUE actions, VALUE options ) {
     buffer *body = alloc_buffer_with_length( length );
     void *p = append_back_buffer( body, length );
     for ( int i = 0; i < length; i++ ) {
-      ( ( uint8_t * ) p )[ i ] = ( uint8_t ) FIX2INT( RARRAY_PTR( r_body )[ i ] );
+      ( ( uint8_t * ) p )[ i ] = ( uint8_t ) FIX2INT( rb_ary_entry( r_body, i ) );
     }
     append_action_experimenter( openflow_actions_ptr( actions ), NUM2UINT( r_experimenter ), body );
     free_buffer( body );

@@ -37,7 +37,7 @@ pack_hello( VALUE options ) {
         rb_raise(rb_eArgError, "Currently only a single version is supported" );
       }
       else {
-        ofp_version[ 0 ] = ( uint8_t ) NUM2UINT( RARRAY_PTR( r_version )[ 0 ] );
+        ofp_version[ 0 ] = ( uint8_t ) NUM2UINT( rb_ary_entry( r_version , 0 ) );
       }
     }
   }
