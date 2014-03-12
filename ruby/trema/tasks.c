@@ -28,7 +28,7 @@ static void
 tasks_read( int __attribute__((unused)) fd, void *data ) {
   VALUE self = ( VALUE ) data;
 
-  rb_funcall( self, rb_intern( "consome_tasks" ), 0);
+  rb_funcall( self, rb_intern( "consume_tasks" ), 0);
 }
 
 
