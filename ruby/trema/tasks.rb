@@ -48,6 +48,8 @@ module Trema
     private
     
     def consume_tasks
+      current_tasks = nil
+
       @lock.synchronize {
         current_tasks = @tasks
         @tasks = []
