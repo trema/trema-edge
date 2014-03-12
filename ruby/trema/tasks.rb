@@ -47,16 +47,14 @@ module Trema
 
     private
     
-    def consome_tasks
-      consume_tasks = nil
-
+    def consume_tasks
       @lock.synchronize {
-        consume_tasks = @tasks
+        current_tasks = @tasks
         @tasks = []
         @wakeup.read(1)
       }
 
-      consume_tasks.each { |task| task.call }
+      current_tasks.each { |task| task.call }
     end
 
   end
