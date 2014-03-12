@@ -176,6 +176,38 @@ duplicate_bucket_list( bucket_list *buckets ) {
 }
 
 
+static void
+dump_bucket( const bucket *bucket, void dump_function( const char *format, ... ) ) {
+  assert( bucket != NULL );
+  assert( dump_function != NULL );
+
+  ( *dump_function )( "weight: %u", bucket->weight );
+  ( *dump_function )( "watch_port: %u", bucket->watch_port );
+  ( *dump_function )( "watch_group: %u", bucket->watch_group );
+  ( *dump_function )( "packet_count: %" PRIu64, bucket->packet_count );
+  ( *dump_function )( "byte_count: %" PRIu64, bucket->byte_count );
+  ( *dump_function )( "actions: %p", bucket->actions );
+  if ( bucket->actions != NULL ) {
+    dump_action_list( bucket->actions, dump_function );
+  }
+}
+
+
+void
+dump_buckets( bucket_list *buckets, void dump_function( const char *format, ... ) ) {
+  assert( buckets != NULL );
+  assert( dump_function != NULL );
+
+  for ( dlist_element *element = get_first_element( buckets ); element != NULL; element = element->next ) {
+    if ( element->data == NULL ) {
+      continue;
+    }
+    bucket *bucket = element->data;
+    dump_bucket( bucket, dump_function );
+  }
+}
+
+
 /*
  * Local variables:
  * c-basic-offset: 2

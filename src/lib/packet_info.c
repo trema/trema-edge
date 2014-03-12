@@ -157,6 +157,13 @@ packet_type_eth_mpls( const buffer *frame ) {
 
 
 bool
+packet_type_eth_pbb( const buffer *frame ) {
+  die_if_NULL( frame );
+  return if_packet_type( frame, PBB );
+}
+
+
+bool
 packet_type_arp( const buffer *frame ) {
   die_if_NULL( frame );
   return if_packet_type( frame, NW_ARP );
@@ -230,6 +237,20 @@ bool
 packet_type_ipv6_udp( const buffer *frame ) {
   die_if_NULL( frame );
   return if_packet_type( frame, NW_IPV6 | TP_UDP );
+}
+
+
+bool
+packet_type_ipv4_sctp( const buffer *frame ) {
+  die_if_NULL( frame );
+  return if_packet_type( frame, NW_IPV4 | TP_SCTP );
+}
+
+
+bool
+packet_type_ipv6_sctp( const buffer *frame ) {
+  die_if_NULL( frame );
+  return if_packet_type( frame, NW_IPV6 | TP_SCTP );
 }
 
 

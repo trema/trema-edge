@@ -34,8 +34,9 @@
 #endif
 
 
-#define OFP_TCP_PORT  6633
-#define OFP_SSL_PORT  6633
+/* Official IANA registered port for OpenFlow. */
+#define OFP_TCP_PORT  6653
+#define OFP_SSL_PORT  6653
 
 
 // 7.1  OpenFlow Header
@@ -51,7 +52,15 @@ struct ofp_header {
 };
 OFP_ASSERT(sizeof(struct ofp_header) == 8);
 
-#define OFP_VERSION 0x04        /* Version 1.3 */
+/* Version number:
+ * Non-experimental versions released: 0x01 = 1.0 ; 0x02 = 1.1 ; 0x03 = 1.2
+ * 0x04 = 1.3
+ * Experimental versions released: 0x81 -- 0x99
+ */
+/* The most significant bit being set in the version field indicates an
+ * experimental OpenFlow version.
+ */
+#define OFP_VERSION 0x04
 
 enum ofp_type {
     /* Immutable messages. */
@@ -368,6 +377,8 @@ enum oxm_ofb_match_fields {
     OFPXMT_OFB_IPV6_EXTHDR    = 39  /* IPv6 Extension Header pseudo-field */
 };
 
+#define OFPXMT_OFB_ALL ((UINT64_C(1) << 40) - 1)
+
 /* The VLAN id is 12-bits, so we can use the entire 16 bits to indicate
  * special conditions.
  */
@@ -375,6 +386,9 @@ enum ofp_vlan_id {
     OFPVID_PRESENT = 0x1000, /* Bit that indicate that a VLAN id is set */
     OFPVID_NONE    = 0x0000  /* No VLAN id was set. */
 };
+
+/* Define for compatibility */
+#define OFP_VLAN_NONE OFPVID_NONE
 
 /* Bit definitions for IPv6 Extension Header pseudo-field. */
 enum ofp_ipv6exthdr_flags {
@@ -519,9 +533,9 @@ struct ofp_action_set_field {
     uint16_t type;          /* OFPAT_SET_FIELD. */
     uint16_t len;           /* Length is padded to 64 bits. */
     /* Followed by:
-     *  - Exactly oxm_len bytes containing a single OXM TLV, then
-     *  - Exactly ((oxm_len + 4) + 7)/8*8 - (oxm_len + 4) (between 0 and 7)
-     *    bytes of all-zero bytes
+     *  - Exactly (4 + oxm_length) bytes containing a single OXM TLV, then
+     *  - Exactly ((8 + oxm_length) + 7)/8*8 - (8 + oxm_length)
+     *    (between 0 and 7) bytes of all-zero bytes
      */
     uint8_t field[4];       /* OXM TLV - Make compiler happy */
 };
@@ -669,6 +683,8 @@ enum ofp_config_flags {
     OFPC_FRAG_REASM  = 1 << 1, /* Reassemble (only if OFPC_IP_REASM set). */
     OFPC_FRAG_MASK   = 3
 };
+
+#define OFP_DEFAULT_MISS_SEND_LEN 128
 
 
 // 7.3.3  Flow Table Configuration
@@ -1561,6 +1577,25 @@ struct ofp_role_request {
 };
 OFP_ASSERT(sizeof(struct ofp_role_request) == 24);
 
+/* Configures the "role" of the sending controller. The default role is:
+ *
+ * - Equal (OFPCR_ROLE_EQUAL), which allows the controller access to all
+ * OpenFlow features. All controllers have equal responsibility.
+ *
+ * The other possible roles are a related pair:
+ *
+ * - Master (OFPCR_ROLE_MASTER) is equivalent to Equal, except that there
+ * may be at most one Master controller at a time: when a controller
+ * configures itself as Master, any existing Master is demoted to the
+ * Slave role.
+ *
+ * - Slave (OFPCR_ROLE_SLAVE) allows the controller read-only access to
+ * OpenFlow features. In particular attempts to modify the flow table
+ * will be rejected with an OFPBRC_EPERM error.
+ *
+ * Slave controllers do not receive OFPT_PACKET_IN or OFPT_FLOW_REMOVED
+ * messages, but they do receive OFPT_PORT_STATUS messages.
+ */
 /* Controller roles. */
 enum ofp_controller_role {
     OFPCR_ROLE_NOCHANGE = 0, /* Don't change current role. */
@@ -1605,8 +1640,6 @@ struct ofp_packet_in {
     //uint8_t data[0];      /* Ethernet frame */
 };
 OFP_ASSERT(sizeof(struct ofp_packet_in) == 32);
-
-#define OFP_DEFAULT_MISS_SEND_LEN 128
 
 /* Why is this packet being sent to the controller? */
 enum ofp_packet_in_reason {
@@ -1940,6 +1973,24 @@ struct ofp_hello_elem_header {
 };
 OFP_ASSERT(sizeof(struct ofp_hello_elem_header) == 4);
 
+/* Hello elements types.
+*/
+enum ofp_hello_elem_type {
+    OFPHET_VERSIONBITMAP = 1, /* Bitmap of version supported. */
+};
+
+/* Version bitmap Hello Element */
+struct ofp_hello_elem_versionbitmap {
+   uint16_t type;   /* OFPHET_VERSIONBITMAP. */
+   uint16_t length; /* Length in bytes of this element. */
+   /* Followed by:
+    *  - Exactly (length - 4) bytes containing the bitmaps, then
+    *  - Exactly (length + 7)/8*8 - (length) (between 0 and 7)
+    *    bytes of all-zero bytes */
+   uint32_t bitmaps[0]; /* List of bitmaps - supported versions */
+};
+OFP_ASSERT(sizeof(struct ofp_hello_elem_versionbitmap) == 4);
+
 /* OFPT_HELLO. This message includes zero or more hello elements having
 * variable size. Unknown elements types must be ignored/skipped, to allow
 * for future extensions. */
@@ -1950,24 +2001,6 @@ struct ofp_hello {
     struct ofp_hello_elem_header elements[0]; /* List of elements - 0 or more */
 };
 OFP_ASSERT(sizeof(struct ofp_hello) == 8);
-
-/* Hello elements types.
-*/
-enum ofp_hello_elem_type {
-    OFPHET_VERSIONBITMAP = 1, /* Bitmap of version supported. */
-};
-
-/* Version bitmap Hello Element */
-struct ofp_hello_elem_versionbitmap {
-   uint16_t type; /* OFPHET_VERSIONBITMAP. */
-   uint16_t length; /* Length in bytes of this element. */
-   /* Followed by:
-    *  - Exactly (length - 4) bytes containing the bitmaps, then
-    *  - Exactly (length + 7)/8*8 - (length) (between 0 and 7)
-    *    bytes of all-zero bytes */
-   uint32_t bitmaps[0]; /* List of bitmaps - supported versions */
-};
-OFP_ASSERT(sizeof(struct ofp_hello_elem_versionbitmap) == 4);
 
 
 // 7.5.2  Echo Request

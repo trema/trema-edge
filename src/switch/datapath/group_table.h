@@ -78,6 +78,7 @@ OFDPE get_group_features( group_table_features *features );
 OFDPE set_group_features( group_table_features *features );
 void increment_reference_count( const uint32_t group_id );
 void decrement_reference_count( const uint32_t group_id );
+void dump_group_table( void dump_function( const char *format, ... ) );
 
 
 #endif // GROUP_TABLE_H

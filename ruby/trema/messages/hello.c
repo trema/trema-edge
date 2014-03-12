@@ -30,14 +30,14 @@ pack_hello( VALUE options ) {
   }
 
   VALUE r_version = HASH_REF( options, version );
-  uint32_t ofp_version[ 1 ];
+  uint8_t ofp_version[ 1 ];
   if ( !NIL_P( r_version ) ) {
     if ( rb_obj_is_kind_of( r_version, rb_cArray ) )  {
       if ( RARRAY_LEN( r_version ) > 1 ) {
         rb_raise(rb_eArgError, "Currently only a single version is supported" );
       }
       else {
-        ofp_version[ 0 ] = ( uint32_t ) NUM2UINT( RARRAY_PTR( r_version )[ 0 ] );
+        ofp_version[ 0 ] = ( uint8_t ) NUM2UINT( rb_ary_entry( r_version , 0 ) );
       }
     }
   }
@@ -45,7 +45,11 @@ pack_hello( VALUE options ) {
     ofp_version[ 0 ] = OFP_VERSION;
   }
 
-  return create_hello_elem_versionbitmap( xid, ofp_version, sizeof( ofp_version ) / sizeof( ofp_version[ 0 ] ) );
+  buffer *element = create_hello_elem_versionbitmap( ofp_version, sizeof( ofp_version ) / sizeof( ofp_version[ 0 ] ) );
+  buffer *hello = create_hello( xid, element );
+  free_buffer( element );
+
+  return hello;
 }
 
 

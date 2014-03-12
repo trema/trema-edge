@@ -1,8 +1,6 @@
 /*
  * Queue implementation.
  *
- * Author: Yasunobu Chiba
- *
  * Copyright (C) 2008-2013 NEC Corporation
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +34,7 @@ typedef struct queue {
   queue_element *head;
   queue_element *divider;
   queue_element *tail;
-  int length;
+  volatile int length;
 } queue;
 
 

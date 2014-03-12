@@ -29,7 +29,7 @@ static uint16_t pack_mpls_tc( oxm_match_header *hdr, const match *match );
 
 static struct oxm oxm_mpls_tc = {
   OFPXMT_OFB_MPLS_TC,
-  ( uint16_t ) sizeof( uint8_t ),
+  ( uint16_t ) sizeof( oxm_match_header ) + sizeof( uint8_t ),
   mpls_tc_field,
   mpls_tc_length,
   pack_mpls_tc
@@ -66,8 +66,11 @@ mpls_tc_length( const match *match ) {
 
 static uint16_t
 pack_mpls_tc( oxm_match_header *hdr, const match *match ) {
-  UNUSED( hdr );
   if ( match->mpls_tc.valid ) {
+    *hdr = OXM_OF_MPLS_TC;
+    uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof ( oxm_match_header ) );
+    *value = match->mpls_tc.value;
+    return oxm_mpls_tc.length;
   }
   return 0;
 }

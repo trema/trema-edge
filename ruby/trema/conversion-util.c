@@ -36,7 +36,7 @@ r_array_to_buffer( VALUE r_array ) {
     append_back_buffer( data, length );
     uint8_t *data_ptr = data->data;
     for ( uint32_t i = 0; i < length; i++ ) {
-      data_ptr[ i ] = ( uint8_t ) FIX2INT( RARRAY_PTR( r_array ) [ i ] );
+      data_ptr[ i ] = ( uint8_t ) FIX2INT( rb_ary_entry( r_array , i ) );
     }
   }
   return data;

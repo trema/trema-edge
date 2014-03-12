@@ -93,6 +93,7 @@ set_signal_mask() {
   sigemptyset( &signals );
   sigaddset( &signals, SIGPIPE );
   sigaddset( &signals, SIGUSR1 );
+  sigaddset( &signals, SIGUSR2 );
   sigprocmask( SIG_BLOCK, &signals, 0 );
 }
 

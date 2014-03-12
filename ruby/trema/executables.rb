@@ -88,6 +88,7 @@ class Trema::Executables
   path "switch/switch/switch"
   path "switch_manager/switch_daemon"
   path "switch_manager/switch_manager"
+  path "tremashark/tremashark"
 end
 
 

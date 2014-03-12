@@ -109,23 +109,6 @@ parse_ether( buffer *buf ) {
         ptr = ( void * ) ( vlantag_header + 1 );
         tagged = 1;
       }
-      else if ( ethertype == ETH_ETHTYPE_PBB ) {
-        if ( length < sizeof( pbb_header_t ) ) {
-          debug("incomplete pbb_header_t");
-          return;
-        }
-        pbb_header_t *pbb_header = ptr;
-
-        if ( packet_info->l2_pbb_header == NULL ) {
-          // capture the outermost information
-          packet_info->pbb_isid = ntohl( pbb_header->isid ) & 0x00FFFFFF;
-          packet_info->l2_pbb_header = pbb_header;
-        }
-
-        ethertype = ntohs( pbb_header->type );
-        ptr = ( void * ) ( pbb_header + 1 );
-        tagged = 1;
-      }
     }
   } while ( tagged == 1 );
 
@@ -346,37 +329,48 @@ parse_mpls( buffer *buf ) {
   assert( buf != NULL );
 
   packet_info *packet_info = buf->user_data;
-  void *ptr = packet_info->l3_header;
+  void *ptr = packet_info->l2_payload;
   assert( ptr != NULL );
 
-  uint8_t mpls_bos = 0;
-  do {
-    // Check the length of remained buffer
-    size_t length = REMAINED_BUFFER_LENGTH( buf, ptr );
-    if ( length < sizeof( mpls_header_t ) ) {
-      debug("incomplete mpls");
-      return;
-    }
-
-    mpls_header_t *mpls_header = ptr;
-    uint32_t mpls = ntohl( mpls_header->label );
-    mpls_bos = ( uint8_t ) ( ( mpls & 0x00000100 ) >> 8 );
-    if ( packet_info->l2_mpls_header == NULL ) {
-      // capture the outermost information
-      packet_info->mpls_label =             ( ( mpls & 0xFFFFF000 ) >> 12 );
-      packet_info->mpls_tc    = ( uint8_t ) ( ( mpls & 0x00000E00 ) >>  9 );
-      packet_info->mpls_bos   = ( uint8_t ) ( ( mpls & 0x00000100 ) >>  8 );
-      packet_info->format |= MPLS;
-      packet_info->l2_mpls_header = ptr;
-    }
-    ptr = ( void * ) ( mpls_header + 1 );
-  } while ( mpls_bos == 0 );
-
-  size_t payload_length = REMAINED_BUFFER_LENGTH( buf, ptr );
-  if ( payload_length > 0 ) {
-    packet_info->l3_payload = ptr;
-    packet_info->l3_payload_length = payload_length;
+  // Check the length of remained buffer
+  size_t length = REMAINED_BUFFER_LENGTH( buf, ptr );
+  if ( length < sizeof( mpls_header_t ) ) {
+    debug("incomplete mpls");
+    return;
   }
+
+  // We only parse the outer most one.
+  mpls_header_t *mpls_header = ptr;
+  uint32_t mpls = ntohl( mpls_header->label );
+  packet_info->mpls_label =             ( ( mpls & 0xFFFFF000 ) >> 12 );
+  packet_info->mpls_tc    = ( uint8_t ) ( ( mpls & 0x00000E00 ) >>  9 );
+  packet_info->mpls_bos   = ( uint8_t ) ( ( mpls & 0x00000100 ) >>  8 );
+  packet_info->format |= MPLS;
+  packet_info->l2_mpls_header = ptr;
+
+  return;
+}
+
+
+static void
+parse_pbb( buffer *buf ) {
+  assert( buf != NULL );
+
+  packet_info *packet_info = buf->user_data;
+  void *ptr = packet_info->l2_payload;
+  assert( ptr != NULL );
+
+  // Check the length of remained buffer
+  size_t length = REMAINED_BUFFER_LENGTH( buf, ptr );
+  if ( length < sizeof( pbb_header_t ) ) {
+    debug("incomplete pbb_header_t");
+    return;
+  }
+
+  pbb_header_t *pbb_header = ptr;
+  packet_info->pbb_isid = ntohl( pbb_header->isid ) & 0x00FFFFFF;
+  packet_info->l2_pbb_header = ptr;
+  packet_info->format |= PBB;
 
   return;
 }
@@ -487,6 +481,12 @@ parse_icmpv6( buffer *buf ) {
     break;
   }
 
+  ptr = ( void * ) ( icmpv6_header + 1 );
+  size_t payload_length = REMAINED_BUFFER_LENGTH( buf, ptr );
+  if ( payload_length > 0 ) {
+    packet_info->l4_payload = ptr;
+    packet_info->l4_payload_length = payload_length;
+  }
   packet_info->format |= NW_ICMPV6;
 
   return;
@@ -706,9 +706,12 @@ parse_packet( buffer *buf ) {
 
   case ETH_ETHTYPE_MPLS_UNI:
   case ETH_ETHTYPE_MPLS_MLT:
-    packet_info->l3_header = packet_info->l2_payload;
     parse_mpls( buf );
-    break;
+    return true;
+
+  case ETH_ETHTYPE_PBB:
+    parse_pbb( buf );
+    return true;
 
   default:
     // Unknown L3 type

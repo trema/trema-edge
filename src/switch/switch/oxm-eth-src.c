@@ -72,7 +72,7 @@ pack_eth_src( oxm_match_header *hdr, const match *match ) {
   if ( match->eth_src[ 0 ].valid ) {
     *hdr = OXM_OF_ETH_SRC;
     uint8_t *value = ( uint8_t * ) ( ( char * ) hdr + sizeof( oxm_match_header ) );
-    for ( uint8_t i = 0; i < oxm_eth_src.length; i++ ) {
+    for ( uint8_t i = 0; i < OFP_ETH_ALEN; i++ ) {
       value[ i ] = match->eth_src[ i ].value;
     }
     return oxm_eth_src.length;

@@ -32,14 +32,12 @@
 
 int
 ofpmsg_send_hello( struct switch_info *sw_info ) {
-  int ret;
-  buffer *buf;
+  const uint8_t ofp_versions[ 1 ] = { OFP_VERSION };
+  buffer *element = create_hello_elem_versionbitmap( ofp_versions, sizeof( ofp_versions ) / sizeof( ofp_versions[ 0 ] ) );
+  buffer *buf = create_hello( generate_xid(), element );
+  free_buffer( element );
 
-  const uint32_t ofp_versions[ 1 ] = { OFP_VERSION };
-  buf = create_hello_elem_versionbitmap( generate_xid(), ofp_versions,
-    sizeof( ofp_versions ) / sizeof( ofp_versions[ 1 ] ) );
-
-  ret = send_to_secure_channel( sw_info, buf );
+  int ret = send_to_secure_channel( sw_info, buf );
   if ( ret == 0 ) {
     debug( "Send 'hello' to a switch. fd:%d", sw_info->secure_channel_fd );
   }

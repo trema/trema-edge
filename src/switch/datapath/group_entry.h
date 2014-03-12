@@ -41,6 +41,7 @@ group_entry *alloc_group_entry( const uint8_t type, const uint32_t group_id, buc
 void free_group_entry( group_entry *entry );
 bool valid_group_id( const uint32_t id );
 bool valid_group_type( const uint8_t type );
+void dump_group_entry( const group_entry *entry, void dump_function( const char *format, ... ) );
 
 
 #endif // GROUP_ENTRY_H

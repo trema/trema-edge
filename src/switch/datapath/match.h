@@ -164,6 +164,7 @@ void build_match_from_packet_info( match *match, const packet_info *pinfo );
 void build_all_wildcarded_match( match *match );
 bool all_wildcarded_match( const match *match );
 void dump_match( const match *match, void dump_function( const char *format, ... ) );
+void merge_match( match *dst, const match *src);
 
 #endif // MATCH_H
 

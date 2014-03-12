@@ -78,8 +78,7 @@ bool init_openflow_message( void );
 
 // Functions for creating OpenFlow messages
 buffer *create_hello( const uint32_t transaction_id, const buffer *elements );
-buffer *create_hello_elem_versionbitmap( const uint32_t transaction_id,
-                                         const uint32_t ofp_versions[], const uint16_t nr_versions );
+buffer *create_hello_elem_versionbitmap( const uint8_t *ofp_versions, const uint16_t n_versions );
 buffer *create_error( const uint32_t transaction_id, const uint16_t type,
                       const uint16_t code, const buffer *data );
 buffer *create_error_experimenter( const uint32_t transaction_id, const uint16_t type,
@@ -301,7 +300,7 @@ bool append_bucket( openflow_buckets *buckets, uint16_t weight, uint32_t watch_p
 // Return code definitions indicating the result of OpenFlow message validation.
 enum {
   SUCCESS = 0,
-  ERROR_UNSUPPORTED_VERSION = -102,
+  ERROR_UNSUPPORTED_VERSION = -105,
   ERROR_INVALID_LENGTH,
   ERROR_TOO_SHORT_MESSAGE,
   ERROR_TOO_LONG_MESSAGE,
@@ -403,6 +402,9 @@ enum {
   ERROR_INVALID_STATS_TYPE,
   ERROR_INVALID_STATS_REQUEST_FLAGS,
   ERROR_UNDEFINED_FLOW_MOD_COMMAND,
+  ERROR_TOO_SHORT_HELLO_ELEMENT,
+  ERROR_INVALID_HELLO_ELEMENT_LENGTH,
+  ERROR_UNDEFINED_HELLO_ELEMENT_TYPE,
   ERROR_UNEXPECTED_ERROR = -255
 };
 

@@ -141,6 +141,7 @@ action_tlv_pack( struct ofp_action_header *ac_hdr, const action *action  ) {
       actions_arr[ i ]->pack( ac_hdr, &action_tlv_args );
       if ( action->type == OFPAT_SET_FIELD ) {
         struct ofp_action_set_field *set_field = ( struct ofp_action_set_field * ) ac_hdr;
+        set_field->len = ( uint16_t ) ( set_field->len - sizeof( set_field->field ) ); // PADLEN_TO_64() below
         oxm_match_header *oxm_hdr = ( oxm_match_header * ) ( ( char * ) set_field + offsetof( struct ofp_action_set_field, field ) );
         set_field->len = ( uint16_t ) ( set_field->len + pack_oxm( oxm_hdr, action->match ) );
         set_field->len = ( uint16_t ) ( set_field->len + PADLEN_TO_64( set_field->len ) );

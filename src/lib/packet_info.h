@@ -46,6 +46,7 @@ enum {
   ETH_8023_SNAP = 0x00000008,
   ETH_8021Q = 0x00000010,
   MPLS = 0x00000020,
+  PBB = 0x00000040,
   NW_IPV4 = 0x00000100,
   NW_ICMPV4 = 0x00000200,
   NW_IPV6 = 0x00000400,
@@ -118,10 +119,9 @@ typedef struct {
 
   uint16_t vlan_tci;
   uint16_t vlan_tpid;
-  uint8_t vlan_prio;
+  uint8_t vlan_prio; // PCP
   uint8_t vlan_cfi;
   uint16_t vlan_vid;
-  uint8_t  vlan_pcp;
 
   uint8_t snap_llc[ SNAP_LLC_LENGTH ];
   uint8_t snap_oui[ SNAP_OUI_LENGTH ];
@@ -247,6 +247,7 @@ bool packet_type_eth_raw( const buffer *frame );
 bool packet_type_eth_llc( const buffer *frame );
 bool packet_type_eth_snap( const buffer *frame );
 bool packet_type_eth_mpls( const buffer *frame );
+bool packet_type_eth_pbb(const buffer *frame);
 bool packet_type_ether( const buffer *frame );
 bool packet_type_arp( const buffer *frame );
 bool packet_type_ipv4( const buffer *frame );
@@ -258,6 +259,8 @@ bool packet_type_ipv4_tcp( const buffer *frame );
 bool packet_type_ipv6_tcp( const buffer *frame );
 bool packet_type_ipv4_udp( const buffer *frame );
 bool packet_type_ipv6_udp( const buffer *frame );
+bool packet_type_ipv4_sctp( const buffer *frame );
+bool packet_type_ipv6_sctp( const buffer *frame );
 bool packet_type_ipv4_etherip( const buffer *frame );
 
 bool packet_type_arp_request( const buffer *frame );

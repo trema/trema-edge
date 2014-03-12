@@ -41,7 +41,7 @@ pack_echo_request( VALUE options ) {
 
         
         for ( int i = 0; i < buffer_len && i < RARRAY_LEN( r_body ); i++ ) {
-          buf[ i ]= ( uint8_t ) FIX2INT( RARRAY_PTR( r_body )[ i ] );
+          buf[ i ]= ( uint8_t ) FIX2INT( rb_ary_entry( r_body , i ) );
         }
     }
     else {

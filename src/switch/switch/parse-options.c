@@ -53,11 +53,12 @@ print_usage( const struct switch_arguments *args, int exit_code ) {
 static void
 set_default_opts( struct switch_arguments *args, const struct option long_options[] ) {
   args->progname = "switch",
+  args->log_type = LOGGING_TYPE_UNSET,
   args->log_level = "info",
   args->datapath_ports = "",
   args->datapath_id = 1,
   args->server_ip = 0x7f000001,
-  args->server_port = 6633,
+  args->server_port = 6653,
   args->max_flow_entries = UINT8_MAX;
   args->run_as_daemon = false,
   args->options = long_options;
@@ -67,6 +68,7 @@ set_default_opts( struct switch_arguments *args, const struct option long_option
 void 
 _parse_options( struct switch_arguments *args, int argc, char **argv ) {
   static struct option long_options[] = {
+    { "logging_type", optional_argument, 0, 't' },
     { "logging_level", required_argument, 0, 'l' },
     { "daemonize", no_argument, 0, 'd' },
     { "datapath_id", required_argument, 0, 'i' },
@@ -77,7 +79,7 @@ _parse_options( struct switch_arguments *args, int argc, char **argv ) {
     { "help", no_argument, 0, 'h' },
     { 0, 0, 0, 0 },
   };
-  static const char *short_options = "l:di:c:p:e:h";
+  static const char *short_options = "t:l:di:c:p:e:h";
   set_default_opts( args, long_options );
   
   int c, index = 0;
@@ -90,6 +92,23 @@ _parse_options( struct switch_arguments *args, int argc, char **argv ) {
     switch ( c ) {
       case 'h':
         print_usage( args, 0 );
+      break;
+      case 't':
+        args->log_type = 0;
+        if ( optarg ) {
+          char *save_ptr = NULL;
+          char *p = strtok_r( optarg, ",", &save_ptr );
+          while ( p ) {
+            if ( strcasecmp( p, "file" ) == 0 ) {
+              args->log_type |= LOGGING_TYPE_FILE;
+            } else if ( strcasecmp( p, "syslog" ) == 0 ) {
+              args->log_type |= LOGGING_TYPE_SYSLOG;
+            } else if ( strcasecmp( p, "stdout" ) == 0 ) {
+              args->log_type |= LOGGING_TYPE_STDOUT;
+            }
+            p = strtok_r( NULL, ".", &save_ptr );
+          }
+        }
       break;
       case 'l':
         if ( optarg ) {

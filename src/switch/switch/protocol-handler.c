@@ -44,29 +44,28 @@ bool mock_switch_send_openflow_message( buffer *message );
 
 
 static void
-_handle_hello( const uint32_t transaction_id, const uint8_t version, const buffer *version_data, void *user_data ) {
-  assert( user_data );
+_handle_hello( const uint32_t transaction_id, const uint8_t version, const buffer *elements, void *user_data ) {
+  UNUSED( elements );
+
+  assert( user_data != NULL );
+
   struct protocol *protocol = user_data;
+
   debug( "Hello received ( transaction_id = %#x, version = %#x ).", transaction_id, version );
 
-  struct ofp_hello_elem_versionbitmap *versionbitmap = ( struct ofp_hello_elem_versionbitmap * ) version_data->data;
-  const uint32_t ofp_versions[ 1 ] = { OFP_VERSION };
-  
-  uint32_t bitmap = versionbitmap->bitmaps[ 0 ];
-  if ( ( bitmap & ( ( uint32_t ) 1 << ofp_versions[ 0 ] ) ) != ( ( uint32_t ) ofp_versions[ 0 ] ) ) {
-    buffer *hello_buf = create_hello_elem_versionbitmap( transaction_id, ofp_versions,
-      sizeof( ofp_versions ) / sizeof( ofp_versions[ 0 ] ) );
-    if ( switch_send_openflow_message( hello_buf ) ) {
-      switch_features features;
-      memset( &features, 0, sizeof( switch_features ) );
-      get_switch_features( &features );
-      protocol->ctrl.controller_connected = true;
-      protocol->ctrl.capabilities = features.capabilities;
-    }
-    free_buffer( hello_buf );
-  } else {
-    send_error_message( transaction_id, OFPET_HELLO_FAILED, OFPHFC_INCOMPATIBLE );
+  uint8_t supported_versions[ 1 ] = { OFP_VERSION };
+  buffer *element = create_hello_elem_versionbitmap( supported_versions, sizeof( supported_versions ) / sizeof( supported_versions[ 0 ] ) );
+  buffer *buf = create_hello( transaction_id, element );
+  free_buffer( element );
+  bool ret = switch_send_openflow_message( buf );
+  if ( ret ) {
+    switch_features features;
+    memset( &features, 0, sizeof( switch_features ) );
+    get_switch_features( &features );
+    protocol->ctrl.controller_connected = true;
+    protocol->ctrl.capabilities = features.capabilities;
   }
+  free_buffer( buf );
 }
 void ( *handle_hello )( const uint32_t transaction_id,
         const uint8_t version,
@@ -576,6 +575,7 @@ save_outstanding_request( struct protocol_ctrl *ctrl, const uint32_t transaction
      */
     if ( ctrl->nr_requests < MAX_OUTSTANDING_REQUESTS ) {
       if ( ( flags & OFPMPF_REQ_MORE ) == OFPMPF_REQ_MORE ) {
+        i = MAX_OUTSTANDING_REQUESTS - 1; // overwrite the last one
         ctrl->outstanding_requests[ i ].transaction_id = transaction_id;
         ctrl->outstanding_requests[ i ].type = type;
         ctrl->outstanding_requests[ i ].flags = flags;

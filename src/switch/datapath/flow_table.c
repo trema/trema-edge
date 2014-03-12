@@ -315,7 +315,7 @@ init_flow_table( const uint8_t table_id, const uint32_t max_flow_entries ) {
     return OFDPE_FAILED;
   }
 
-  memset( table, 0, sizeof( table ) );
+  memset( table, 0, sizeof( flow_table ) );
 
   table->counters.active_count = 0;
   table->counters.lookup_count = 0;
@@ -615,10 +615,16 @@ add_flow_entry( const uint8_t table_id, flow_entry *entry, const uint16_t flags 
 
   flow_table *table = get_flow_table( table_id );
   if ( table == NULL ) {
+    if ( !unlock_pipeline() ) {
+      return ERROR_UNLOCK;
+    }
     return ERROR_OFDPE_FLOW_MOD_FAILED_BAD_TABLE_ID;
   }
 
   if ( table->features.max_entries <= get_active_count( table_id ) ) {
+    if ( !unlock_pipeline() ) {
+      return ERROR_UNLOCK;
+    }
     return ERROR_OFDPE_FLOW_MOD_FAILED_TABLE_FULL;
   }
 
@@ -714,6 +720,9 @@ update_flow_entries( const uint8_t table_id, const match *match, const uint64_t 
   OFDPE ret = validate_instruction_set( instructions, table->features.metadata_write );
   if ( ret != OFDPE_SUCCESS ) {
     error( "Invalid instruction set ( ret = %#x, instructions = %p ).", ret, instructions );
+    if ( !unlock_pipeline() ) {
+      return ERROR_UNLOCK;
+    }
     return ret;
   }
 
@@ -769,6 +778,9 @@ update_flow_entry_strict( const uint8_t table_id, const match *match, const uint
   OFDPE ret = validate_instruction_set( instructions, table->features.metadata_write );
   if ( ret != OFDPE_SUCCESS ) {
     error( "Invalid instruction set ( ret = %#x, instructions = %p ).", ret, instructions );
+    if ( !unlock_pipeline() ) {
+      return ERROR_UNLOCK;
+    }
     return ret;
   }
 
@@ -822,7 +834,9 @@ update_or_add_flow_entry( const uint8_t table_id, const match *key,
   OFDPE ret = validate_instruction_set( instructions, table->features.metadata_write );
   if ( ret != OFDPE_SUCCESS ) {
     error( "Invalid instruction set ( ret = %#x, instructions = %p ).", ret, instructions );
-    unlock_pipeline();
+    if ( !unlock_pipeline() ) {
+      return ERROR_UNLOCK;
+    }
     return ret;
   }
 

@@ -214,6 +214,78 @@ oxm_match_16w_to_hex_string( const oxm_match_header *header, char *str, size_t l
 }
 
 
+#if 0
+static bool
+oxm_match_24_to_dec_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint8_t *v = ( const uint8_t * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  int ret = snprintf( str, length, "%s = %u", key, (v[0]<<16)+(v[1]<<8)+v[2] );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+#endif
+
+
+static bool
+oxm_match_24_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint8_t *v = ( const uint8_t * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  int ret = snprintf( str, length, "%s = 0x%06x", key, (v[0]<<16)+(v[1]<<8)+v[2] );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+#if 0
+static bool
+oxm_match_24w_to_dec_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint8_t *v = ( const uint8_t * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  int ret = snprintf( str, length, "%s = %u/%u", key, (v[0]<<16)+(v[1]<<8)+v[2], (v[3]<<16)+(v[4]<<8)+v[5] );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+#endif
+
+
+static bool
+oxm_match_24w_to_hex_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
+  assert( header != NULL );
+  assert( str != NULL );
+  assert( length > 0 );
+  assert( key != NULL );
+
+  const uint8_t *v = ( const uint8_t * ) ( ( const char * ) header + sizeof( oxm_match_header ) );
+  int ret = snprintf( str, length, "%s = 0x%06x/0x%06x", key, (v[0]<<16)+(v[1]<<8)+v[2], (v[3]<<16)+(v[4]<<8)+v[5] );
+  if ( ( ret >= ( int ) length ) || ( ret < 0 ) ) {
+    return false;
+  }
+
+  return true;
+}
+
+
 static bool
 oxm_match_32_to_dec_string( const oxm_match_header *header, char *str, size_t length, const char *key ) {
   assert( header != NULL );
@@ -900,10 +972,10 @@ oxm_match_pbb_isid_to_string( const oxm_match_header *header, char *str, size_t 
 
   switch ( *header ) {
     case OXM_OF_PBB_ISID:
-      return oxm_match_32_to_hex_string( header, str, length, "pbb_isid" );
+      return oxm_match_24_to_hex_string( header, str, length, "pbb_isid" );
 
     case OXM_OF_PBB_ISID_W:
-      return oxm_match_32w_to_hex_string( header, str, length, "pbb_isid" );
+      return oxm_match_24w_to_hex_string( header, str, length, "pbb_isid" );
 
     default:
       assert( 0 );
@@ -1737,8 +1809,13 @@ get_checksum( uint16_t *pos, uint32_t size ) {
     csum += *pos;
   }
   if ( size == 1 ) {
-    csum += *( unsigned char * ) pos;
+    union {
+     uint8_t bytes[ 2 ];
+     uint16_t num;
+    } tmp = { .bytes = { * ( uint8_t * ) pos, 0 } };
+    csum += tmp.num;
   }
+  // ones' complement: sum up carry
   while ( csum & 0xffff0000 ) {
     csum = ( csum & 0x0000ffff ) + ( csum >> 16 );
   }
