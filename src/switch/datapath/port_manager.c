@@ -332,7 +332,7 @@ get_switch_ports_to_output( const uint32_t port_no, const uint32_t in_port ) {
     }
     break;
 
-    case OFPP_FLOOD:
+    case OFPP_FLOOD: // Openflow-hybrid
     case OFPP_ALL:
     {
       foreach_switch_port( append_switch_port_to_list, &ports );
@@ -340,7 +340,7 @@ get_switch_ports_to_output( const uint32_t port_no, const uint32_t in_port ) {
     break;
 
     case OFPP_TABLE:
-    case OFPP_NORMAL:
+    case OFPP_NORMAL: // Openflow-hybrid
     case OFPP_CONTROLLER:
     case OFPP_LOCAL:
     case OFPP_ANY:
@@ -351,9 +351,11 @@ get_switch_ports_to_output( const uint32_t port_no, const uint32_t in_port ) {
 
     default:
     {
-      switch_port *port = lookup_switch_port( port_no );
-      if ( port != NULL ) {
-        append_to_tail( &ports.list, port );
+      if ( port_no != in_port ) {
+        switch_port *port = lookup_switch_port( port_no );
+        if ( port != NULL ) {
+          append_to_tail( &ports.list, port );
+        }
       }
     }
     break;
@@ -367,9 +369,9 @@ OFDPE
 send_frame_from_switch_port( const uint32_t port_no, buffer *frame ) {
   assert( port_no > 0 );
   assert( frame != NULL );
- 
-  if ( port_no == OFPP_NORMAL || port_no == OFPP_CONTROLLER || port_no == OFPP_LOCAL || port_no == OFPP_ANY ) {
-    error( "Invalid output port number ( port_no = %u, frame = %p ).", port_no, frame );
+
+  if ( port_no > OFPP_MAX && port_no != OFPP_IN_PORT && port_no != OFPP_NORMAL && port_no != OFPP_FLOOD && port_no != OFPP_ALL && port_no != OFPP_LOCAL ) {
+    error( "Output port number is not targeted to switch port ( port_no = %u, frame = %p ).", port_no, frame );
     return OFDPE_FAILED;
   }
 
@@ -377,66 +379,41 @@ send_frame_from_switch_port( const uint32_t port_no, buffer *frame ) {
     fill_ether_padding( frame );
   }
 
-  uint32_t in_port = 0;
-  if ( port_no == OFPP_ALL || port_no == OFPP_FLOOD || port_no == OFPP_IN_PORT || port_no == OFPP_TABLE ) {
-    if ( frame->user_data == NULL ) {
-      warn( "Ethernet frame is not parsed yet. OFPP_ALL, OFPP_FLOOD, OFPP_IN_PORT, and OFPP_TABLE "
-            "require eth_in_port to find actual output ports ( port_no = %u, frame = %p ).", port_no, frame );
-      return OFDPE_FAILED;
-    }
-    in_port = ( ( packet_info * ) frame->user_data )->eth_in_port;
-    if ( in_port == 0 || ( in_port > OFPP_MAX && in_port != OFPP_CONTROLLER ) ) {
-      warn( "Invalid eth_in_port found in a parsed frame ( frame = %p, eth_in_port = %u ).", frame, in_port );
-      return OFDPE_FAILED;
-    }
+  if ( frame->user_data == NULL ) {
+    warn( "Ethernet frame is not parsed yet."
+          "require eth_in_port to find actual output ports ( port_no = %u, frame = %p ).", port_no, frame );
+    return OFDPE_FAILED;
+  }
+  uint32_t in_port = ( ( packet_info * ) frame->user_data )->eth_in_port;
+  if ( in_port == 0 || ( in_port > OFPP_MAX && in_port != OFPP_CONTROLLER ) ) {
+    warn( "Invalid eth_in_port found in a parsed frame ( frame = %p, eth_in_port = %u ).", frame, in_port );
+    return OFDPE_FAILED;
   }
 
   if ( !lock_mutex( &mutex ) ) {
     return ERROR_LOCK;
   }
 
-  OFDPE ret = OFDPE_SUCCESS;
-  if ( port_no == OFPP_IN_PORT && in_port == OFPP_CONTROLLER ) {
-    warn( "Packet-out with in_port = OFPP_CONTROLLER is not supported." );
-    ret = OFDPE_FAILED;
-  }
-  else if ( port_no != OFPP_TABLE ) {
-    list_element *ports = get_switch_ports_to_output( port_no, in_port );
-    for ( list_element *e = ports; e != NULL;  e = e->next ) {
-      assert( e->data != NULL );
-      switch_port *port = e->data;
-      if ( ( port->config & ( OFPPC_PORT_DOWN | OFPPC_NO_FWD ) ) != 0 ) {
-        continue;
-      }
-      assert( port->device != NULL );
-      send_frame( port->device, frame );
+  list_element *ports = get_switch_ports_to_output( port_no, in_port );
+  for ( list_element *e = ports; e != NULL;  e = e->next ) {
+    assert( e->data != NULL );
+    switch_port *port = e->data;
+    if ( ( port->config & ( OFPPC_PORT_DOWN | OFPPC_NO_FWD ) ) != 0 ) {
+      continue;
     }
+    assert( port->device != NULL );
+    send_frame( port->device, frame );
+  }
 
-    if ( ports != NULL ) {
-      delete_list( ports );
-    }
-  }
-  else {
-    if ( in_port != OFPP_CONTROLLER ) {
-      switch_port *port = lookup_switch_port( in_port );
-      if ( port != NULL ) {
-        handle_received_frame( port, frame );
-      }
-      else {
-        ret = OFDPE_FAILED;
-      }
-    }
-    else {
-      warn( "Packet-out with in_port = OFPP_CONTROLLER is not supported." );
-      ret = OFDPE_FAILED;
-    }
+  if ( ports != NULL ) {
+    delete_list( ports );
   }
 
   if ( !unlock_mutex( &mutex ) ) {
     return ERROR_UNLOCK;
   }
 
-  return ret;
+  return OFDPE_SUCCESS;
 }
 
 
