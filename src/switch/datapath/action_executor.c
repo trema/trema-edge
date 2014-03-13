@@ -2085,7 +2085,7 @@ execute_group_select( buffer *frame, bucket_list *buckets ) {
         continue;
       }
       candidates_weight_total += b->weight;
-      append_to_tail( &candidates, bucket_element );
+      append_to_tail( &candidates, b );
     }
     bucket_element = bucket_element->next;
   }
@@ -2103,28 +2103,24 @@ execute_group_select( buffer *frame, bucket_list *buckets ) {
 #endif
 
   uint32_t candidate_index = 0;
-  list_element *target = candidates;
-  for ( uint32_t i = 0; target != NULL && i < length_of_candidates; i++ ) {
-    bucket *b = target->data;
+  bucket *selected_bucket = NULL;
+  for ( list_element *e = candidates; e != NULL; e = e->next ) {
+    bucket *b = e->data;
     if ( candidate_weight < b->weight ) {
+      selected_bucket = b;
       break;
     }
     candidate_index++;
     candidate_weight -= b->weight;
-    target = target->next;
   }
   debug( "execute group select. bucket=%u(/%u)", candidate_index, length_of_candidates );
 
-  if ( target != NULL ) {
-    bucket_element = target->data;
-    bucket *b = bucket_element->data;
-    if ( b != NULL ) {
-      b->packet_count++;
-      b->byte_count += frame->length;
-      if ( execute_action_list( b->actions, frame ) != OFDPE_SUCCESS ) {
-        delete_list( candidates );
-        return false;
-      }
+  if ( selected_bucket != NULL ) {
+    selected_bucket->packet_count++;
+    selected_bucket->byte_count += frame->length;
+    if ( execute_action_list( selected_bucket->actions, frame ) != OFDPE_SUCCESS ) {
+      delete_list( candidates );
+      return false;
     }
   }
 
