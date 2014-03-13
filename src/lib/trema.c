@@ -272,6 +272,10 @@ bool mock_finalize_packetin_filter_interface();
 static bool initialized = false;
 static bool trema_started = false;
 static bool run_as_daemon = false;
+static int use_exit_handler = 1;
+static int use_hup_handler = 1;
+static int use_usr1_handler = 1;
+static int use_usr2_handler = 1;
 static char *trema_name = NULL;
 static char *executable_name = NULL;
 static char *trema_log = NULL;
@@ -285,6 +289,10 @@ static struct option long_options[] = {
   { "name", 1, NULL, 'n' },
   { "daemonize", 0, NULL, 'd' },
   { "logging_level", 1, NULL, 'l' },
+  { "no_exit_handler", 0, &use_exit_handler, 0 },
+  { "no_hup_handler", 0, &use_hup_handler, 0 },
+  { "no_usr1_handler", 0, &use_usr1_handler, 0 },
+  { "no_usr2_handler", 0, &use_usr2_handler, 0 },
   { "syslog", 0, NULL, 'g' },
   { "help", 0, NULL, 'h' },
   { NULL, 0, NULL, 0 },
@@ -602,10 +610,18 @@ init_trema( int *argc, char ***argv ) {
   }
   init_log( get_trema_name(), get_trema_log(), log_output_type );
   ignore_sigpipe();
-  set_exit_handler();
-  set_hup_handler();
-  set_usr1_handler();
-  set_usr2_handler();
+  if ( use_exit_handler ) {
+    set_exit_handler();
+  }
+  if ( use_hup_handler ) {
+    set_hup_handler();
+  }
+  if ( use_usr1_handler ) {
+    set_usr1_handler();
+  }
+  if ( use_usr2_handler ) {
+    set_usr2_handler();
+  }
   init_messenger( get_trema_sock() );
   init_stat();
   init_timer();
