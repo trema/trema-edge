@@ -454,8 +454,8 @@ _assign_match( match *match, const oxm_match_header *hdr ) {
     }
     break;
     default:
-      error( "Undefined oxm type ( header = %#x, type = %#x, has_mask = %u, length = %u ). ",
-              *hdr, OXM_TYPE( *hdr ), OXM_HASMASK( *hdr ), OXM_LENGTH( *hdr ) );
+      error( "Undefined oxm type ( header = %#x, class = %#x, field = %#x, type = %#x, has_mask = %u, length = %u ). ",
+              *hdr, OXM_TYPE( *hdr ), OXM_CLASS( *hdr ), OXM_FIELD( *hdr ), OXM_HASMASK( *hdr ), OXM_LENGTH( *hdr ) );
     break;
   }
 }

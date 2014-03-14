@@ -4363,6 +4363,7 @@ validate_match( struct ofp_match *match ) {
       break;
     case OFPXMT_OFB_IN_PHY_PORT:
       if ( in_port_present != true ) {
+        debug( "OFPXMT_OFB_IN_PHY_PORT: in_port_present false" );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
@@ -4400,6 +4401,7 @@ validate_match( struct ofp_match *match ) {
     case OFPXMT_OFB_VLAN_PCP:
       {
         if ( vid_present != true ) {
+          debug( "OFPXMT_OFB_VLAN_PCP: vid_present false" );
           return ERROR_BAD_MATCH_PREREQ;
         }
         uint8_t *v = ( uint8_t * ) ( ( char * ) tl_p + sizeof( oxm_match_header ) );
@@ -4413,6 +4415,7 @@ validate_match( struct ofp_match *match ) {
     case OFPXMT_OFB_IP_DSCP:
       {
         if ( ( eth_type_val != 0x0800 ) && ( eth_type_val != 0x86dd ) ) {
+          debug( "OFPXMT_OFB_IP_DSCP: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
           return ERROR_BAD_MATCH_PREREQ;
         }
         uint8_t *v = ( uint8_t * ) ( ( char * ) tl_p + sizeof( oxm_match_header ) );
@@ -4426,6 +4429,7 @@ validate_match( struct ofp_match *match ) {
     case OFPXMT_OFB_IP_ECN:
       {
         if ( ( eth_type_val != 0x0800 ) && ( eth_type_val != 0x86dd ) ) {
+          debug( "OFPXMT_OFB_IP_ECN: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
           return ERROR_BAD_MATCH_PREREQ;
         }
         uint8_t *v = ( uint8_t * ) ( ( char * ) tl_p + sizeof( oxm_match_header ) );
@@ -4439,6 +4443,7 @@ validate_match( struct ofp_match *match ) {
     case OFPXMT_OFB_IP_PROTO:
       {
         if ( ( eth_type_val != 0x0800 ) && ( eth_type_val != 0x86dd ) ) {
+          debug( "OFPXMT_OFB_IP_PROTO: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
           return ERROR_BAD_MATCH_PREREQ;
         }
         uint8_t *v = ( uint8_t * ) ( ( char * ) tl_p + sizeof( oxm_match_header ) );
@@ -4447,92 +4452,110 @@ validate_match( struct ofp_match *match ) {
       break;
     case OFPXMT_OFB_IPV4_SRC:
       if ( eth_type_val != 0x0800 ) {
+        debug( "OFPXMT_OFB_IPV4_SRC: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_IPV4_DST:
       if ( eth_type_val != 0x0800 ) {
+        debug( "OFPXMT_OFB_IPV4_DST: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_TCP_SRC:
       if ( ip_proto_val != 6 ) {
+        debug( "OFPXMT_OFB_TCP_SRC: invalid ip_proto_val ( ip_proto_val = %d )", ip_proto_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_TCP_DST:
       if ( ip_proto_val != 6 ) {
+        debug( "OFPXMT_OFB_TCP_DST: invalid ip_proto_val ( ip_proto_val = %d )", ip_proto_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_UDP_SRC:
       if ( ip_proto_val != 17 ) {
+        debug( "OFPXMT_OFB_UDP_SRC: invalid ip_proto_val ( ip_proto_val = %d )", ip_proto_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_UDP_DST:
       if ( ip_proto_val != 17 ) {
+        debug( "OFPXMT_OFB_UDP_DST: invalid ip_proto_val ( ip_proto_val = %d )", ip_proto_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_SCTP_SRC:
       if ( ip_proto_val != 132 ) {
+        debug( "OFPXMT_OFB_SCTP_SRC: invalid ip_proto_val ( ip_proto_val = %d )", ip_proto_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_SCTP_DST:
       if ( ip_proto_val != 132 ) {
+        debug( "OFPXMT_OFB_SCTP_DST: invalid ip_proto_val ( ip_proto_val = %d )", ip_proto_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_ICMPV4_TYPE:
       if ( ip_proto_val != 1 ) {
+        debug( "OFPXMT_OFB_ICMPV4_TYPE: invalid ip_proto_val ( ip_proto_val = %d )", ip_proto_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_ICMPV4_CODE:
       if ( ip_proto_val != 1 ) {
+        debug( "OFPXMT_OFB_ICMPV4_CODE: invalid ip_proto_val ( ip_proto_val = %d )", ip_proto_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_ARP_OP:
       if ( eth_type_val != 0x0806 ) {
+        debug( "OFPXMT_OFB_ARP_OP: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_ARP_SPA:
       if ( eth_type_val != 0x0806 ) {
+        debug( "OFPXMT_OFB_ARP_SPA: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_ARP_TPA:
       if ( eth_type_val != 0x0806 ) {
+        debug( "OFPXMT_OFB_ARP_TPA: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_ARP_SHA:
       if ( eth_type_val != 0x0806 ) {
+        debug( "OFPXMT_OFB_ARP_SHA: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_ARP_THA:
       if ( eth_type_val != 0x0806 ) {
+        debug( "OFPXMT_OFB_ARP_THA: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_IPV6_SRC:
       if ( eth_type_val != 0x86dd ) {
+        debug( "OFPXMT_OFB_IPV6_SRC: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_IPV6_DST:
       if ( eth_type_val != 0x86dd ) {
+        debug( "OFPXMT_OFB_IPV6_DST: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_IPV6_FLABEL:
       {
         if ( eth_type_val != 0x86dd ) {
+          debug( "OFPXMT_OFB_IPV6_FLABEL: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
           return ERROR_BAD_MATCH_PREREQ;
         }
         uint32_t *v = ( uint32_t * ) ( ( char * ) tl_p + sizeof( oxm_match_header ) );
@@ -4546,6 +4569,7 @@ validate_match( struct ofp_match *match ) {
     case OFPXMT_OFB_ICMPV6_TYPE:
       {
         if ( ip_proto_val != 58 ) {
+          debug( "OFPXMT_OFB_ICMPV6_TYPE: invalid ip_proto_val ( ip_proto_val = %d )", ip_proto_val );
           return ERROR_BAD_MATCH_PREREQ;
         }
         uint8_t *v = ( uint8_t * ) ( ( char * ) tl_p + sizeof( oxm_match_header ) );
@@ -4554,27 +4578,32 @@ validate_match( struct ofp_match *match ) {
       break;
     case OFPXMT_OFB_ICMPV6_CODE:
       if ( ip_proto_val != 58 ) {
+        debug( "OFPXMT_OFB_ICMPV6_CODE: invalid ip_proto_val ( ip_proto_val = %d )", ip_proto_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_IPV6_ND_TARGET:
       if ( ( icmpv6_type_val != 135 ) && ( icmpv6_type_val != 136 ) ) {
+        debug( "OFPXMT_OFB_IPV6_ND_TARGET: invalid icmpv6_type_val ( icmpv6_type_val = %d )", icmpv6_type_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_IPV6_ND_SLL:
       if ( icmpv6_type_val != 135 ) {
+        debug( "OFPXMT_OFB_IPV6_ND_SLL: invalid icmpv6_type_val ( icmpv6_type_val = %d )", icmpv6_type_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_IPV6_ND_TLL:
       if ( icmpv6_type_val != 136 ) {
+        debug( "OFPXMT_OFB_IPV6_ND_TLL: invalid icmpv6_type_val ( icmpv6_type_val = %d )", icmpv6_type_val );
         return ERROR_BAD_MATCH_PREREQ;
       }
       break;
     case OFPXMT_OFB_MPLS_LABEL:
       {
         if ( ( eth_type_val != 0x8847 ) && ( eth_type_val != 0x8848 ) ) {
+          debug( "OFPXMT_OFB_MPLS_LABEL: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
           return ERROR_BAD_MATCH_PREREQ;
         }
         uint32_t *v = ( uint32_t * ) ( ( char * ) tl_p + sizeof( oxm_match_header ) );
@@ -4588,6 +4617,7 @@ validate_match( struct ofp_match *match ) {
     case OFPXMT_OFB_MPLS_TC:
       {
         if ( ( eth_type_val != 0x8847 ) && ( eth_type_val != 0x8848 ) ) {
+          debug( "OFPXMT_OFB_MPLS_TC: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
           return ERROR_BAD_MATCH_PREREQ;
         }
         uint8_t *v = ( uint8_t * ) ( ( char * ) tl_p + sizeof( oxm_match_header ) );
@@ -4601,6 +4631,7 @@ validate_match( struct ofp_match *match ) {
     case OFPXMT_OFB_MPLS_BOS:
       {
         if ( ( eth_type_val != 0x8847 ) && ( eth_type_val != 0x8848 ) ) {
+          debug( "OFPXMT_OFB_MPLS_BOS: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
           return ERROR_BAD_MATCH_PREREQ;
         }
         uint8_t *v = ( uint8_t * ) ( ( char * ) tl_p + sizeof( oxm_match_header ) );
@@ -4614,6 +4645,7 @@ validate_match( struct ofp_match *match ) {
     case OFPXMT_OFB_PBB_ISID:
       {
         if ( eth_type_val != 0x88e7 ) {
+          debug( "OFPXMT_OFB_PBB_ISID: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
           return ERROR_BAD_MATCH_PREREQ;
         }
         uint32_t *v = ( uint32_t * ) ( ( char * ) tl_p + sizeof( oxm_match_header ) );
@@ -4629,6 +4661,7 @@ validate_match( struct ofp_match *match ) {
     case OFPXMT_OFB_IPV6_EXTHDR:
       {
         if ( eth_type_val != 0x86dd ) {
+          debug( "OFPXMT_OFB_IPV6_EXTHDR: invalid eth_type_val ( eth_type_val = 0x%x )", eth_type_val );
           return ERROR_BAD_MATCH_PREREQ;
         }
         uint16_t *v = ( uint16_t * ) ( ( char * ) tl_p + sizeof( oxm_match_header ) );
@@ -4640,6 +4673,7 @@ validate_match( struct ofp_match *match ) {
       }
       break;
     default:
+      debug( "ERROR_INVALID_MATCH_TYPE: invalid oxm field ( oxm field = 0x%x )", OXM_FIELD( tl_hb ) );
       return ERROR_INVALID_MATCH_TYPE;
       break;
     }
@@ -8303,8 +8337,8 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
         warn( "Invalid pbb_isid ( change %#x to %#x )", pbb_isid, pbb_isid & PBB_ISID_MASK );
         pbb_isid = ( uint32_t ) ( pbb_isid & PBB_ISID_MASK );
       }
+      append_oxm_match_pbb_isid( match, pbb_isid, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_pbb_isid ) );
     }
-    append_oxm_match_pbb_isid( match, pbb_isid, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_pbb_isid ) );
   }
   if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_VLAN_VID ) ) ) {
     uint16_t vlan_vid;
