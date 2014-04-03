@@ -261,7 +261,7 @@ bool append_action_set_field_sctp_src( openflow_actions *actions, const uint16_t
 bool append_action_set_field_sctp_dst( openflow_actions *actions, const uint16_t sctp_dst );
 bool append_action_set_field_icmpv4_type( openflow_actions *actions, const uint8_t icmpv4_type );
 bool append_action_set_field_icmpv4_code( openflow_actions *actions, const uint8_t icmpv4_code );
-bool append_action_set_field_arp_op( openflow_actions *actions, const uint16_t arp_op );
+bool append_action_set_field_arp_op( openflow_actions *actions, const uint16_t arp_opcode );
 bool append_action_set_field_arp_spa( openflow_actions *actions, const uint32_t arp_spa );
 bool append_action_set_field_arp_tpa( openflow_actions *actions, const uint32_t arp_tpa );
 bool append_action_set_field_arp_sha( openflow_actions *actions, const uint8_t arp_sha[ OFP_ETH_ALEN ] );

@@ -13023,7 +13023,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_tag_and_wildcards_is_zero
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_vlan_pcp( expected, packet_info0->vlan_prio );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13075,7 +13075,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_zero() {
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13127,7 +13127,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IN_P
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13180,7 +13180,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IN_P
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13233,7 +13233,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_META
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13285,7 +13285,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_ETH_
     append_oxm_match_eth_src( expected, ether->macsa, mask.mask_eth_src );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13337,7 +13337,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_ETH_
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13433,7 +13433,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_VLAN
     append_oxm_match_eth_src( expected, ether->macsa, mask.mask_eth_src );
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13486,7 +13486,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_VLAN
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13539,7 +13539,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IP_D
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13592,7 +13592,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IP_E
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13645,7 +13645,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IP_P
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13698,7 +13698,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IPV4
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13751,7 +13751,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IPV4
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13804,7 +13804,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_TCP_
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13857,7 +13857,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_TCP_
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13910,7 +13910,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_UDP_
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -13963,7 +13963,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_UDP_
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14016,7 +14016,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_SCTP
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14069,7 +14069,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_SCTP
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14122,7 +14122,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_ICMP
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14175,7 +14175,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_ICMP
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14280,7 +14280,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_ARP_
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
     append_oxm_match_arp_tha( expected, arp->tha, mask.mask_arp_tha );
@@ -14332,7 +14332,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_ARP_
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
     append_oxm_match_arp_tha( expected, arp->tha, mask.mask_arp_tha );
@@ -14384,7 +14384,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_ARP_
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_tha( expected, arp->tha, mask.mask_arp_tha );
@@ -14436,7 +14436,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_ARP_
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14488,7 +14488,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IPV6
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14541,7 +14541,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IPV6
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14594,7 +14594,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IPV6
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14647,7 +14647,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_ICMP
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14700,7 +14700,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_ICMP
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14753,7 +14753,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IPV6
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14806,7 +14806,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IPV6
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14859,7 +14859,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IPV6
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14912,7 +14912,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_MPLS
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -14965,7 +14965,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_MPLS
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -15018,7 +15018,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_MPLS
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -15071,7 +15071,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_PBB_
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -15124,7 +15124,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_TUNN
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );
@@ -15177,7 +15177,7 @@ test_set_match_from_packet_succeeds_if_datatype_is_arp_and_wildcards_is_OFB_IPV6
     append_oxm_match_eth_dst( expected, ether->macda, mask.mask_eth_dst );
     append_oxm_match_vlan_vid( expected, vlan_vid, mask.mask_vlan_vid );
     append_oxm_match_eth_type( expected, packet_info0->eth_type );
-    append_oxm_match_arp_op( expected, ntohs( arp->ar_op ) );
+    append_oxm_match_arp_opcode( expected, ntohs( arp->ar_op ) );
     append_oxm_match_arp_spa( expected, ntohl( arp->sip ), mask.mask_arp_spa );
     append_oxm_match_arp_tpa( expected, ntohl( arp->tip ), mask.mask_arp_tpa );
     append_oxm_match_arp_sha( expected, arp->sha, mask.mask_arp_sha );

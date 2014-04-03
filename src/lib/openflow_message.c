@@ -3192,14 +3192,14 @@ append_action_set_field_icmpv4_code( openflow_actions *actions, const uint8_t ic
 
 
 bool
-append_action_set_field_arp_op( openflow_actions *actions, const uint16_t arp_op ) {
+append_action_set_field_arp_op( openflow_actions *actions, const uint16_t arp_opcode ) {
   bool ret;
 
-  debug( "Appending a set field arp op action ( arp_op = %#x ).", arp_op );
+  debug( "Appending a set field arp op action ( arp_op = %#x ).", arp_opcode );
 
   assert( actions != NULL );
 
-  ret = append_action_set_field( actions, OXM_OF_ARP_OP, &arp_op );
+  ret = append_action_set_field( actions, OXM_OF_ARP_OP, &arp_opcode );
 
   return ret;
 }
@@ -8427,7 +8427,7 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
   }
   else if ( eth_type == ETH_ETHTYPE_ARP ) {
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ARP_OP ) ) ) {
-      append_oxm_match_arp_op( match, ( ( packet_info * ) packet->user_data )->arp_ar_op );
+      append_oxm_match_arp_opcode( match, ( ( packet_info * ) packet->user_data )->arp_ar_op );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ARP_SPA ) ) ) {
       append_oxm_match_arp_spa( match, ( ( packet_info * ) packet->user_data )->arp_spa, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_arp_spa ) );

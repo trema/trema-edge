@@ -68,7 +68,7 @@ bool append_oxm_match_sctp_src( oxm_matches *matches, uint16_t port );
 bool append_oxm_match_sctp_dst( oxm_matches *matches, uint16_t port );
 bool append_oxm_match_icmpv4_type( oxm_matches *matches, uint8_t type );
 bool append_oxm_match_icmpv4_code( oxm_matches *matches, uint8_t code );
-bool append_oxm_match_arp_op( oxm_matches *matches, uint16_t value );
+bool append_oxm_match_arp_opcode( oxm_matches *matches, uint16_t value );
 bool append_oxm_match_arp_spa( oxm_matches *matches, uint32_t addr, uint32_t mask );
 bool append_oxm_match_arp_tpa( oxm_matches *matches, uint32_t addr, uint32_t mask );
 bool append_oxm_match_arp_sha( oxm_matches *matches, uint8_t addr[ OFP_ETH_ALEN ], uint8_t mask[ OFP_ETH_ALEN ] );

@@ -228,7 +228,7 @@ test_match_to_string() {
       "ipv4_src = 1.2.3.4, ipv4_src = 1.2.3.4/255.255.0.0, "
       "ipv4_dst = 1.2.3.4, ipv4_dst = 1.2.3.4/255.255.0.0, "
       "tcp_src = 1000, tcp_dst = 2000, udp_src = 3000, udp_dst = 4000, sctp_src = 5000, sctp_dst = 6000, "
-      "icmpv4_type = 0x07, icmpv4_code = 0x08, arp_op = 0x0102, "
+      "icmpv4_type = 0x07, icmpv4_code = 0x08, arp_opcode = 0x0102, "
       "arp_spa = 1.2.3.4, arp_spa = 1.2.3.4/255.255.0.0, "
       "arp_tpa = 1.2.3.4, arp_tpa = 1.2.3.4/255.255.0.0, "
       "arp_sha = 01:02:03:04:05:06, arp_sha = 01:02:03:04:05:06/ff:ff:ff:00:00:00, "
@@ -304,7 +304,7 @@ test_match_to_string() {
     append_oxm_match_sctp_dst( match, 6000 );
     append_oxm_match_icmpv4_type( match, 7 );
     append_oxm_match_icmpv4_code( match, 8 );
-    append_oxm_match_arp_op( match, data_16bit );
+    append_oxm_match_arp_opcode( match, data_16bit );
     append_oxm_match_arp_spa( match, data_32bit, nomask_32bit );
     append_oxm_match_arp_spa( match, data_32bit, mask_32bit );
     append_oxm_match_arp_tpa( match, data_32bit, nomask_32bit );

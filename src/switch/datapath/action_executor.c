@@ -1783,8 +1783,8 @@ execute_action_set_field( buffer *frame, action *set_field ) {
     }
   }
 
-  if ( match->arp_op.valid ) {
-    if ( !set_arp_op( frame, match->arp_op.value ) ) {
+  if ( match->arp_opcode.valid ) {
+    if ( !set_arp_op( frame, match->arp_opcode.value ) ) {
       return false;
     }
   }
