@@ -496,7 +496,7 @@ append_oxm_match_icmpv4_code( oxm_matches *matches, uint8_t code ) {
 
 
 bool
-append_oxm_match_arp_opcode( oxm_matches *matches, uint16_t value ) {
+append_oxm_match_arp_op( oxm_matches *matches, uint16_t value ) {
   assert( matches != NULL );
 
   return append_oxm_match_16( matches, OXM_OF_ARP_OP, value );  

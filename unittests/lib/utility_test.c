@@ -304,7 +304,7 @@ test_match_to_string() {
     append_oxm_match_sctp_dst( match, 6000 );
     append_oxm_match_icmpv4_type( match, 7 );
     append_oxm_match_icmpv4_code( match, 8 );
-    append_oxm_match_arp_opcode( match, data_16bit );
+    append_oxm_match_arp_op( match, data_16bit );
     append_oxm_match_arp_spa( match, data_32bit, nomask_32bit );
     append_oxm_match_arp_spa( match, data_32bit, mask_32bit );
     append_oxm_match_arp_tpa( match, data_32bit, nomask_32bit );

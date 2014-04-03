@@ -1282,16 +1282,16 @@ test_append_oxm_match_icmpv4_code() {
 
 
 static void
-test_append_oxm_match_arp_opcode() {
+test_append_oxm_match_arp_op() {
   const oxm_match_header type = OXM_OF_ARP_OP;
   const uint16_t data = data_16bit;
   const uint16_t offset = sizeof( oxm_match_header );
 
   oxm_matches *matches = create_oxm_matches();
 
-  expect_assert_failure( append_oxm_match_arp_opcode( NULL, data ) );
+  expect_assert_failure( append_oxm_match_arp_op( NULL, data ) );
 
-  bool ret = append_oxm_match_arp_opcode( matches, data );
+  bool ret = append_oxm_match_arp_op( matches, data );
   assert_true( ret );
 
   oxm_match_header *chk_hdr;
@@ -2122,7 +2122,7 @@ test_parse_ofp_match() {
     append_oxm_match_sctp_dst( expected, data_16bit );
     append_oxm_match_icmpv4_type( expected, data_8bit );
     append_oxm_match_icmpv4_code( expected, data_8bit );
-    append_oxm_match_arp_opcode( expected, data_16bit );
+    append_oxm_match_arp_op( expected, data_16bit );
     append_oxm_match_arp_spa( expected, data_32bit, mask_32bit );
     append_oxm_match_arp_tpa( expected, data_32bit, mask_32bit );
     append_oxm_match_arp_sha( expected, d_48bit, m_48bit );
@@ -2215,7 +2215,7 @@ test_construct_ofp_match() {
     append_oxm_match_sctp_dst( expected, data_16bit );
     append_oxm_match_icmpv4_type( expected, data_8bit );
     append_oxm_match_icmpv4_code( expected, data_8bit );
-    append_oxm_match_arp_opcode( expected, data_16bit );
+    append_oxm_match_arp_op( expected, data_16bit );
     append_oxm_match_arp_spa( expected, data_32bit, mask_32bit );
     append_oxm_match_arp_tpa( expected, data_32bit, mask_32bit );
     append_oxm_match_arp_sha( expected, d_48bit, m_48bit );
@@ -2311,7 +2311,7 @@ test_duplicate_oxm_matches() {
     append_oxm_match_sctp_dst( expected, data_16bit );
     append_oxm_match_icmpv4_type( expected, data_8bit );
     append_oxm_match_icmpv4_code( expected, data_8bit );
-    append_oxm_match_arp_opcode( expected, data_16bit );
+    append_oxm_match_arp_op( expected, data_16bit );
     append_oxm_match_arp_spa( expected, data_32bit, mask_32bit );
     append_oxm_match_arp_tpa( expected, data_32bit, mask_32bit );
     append_oxm_match_arp_sha( expected, d_48bit, m_48bit );
@@ -3095,9 +3095,9 @@ test_compare_oxm_match_with_arp_op() {
   y = create_oxm_matches();
   z = create_oxm_matches();
 
-  append_oxm_match_arp_opcode( x, 1 );
-  append_oxm_match_arp_opcode( y, 1 );
-  append_oxm_match_arp_opcode( z, 2 );
+  append_oxm_match_arp_op( x, 1 );
+  append_oxm_match_arp_op( y, 1 );
+  append_oxm_match_arp_op( z, 2 );
 
   assert_true( compare_oxm_match( x, y ) );
   assert_false( compare_oxm_match( x, z ) );
@@ -4655,9 +4655,9 @@ test_compare_oxm_match_strict_with_arp_op() {
   y = create_oxm_matches();
   z = create_oxm_matches();
 
-  append_oxm_match_arp_opcode( x, 1 );
-  append_oxm_match_arp_opcode( y, 1 );
-  append_oxm_match_arp_opcode( z, 2 );
+  append_oxm_match_arp_op( x, 1 );
+  append_oxm_match_arp_op( y, 1 );
+  append_oxm_match_arp_op( z, 2 );
 
   assert_true( compare_oxm_match_strict( x, y ) );
   assert_false( compare_oxm_match_strict( x, z ) );
@@ -5524,7 +5524,7 @@ main() {
     unit_test( test_append_oxm_match_sctp_dst ),
     unit_test( test_append_oxm_match_icmpv4_type ),
     unit_test( test_append_oxm_match_icmpv4_code ),
-    unit_test( test_append_oxm_match_arp_opcode ),
+    unit_test( test_append_oxm_match_arp_op ),
     unit_test( test_append_oxm_match_arp_spa ),
     unit_test( test_append_oxm_match_arp_tpa ),
     unit_test( test_append_oxm_match_arp_sha ),

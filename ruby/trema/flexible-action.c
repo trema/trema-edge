@@ -350,7 +350,7 @@ pack_arp_op( VALUE self, VALUE actions, VALUE options ) {
     append_action_set_field_arp_op( openflow_actions_ptr( actions ), ( const uint16_t ) NUM2UINT( r_arp_op ) );
   }
   else if ( rb_obj_is_kind_of( actions, flexible_action_eval ) ) {
-    append_oxm_match_arp_opcode( oxm_match_ptr( actions ), ( uint16_t ) NUM2UINT( r_arp_op ) );
+    append_oxm_match_arp_op( oxm_match_ptr( actions ), ( uint16_t ) NUM2UINT( r_arp_op ) );
   }
 
   return self;
