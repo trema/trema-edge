@@ -111,7 +111,7 @@ typedef struct {
 } match64;
 
 typedef struct {
-  match16 arp_op;
+  match16 arp_opcode;
   match8 arp_sha[ ETH_ADDRLEN ];
   match32 arp_spa;
   match8 arp_tha[ ETH_ADDRLEN ];

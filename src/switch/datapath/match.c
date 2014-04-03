@@ -76,7 +76,7 @@ init_match( match *new_match ) {
 
   memset( new_match, 0, sizeof( match ) );
 
-  init_match16( &new_match->arp_op );
+  init_match16( &new_match->arp_opcode );
   for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
     init_match8( &( new_match->arp_sha[ i ] ) );
   }
@@ -216,7 +216,7 @@ validate_match( match *match ) {
     }
   }
 
-  if ( match->arp_op.valid || match->arp_spa.valid || match->arp_tpa.valid ||
+  if ( match->arp_opcode.valid || match->arp_spa.valid || match->arp_tpa.valid ||
        match->arp_sha[ 0 ].valid || match->arp_tha[ 0 ].valid ) {
     if ( !match->eth_type.valid || match->eth_type.value != ETH_ETHTYPE_ARP ) {
       return ERROR_OFDPE_BAD_MATCH_BAD_PREREQ;
@@ -323,7 +323,7 @@ compare_match_strict( const match *x, const match *y ) {
   assert( x != NULL );
   assert( y != NULL );
 
-  if ( !compare_match16_strict( x->arp_op, y->arp_op ) ) {
+  if ( !compare_match16_strict( x->arp_opcode, y->arp_opcode ) ) {
     return false;
   }
   for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
@@ -589,7 +589,7 @@ compare_match( const match *narrow, const match *wide ) {
   assert( narrow != NULL );
   assert( wide != NULL );
 
-  if ( !compare_match16( narrow->arp_op, wide->arp_op ) ) {
+  if ( !compare_match16( narrow->arp_opcode, wide->arp_opcode ) ) {
     return false;
   }
   for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
@@ -774,9 +774,9 @@ build_match_from_packet_info( match *m, const packet_info *pinfo ) {
   }
 
   if ( ( pinfo->format & NW_ARP ) != 0 ) {
-    m->arp_op.value = pinfo->arp_ar_op;
-    m->arp_op.mask = UINT16_MAX;
-    m->arp_op.valid = true;
+    m->arp_opcode.value = pinfo->arp_ar_op;
+    m->arp_opcode.mask = UINT16_MAX;
+    m->arp_opcode.valid = true;
     for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
       m->arp_sha[ i ].value = pinfo->arp_sha[ i ];
       m->arp_sha[ i ].mask = UINT8_MAX;
@@ -961,8 +961,8 @@ build_all_wildcarded_match( match *m ) {
   m->pbb_isid.mask = 0;
   m->pbb_isid.valid = true;
 
-  m->arp_op.mask = 0;
-  m->arp_op.valid = true;
+  m->arp_opcode.mask = 0;
+  m->arp_opcode.valid = true;
 
   for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
     m->arp_sha[ i ].mask = 0;
@@ -1186,7 +1186,7 @@ dump_match( const match *m, void dump_function( const char *format, ... ) ) {
   assert( m != NULL );
   assert( dump_function != NULL );
 
-  dump_match16( "arp_op", &m->arp_op, dump_function );
+  dump_match16( "arp_opcode", &m->arp_opcode, dump_function );
   dump_eth_addr( "arp_sha", m->arp_sha, dump_function );
   dump_match32( "arp_spa", &m->arp_spa, dump_function );
   dump_eth_addr( "arp_tha", m->arp_tha, dump_function );
@@ -1273,7 +1273,7 @@ merge_match( match *dst, const match *src) {
   assert( dst != NULL );
   assert( src != NULL );
 
-  merge_match16( &dst->arp_op, &src->arp_op );
+  merge_match16( &dst->arp_opcode, &src->arp_opcode );
   for ( int i = 0; i < ETH_ADDRLEN; i++ ) {
     merge_match8( &( dst->arp_sha[ i ] ), &( src->arp_sha[ i ] ) );
   }

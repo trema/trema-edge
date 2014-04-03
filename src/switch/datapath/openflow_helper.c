@@ -293,7 +293,7 @@ get_oxm_length( const match *match ) {
 
   size_t length = 0;
 
-  length += get_oxm_length_from_match16( &match->arp_op, 1 );
+  length += get_oxm_length_from_match16( &match->arp_opcode, 1 );
   length += get_oxm_length_from_match8( match->arp_sha, ETH_ADDRLEN );
   length += get_oxm_length_from_match32( &match->arp_spa, 1 );
   length += get_oxm_length_from_match8( match->arp_tha, ETH_ADDRLEN );

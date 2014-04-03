@@ -253,7 +253,7 @@ r_match_to_oxm_match( VALUE r_match, oxm_matches *match ) {
   APPEND_OXM_MATCH_UINT8( r_match, "@icmpv4_type", append_oxm_match_icmpv4_type, match );
   APPEND_OXM_MATCH_UINT8( r_match, "@icmpv4_code", append_oxm_match_icmpv4_code, match );
 
-  APPEND_OXM_MATCH_UINT16( r_match, "@arp_op", append_oxm_match_arp_op, match );
+  APPEND_OXM_MATCH_UINT16( r_match, "@arp_opcode", append_oxm_match_arp_opcode, match );
 
   APPEND_OXM_MATCH_IPV4_ADDR_MASK( r_match, "@arp_spa", append_oxm_match_arp_spa, match );
   APPEND_OXM_MATCH_IPV4_ADDR_MASK( r_match, "@arp_tpa", append_oxm_match_arp_tpa, match );

@@ -374,7 +374,7 @@ _assign_match( match *match, const oxm_match_header *hdr ) {
     break;
     case OXM_OF_ARP_OP: {
       const uint16_t *value = ( const uint16_t * ) ( ( const char * ) hdr + sizeof ( oxm_match_header ) );
-      MATCH_ATTR_SET( arp_op, *value )
+      MATCH_ATTR_SET( arp_opcode, *value )
     }
     break;
     case OXM_OF_ARP_SPA:
@@ -483,7 +483,7 @@ _construct_oxm( oxm_matches *oxm_match, match *match ) {
   APPEND_OXM_MATCH( vlan_pcp )
   APPEND_OXM_MATCH( icmpv4_type )
   APPEND_OXM_MATCH( icmpv6_type )
-  APPEND_OXM_MATCH( arp_op )
+  APPEND_OXM_MATCH( arp_opcode )
   uint8_t eth_addr[ ETH_ADDRLEN ];
   uint8_t eth_addr_mask[ ETH_ADDRLEN ];
   if ( match->arp_sha[ 0 ].valid ) {
