@@ -483,8 +483,10 @@ _construct_oxm( oxm_matches *oxm_match, match *match ) {
   APPEND_OXM_MATCH( vlan_pcp )
   APPEND_OXM_MATCH( icmpv4_type )
   APPEND_OXM_MATCH( icmpv6_type )
-  APPEND_OXM_MATCH( arp_opcode )
-  uint8_t eth_addr[ ETH_ADDRLEN ];
+  if ( match->arp_opcode.valid ) {
+		append_oxm_match_arp_op( oxm_match, match->arp_opcode.value );
+	}
+	uint8_t eth_addr[ ETH_ADDRLEN ];
   uint8_t eth_addr_mask[ ETH_ADDRLEN ];
   if ( match->arp_sha[ 0 ].valid ) {
     byte_copy_match8( eth_addr, eth_addr_mask, &match->arp_sha[ 0 ], ETH_ADDRLEN );

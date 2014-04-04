@@ -8427,7 +8427,7 @@ set_match_from_packet( oxm_matches *match, const uint32_t in_port,
   }
   else if ( eth_type == ETH_ETHTYPE_ARP ) {
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ARP_OP ) ) ) {
-      append_oxm_match_arp_opcode( match, ( ( packet_info * ) packet->user_data )->arp_ar_op );
+      append_oxm_match_arp_op( match, ( ( packet_info * ) packet->user_data )->arp_ar_op );
     }
     if ( no_mask || !( mask->wildcards & WILDCARD_OFB_BIT( OFPXMT_OFB_ARP_SPA ) ) ) {
       append_oxm_match_arp_spa( match, ( ( packet_info * ) packet->user_data )->arp_spa, ( uint32_t ) ( no_mask ? UINT32_MAX : mask->mask_arp_spa ) );
