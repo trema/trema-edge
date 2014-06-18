@@ -21,6 +21,9 @@
 
 bool
 valid_group_id( const uint32_t id ) {
+  if ( id == OFPG_ALL || id == OFPG_ANY ) {
+    return true;
+  }
   if ( id > OFPG_MAX ) {
     return false;
   }
