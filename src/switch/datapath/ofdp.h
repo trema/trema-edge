@@ -27,6 +27,8 @@
 #include "flow_table.h"
 #include "group_entry.h"
 #include "group_table.h"
+#include "meter_entry.h"
+#include "meter_table.h"
 #include "instruction.h"
 #include "match.h"
 #include "ofdp_error.h"

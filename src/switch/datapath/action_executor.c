@@ -488,7 +488,7 @@ set_vlan_pcp( buffer *frame, uint8_t value ) {
 }
 
 
-static bool
+bool
 set_nw_dscp( buffer *frame, uint8_t value ) {
   assert( frame != NULL );
 
