@@ -105,7 +105,11 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
     // update bucket
     if ( false == do_drop ) {
       for( int i=0; i<entry->bands_count; i++ ) {
-        entry->bands[i].bucket += rate_size;
+        if ( entry->bands[i].bucket > UINT64_MAX - rate_size ) {
+          entry->bands[i].bucket = UINT64_MAX;
+        } else {
+          entry->bands[i].bucket += rate_size;
+        }
       }
     }
   }
