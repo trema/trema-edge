@@ -33,6 +33,9 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
     // drain
     for( int i=0; i<entry->bands_count; i++ ) {
       uint64_t drain = interval_sec * entry->bands[i].rate;
+      if ( ( entry->flags & OFPMF_PKTPS ) != OFPMF_PKTPS ) {
+        drain = drain * 1000; // kilobits; we compare in bits
+      }
       if ( entry->bands[i].bucket < drain ) {
         entry->bands[i].bucket = 0;
       } else {
