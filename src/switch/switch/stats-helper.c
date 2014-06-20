@@ -1158,7 +1158,7 @@ _handle_meter_stats( const struct ofp_meter_multipart_request *req, const uint32
       free_buffer( buf );
     }
     xfree( alloc_ptrs );
-    for ( int i=0; i<nr_meter_stats; i++ ) {
+    for ( uint32_t i=0; i<nr_meter_stats; i++ ) {
       if ( stats[i].bands_count > 0 ){
         xfree( stats[i].bands );
       }
@@ -1244,7 +1244,7 @@ _handle_meter_config( const struct ofp_meter_multipart_request *req, const uint3
       free_buffer( buf );
     }
     xfree( alloc_ptrs );
-    for ( int i=0; i<nr_meter_stats; i++ ) {
+    for ( uint32_t i=0; i<nr_meter_stats; i++ ) {
       if ( stats[i].bands_count > 0 ){
         xfree( stats[i].bands );
       }

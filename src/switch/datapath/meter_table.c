@@ -181,6 +181,7 @@ ref_meter_id( const uint32_t meter_id ) {
   if ( !unlock_pipeline() ) {
     return ERROR_UNLOCK;
   }
+  return OFDPE_SUCCESS;
 }
 
 
@@ -200,6 +201,7 @@ unref_meter_id( const uint32_t meter_id ) {
   if ( !unlock_pipeline() ) {
     return ERROR_UNLOCK;
   }
+  return OFDPE_SUCCESS;
 }
 
 
@@ -217,7 +219,7 @@ get_meter_stats( const uint32_t meter_id, meter_entry** entries, uint32_t *count
     meter_entry *head = xcalloc(*count, sizeof(meter_entry));
     int i=0;
     for ( list_element *e = table->entries; e != NULL; e=e->next,i++ ) {
-      meter_entry *p = clone_meter_entry( head+i, e->data );
+      clone_meter_entry( head+i, e->data );
     }
     *entries = head;
   } else {
