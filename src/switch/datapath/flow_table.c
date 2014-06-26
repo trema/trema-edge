@@ -1091,6 +1091,44 @@ delete_flow_entries_by_group_id( const uint32_t group_id ) {
 
 
 OFDPE
+delete_flow_entries_by_meter_id( const uint32_t meter_id ) {
+
+  if ( !lock_pipeline() ) {
+    return ERROR_LOCK;
+  }
+
+  list_element *delete_us = NULL;
+  create_list( &delete_us );
+
+  for ( uint8_t table_id = 0; table_id <= FLOW_TABLE_ID_MAX; table_id++ ) {
+    flow_table *table = get_flow_table( table_id );
+    assert( table != NULL );
+    for ( list_element *e = table->entries; e != NULL; e = e->next ) {
+      assert( e->data != NULL );
+      flow_entry *entry = e->data;
+      if ( entry->instructions->meter != NULL ) {
+        if ( meter_id == OFPM_ALL || meter_id == entry->instructions->meter->meter_id ) {
+          append_to_tail( &delete_us, e->data );
+        }
+      }
+    }
+  }
+
+  delete_flow_entries_in_list( delete_us, 0, 0, OFPP_ANY, OFPG_ANY, OFPRR_GROUP_DELETE );
+
+  if ( delete_us != NULL ) {
+    delete_list( delete_us );
+  }
+
+  if ( !unlock_pipeline() ) {
+    return ERROR_UNLOCK;
+  }
+
+  return OFDPE_SUCCESS;
+}
+
+
+OFDPE
 get_table_stats( table_stats **stats, uint8_t *n_tables ) {
   assert( stats != NULL );
   assert( n_tables != NULL );

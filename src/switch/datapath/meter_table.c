@@ -1,4 +1,5 @@
 #include "ofdp_common.h"
+#include "flow_table.h"
 #include "meter_table.h"
 #include "table_manager.h"
 
@@ -123,11 +124,13 @@ delete_meter_entry( const uint32_t meter_id ) {
     return ERROR_LOCK;
   }
   if ( meter_id == OFPM_ALL ) {
+    delete_flow_entries_by_meter_id( meter_id );
     for ( list_element *e = table->entries; e != NULL; ) {
       list_element *next = e->next;
       meter_entry *entry = e->data;
       if ( entry->meter_id > 0 && entry->meter_id <= OFPM_MAX ) { // virtual meters won't be deleted by OFPM_ALL
         delete_element( &table->entries, entry );
+        free_meter_entry( entry );
       }
       e = next;
     }
@@ -135,10 +138,10 @@ delete_meter_entry( const uint32_t meter_id ) {
     meter_entry *old_entry = lookup_meter_entry( meter_id );
     if ( NULL == old_entry ) {
       ret = ERROR_OFDPE_METER_MOD_FAILED_UNKNOWN_METER;
-    } else if ( old_entry->ref_count > 0 ) {
-      // XXX: may remove referencing flows as spec
-      ret = ERROR_OFDPE_METER_MOD_FAILED_UNKNOWN;
     } else {
+      if ( old_entry->ref_count > 0 ) {
+        delete_flow_entries_by_meter_id( meter_id );
+      }
       delete_element( &table->entries, old_entry );
       free_meter_entry( old_entry );
     }

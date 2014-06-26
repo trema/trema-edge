@@ -110,6 +110,7 @@ OFDPE delete_flow_entries( const uint8_t table_id, const match *match, const uin
 OFDPE delete_flow_entry_strict( const uint8_t table_id, const match *match, const uint64_t cookie, const uint64_t cookie_mask, 
                                 const uint16_t priority, uint32_t out_port, uint32_t out_group );
 OFDPE delete_flow_entries_by_group_id( const uint32_t group_id );
+OFDPE delete_flow_entries_by_meter_id( const uint32_t meter_id );
 OFDPE get_table_stats( table_stats **stats, uint8_t *n_tables );
 OFDPE get_flow_stats( const uint8_t table_id, const match *match, const uint64_t cookie, const uint64_t cookie_mask,
                       const uint32_t out_port, const uint32_t out_group, flow_stats **stats, uint32_t *n_entries );
