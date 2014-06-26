@@ -85,25 +85,31 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
     if ( band->type == OFPMBT_DROP ) {
       do_drop = true;
     } else if ( band->type == OFPMBT_DSCP_REMARK ) {
-      packet_info info = get_packet_info( frame );
-      uint8_t phb = info.ip_dscp >> 3;
-      if ( phb == 1 || phb == 2 || phb == 3 ) { // AF classes
-        uint8_t prec = ( info.ip_dscp & 0x07 ) + band->prec_level;
-        if ( prec > 0x07 ) {
-          prec = 0x07;
-        }
-        if ( set_nw_dscp( frame, (phb<<3)|prec ) == false ){
-          error("DSCP remark failed");
+      if ( band->prec_level > 0 ) {
+        packet_info info = get_packet_info( frame );
+        uint8_t phb = info.ip_dscp >> 3;
+        uint8_t prec = ( info.ip_dscp >> 1 ) & 0x03;
+        if ( prec != 0 && ( phb == 1 || phb == 2 || phb == 3 || phb == 4 ) ) { // AF classes
+          prec += band->prec_level;
+          if ( prec > 0x03 ) {
+            prec = 0x03;
+          }
+          if ( set_nw_dscp( frame, (phb<<3)|(prec<<1) ) == false ){
+            error("DSCP remark failed");
+          }
         }
       }
     }
     band->packet_count++;
     band->byte_count += frame->length;
+
+    entry->estimated_rate = ( BASE_INTERVAL * entry->estimated_rate ) / ( interval_sec + BASE_INTERVAL );
+  } else {
+    entry->estimated_rate = passing_rate;
   }
-  
   if ( entry->flags & OFPMF_BURST ) {
     // update bucket
-    if ( false == do_drop ) {
+    if ( selected_burst_band == -1 ) {
       for( int i=0; i<entry->bands_count; i++ ) {
         if ( entry->bands[i].bucket > UINT64_MAX - rate_size ) {
           entry->bands[i].bucket = UINT64_MAX;
@@ -113,12 +119,9 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
       }
     }
   }
-  
   if ( do_drop ) {
-    entry->estimated_rate = ( BASE_INTERVAL * entry->estimated_rate ) / ( interval_sec + BASE_INTERVAL );
     return ERROR_DROP_PACKET;
   } else {
-    entry->estimated_rate = passing_rate;
     return OFDPE_SUCCESS;
   }
 }
