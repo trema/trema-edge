@@ -125,7 +125,9 @@ process_received_frame( const switch_port *port, buffer *frame ) {
     uint8_t next_table_id = FLOW_TABLE_ALL;
     ret = apply_instructions( table_id, entry->instructions, frame, &set, &next_table_id );
     if ( ret != OFDPE_SUCCESS ) {
-      error( "Failed to apply instructions ( ret = %d ).", ret );
+      if ( ret != ERROR_DROP_PACKET ) {
+        error( "Failed to apply instructions ( ret = %d ).", ret );
+      }
       break;
     }
 
