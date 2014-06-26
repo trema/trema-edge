@@ -19,7 +19,7 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
   struct timespec interval = { 0, 0 };
   timespec_diff( entry->meter_at, now, &interval);
   entry->meter_at = now;
-  double interval_sec = interval.tv_sec + interval.tv_nsec/1000000.0;
+  double interval_sec = interval.tv_sec + interval.tv_nsec/1000000000.0;
   
   uint64_t rate_size = frame->length * 8; // bits
   if ( entry->flags & OFPMF_PKTPS ) {
