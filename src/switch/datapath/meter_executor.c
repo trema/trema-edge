@@ -14,9 +14,9 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
   entry->packet_count++;
   entry->byte_count += frame->length;
   
-  struct timespec now = { 0, 0 };
+  struct timespec now;
   time_now( &now );
-  struct timespec interval = { 0, 0 };
+  struct timespec interval;
   timespec_diff( entry->meter_at, now, &interval);
   entry->meter_at = now;
   double interval_sec = interval.tv_sec + interval.tv_nsec/1000000000.0;
@@ -44,12 +44,19 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
     }
   }
   
+  packet_info *info = NULL;
+  if ( frame->user_data != NULL || parse_packet( frame ) == true) {
+    info = frame->user_data;
+  }
+  
   // select band
   double passing_rate = ( BASE_INTERVAL * entry->estimated_rate + rate_size ) / ( interval_sec + BASE_INTERVAL );
   uint16_t rate_for_select_max = 0;
   for( int i=0; i<entry->bands_count; i++ ) {
-    if ( !packet_type_ipv4( frame ) && !packet_type_ipv6( frame ) && entry->bands[i].type == OFPMBT_DSCP_REMARK ){
-      continue;
+    if ( entry->bands[i].type == OFPMBT_DSCP_REMARK ) {
+      if( info == NULL || ( info->format & (NW_IPV4|NW_IPV6) ) == 0 ) {
+        continue;
+      }
     }
     if ( ( entry->flags & OFPMF_BURST ) != 0 && selected_burst_band == -1 ) {
       uint64_t burst_size = entry->bands[i].burst_size;
@@ -85,10 +92,9 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
     if ( band->type == OFPMBT_DROP ) {
       do_drop = true;
     } else if ( band->type == OFPMBT_DSCP_REMARK ) {
-      if ( band->prec_level > 0 ) {
-        packet_info info = get_packet_info( frame );
-        uint8_t phb = info.ip_dscp >> 3;
-        uint8_t prec = ( info.ip_dscp >> 1 ) & 0x03;
+      if ( band->prec_level > 0 && info != NULL ) {
+        uint8_t phb = info->ip_dscp >> 3;
+        uint8_t prec = ( info->ip_dscp >> 1 ) & 0x03;
         if ( prec != 0 && ( phb == 1 || phb == 2 || phb == 3 || phb == 4 ) ) { // AF classes
           prec += band->prec_level;
           if ( prec > 0x03 ) {
