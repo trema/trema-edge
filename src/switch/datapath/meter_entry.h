@@ -5,8 +5,8 @@
 
 typedef struct {
   uint16_t type; // OFPMBT_
-  uint16_t rate;
-  uint16_t burst_size;
+  uint32_t rate;
+  uint32_t burst_size;
   // only used with OFPMBT_DSCP_REMARK
   uint8_t prec_level;
   // bucket will be refreshed per sec
