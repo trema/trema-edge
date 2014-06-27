@@ -2222,11 +2222,10 @@ execute_action_output( buffer *frame, action *output ) {
 
   bool ret = true;
 
-  if ( output->port == OFPP_CONTROLLER ) {
-    packet_info *info = ( packet_info * ) frame->user_data;
-    uint32_t in_port = info->eth_in_port;
-    switch_port *port = lookup_switch_port( in_port );
+  packet_info *info = ( packet_info * ) frame->user_data;
+  uint32_t in_port = info->eth_in_port;
 
+  if ( output->port == OFPP_CONTROLLER || ( output->port == OFPP_IN_PORT && in_port == OFPP_CONTROLLER )) {
     match *match = NULL;
     uint8_t table_id = 0;
     uint64_t cookie = 0;
@@ -2234,7 +2233,8 @@ execute_action_output( buffer *frame, action *output ) {
       match = duplicate_match( output->entry->match );
       cookie = output->entry->cookie;
       table_id = output->entry->table_id;
-    } else {
+    }
+    else {
       match = create_match();
     }
     match->in_port.value = info->eth_in_port;
@@ -2251,7 +2251,9 @@ execute_action_output( buffer *frame, action *output ) {
       match->tunnel_id.value = info->tunnel_id;
       match->tunnel_id.valid = true;
     }
+
     if ( output->entry != NULL && output->entry->table_miss ) {
+      switch_port *port = lookup_switch_port( in_port );
       if ( port == NULL || ( port->config & OFPPC_NO_PACKET_IN ) == 0 ){
         notify_packet_in( OFPR_NO_MATCH, table_id, cookie, match, frame, MISS_SEND_LEN );
       }
@@ -2262,23 +2264,19 @@ execute_action_output( buffer *frame, action *output ) {
     delete_match( match );
   }
   else if ( output->port == OFPP_TABLE ) {
-    packet_info *info = ( packet_info * ) frame->user_data;
-    uint32_t in_port = info->eth_in_port;
-
-    // port is valid standard switch port or OFPP_CONTROLLER
-    switch_port *port = lookup_switch_port( in_port );
-    bool free_port = false;
-    if ( port == NULL ){
-      port = ( switch_port * ) xmalloc( sizeof( switch_port ) );
-      memset( port, 0, sizeof( switch_port ) );
-      port->port_no = OFPP_CONTROLLER;
-      free_port = true;
+    switch_port *port = NULL, controller = { .port_no = OFPP_CONTROLLER };
+    if ( in_port == OFPP_CONTROLLER ) {
+      port = &controller;
     }
-
-    handle_received_frame( port, frame );
-
-    if ( free_port ) {
-      xfree( port );
+    else {
+      port = lookup_switch_port( in_port );
+    }
+    if ( port != NULL ) {
+      handle_received_frame( port, frame );
+    }
+    else {
+      // in_port must be set to either valid standard switch port or OFPP_CONTROLLER (7.3.7)
+      ret = OFDPE_FAILED;
     }
   }
   else {
