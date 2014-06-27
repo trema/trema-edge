@@ -118,6 +118,7 @@ process_received_frame( const switch_port *port, buffer *frame ) {
 
     entry->packet_count++;
     entry->byte_count += frame->length;
+    time_now( &( entry->last_seen ) );
 
     uint8_t next_table_id = FLOW_TABLE_ALL;
     ret = apply_instructions( table_id, entry->instructions, frame, &set, &next_table_id );
