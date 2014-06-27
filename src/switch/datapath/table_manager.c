@@ -18,6 +18,7 @@
 
 #include "flow_table.h"
 #include "group_table.h"
+#include "meter_table.h"
 #include "table_manager.h"
 
 
@@ -28,6 +29,7 @@ OFDPE
 init_table_manager( const uint32_t max_flow_entries ) {
   init_flow_tables( max_flow_entries );
   init_group_table();
+  init_meter_table();
 
   return OFDPE_SUCCESS;
 }
@@ -35,6 +37,7 @@ init_table_manager( const uint32_t max_flow_entries ) {
 
 OFDPE
 finalize_table_manager( void ) {
+  finalize_meter_table();
   finalize_group_table();
   finalize_flow_tables();
 

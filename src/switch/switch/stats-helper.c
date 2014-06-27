@@ -1100,25 +1100,178 @@ _handle_group_features( const uint32_t transaction_id, const uint32_t capabiliti
 void ( *handle_group_features )( const uint32_t transaction_id, const uint32_t capabilities ) = _handle_group_features;
 
 
+static buffer *
+assign_meter_stats( meter_entry *stats ) {
+  uint16_t length = ( uint16_t )( sizeof( struct ofp_meter_stats ) + stats->bands_count * sizeof( struct ofp_meter_band_stats ) );
+  buffer *buffer = alloc_buffer_with_length( length );
+  append_back_buffer( buffer, length );
+  struct ofp_meter_stats *meter_stats = buffer->data;
+
+  meter_stats->meter_id = stats->meter_id;
+  meter_stats->len = length;
+  memset( &meter_stats->pad, 0, sizeof( meter_stats->pad ) );
+  meter_stats->flow_count = stats->ref_count;
+  meter_stats->packet_in_count = stats->packet_count;
+  meter_stats->byte_in_count = stats->byte_count;
+  
+  struct timespec now = { 0, 0 };
+  time_now( &now );
+  struct timespec interval = { 0, 0 };
+  timespec_diff( stats->created_at, now, &interval);
+  meter_stats->duration_sec = interval.tv_sec;
+  meter_stats->duration_nsec = interval.tv_nsec;
+  
+  for ( int i=0; i<stats->bands_count; i++ ) {
+    struct ofp_meter_band_stats band_stat = { stats->bands[i].packet_count, stats->bands[i].byte_count };
+    memcpy( meter_stats->band_stats + i * sizeof(band_stat), &band_stat, sizeof(band_stat) );
+  }
+  return buffer;
+}
+
+
 void
 _handle_meter_stats( const struct ofp_meter_multipart_request *req, const uint32_t transaction_id ) {
   UNUSED( req );
-  send_error_message( transaction_id, OFPET_BAD_REQUEST, OFPBRC_BAD_MULTIPART );
+  
+  meter_entry *stats = NULL;
+  uint32_t nr_meter_stats = 0;
+
+  OFDPE ret = get_meter_stats( req->meter_id, &stats, &nr_meter_stats );
+  if ( ret == OFDPE_SUCCESS ) {
+    list_element *list = NULL;
+    if ( nr_meter_stats ) {
+      list = new_list();
+    }
+    void **alloc_ptrs = ( void ** )xmalloc( nr_meter_stats * sizeof( void * ) );
+    for ( uint32_t i = 0; i < nr_meter_stats; i++ ) {
+      buffer *buf = assign_meter_stats( &stats[ i ] );
+      struct ofp_meter_stats *meter_stats = buf->data;
+      append_to_tail( &list, ( void * ) meter_stats );
+      alloc_ptrs[ i ] = buf;
+    }
+
+    SEND_STATS( meter, transaction_id, 0, list );
+    for ( uint32_t i = 0; i < nr_meter_stats; i++ ) {
+      buffer *buf = alloc_ptrs[ i ];
+      struct ofp_meter_stats *meter_stats = buf->data;
+      delete_element( &list, ( void * ) meter_stats );
+      free_buffer( buf );
+    }
+    xfree( alloc_ptrs );
+    for ( uint32_t i=0; i<nr_meter_stats; i++ ) {
+      if ( stats[i].bands_count > 0 ){
+        xfree( stats[i].bands );
+      }
+    }
+    xfree( stats );
+    if ( list != NULL ) {
+      delete_list( list );
+    }
+  }
+  else {
+    SEND_STATS( flow, transaction_id, 0, NULL );
+  }
 }
 void ( *handle_meter_stats )( const struct ofp_meter_multipart_request *req, const uint32_t transaction_id ) = _handle_meter_stats;
+
+
+static buffer *
+assign_meter_config( meter_entry *stats ) {
+  uint16_t length = ( uint16_t )( sizeof( struct ofp_meter_config ) + stats->bands_count * 16 );
+  buffer *buffer = alloc_buffer_with_length( length );
+  append_back_buffer( buffer, length );
+  struct ofp_meter_config *meter_config = buffer->data;
+
+  meter_config->length = length;
+  meter_config->flags = stats->flags;
+  meter_config->meter_id = stats->meter_id;
+  memset( &meter_config->bands, 0, stats->bands_count * 16 );
+  
+  for ( int i=0; i<stats->bands_count; i++ ) {
+    if ( stats->bands[i].type == OFPMBT_DROP ) {
+      struct ofp_meter_band_drop band = {
+          stats->bands[i].type,
+          16,
+          stats->bands[i].rate,
+          stats->bands[i].burst_size,
+          { 0,0,0,0 }
+        };
+      memcpy( ((void*)meter_config->bands) + i*16, &band, sizeof( struct ofp_meter_band_drop ) );
+    } else if ( stats->bands[i].type == OFPMBT_DSCP_REMARK ) {
+      struct ofp_meter_band_dscp_remark band = {
+          stats->bands[i].type,
+          16,
+          stats->bands[i].rate,
+          stats->bands[i].burst_size,
+          stats->bands[i].prec_level,
+          { 0,0,0 }
+        };
+      memcpy( ((void*)meter_config->bands) + i*16, &band, sizeof( struct ofp_meter_band_dscp_remark ) );
+    } else {
+      error("meter_stats returned unknown type %d", stats->bands[i].type);
+    }
+  }
+  return buffer;
+}
 
 
 void
 _handle_meter_config( const struct ofp_meter_multipart_request *req, const uint32_t transaction_id ) {
   UNUSED( req );
-  send_error_message( transaction_id, OFPET_BAD_REQUEST, OFPBRC_BAD_MULTIPART );
+
+  meter_entry *stats = NULL;
+  uint32_t nr_meter_stats = 0;
+
+  OFDPE ret = get_meter_stats( req->meter_id, &stats, &nr_meter_stats );
+  if ( ret == OFDPE_SUCCESS ) {
+    list_element *list = NULL;
+    if ( nr_meter_stats ) {
+      list = new_list();
+    }
+    void **alloc_ptrs = ( void ** )xmalloc( nr_meter_stats * sizeof( void * ) );
+    for ( uint32_t i = 0; i < nr_meter_stats; i++ ) {
+      buffer *buf = assign_meter_config( &stats[ i ] );
+      struct ofp_meter_config *meter_config = buf->data;
+      append_to_tail( &list, ( void * ) meter_config );
+      alloc_ptrs[ i ] = buf;
+    }
+
+    SEND_STATS( meter_config, transaction_id, 0, list );
+    for ( uint32_t i = 0; i < nr_meter_stats; i++ ) {
+      buffer *buf = alloc_ptrs[ i ];
+      struct ofp_meter_config *meter_stats = buf->data;
+      delete_element( &list, ( void * ) meter_stats );
+      free_buffer( buf );
+    }
+    xfree( alloc_ptrs );
+    for ( uint32_t i=0; i<nr_meter_stats; i++ ) {
+      if ( stats[i].bands_count > 0 ){
+        xfree( stats[i].bands );
+      }
+    }
+    xfree( stats );
+    if ( list != NULL ) {
+      delete_list( list );
+    }
+  }
+  else {
+    SEND_STATS( meter_config, transaction_id, 0, NULL );
+  }
 }
 void ( *handle_meter_config )( const struct ofp_meter_multipart_request *req, const uint32_t transaction_id ) = _handle_meter_config;
 
 
 void
 _handle_meter_features( const uint32_t transaction_id ) {
-  send_error_message( transaction_id, OFPET_BAD_REQUEST, OFPBRC_BAD_MULTIPART );
+  buffer *msg = create_meter_features_multipart_reply( transaction_id,
+                                                       0,
+                                                       UINT32_MAX,
+                                                       ( 1 << OFPMBT_DROP ) | ( 1 << OFPMBT_DSCP_REMARK ),
+                                                       OFPMF_KBPS | OFPMF_PKTPS | OFPMF_BURST | OFPMF_STATS,
+                                                       UINT8_MAX,
+                                                       2);
+  switch_send_openflow_message( msg );
+  free_buffer( msg );
 }
 void ( *handle_meter_features )( const uint32_t transaction_id ) = _handle_meter_features;
 

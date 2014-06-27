@@ -25,6 +25,7 @@
 #include "ofdp.h"
 #include "action-helper.h"
 #include "group-helper.h"
+#include "meter-helper.h"
 #include "instruction-helper.h"
 #include "oxm-helper.h"
 #include "parse-options.h"
@@ -535,6 +536,32 @@ _handle_group_mod( const uint32_t transaction_id,
   }
 }
 void ( *handle_group_mod )( const uint32_t transaction_id, const uint16_t command, const uint8_t type, const uint32_t group_id, const list_element *buckets, void *user_data ) = _handle_group_mod;
+
+
+static void
+_handle_meter_mod( const uint32_t transaction_id,
+        const uint16_t command,
+        const uint16_t flags,
+        const uint32_t meter_id,
+        const list_element *bands,
+        void *user_data ) {
+  UNUSED( user_data );
+  switch( command ) {
+    case OFPMC_ADD:
+      handle_meter_mod_add( transaction_id, flags, meter_id, bands );
+    break;
+    case OFPMC_MODIFY:
+      handle_meter_mod_mod( transaction_id, flags, meter_id, bands );
+    break;
+    case OFPMC_DELETE:
+      handle_meter_mod_delete( transaction_id, meter_id );
+    break;
+    default:
+      send_error_message( transaction_id, OFPET_METER_MOD_FAILED, OFPMMFC_BAD_COMMAND );
+    break;
+  }
+}
+void ( *handle_meter_mod)( const uint32_t transaction_id, const uint16_t command, const uint16_t flags, const uint32_t meter_id, const list_element *bands, void *user_data ) = _handle_meter_mod;
 
 
 static void

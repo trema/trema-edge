@@ -54,6 +54,8 @@ OFDPE execute_action_list( action_list *list, buffer *frame );
 OFDPE execute_action_set( action_set *aset, buffer *frame );
 OFDPE execute_packet_out( uint32_t buffer_id, uint32_t in_port, action_list *list, buffer *frame );
 
+// meter_executor use this
+bool set_nw_dscp( buffer *frame, uint8_t value );
 
 #endif // ACTION_EXECUTOR_H
 

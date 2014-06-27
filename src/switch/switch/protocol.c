@@ -151,6 +151,7 @@ handle_controller_connected( void *user_data ) {
   set_port_mod_handler( handle_port_mod, user_data );
   set_table_mod_handler( handle_table_mod, user_data );
   set_group_mod_handler( handle_group_mod, user_data );
+  set_meter_mod_handler( handle_meter_mod, user_data );
   set_multipart_request_handler( handle_multipart_request, user_data );
   set_barrier_request_handler( handle_barrier_request, user_data );
   set_get_config_request_handler( handle_get_config_request, user_data );

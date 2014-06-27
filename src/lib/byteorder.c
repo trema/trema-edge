@@ -1851,7 +1851,7 @@ void hton_meter_config( struct ofp_meter_config *dst, const struct ofp_meter_con
   dst->meter_id = htonl( src->meter_id );
 
   size_t offset = offsetof( struct ofp_meter_config, bands );
-  size_t bands_length = ntohs( dst->length ) - offset;
+  size_t bands_length = src->length - offset;
 
   while ( bands_length >= sizeof( struct ofp_meter_band_header ) ) {
     const struct ofp_meter_band_header *bh_src = ( const struct ofp_meter_band_header * ) ( ( const char * ) src + offset );
@@ -1862,7 +1862,7 @@ void hton_meter_config( struct ofp_meter_config *dst, const struct ofp_meter_con
       break;
     }
 
-    ntoh_meter_band_header( bh_dst, bh_src );
+    hton_meter_band_header( bh_dst, bh_src );
 
     bands_length -= part_length;
     offset += part_length;

@@ -18,6 +18,7 @@
 
 #include "flow_table.h"
 #include "group_table.h"
+#include "meter_table.h"
 #include "instruction.h"
 
 
@@ -479,7 +480,9 @@ validate_instruction_meter( const instruction *instruction ) {
   assert( instruction != NULL );
   assert( instruction->type == OFPIT_METER );
 
-  // TODO: implement here
+  if ( instruction->meter_id == 0 || instruction->meter_id > OFPM_MAX ){
+    return ERROR_OFDPE_METER_MOD_FAILED_INVALID_METER;
+  }
 
   return OFDPE_SUCCESS;
 }
@@ -549,6 +552,21 @@ static void
 update_reference_counters( instruction_set *instructions, counter_update_type type ) {
   if ( instructions == NULL ) {
     return;
+  }
+
+  if ( instructions->meter != NULL ) {
+    uint32_t meter_id = instructions->meter->meter_id;
+    if ( type == INCREMENT ) {
+      if ( OFDPE_SUCCESS != ref_meter_id( meter_id ) ) {
+        error( "meter id=%d reference counter increment error", meter_id );
+      }
+    } else if ( type == DECREMENT ) {
+      if ( OFDPE_SUCCESS != unref_meter_id( meter_id ) ) {
+        error( "meter id=%d reference counter decrement error", meter_id );
+      }
+    } else {
+      error( "Undefined counter update type ( %#x ).", type );
+    }
   }
 
   if ( instructions->write_actions != NULL ) {
