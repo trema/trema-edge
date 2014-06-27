@@ -560,13 +560,13 @@ create_ether_device( const char *name, const size_t max_send_queue, const size_t
     warn( "Failed to set immediate mode for %s.", name );
   }
   #endif // USE_PCAP_IMMEDIATE_MODE
-  if ( pcap_setnonblock( handle, 1, errbuf ) == -1 ) {
-    warn( "Failed to setnonblock %s ( %s ).", name, errbuf );
-  }
   if ( pcap_activate( handle ) < 0 ) {
     error( "Failed to activate %s.", name );
     pcap_close( handle );
     return NULL;
+  }
+  if ( pcap_setnonblock( handle, 1, errbuf ) == -1 ) {
+    warn( "Failed to setnonblock %s ( %s ).", name, errbuf );
   }
 
   int fd = pcap_get_selectable_fd( handle );
