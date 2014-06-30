@@ -24,6 +24,7 @@
 extern "C" {
 #endif
 
+#include "mutex.h"
 
 #define MAX_OUTSTANDING_REQUESTS  16
 
@@ -50,6 +51,7 @@ struct protocol {
   struct async thread;
   const struct switch_arguments *args;
   message_queue *input_queue;
+  pthread_mutex_t *input_mutex;
   uint64_t send_count;
   void *data;
   int own_efd;

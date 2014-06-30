@@ -218,7 +218,11 @@ retrieve_packet_from_datapath( int fd, void *user_data ) {
     count = 0;
   }
   for ( uint64_t i = 0; i < count; i++ ) {
-    buffer *packet = dequeue_message( protocol->input_queue );
+    buffer *packet = NULL;
+    if ( lock_mutex( protocol->input_mutex ) ) {
+      packet = dequeue_message( protocol->input_queue );
+      unlock_mutex( protocol->input_mutex );
+    }
     assert( packet != NULL );
     handle_datapath_packet( packet, protocol );
   }
@@ -239,6 +243,7 @@ serve_protocol( void *data ) {
   protocol->own_efd = args->efd[ 0 ];
   protocol->peer_efd = args->efd[ 1 ];
   protocol->input_queue = args->to_protocol_queue;
+  protocol->input_mutex = args->queue_mutex;
   protocol->send_count = 0;
 
   set_fd_handler_safe( protocol->own_efd, retrieve_packet_from_datapath, protocol, NULL, NULL );

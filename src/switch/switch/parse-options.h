@@ -26,6 +26,7 @@ extern "C" {
 
 
 #include "trema.h"
+#include "mutex.h"
 
 
 struct switch_arguments {
@@ -38,6 +39,7 @@ struct switch_arguments {
   uint64_t datapath_id;
   int efd[ 2 ]; // event descriptors associated with the to_protocol_queue
   message_queue *to_protocol_queue;
+  pthread_mutex_t *queue_mutex;
   uint32_t server_ip;
   bool run_as_daemon;
   uint16_t server_port;

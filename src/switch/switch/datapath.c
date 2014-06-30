@@ -59,7 +59,10 @@ notify_protocol( int fd, void *user_data ) {
 static void
 push_datapath_message_to_peer( buffer *packet, struct datapath *datapath ) {
   if ( is_datapath() ) {
-    enqueue_message( datapath->peer_queue, packet );
+    if ( lock_mutex( datapath->peer_mutex ) ) {
+      enqueue_message( datapath->peer_queue, packet );
+      unlock_mutex( datapath->peer_mutex );
+    }
     datapath->send_count++;
     set_writable_safe( datapath->peer_efd, true );
   } else if ( is_protocol() ) {
@@ -274,6 +277,7 @@ serve_datapath( void *data ) {
   datapath->own_efd = args->efd[ 1 ];
   datapath->peer_efd = args->efd[ 0 ];
   datapath->peer_queue = args->to_protocol_queue;
+  datapath->peer_mutex = args->queue_mutex;
   datapath->send_count = 0;
   
   set_fd_handler_safe( datapath->peer_efd, NULL, NULL, notify_protocol, datapath );
