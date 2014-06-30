@@ -21,20 +21,11 @@
 #include <assert.h>
 #include "wrapper.h"
 #include "message_queue.h"
-#include "mutex.h"
-
-typedef struct {
-  message_queue public;
-  pthread_mutex_t mutex;
-} message_queue_private;
-
 
 
 message_queue *
 create_message_queue( void ) {
-  message_queue_private *priv = xmalloc( sizeof( message_queue_private ) );
-  init_mutex(&priv->mutex);
-  message_queue *new_queue = (message_queue *)priv;
+  message_queue *new_queue = xmalloc( sizeof( message_queue ) );
   new_queue->head = xmalloc( sizeof( message_queue_element ) );
   new_queue->head->data = NULL;
   new_queue->head->next = NULL;
@@ -59,8 +50,6 @@ delete_message_queue( message_queue *queue ) {
     queue->head = queue->head->next;
     xfree( element );
   }
-  message_queue_private *priv = (message_queue_private*)queue;
-  finalize_mutex(&priv->mutex);
   xfree( queue );
 
   return true;
@@ -86,11 +75,6 @@ enqueue_message( message_queue *queue, buffer *message ) {
     die( "message must not be NULL" );
   }
 
-  message_queue_private *priv = (message_queue_private*)queue;
-  if( !lock_mutex(&priv->mutex) ) {
-    return false;
-  }
-  
   message_queue_element *new_tail = xmalloc( sizeof( message_queue_element ) );
   new_tail->data = message;
   new_tail->next = NULL;
@@ -101,7 +85,6 @@ enqueue_message( message_queue *queue, buffer *message ) {
 
   collect_garbage( queue );
 
-  unlock_mutex( &priv->mutex );
   return true;
 }
 
@@ -114,12 +97,6 @@ dequeue_message( message_queue *queue ) {
   if ( queue->divider == queue->tail ) {
     return NULL;
   }
-  assert(queue->length > 0);
-
-  message_queue_private *priv = (message_queue_private*)queue;
-  if( !lock_mutex(&priv->mutex) ) {
-    return NULL;
-  }
 
   message_queue_element *next = queue->divider->next;
   buffer *message = next->data;
@@ -127,7 +104,6 @@ dequeue_message( message_queue *queue ) {
   queue->divider = next;
   queue->length--;
 
-  unlock_mutex(&priv->mutex);
   return message;
 }
 
@@ -142,22 +118,12 @@ peek_message( message_queue *queue ) {
     return NULL;
   }
 
-  message_queue_private *priv = (message_queue_private*)queue;
-  if( !lock_mutex(&priv->mutex) ) {
-    return NULL;
-  }
-  buffer *message = queue->divider->next->data;
-  unlock_mutex(&priv->mutex);
-  return message;
+  return queue->divider->next->data;
 }
 
 
 void foreach_message_queue( message_queue *queue, void function( buffer *message, void *user_data ),     void *user_data ) {
   if ( queue->divider == queue->tail ) {
-    return;
-  }
-  message_queue_private *priv = (message_queue_private*)queue;
-  if( !lock_mutex(&priv->mutex) ) {
     return;
   }
   message_queue_element *element;
@@ -166,7 +132,6 @@ void foreach_message_queue( message_queue *queue, void function( buffer *message
     assert( message != NULL );
     function( message, user_data );
   }
-  unlock_mutex(&priv->mutex);
 }
 
 
