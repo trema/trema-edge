@@ -18,7 +18,7 @@ typedef struct {
 typedef struct {
   uint32_t meter_id;
   uint16_t flags;
-  int bands_count;
+  size_t bands_count;
   meter_band *bands;
   
   uint32_t ref_count;

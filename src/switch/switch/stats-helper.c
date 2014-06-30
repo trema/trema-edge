@@ -1118,10 +1118,10 @@ assign_meter_stats( meter_entry *stats ) {
   time_now( &now );
   struct timespec interval = { 0, 0 };
   timespec_diff( stats->created_at, now, &interval);
-  meter_stats->duration_sec = interval.tv_sec;
-  meter_stats->duration_nsec = interval.tv_nsec;
+  meter_stats->duration_sec = ( uint32_t )interval.tv_sec;
+  meter_stats->duration_nsec = ( uint32_t )interval.tv_nsec;
   
-  for ( int i=0; i<stats->bands_count; i++ ) {
+  for ( unsigned int i=0; i<stats->bands_count; i++ ) {
     struct ofp_meter_band_stats band_stat = { stats->bands[i].packet_count, stats->bands[i].byte_count };
     memcpy( meter_stats->band_stats + i * sizeof(band_stat), &band_stat, sizeof(band_stat) );
   }
@@ -1187,7 +1187,7 @@ assign_meter_config( meter_entry *stats ) {
   meter_config->meter_id = stats->meter_id;
   memset( &meter_config->bands, 0, stats->bands_count * 16 );
   
-  for ( int i=0; i<stats->bands_count; i++ ) {
+  for ( unsigned int i=0; i<stats->bands_count; i++ ) {
     if ( stats->bands[i].type == OFPMBT_DROP ) {
       struct ofp_meter_band_drop band = {
           stats->bands[i].type,
@@ -1196,7 +1196,7 @@ assign_meter_config( meter_entry *stats ) {
           stats->bands[i].burst_size,
           { 0,0,0,0 }
         };
-      memcpy( ((void*)meter_config->bands) + i*16, &band, sizeof( struct ofp_meter_band_drop ) );
+      memcpy( ((char*)meter_config->bands) + i*16, &band, sizeof( struct ofp_meter_band_drop ) );
     } else if ( stats->bands[i].type == OFPMBT_DSCP_REMARK ) {
       struct ofp_meter_band_dscp_remark band = {
           stats->bands[i].type,
@@ -1206,7 +1206,7 @@ assign_meter_config( meter_entry *stats ) {
           stats->bands[i].prec_level,
           { 0,0,0 }
         };
-      memcpy( ((void*)meter_config->bands) + i*16, &band, sizeof( struct ofp_meter_band_dscp_remark ) );
+      memcpy( ((char*)meter_config->bands) + i*16, &band, sizeof( struct ofp_meter_band_dscp_remark ) );
     } else {
       error("meter_stats returned unknown type %d", stats->bands[i].type);
     }

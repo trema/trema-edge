@@ -19,7 +19,7 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
   struct timespec interval;
   timespec_diff( entry->meter_at, now, &interval);
   entry->meter_at = now;
-  double interval_sec = interval.tv_sec + interval.tv_nsec/1000000000.0;
+  double interval_sec = (double)interval.tv_sec + (double)interval.tv_nsec/1000000000.0;
   
   uint64_t rate_size = frame->length * 8; // bits
   if ( entry->flags & OFPMF_PKTPS ) {
@@ -31,8 +31,8 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
   
   if ( entry->flags & OFPMF_BURST ) {
     // drain
-    for( int i=0; i<entry->bands_count; i++ ) {
-      uint64_t drain = interval_sec * entry->bands[i].rate;
+    for( unsigned int i=0; i<entry->bands_count; i++ ) {
+      uint64_t drain = ( uint64_t )( interval_sec * entry->bands[i].rate );
       if ( ( entry->flags & OFPMF_PKTPS ) != OFPMF_PKTPS ) {
         drain = drain * 1000; // kilobits; we compare in bits
       }
@@ -50,9 +50,9 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
   }
   
   // select band
-  double passing_rate = ( BASE_INTERVAL * entry->estimated_rate + rate_size ) / ( interval_sec + BASE_INTERVAL );
+  double passing_rate = ( BASE_INTERVAL * entry->estimated_rate + ( double ) rate_size ) / ( interval_sec + BASE_INTERVAL );
   uint16_t rate_for_select_max = 0;
-  for( int i=0; i<entry->bands_count; i++ ) {
+  for( unsigned int i=0; i<entry->bands_count; i++ ) {
     if ( entry->bands[i].type == OFPMBT_DSCP_REMARK ) {
       if( info == NULL || ( info->format & (NW_IPV4|NW_IPV6) ) == 0 ) {
         continue;
@@ -64,7 +64,7 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
         burst_size = burst_size * 1000; // kilobits; we compare in bits
       }
       if ( burst_size < entry->bands[i].bucket + rate_size ) {
-        selected_burst_band = i;
+        selected_burst_band = ( int ) i;
         debug("burst hit %d %d", burst_size, entry->bands[i].bucket + rate_size);
       }
     }
@@ -75,7 +75,7 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
     }
     if ( rate < passing_rate ) {
       if ( rate_for_select_max < rate ) {
-        selected_rate_band = i;
+        selected_rate_band = ( int ) i;
         debug("rate hit %d %f", rate, passing_rate);
       }
     }
@@ -96,11 +96,11 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
         uint8_t phb = info->ip_dscp >> 3;
         uint8_t prec = ( info->ip_dscp >> 1 ) & 0x03;
         if ( prec != 0 && ( phb == 1 || phb == 2 || phb == 3 || phb == 4 ) ) { // AF classes
-          prec += band->prec_level;
+          prec = ( uint8_t ) ( prec + band->prec_level );
           if ( prec > 0x03 ) {
             prec = 0x03;
           }
-          if ( set_nw_dscp( frame, (phb<<3)|(prec<<1) ) == false ){
+          if ( set_nw_dscp( frame, ( uint8_t ) ((phb<<3)|(prec<<1)) ) == false ){
             error("DSCP remark failed");
           }
         }
@@ -116,7 +116,7 @@ execute_meter( uint32_t meter_id, buffer *frame ) {
   if ( entry->flags & OFPMF_BURST ) {
     // update bucket
     if ( selected_burst_band == -1 ) {
-      for( int i=0; i<entry->bands_count; i++ ) {
+      for( unsigned int i=0; i<entry->bands_count; i++ ) {
         if ( entry->bands[i].bucket > UINT64_MAX - rate_size ) {
           entry->bands[i].bucket = UINT64_MAX;
         } else {
