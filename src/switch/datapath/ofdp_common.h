@@ -41,7 +41,6 @@ extern uint16_t MISS_SEND_LEN;
 void time_now( struct timespec *tp );
 void timespec_diff( struct timespec start, struct timespec end, struct timespec *diff );
 void print_bitmap( const uint64_t bitmap, const uint64_t bit, const char *name );
-char *safe_strerror_r( int errnum, char *buf, size_t buflen );
 void copy_buffer( buffer *dst, const buffer *src );
 
 

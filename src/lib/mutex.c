@@ -15,9 +15,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-
+#include <assert.h>
+#include <errno.h>
 #include "mutex.h"
+#include "wrapper.h"
+#include "log.h"
 
+#define ERROR_STRING_SIZE 256
 
 bool
 init_mutex( pthread_mutex_t *mutex ) {
@@ -102,6 +106,27 @@ try_lock( pthread_mutex_t *mutex ) {
   return true;
 }
 
+
+char *
+safe_strerror_r( int errnum, char *buf, size_t buflen ) {
+  assert( buf != NULL );
+  assert( buflen > 0 );
+
+  int original = errnum;
+
+  memset( buf, '\0', buflen );
+
+#if ( _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600 ) && ! _GNU_SOURCE
+  int ret = strerror_r( errnum, buf, buflen );
+  char *error_string = buf;
+#else
+  char *error_string = strerror_r( errnum, buf, buflen );
+#endif
+
+  errno = original;
+
+  return error_string;
+}
 
 /*
  * Local variables:
