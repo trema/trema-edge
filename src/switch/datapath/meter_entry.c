@@ -42,7 +42,7 @@ clone_meter_entry( meter_entry *dst, const meter_entry *src ){
   memcpy( dst, src, sizeof(meter_entry) );
   if ( src->bands_count > 0 ) {
     dst->bands = xcalloc( src->bands_count, sizeof(meter_band) );
-    for ( int i=0; i<src->bands_count; i++ ) {
+    for ( unsigned int i=0; i<src->bands_count; i++ ) {
       memcpy( dst->bands+i, src->bands+i, sizeof(meter_band) );
     }
   }
