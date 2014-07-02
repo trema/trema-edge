@@ -28,7 +28,7 @@ shared_examples_for "features request message" do
       vswitch( "features-request" ) { datapath_id 0xabc }
     }.run( FeaturesRequestController ) {
       controller( "FeaturesRequestController" ).send_message( 0xabc, subject )
-      IO.read( File.join( Trema.log, "openflowd.features-request.log" ) ).should include( "OFPT_FEATURES_REQUEST" )
+      expect(IO.read( File.join( Trema.log, "openflowd.features-request.log" ) )).to include( "OFPT_FEATURES_REQUEST" )
     }
   end
 end

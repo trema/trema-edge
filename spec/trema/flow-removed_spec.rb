@@ -54,17 +54,61 @@ describe Trema::FlowRemoved, ".new( VALID OPTIONS )" do
         :byte_count => 256
       )
     end
-    its ( :datapath_id ) { should == 2748 }
-    its ( :transaction_id ) { should == 0 }
-    its ( :match ) { should be_instance_of( Match ) }
-    its ( :cookie ) { should == 123456789 }
-    its ( :priority ) { should == 65535 }
-    its ( :reason ) { should == 0 }
-    its ( :duration_sec ) { should == 1 }
-    its ( :duration_nsec ) { should == 779000000 }
-    its ( :idle_timeout ) { should == 1 }
-    its ( :packet_count ) { should == 6 }
-    its ( :byte_count ) { should == 256 }
+
+    describe ( :datapath_id ) do
+      subject { super().send(( :datapath_id )) }
+      it { is_expected.to eq(2748) }
+    end
+
+    describe ( :transaction_id ) do
+      subject { super().send(( :transaction_id )) }
+      it { is_expected.to eq(0) }
+    end
+
+    describe ( :match ) do
+      subject { super().send(( :match )) }
+      it { is_expected.to be_instance_of( Match ) }
+    end
+
+    describe ( :cookie ) do
+      subject { super().send(( :cookie )) }
+      it { is_expected.to eq(123456789) }
+    end
+
+    describe ( :priority ) do
+      subject { super().send(( :priority )) }
+      it { is_expected.to eq(65535) }
+    end
+
+    describe ( :reason ) do
+      subject { super().send(( :reason )) }
+      it { is_expected.to eq(0) }
+    end
+
+    describe ( :duration_sec ) do
+      subject { super().send(( :duration_sec )) }
+      it { is_expected.to eq(1) }
+    end
+
+    describe ( :duration_nsec ) do
+      subject { super().send(( :duration_nsec )) }
+      it { is_expected.to eq(779000000) }
+    end
+
+    describe ( :idle_timeout ) do
+      subject { super().send(( :idle_timeout )) }
+      it { is_expected.to eq(1) }
+    end
+
+    describe ( :packet_count ) do
+      subject { super().send(( :packet_count )) }
+      it { is_expected.to eq(6) }
+    end
+
+    describe ( :byte_count ) do
+      subject { super().send(( :byte_count )) }
+      it { is_expected.to eq(256) }
+    end
   end
   
   
@@ -74,7 +118,7 @@ describe Trema::FlowRemoved, ".new( VALID OPTIONS )" do
       network {
         vswitch { datapath_id 0xabc }
       }.run( FlowRemovedController ) {
-        controller( "FlowRemovedController" ).should_receive( :flow_removed )
+        expect(controller( "FlowRemovedController" )).to receive( :flow_removed )
         controller( "FlowRemovedController" ).send_flow_mod_add(
           0xabc,
           :idle_timeout => 1,
@@ -104,26 +148,26 @@ describe Trema::FlowRemoved, ".new( VALID OPTIONS )" do
       network {
         vswitch { datapath_id 0xabc }
       }.run( FlowRemovedController ) {
-        controller( "FlowRemovedController" ).should_receive( :flow_removed ) do | datapath_id, message |
-          datapath_id.should == 0xabc
-          message.match.in_port.should == 1
-          message.match.dl_src.to_s.should == "00:00:00:00:00:01"
-          message.match.dl_dst.to_s.should == "00:00:00:00:00:02"
-          message.match.dl_type.should == 0x800
-          message.match.dl_vlan.should == 65535
-          message.match.dl_vlan_pcp.should == 0
-          message.match.nw_tos.should == 0
-          message.match.nw_proto.should == 17
-          Trema::IP.new( message.match.nw_src ).to_s.should == "192.168.0.1"
-          Trema::IP.new( message.match.nw_dst ).to_s.should == "192.168.0.2"
-          message.match.tp_src.should == 1
-          message.match.tp_dst.should == 1
-          message.cookie.should == 123456789
-          message.idle_timeout.should == 1
-          message.reason.should == 0
-          message.duration_sec.should >= 1
-          message.packet_count.should == 0
-          message.byte_count.should == 0
+        expect(controller( "FlowRemovedController" )).to receive( :flow_removed ) do | datapath_id, message |
+          expect(datapath_id).to eq(0xabc)
+          expect(message.match.in_port).to eq(1)
+          expect(message.match.dl_src.to_s).to eq("00:00:00:00:00:01")
+          expect(message.match.dl_dst.to_s).to eq("00:00:00:00:00:02")
+          expect(message.match.dl_type).to eq(0x800)
+          expect(message.match.dl_vlan).to eq(65535)
+          expect(message.match.dl_vlan_pcp).to eq(0)
+          expect(message.match.nw_tos).to eq(0)
+          expect(message.match.nw_proto).to eq(17)
+          expect(Trema::IP.new( message.match.nw_src ).to_s).to eq("192.168.0.1")
+          expect(Trema::IP.new( message.match.nw_dst ).to_s).to eq("192.168.0.2")
+          expect(message.match.tp_src).to eq(1)
+          expect(message.match.tp_dst).to eq(1)
+          expect(message.cookie).to eq(123456789)
+          expect(message.idle_timeout).to eq(1)
+          expect(message.reason).to eq(0)
+          expect(message.duration_sec).to be >= 1
+          expect(message.packet_count).to eq(0)
+          expect(message.byte_count).to eq(0)
         end
         controller( "FlowRemovedController" ).send_flow_mod_add(
           0xabc,

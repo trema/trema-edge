@@ -50,10 +50,10 @@ module Trema
           vhost "host"
           link "host", "0xabc"
         }.run( PortStatusController ) {
-          controller( "PortStatusController" ).should_receive( :port_status ).with do | dpid, message |
-            dpid.should == 0xabc
-            message.should be_an_instance_of( PortStatusModify )
-          end
+          expect(controller( "PortStatusController" )).to receive( :port_status ).with { | dpid, message |
+            expect(dpid).to eq(0xabc)
+            expect(message).to be_an_instance_of( PortStatusModify )
+          }
 
           controller( "PortStatusController" ).send_message 0xabc, FeaturesRequest.new
           sleep 2  # FIXME: wait to receive port_status

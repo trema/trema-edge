@@ -24,7 +24,11 @@ require "trema"
 describe Trema::ArpSpa, "new( VALID OPTIONS )" do
   subject { ArpSpa.new(  ip_addr: addr ) }
   let( :addr ) { IPAddr.new( "192.168.0.100" ) }
-  its ( :ip_addr ) { should == "192.168.0.100" }
+
+  describe ( :ip_addr ) do
+    subject { super().send(( :ip_addr )) }
+    it { is_expected.to eq("192.168.0.100") }
+  end
 end
 
 
@@ -55,7 +59,7 @@ describe Trema::ArpSpa, ".new( VALID OPTIONS )" do
         link "host2", "lsw:2"
       }
       mc = MockController.new( network_blk )
-      mc.should_receive( :switch_ready ) do | datapath_id |
+      expect(mc).to receive( :switch_ready ) do | datapath_id |
         system( "sudo ip address add dev trema1-0 local 192.168.0.100 >/dev/null 2>&1" )
         action = SendOutPort.new( port_number: OFPP_CONTROLLER )
         apply_ins = ApplyAction.new( actions: [ action ] )
@@ -65,7 +69,7 @@ describe Trema::ArpSpa, ".new( VALID OPTIONS )" do
                               match: match_fields,
                               instructions: [ apply_ins ] )
       end
-      mc.should_receive( :packet_in ).at_least( :once ) do | datapath_id, message |
+      expect(mc).to receive( :packet_in ).at_least( :once ) do | datapath_id, message |
         action = Trema::ArpSpa.new( ip_addr: IPAddr.new( "192.168.0.100" ) )
         expect( action.ip_addr.to_s ).to  eq( message.packet_info.arp_spa.to_s )
       end

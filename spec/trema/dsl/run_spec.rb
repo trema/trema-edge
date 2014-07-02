@@ -32,16 +32,16 @@ module Trema
 
       context %[when parsing "run { ... }"] do
         it %[recognizes "path COMMAND_PATH" directive] do
-          lambda do
+          expect do
             @run.path "/usr/bin/tremario"
-          end.should_not raise_error
+          end.not_to raise_error
         end
 
 
         it %[recognizes "options OPTIONS..." directive] do
-          lambda do
+          expect do
             @run.options "--verbose", "--color"
-          end.should_not raise_error
+          end.not_to raise_error
         end
       end
 
@@ -49,21 +49,21 @@ module Trema
       context "when getting the attributes of an run" do
         it "returns its name" do
           @run.path "/usr/bin/tremario"
-          @run[ :name ].should == "tremario"
+          expect(@run[ :name ]).to eq("tremario")
         end
 
 
         it "returns its path" do
           @run.path "/usr/bin/tremario"
-          @run[ :path ].should == "/usr/bin/tremario"
+          expect(@run[ :path ]).to eq("/usr/bin/tremario")
         end
 
 
         it "returns its options" do
           @run.options "--verbose", "--color"
-          @run[ :options ].size.should == 2
-          @run[ :options ].should include( "--verbose" )
-          @run[ :options ].should include( "--color" )
+          expect(@run[ :options ].size).to eq(2)
+          expect(@run[ :options ]).to include( "--verbose" )
+          expect(@run[ :options ]).to include( "--color" )
         end
       end
     end

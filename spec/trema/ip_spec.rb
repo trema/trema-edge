@@ -29,18 +29,40 @@ module Trema
         let( :ip_address ) { "192.168.1.1" }
         let( :prefixlen ) { 32 }
 
-        its( :to_s ) { should == "192.168.1.1" }
-        its( :to_i ) { should == 3232235777 }
-        its( :to_array ) { should == [ 0xc0, 0xa8, 0x01, 0x01 ] }
+        describe '#to_s' do
+          subject { super().to_s }
+          it { is_expected.to eq("192.168.1.1") }
+        end
+
+        describe '#to_i' do
+          subject { super().to_i }
+          it { is_expected.to eq(3232235777) }
+        end
+
+        describe '#to_array' do
+          subject { super().to_array }
+          it { is_expected.to eq([ 0xc0, 0xa8, 0x01, 0x01 ]) }
+        end
       end
 
       context %{when "10.1.1.1/8"} do
         let( :ip_address ) { "10.1.1.1" }
         let( :prefixlen ) { 8 }
 
-        its( :to_s ) { should == "10.0.0.0" }
-        its( :to_i ) { should == 10 * 256 * 256 * 256 }
-        its( :to_array ) { should == [ 0x0a, 0x00, 0x00, 0x00 ] }
+        describe '#to_s' do
+          subject { super().to_s }
+          it { is_expected.to eq("10.0.0.0") }
+        end
+
+        describe '#to_i' do
+          subject { super().to_i }
+          it { is_expected.to eq(10 * 256 * 256 * 256) }
+        end
+
+        describe '#to_array' do
+          subject { super().to_array }
+          it { is_expected.to eq([ 0x0a, 0x00, 0x00, 0x00 ]) }
+        end
       end
     end
   end

@@ -25,13 +25,13 @@ require "trema/packetin-filter"
 
 describe Trema::DSL::Syntax do
   before( :each ) do
-    @context = mock( "context", :port => 6653, :dump_to => nil )
+    @context = double( "context", :port => 6653, :dump_to => nil )
     @syntax = Trema::DSL::Syntax.new( @context )
   end
 
 
   it "should recognize 'port' directive" do
-    @context.should_receive( :port= ).with( 1234 ).once
+    expect(@context).to receive( :port= ).with( 1234 ).once
 
     @syntax.instance_eval do
       port 1234
@@ -40,8 +40,8 @@ describe Trema::DSL::Syntax do
 
 
   it "should recognize 'link' directive" do
-    @context.stub!( :links ).and_return( [ mock( "link" ) ] )
-    Trema::Link.should_receive( :add ).with( an_instance_of( Trema::Link ) ).once
+    allow(@context).to receive( :links ).and_return( [ double( "link" ) ] )
+    expect(Trema::Link).to receive( :add ).with( an_instance_of( Trema::Link ) ).once
 
     @syntax.instance_eval do
       link "PEER0", "PEER1"
@@ -50,7 +50,7 @@ describe Trema::DSL::Syntax do
 
 
   it "should recognize 'switch' directive" do
-    Trema::OpenflowSwitch.should_receive( :add ).with( an_instance_of( HardwareSwitch ) ).once
+    expect(Trema::OpenflowSwitch).to receive( :add ).with( an_instance_of( HardwareSwitch ) ).once
 
     @syntax.instance_eval do
       switch { dpid "0xabc" }
@@ -59,7 +59,7 @@ describe Trema::DSL::Syntax do
 
 
   it "should recognize 'vswitch' directive" do
-    Trema::OpenflowSwitch.should_receive( :add ).with( an_instance_of( OpenVswitch ) ).once
+    expect(Trema::OpenflowSwitch).to receive( :add ).with( an_instance_of( OpenVswitch ) ).once
 
     @syntax.instance_eval do
       vswitch { dpid "0xabc" }
@@ -68,7 +68,7 @@ describe Trema::DSL::Syntax do
 
 
   it "should recognize 'vhost' directive" do
-    Trema::Host.should_receive( :add ).with( an_instance_of( Trema::Host ) ).once
+    expect(Trema::Host).to receive( :add ).with( an_instance_of( Trema::Host ) ).once
 
     @syntax.instance_eval do
       vhost { }
@@ -77,7 +77,7 @@ describe Trema::DSL::Syntax do
 
 
   it "should recognize 'filter' directive" do
-    Trema::PacketinFilter.should_receive( :add ).with( an_instance_of( Trema::PacketinFilter ) ).once
+    expect(Trema::PacketinFilter).to receive( :add ).with( an_instance_of( Trema::PacketinFilter ) ).once
 
     @syntax.instance_eval do
       filter :lldp => "LLDP RULE", :packet_in => "PACKET-IN RULE"
@@ -86,7 +86,7 @@ describe Trema::DSL::Syntax do
 
 
   it "should recognize 'event' directive" do
-    Trema::SwitchManager.should_receive( :add ).with( an_instance_of( Trema::SwitchManager ) ).once
+    expect(Trema::SwitchManager).to receive( :add ).with( an_instance_of( Trema::SwitchManager ) ).once
 
     @syntax.instance_eval do
       event "RULE"
@@ -95,7 +95,7 @@ describe Trema::DSL::Syntax do
 
 
   it "should recognize 'run' directive" do
-    Trema::App.should_receive( :add ).with( an_instance_of( Trema::App ) ).once
+    expect(Trema::App).to receive( :add ).with( an_instance_of( Trema::App ) ).once
 
     @syntax.instance_eval do
       run( "My App" ) { }

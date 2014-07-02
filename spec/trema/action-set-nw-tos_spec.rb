@@ -30,9 +30,13 @@ end
 describe ActionSetNwTos, ".new( VALID OPTION )" do
   subject { ActionSetNwTos.new( :nw_tos => nw_tos ) }
   let( :nw_tos ) { 4 }
-  its( :nw_tos ) { should == 4 }
+
+  describe '#nw_tos' do
+    subject { super().nw_tos }
+    it { is_expected.to eq(4) }
+  end
   it "should inspect its attributes" do
-    subject.inspect.should == "#<Trema::ActionSetNwTos nw_tos=4>"
+    expect(subject.inspect).to eq("#<Trema::ActionSetNwTos nw_tos=4>")
   end
   it_should_behave_like "any OpenFlow message with nw_tos option"
 end
@@ -61,7 +65,7 @@ describe ActionSetNwTos, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         action = ActionSetNwTos.new( :nw_tos => 4 )
-        action.should_receive( :append )
+        expect(action).to receive( :append )
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => action )
      }
     end
@@ -73,8 +77,8 @@ describe ActionSetNwTos, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => ActionSetNwTos.new( :nw_tos => 4 ) )
-        vswitch( "0xabc" ).should have( 1 ).flows
-        vswitch( "0xabc" ).flows[0].actions.should match( /mod_nw_tos:4/ )
+        expect(vswitch( "0xabc" ).size).to eq(1)
+        expect(vswitch( "0xabc" ).flows[0].actions).to match( /mod_nw_tos:4/ )
       }
     end
   end

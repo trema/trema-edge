@@ -23,47 +23,47 @@ require "trema"
 module Trema
   describe Trema, ".constants", :nosudo => true do
     subject { Trema.constants }
-    it { should include "OFPET_HELLO_FAILED" }
-    it { should include "OFPHFC_INCOMPATIBLE" }
-    it { should include "OFPHFC_EPERM" }
+    it { is_expected.to include "OFPET_HELLO_FAILED" }
+    it { is_expected.to include "OFPHFC_INCOMPATIBLE" }
+    it { is_expected.to include "OFPHFC_EPERM" }
 
-    it { should include "OFPET_BAD_REQUEST" }
-    it { should include "OFPBRC_BAD_VERSION" }
-    it { should include "OFPBRC_BAD_TYPE" }
-    it { should include "OFPBRC_BAD_STAT" }
-    it { should include "OFPBRC_BAD_VENDOR" }
-    it { should include "OFPBRC_BAD_SUBTYPE" }
-    it { should include "OFPBRC_EPERM" }
-    it { should include "OFPBRC_BAD_LEN" }
-    it { should include "OFPBRC_BUFFER_EMPTY" }
-    it { should include "OFPBRC_BUFFER_UNKNOWN" }
+    it { is_expected.to include "OFPET_BAD_REQUEST" }
+    it { is_expected.to include "OFPBRC_BAD_VERSION" }
+    it { is_expected.to include "OFPBRC_BAD_TYPE" }
+    it { is_expected.to include "OFPBRC_BAD_STAT" }
+    it { is_expected.to include "OFPBRC_BAD_VENDOR" }
+    it { is_expected.to include "OFPBRC_BAD_SUBTYPE" }
+    it { is_expected.to include "OFPBRC_EPERM" }
+    it { is_expected.to include "OFPBRC_BAD_LEN" }
+    it { is_expected.to include "OFPBRC_BUFFER_EMPTY" }
+    it { is_expected.to include "OFPBRC_BUFFER_UNKNOWN" }
 
-    it { should include "OFPET_BAD_ACTION" }
-    it { should include "OFPBAC_BAD_TYPE" }
-    it { should include "OFPBAC_BAD_LEN" }
-    it { should include "OFPBAC_BAD_VENDOR" }
-    it { should include "OFPBAC_BAD_VENDOR_TYPE" }
-    it { should include "OFPBAC_BAD_OUT_PORT" }
-    it { should include "OFPBAC_BAD_ARGUMENT" }
-    it { should include "OFPBAC_EPERM" }
-    it { should include "OFPBAC_TOO_MANY" }
-    it { should include "OFPBAC_BAD_QUEUE" }
+    it { is_expected.to include "OFPET_BAD_ACTION" }
+    it { is_expected.to include "OFPBAC_BAD_TYPE" }
+    it { is_expected.to include "OFPBAC_BAD_LEN" }
+    it { is_expected.to include "OFPBAC_BAD_VENDOR" }
+    it { is_expected.to include "OFPBAC_BAD_VENDOR_TYPE" }
+    it { is_expected.to include "OFPBAC_BAD_OUT_PORT" }
+    it { is_expected.to include "OFPBAC_BAD_ARGUMENT" }
+    it { is_expected.to include "OFPBAC_EPERM" }
+    it { is_expected.to include "OFPBAC_TOO_MANY" }
+    it { is_expected.to include "OFPBAC_BAD_QUEUE" }
 
-    it { should include "OFPET_FLOW_MOD_FAILED" }
-    it { should include "OFPFMFC_ALL_TABLES_FULL" }
-    it { should include "OFPFMFC_OVERLAP" }
-    it { should include "OFPFMFC_BAD_EMERG_TIMEOUT" }
-    it { should include "OFPFMFC_BAD_COMMAND" }
-    it { should include "OFPFMFC_UNSUPPORTED" }
+    it { is_expected.to include "OFPET_FLOW_MOD_FAILED" }
+    it { is_expected.to include "OFPFMFC_ALL_TABLES_FULL" }
+    it { is_expected.to include "OFPFMFC_OVERLAP" }
+    it { is_expected.to include "OFPFMFC_BAD_EMERG_TIMEOUT" }
+    it { is_expected.to include "OFPFMFC_BAD_COMMAND" }
+    it { is_expected.to include "OFPFMFC_UNSUPPORTED" }
 
-    it { should include "OFPET_PORT_MOD_FAILED" }
-    it { should include "OFPPMFC_BAD_PORT" }
-    it { should include "OFPPMFC_BAD_HW_ADDR" }
+    it { is_expected.to include "OFPET_PORT_MOD_FAILED" }
+    it { is_expected.to include "OFPPMFC_BAD_PORT" }
+    it { is_expected.to include "OFPPMFC_BAD_HW_ADDR" }
 
-    it { should include "OFPET_QUEUE_OP_FAILED" }
-    it { should include "OFPQOFC_BAD_PORT" }
-    it { should include "OFPQOFC_BAD_QUEUE" }
-    it { should include "OFPQOFC_EPERM" }
+    it { is_expected.to include "OFPET_QUEUE_OP_FAILED" }
+    it { is_expected.to include "OFPQOFC_BAD_PORT" }
+    it { is_expected.to include "OFPQOFC_BAD_QUEUE" }
+    it { is_expected.to include "OFPQOFC_EPERM" }
   end
 
 
@@ -92,9 +92,21 @@ module Trema
   describe Error, ".new(:type => value, :code => value)" do
     subject { Error.new( :type => OFPET_BAD_REQUEST, :code => OFPBRC_BAD_TYPE ) }
     it_should_behave_like "any Openflow message with default transaction ID"
-    its( :error_type ) { should == OFPET_BAD_REQUEST }
-    its( :code ) { should == OFPBRC_BAD_TYPE }
-    its( :data ) { should be_nil }
+
+    describe '#error_type' do
+      subject { super().error_type }
+      it { is_expected.to eq(OFPET_BAD_REQUEST) }
+    end
+
+    describe '#code' do
+      subject { super().code }
+      it { is_expected.to eq(OFPBRC_BAD_TYPE) }
+    end
+
+    describe '#data' do
+      subject { super().data }
+      it { is_expected.to be_nil }
+    end
   end
 
 
@@ -113,9 +125,21 @@ module Trema
   describe Error, ".new(:type => value, :code => value, :data => value)" do
     subject { Error.new( :type => OFPET_BAD_REQUEST, :code => OFPBRC_BAD_TYPE, :data => "deadbeef" ) }
     it_should_behave_like "any Openflow message with default transaction ID"
-    its( :error_type ) { should == OFPET_BAD_REQUEST }
-    its( :code ) { should == OFPBRC_BAD_TYPE }
-    its( :data ) { should == "deadbeef" }
+
+    describe '#error_type' do
+      subject { super().error_type }
+      it { is_expected.to eq(OFPET_BAD_REQUEST) }
+    end
+
+    describe '#code' do
+      subject { super().code }
+      it { is_expected.to eq(OFPBRC_BAD_TYPE) }
+    end
+
+    describe '#data' do
+      subject { super().data }
+      it { is_expected.to eq("deadbeef") }
+    end
   end
 end
 

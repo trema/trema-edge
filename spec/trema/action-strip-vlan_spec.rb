@@ -30,7 +30,7 @@ describe ActionStripVlan, ".new" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         action = ActionStripVlan.new
-        action.should_receive( :append )
+        expect(action).to receive( :append )
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => action )
       }
     end
@@ -42,8 +42,8 @@ describe ActionStripVlan, ".new" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => ActionStripVlan.new( ) )
-        vswitch( "0xabc" ).should have( 1 ).flows
-        vswitch( "0xabc" ).flows[0].actions.should match( /strip_vlan/ )
+        expect(vswitch( "0xabc" ).size).to eq(1)
+        expect(vswitch( "0xabc" ).flows[0].actions).to match( /strip_vlan/ )
       }
     end
   end

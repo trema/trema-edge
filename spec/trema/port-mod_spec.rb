@@ -32,48 +32,68 @@ describe PortMod, ".new( VALID OPTIONS )" do
       :advertise => 0
     )
   }
-  its( :port_no ) { should == 2 }
-  its( :hw_addr ) { subject.to_s.should eq "11:22:33:44:55:66" }
-  its( :config ) { should == 1 }
-  its( :mask ) { should == 1 }
-  its( :advertise ) { should == 0 }
+
+  describe '#port_no' do
+    subject { super().port_no }
+    it { is_expected.to eq(2) }
+  end
+
+  describe '#hw_addr' do
+    subject { super().hw_addr }
+    it { subject.to_s.should eq "11:22:33:44:55:66" }
+  end
+
+  describe '#config' do
+    subject { super().config }
+    it { is_expected.to eq(1) }
+  end
+
+  describe '#mask' do
+    subject { super().mask }
+    it { is_expected.to eq(1) }
+  end
+
+  describe '#advertise' do
+    subject { super().advertise }
+    it { is_expected.to eq(0) }
+  end
   it_should_behave_like "any Openflow message with default transaction ID"
 
 
   describe "hw_addr" do
     it "should be a Trema::Mac object" do
-      PortMod.new(
+      expect(PortMod.new(
         :port_no => 2,
         :hw_addr => Mac::new( "11:22:33:44:55:66" ),
         :config => 1,
         :mask => 1,
         :advertise => 0
-      ).hw_addr.to_s.should eq( "11:22:33:44:55:66" )
+      ).hw_addr.to_s).to eq( "11:22:33:44:55:66" )
     end
 
 
     it "should be a string('11:22:33:44:55')" do
-      PortMod.new(
+      expect(PortMod.new(
         :port_no => 2,
         :hw_addr => "11:22:33:44:55:66",
         :config => 1,
         :mask => 1,
-        :advertise => 0 ).hw_addr.to_s.should eq( "11:22:33:44:55:66" )
+        :advertise => 0 ).hw_addr.to_s).to eq( "11:22:33:44:55:66" )
     end
 
 
     it "should be a number(281474976710655)" do
-      PortMod.new(
+      expect(PortMod.new(
         :port_no => 2,
         :hw_addr => 281474976710655,
         :config => 1,
         :mask => 1,
-        :advertise => 0 ).hw_addr.to_s.should eq( "ff:ff:ff:ff:ff:ff" )
+        :advertise => 0 ).hw_addr.to_s).to eq( "ff:ff:ff:ff:ff:ff" )
     end
 
 
     it "should otherwise raise ArgumentError" do
-      lambda do
+      expect do
         PortMod.new(
           :port_no => 2,
           :hw_addr => Array.new( 1234 ),
@@ -81,7 +101,7 @@ describe PortMod, ".new( VALID OPTIONS )" do
           :mask => 1,
           :advertise => 0
         )
-      end.should raise_error ArgumentError
+      end.to raise_error ArgumentError
     end
   end
 end

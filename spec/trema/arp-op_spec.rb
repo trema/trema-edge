@@ -24,7 +24,11 @@ require "trema"
 describe Trema::ArpOp, "new( VALID OPTIONS )" do
   subject { ArpOp.new arp_op: value }
   let( :value ) { 1 }
-  its ( :arp_op ) { should == 1 }
+
+  describe ( :arp_op ) do
+    subject { super().send(( :arp_op )) }
+    it { is_expected.to eq(1) }
+  end
 end
 
 
@@ -55,7 +59,7 @@ describe Trema::ArpOp, ".new( VALID OPTIONS )" do
         link "host2", "lsw:2"
       }
       mc = MockController.new( network_blk )
-      mc.should_receive( :switch_ready ) do | datapath_id |
+      expect(mc).to receive( :switch_ready ) do | datapath_id |
         action = SendOutPort.new( port_number: OFPP_CONTROLLER )
         apply_ins = ApplyAction.new( actions: [ action ] )
         match_fields = Match.new( in_port: 1, eth_type: 2054, arp_op: 1 )
@@ -64,7 +68,7 @@ describe Trema::ArpOp, ".new( VALID OPTIONS )" do
                               match: match_fields,
                               instructions: [ apply_ins ] )
       end
-      mc.should_receive( :packet_in ).at_least( :once ) do | datapath_id, message |
+      expect(mc).to receive( :packet_in ).at_least( :once ) do | datapath_id, message |
         action = Trema::ArpOp.new( arp_op: 1 )
         expect( action.arp_op ).to  eq( message.packet_info.arp_op )
       end

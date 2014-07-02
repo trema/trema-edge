@@ -39,21 +39,81 @@ describe Match, ".new" do
       :tp_dst => 20
     )
   }
-  its( :in_port ) { should == 1 }
-  its( :dl_src ) { subject.to_s.should == "00:00:00:00:00:01" }
-  its( :dl_dst ) { subject.to_s.should == "00:00:00:00:00:02" }
-  its( :dl_vlan ) { should == 65535 }
-  its( :dl_vlan_pcp ) { should == 0 }
-  its( :dl_type ) { should == 0x800 }
-  its( :nw_tos ) { should == 0 }
-  its( :nw_proto ) { should == 17 }
-  its( :nw_src ) { subject.to_s.should == "192.168.0.1" }
-  its( :nw_src ) { subject.prefixlen.should == 32 }
-  its( :nw_dst ) { subject.to_s.should == "192.168.0.0" }
-  its( :nw_dst ) { subject.prefixlen.should == 24 }
-  its( :tp_src ) { should == 10 }
-  its( :tp_dst ) { should == 20 }
-  its( :to_s ) { should == "wildcards = 0x20000(nw_dst(8)), in_port = 1, dl_src = 00:00:00:00:00:01, dl_dst = 00:00:00:00:00:02, dl_vlan = 65535, dl_vlan_pcp = 0, dl_type = 0x800, nw_tos = 0, nw_proto = 17, nw_src = 192.168.0.1/32, nw_dst = 192.168.0.0/24, tp_src = 10, tp_dst = 20" }
+
+  describe '#in_port' do
+    subject { super().in_port }
+    it { is_expected.to eq(1) }
+  end
+
+  describe '#dl_src' do
+    subject { super().dl_src }
+    it { subject.to_s.should == "00:00:00:00:00:01" }
+  end
+
+  describe '#dl_dst' do
+    subject { super().dl_dst }
+    it { subject.to_s.should == "00:00:00:00:00:02" }
+  end
+
+  describe '#dl_vlan' do
+    subject { super().dl_vlan }
+    it { is_expected.to eq(65535) }
+  end
+
+  describe '#dl_vlan_pcp' do
+    subject { super().dl_vlan_pcp }
+    it { is_expected.to eq(0) }
+  end
+
+  describe '#dl_type' do
+    subject { super().dl_type }
+    it { is_expected.to eq(0x800) }
+  end
+
+  describe '#nw_tos' do
+    subject { super().nw_tos }
+    it { is_expected.to eq(0) }
+  end
+
+  describe '#nw_proto' do
+    subject { super().nw_proto }
+    it { is_expected.to eq(17) }
+  end
+
+  describe '#nw_src' do
+    subject { super().nw_src }
+    it { subject.to_s.should == "192.168.0.1" }
+  end
+
+  describe '#nw_src' do
+    subject { super().nw_src }
+    it { subject.prefixlen.should == 32 }
+  end
+
+  describe '#nw_dst' do
+    subject { super().nw_dst }
+    it { subject.to_s.should == "192.168.0.0" }
+  end
+
+  describe '#nw_dst' do
+    subject { super().nw_dst }
+    it { subject.prefixlen.should == 24 }
+  end
+
+  describe '#tp_src' do
+    subject { super().tp_src }
+    it { is_expected.to eq(10) }
+  end
+
+  describe '#tp_dst' do
+    subject { super().tp_dst }
+    it { is_expected.to eq(20) }
+  end
+
+  describe '#to_s' do
+    subject { super().to_s }
+    it { is_expected.to eq("wildcards = 0x20000(nw_dst(8)), in_port = 1, dl_src = 00:00:00:00:00:01, dl_dst = 00:00:00:00:00:02, dl_vlan = 65535, dl_vlan_pcp = 0, dl_type = 0x800, nw_tos = 0, nw_proto = 17, nw_src = 192.168.0.1/32, nw_dst = 192.168.0.0/24, tp_src = 10, tp_dst = 20") }
+  end
 end
 
 
@@ -78,7 +138,7 @@ describe Match, ".compare" do
       :nw_src => "192.168.0.0/24",
       :nw_dst => "192.168.0.0/24"
     )
-    pattern.compare( tester ).should == true
+    expect(pattern.compare( tester )).to eq(true)
   end
 
   it "Should not match" do
@@ -101,7 +161,7 @@ describe Match, ".compare" do
       :nw_src => "10.0.0.0/8",
       :nw_dst => "10.0.0.0/8"
     )
-    pattern.compare( tester ).should == false
+    expect(pattern.compare( tester )).to eq(false)
   end
 end
 

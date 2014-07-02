@@ -30,9 +30,13 @@ end
 describe ActionSetTpDst, ".new( VALID OPTION )" do
   subject { ActionSetTpDst.new( :tp_dst => tp_dst ) }
   let( :tp_dst ) { 5555 }
-  its( :tp_dst ) { should == 5555 }
+
+  describe '#tp_dst' do
+    subject { super().tp_dst }
+    it { is_expected.to eq(5555) }
+  end
   it "should inspect its attributes" do
-    subject.inspect.should == "#<Trema::ActionSetTpDst tp_port=5555>"
+    expect(subject.inspect).to eq("#<Trema::ActionSetTpDst tp_port=5555>")
   end
   it_should_behave_like "any OpenFlow message with tp_dst option"
 end
@@ -61,7 +65,7 @@ describe ActionSetTpDst, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         action = ActionSetTpDst.new( :tp_dst => 5555 )
-        action.should_receive( :append )
+        expect(action).to receive( :append )
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => action )
      }
     end
@@ -73,8 +77,8 @@ describe ActionSetTpDst, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => ActionSetTpDst.new( :tp_dst => 5555 ) )
-        vswitch( "0xabc" ).should have( 1 ).flows
-        vswitch( "0xabc" ).flows[0].actions.should match( /mod_tp_dst:5555/ )
+        expect(vswitch( "0xabc" ).size).to eq(1)
+        expect(vswitch( "0xabc" ).flows[0].actions).to match( /mod_tp_dst:5555/ )
       }
     end
   end

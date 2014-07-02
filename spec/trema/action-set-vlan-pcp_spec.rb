@@ -24,9 +24,13 @@ require "trema"
 
 describe ActionSetVlanPcp, ".new( VALID OPTION )" do
   subject { ActionSetVlanPcp.new( :vlan_pcp => 7 ) }
-  its( :vlan_pcp ) { should  == 7 }
+
+  describe '#vlan_pcp' do
+    subject { super().vlan_pcp }
+    it { is_expected.to  eq(7) }
+  end
   it "should inspect its attributes" do
-    subject.inspect.should == "#<Trema::ActionSetVlanPcp vlan_pcp=7>"
+    expect(subject.inspect).to eq("#<Trema::ActionSetVlanPcp vlan_pcp=7>")
   end
 end
 
@@ -64,7 +68,7 @@ describe ActionSetVlanPcp, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         action = ActionSetVlanPcp.new( :vlan_pcp => 7 )
-        action.should_receive( :append )
+        expect(action).to receive( :append )
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => action )
      }
     end
@@ -76,8 +80,8 @@ describe ActionSetVlanPcp, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => ActionSetVlanPcp.new( :vlan_pcp => 7 ) )
-        vswitch( "0xabc" ).should have( 1 ).flows
-        vswitch( "0xabc" ).flows[0].actions.should match( /mod_vlan_pcp:7/ )
+        expect(vswitch( "0xabc" ).size).to eq(1)
+        expect(vswitch( "0xabc" ).flows[0].actions).to match( /mod_vlan_pcp:7/ )
       }
     end
   end

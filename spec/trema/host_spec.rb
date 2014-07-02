@@ -27,8 +27,8 @@ module Trema
     before {
       Host.instances.clear
 
-      @cli = mock( "cli" )
-      Cli.stub!( :new ).and_return( @cli )
+      @cli = double( "cli" )
+      allow(Cli).to receive( :new ).and_return( @cli )
     }
 
 
@@ -38,7 +38,7 @@ module Trema
 
         subject { Host.new( @stanza ).ip }
 
-        it { should == "192.168.0.1" }
+        it { is_expected.to eq("192.168.0.1") }
       end
 
 
@@ -47,7 +47,7 @@ module Trema
 
         subject { Host.new( @stanza ).ip }
 
-        it { should == "192.168.100.100" }
+        it { is_expected.to eq("192.168.100.100") }
       end
     end
 
@@ -58,7 +58,7 @@ module Trema
 
         subject { Host.new( @stanza ).mac }
 
-        it { should == "00:00:00:00:00:01" }
+        it { is_expected.to eq("00:00:00:00:00:01") }
       end
 
 
@@ -67,7 +67,7 @@ module Trema
 
         subject { Host.new( @stanza ).mac }
 
-        it { should == "00:00:00:aa:bb:cc" }
+        it { is_expected.to eq("00:00:00:aa:bb:cc") }
       end
     end
 
@@ -78,7 +78,7 @@ module Trema
 
         subject { Host.new( @stanza ).netmask }
 
-        it { should == "255.255.255.255" }
+        it { is_expected.to eq("255.255.255.255") }
       end
 
 
@@ -87,7 +87,7 @@ module Trema
 
         subject { Host.new( @stanza ).netmask }
 
-        it { should == "255.255.0.0" }
+        it { is_expected.to eq("255.255.0.0") }
       end
     end
 
@@ -96,15 +96,15 @@ module Trema
       describe :cli do
         before {
           @host0 = Host.new( :name => "HOST 0" )
-          @host1 = mock( "HOST 1" )
-          @host2 = mock( "HOST 2" )
-          @host3 = mock( "HOST 3" )
+          @host1 = double( "HOST 1" )
+          @host2 = double( "HOST 2" )
+          @host3 = double( "HOST 3" )
         }
 
         it "should add arp entries" do
-          @cli.should_receive( :add_arp_entry ).with( @host1 )
-          @cli.should_receive( :add_arp_entry ).with( @host2 )
-          @cli.should_receive( :add_arp_entry ).with( @host3 )
+          expect(@cli).to receive( :add_arp_entry ).with( @host1 )
+          expect(@cli).to receive( :add_arp_entry ).with( @host2 )
+          expect(@cli).to receive( :add_arp_entry ).with( @host3 )
 
           @host0.add_arp_entry [ @host1, @host2, @host3 ]
         end
@@ -115,21 +115,21 @@ module Trema
     context "when #run!" do
       describe :cli do
         before {
-          Phost.stub!( :new ).and_return( mock( "phost", :run! => nil ) )
+          allow(Phost).to receive( :new ).and_return( double( "phost", :run! => nil ) )
         }
 
         it "should set IP and MAC address" do
-          @cli.should_receive( :set_ip_and_mac_address )
+          expect(@cli).to receive( :set_ip_and_mac_address )
 
           Host.new( :name => "Yutaro's host" ).run!
         end
 
 
         context "when promisc on" do
-          before { @cli.stub!( :set_ip_and_mac_address ) }
+          before { allow(@cli).to receive( :set_ip_and_mac_address ) }
 
           it "should enable promisc" do
-            @cli.should_receive( :enable_promisc )
+            expect(@cli).to receive( :enable_promisc )
 
             Host.new( :name => "Yutaro's host", :promisc => true ).run!
           end
@@ -141,12 +141,12 @@ module Trema
     context "when #send_packets" do
       describe :cli do
         before {
-          @dest = mock( "dest" )
-          @options = mock( "options" )
+          @dest = double( "dest" )
+          @options = double( "options" )
         }
 
         it "should send_packets" do
-          @cli.should_receive( :send_packets ).with( @dest, @options )
+          expect(@cli).to receive( :send_packets ).with( @dest, @options )
 
           Host.new( :name => "Yutaro's host" ).send_packet @dest, @options
         end
@@ -156,7 +156,7 @@ module Trema
 
     context "when getting stats" do
       before {
-        @stats = mock( "stats" )
+        @stats = double( "stats" )
         @host = Host.new( :name => "Yutaro's host" )
       }
 
@@ -164,9 +164,9 @@ module Trema
       context "when #tx_stats" do
         describe :cli do
           it "should get tx stats" do
-            @cli.should_receive( :tx_stats ).and_return( @stats )
+            expect(@cli).to receive( :tx_stats ).and_return( @stats )
 
-            @host.tx_stats.should == @stats
+            expect(@host.tx_stats).to eq(@stats)
           end
         end
       end
@@ -175,9 +175,9 @@ module Trema
       context "when #rx_stats" do
         describe :cli do
           it "should get rx stats" do
-            @cli.should_receive( :rx_stats ).and_return( @stats )
+            expect(@cli).to receive( :rx_stats ).and_return( @stats )
 
-            @host.rx_stats.should == @stats
+            expect(@host.rx_stats).to eq(@stats)
           end
         end
       end

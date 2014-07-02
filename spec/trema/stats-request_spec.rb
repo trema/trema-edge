@@ -24,7 +24,11 @@ require "trema"
 
 shared_examples_for "any stats-request" do
   it_should_behave_like "any Openflow message with default transaction ID"
-  its( :flags ) { should == 0 }
+
+  describe '#flags' do
+    subject { super().flags }
+    it { is_expected.to eq(0) }
+  end
 end
 
 
@@ -46,9 +50,21 @@ describe StatsRequest do
   context "when .FlowStatsRequest.new( OPTIONAL OPTIONS MISSING )" do
     subject { FlowStatsRequest.new( :match => Match.new( :dl_type => 0x800, :nw_proto => 17 ) ) }
     it_should_behave_like "any stats-request"
-    its( :match ) { should be_an_instance_of( Match ) }
-    its( :table_id ) { should == 0xff }
-    its( :out_port ) { should == 0xffff }
+
+    describe '#match' do
+      subject { super().match }
+      it { is_expected.to be_an_instance_of( Match ) }
+    end
+
+    describe '#table_id' do
+      subject { super().table_id }
+      it { is_expected.to eq(0xff) }
+    end
+
+    describe '#out_port' do
+      subject { super().out_port }
+      it { is_expected.to eq(0xffff) }
+    end
   end
 
 
@@ -61,9 +77,21 @@ describe StatsRequest do
       )
     end
     it_should_behave_like "any stats-request"
-    its( :match ) { should be_an_instance_of( Match ) }
-    its( :table_id ) { should == 1 }
-    its( :out_port ) { should == 2 }
+
+    describe '#match' do
+      subject { super().match }
+      it { is_expected.to be_an_instance_of( Match ) }
+    end
+
+    describe '#table_id' do
+      subject { super().table_id }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#out_port' do
+      subject { super().out_port }
+      it { is_expected.to eq(2) }
+    end
   end
 
 
@@ -78,9 +106,21 @@ describe StatsRequest do
   context "when .AggregateStatsRequest.new( OPTIONAL OPTIONS MISSING )" do
     subject { AggregateStatsRequest.new( :match => Match.new( :dl_type => 0x800, :nw_proto => 17 ) ) }
     it_should_behave_like "any stats-request"
-    its( :match ) { should be_an_instance_of( Match ) }
-    its( :table_id ) { should == 0xff }
-    its( :out_port ) { should == 0xffff }
+
+    describe '#match' do
+      subject { super().match }
+      it { is_expected.to be_an_instance_of( Match ) }
+    end
+
+    describe '#table_id' do
+      subject { super().table_id }
+      it { is_expected.to eq(0xff) }
+    end
+
+    describe '#out_port' do
+      subject { super().out_port }
+      it { is_expected.to eq(0xffff) }
+    end
   end
 
 
@@ -93,9 +133,21 @@ describe StatsRequest do
       )
     end
     it_should_behave_like "any stats-request"
-    its( :match ) { should be_an_instance_of( Match ) }
-    its( :table_id ) { should == 1 }
-    its( :out_port ) { should == 2 }
+
+    describe '#match' do
+      subject { super().match }
+      it { is_expected.to be_an_instance_of( Match ) }
+    end
+
+    describe '#table_id' do
+      subject { super().table_id }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#out_port' do
+      subject { super().out_port }
+      it { is_expected.to eq(2) }
+    end
   end
 
 
@@ -108,44 +160,76 @@ describe StatsRequest do
   context "when .PortStasRequest.new( OPTIONAL OPTION MISSING )" do
     subject { PortStatsRequest.new }
     it_should_behave_like "any stats-request"
-    its( :port_no ) { should == 0xffff }
+
+    describe '#port_no' do
+      subject { super().port_no }
+      it { is_expected.to eq(0xffff) }
+    end
   end
 
 
   context "when .PortStasRequest.new( VALID OPTIONS )" do
     subject { PortStatsRequest.new :port_no => 1 }
     it_should_behave_like "any stats-request"
-    its( :port_no ) { should == 1 }
+
+    describe '#port_no' do
+      subject { super().port_no }
+      it { is_expected.to eq(1) }
+    end
   end
 
 
   context "when .QueueStatsRequest.new( OPTIONAL OPTIONS MISSING )" do
     subject { QueueStatsRequest.new }
     it_should_behave_like "any stats-request"
-    its( :port_no ) { should == 0xfffc }
-    its( :queue_id ) { should == 0xffffffff }
+
+    describe '#port_no' do
+      subject { super().port_no }
+      it { is_expected.to eq(0xfffc) }
+    end
+
+    describe '#queue_id' do
+      subject { super().queue_id }
+      it { is_expected.to eq(0xffffffff) }
+    end
   end
 
 
   context "when .QueueStatsRequest.new( VALID OPTIONS )" do
     subject { QueueStatsRequest.new :port_no => 1, :queue_id => 2 }
     it_should_behave_like "any stats-request"
-    its( :port_no ) { should == 1 }
-    its( :queue_id ) { should == 2 }
+
+    describe '#port_no' do
+      subject { super().port_no }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#queue_id' do
+      subject { super().queue_id }
+      it { is_expected.to eq(2) }
+    end
   end
 
 
   context "when .VendorStatsRequest.new( OPTIONAL OPTION MISSING )" do
     subject { VendorStatsRequest.new }
     it_should_behave_like "any stats-request"
-    its( :vendor_id ) { should == 0x00004cff }
+
+    describe '#vendor_id' do
+      subject { super().vendor_id }
+      it { is_expected.to eq(0x00004cff) }
+    end
   end
 
 
   context "when .VendorStatsRequest.new( VALID OPTION )" do
     subject { VendorStatsRequest.new :vendor_id => 123 }
     it_should_behave_like "any stats-request"
-    its( :vendor_id ) { should == 123 }
+
+    describe '#vendor_id' do
+      subject { super().vendor_id }
+      it { is_expected.to eq(123) }
+    end
   end
 end
 

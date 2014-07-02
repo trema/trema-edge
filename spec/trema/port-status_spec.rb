@@ -24,9 +24,21 @@ require "trema"
 
 describe Trema::PortStatus do
   subject { Trema::PortStatus }
-  its( :constants ) { should include "OFPPR_ADD" }
-  its( :constants ) { should include "OFPPR_DELETE" }
-  its( :constants ) { should include "OFPPR_MODIFY" }
+
+  describe '#constants' do
+    subject { super().constants }
+    it { is_expected.to include "OFPPR_ADD" }
+  end
+
+  describe '#constants' do
+    subject { super().constants }
+    it { is_expected.to include "OFPPR_DELETE" }
+  end
+
+  describe '#constants' do
+    subject { super().constants }
+    it { is_expected.to include "OFPPR_MODIFY" }
+  end
 end
 
 

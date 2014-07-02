@@ -51,32 +51,92 @@ module Trema
 
     context %{when "11:22:33:44:55:66"} do
       let( :value ) { "11:22:33:44:55:66" }
-      it { should == Mac.new( "11:22:33:44:55:66" ) }
-      its( :value ) { should == 0x112233445566 }
-      its( :to_s ) { should == "11:22:33:44:55:66" }
-      its( :to_a ) { should == [ 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 ] }
-      its( :multicast? ){ should be_true }
-      its( :broadcast? ){ should be_false }
+      it { is_expected.to eq(Mac.new( "11:22:33:44:55:66" )) }
+
+      describe '#value' do
+        subject { super().value }
+        it { is_expected.to eq(0x112233445566) }
+      end
+
+      describe '#to_s' do
+        subject { super().to_s }
+        it { is_expected.to eq("11:22:33:44:55:66") }
+      end
+
+      describe '#to_a' do
+        subject { super().to_a }
+        it { is_expected.to eq([ 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 ]) }
+      end
+
+      describe '#multicast?' do
+        subject { super().multicast? }
+        it { is_expected.to be_truthy }
+      end
+
+      describe '#broadcast?' do
+        subject { super().broadcast? }
+        it { is_expected.to be_falsey }
+      end
     end
 
     context "when 0" do
       let( :value ) { 0 }
-      it { should == Mac.new( 0 ) }
-      its( :value ) { should == 0 }
-      its( :to_s ) { should == "00:00:00:00:00:00" }
-      its( :to_a ) { should == [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ] }
-      its( :multicast? ){ should be_false }
-      its( :broadcast? ){ should be_false }
+      it { is_expected.to eq(Mac.new( 0 )) }
+
+      describe '#value' do
+        subject { super().value }
+        it { is_expected.to eq(0) }
+      end
+
+      describe '#to_s' do
+        subject { super().to_s }
+        it { is_expected.to eq("00:00:00:00:00:00") }
+      end
+
+      describe '#to_a' do
+        subject { super().to_a }
+        it { is_expected.to eq([ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ]) }
+      end
+
+      describe '#multicast?' do
+        subject { super().multicast? }
+        it { is_expected.to be_falsey }
+      end
+
+      describe '#broadcast?' do
+        subject { super().broadcast? }
+        it { is_expected.to be_falsey }
+      end
     end
 
     context "when 0xffffffffffff" do
       let( :value ) { 0xffffffffffff }
-      it { should == Mac.new( 0xffffffffffff ) }
-      its( :value ) { should == 0xffffffffffff }
-      its( :to_s ) { should == "ff:ff:ff:ff:ff:ff" }
-      its( :to_a ) { should == [ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff ] }
-      its( :multicast? ){ should be_true }
-      its( :broadcast? ){ should be_true }
+      it { is_expected.to eq(Mac.new( 0xffffffffffff )) }
+
+      describe '#value' do
+        subject { super().value }
+        it { is_expected.to eq(0xffffffffffff) }
+      end
+
+      describe '#to_s' do
+        subject { super().to_s }
+        it { is_expected.to eq("ff:ff:ff:ff:ff:ff") }
+      end
+
+      describe '#to_a' do
+        subject { super().to_a }
+        it { is_expected.to eq([ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff ]) }
+      end
+
+      describe '#multicast?' do
+        subject { super().multicast? }
+        it { is_expected.to be_truthy }
+      end
+
+      describe '#broadcast?' do
+        subject { super().broadcast? }
+        it { is_expected.to be_truthy }
+      end
     end
   end
 

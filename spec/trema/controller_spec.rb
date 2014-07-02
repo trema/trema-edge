@@ -27,27 +27,27 @@ module Trema
     context "when using OpenFlow constants" do
       subject { Controller.constants }
 
-      it { should include "OFPP_MAX" }
-      it { should include "OFPP_IN_PORT" }
-      it { should include "OFPP_TABLE" }
-      it { should include "OFPP_NORMAL" }
-      it { should include "OFPP_FLOOD" }
-      it { should include "OFPP_ALL" }
-      it { should include "OFPP_CONTROLLER" }
-      it { should include "OFPP_LOCAL" }
-      it { should include "OFPP_NONE" }
+      it { is_expected.to include "OFPP_MAX" }
+      it { is_expected.to include "OFPP_IN_PORT" }
+      it { is_expected.to include "OFPP_TABLE" }
+      it { is_expected.to include "OFPP_NORMAL" }
+      it { is_expected.to include "OFPP_FLOOD" }
+      it { is_expected.to include "OFPP_ALL" }
+      it { is_expected.to include "OFPP_CONTROLLER" }
+      it { is_expected.to include "OFPP_LOCAL" }
+      it { is_expected.to include "OFPP_NONE" }
     end
 
 
     context "when logging" do
       subject { Controller.new }
 
-      it { should respond_to :critical }
-      it { should respond_to :error }
-      it { should respond_to :warn }
-      it { should respond_to :notice }
-      it { should respond_to :info }
-      it { should respond_to :debug }
+      it { is_expected.to respond_to :critical }
+      it { is_expected.to respond_to :error }
+      it { is_expected.to respond_to :warn }
+      it { is_expected.to respond_to :notice }
+      it { is_expected.to respond_to :info }
+      it { is_expected.to respond_to :debug }
     end
 
 
@@ -59,7 +59,7 @@ module Trema
           vswitch { datapath_id 0xabc }
         }.run( FlowModAddController ) {
           controller( "FlowModAddController" ).send_flow_mod_add( 0xabc )
-          vswitch( "0xabc" ).should have( 1 ).flows
+          expect(vswitch( "0xabc" ).size).to eq(1)
         }
       end
     end

@@ -25,8 +25,15 @@ require "trema"
 describe Trema do
   let!( :spec_dir ) { File.dirname( __FILE__ ) }
 
-  its( :home ) { should eq File.realpath( File.join( spec_dir, ".." ) ) }
-  its( :tmp ) { should eq File.expand_path( File.join( spec_dir, "..", "tmp" ) ) }
+  describe '#home' do
+    subject { super().home }
+    it { is_expected.to eq File.realpath( File.join( spec_dir, ".." ) ) }
+  end
+
+  describe '#tmp' do
+    subject { super().tmp }
+    it { is_expected.to eq File.expand_path( File.join( spec_dir, "..", "tmp" ) ) }
+  end
 end
 
 

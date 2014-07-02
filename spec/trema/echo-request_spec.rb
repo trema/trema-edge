@@ -28,7 +28,7 @@ shared_examples_for "echo reply message" do
       vswitch( "echo" ) { datapath_id 0xabc }
     }.run( EchoReplyController ) {
       controller( "EchoReplyController" ).send_message( 0xabc, subject )
-      IO.read( File.join( Trema.log, "openflowd.echo.log" ) ).should include( "OFPT_ECHO_REPLY" )
+      expect(IO.read( File.join( Trema.log, "openflowd.echo.log" ) )).to include( "OFPT_ECHO_REPLY" )
     }
   end
 end
@@ -38,7 +38,11 @@ module Trema
   describe EchoRequest, ".new" do
     it_should_behave_like "any Openflow message with default transaction ID"
     it_should_behave_like "echo reply message"
-    its( :user_data ) { should be_nil }
+
+    describe '#user_data' do
+      subject { super().user_data }
+      it { is_expected.to be_nil }
+    end
   end
 
 
@@ -46,7 +50,11 @@ module Trema
     subject { EchoRequest.new( nil ) }
     it_should_behave_like "any Openflow message with default transaction ID"
     it_should_behave_like "echo reply message"
-    its( :user_data ) { should be_nil }
+
+    describe '#user_data' do
+      subject { super().user_data }
+      it { is_expected.to be_nil }
+    end
   end
 
 
@@ -101,9 +109,20 @@ module Trema
       let( :transaction_id ) { 123 }
       let( :user_data ) { "USER DATA" }
 
-      its( :transaction_id ) { should == 123 }
-      its( :xid ) { should == 123 }
-      its( :user_data ) { should == "USER DATA" }
+      describe '#transaction_id' do
+        subject { super().transaction_id }
+        it { is_expected.to eq(123) }
+      end
+
+      describe '#xid' do
+        subject { super().xid }
+        it { is_expected.to eq(123) }
+      end
+
+      describe '#user_data' do
+        subject { super().user_data }
+        it { is_expected.to eq("USER DATA") }
+      end
     end
 
     context "when sent to a switch" do

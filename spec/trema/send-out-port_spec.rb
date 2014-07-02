@@ -31,8 +31,16 @@ describe SendOutPort, ".new( VALID OPTIONS )" do
   subject { SendOutPort.new :port => port, :max_len => max_len }
   let( :port ) { 1 }
   let( :max_len ) { 256 }
-  its( :port ) { should == 1 }
-  its( :max_len ) { should == 256 }
+
+  describe '#port' do
+    subject { super().port }
+    it { is_expected.to eq(1) }
+  end
+
+  describe '#max_len' do
+    subject { super().max_len }
+    it { is_expected.to eq(256) }
+  end
   it_should_behave_like "any OpenFlow message with port option"
   it_should_behave_like "any OpenFlow message with max_len option"
 end
@@ -70,9 +78,9 @@ describe SendOutPort, ".new( VALID OPTIONS )" do
         link "host2", "lsw:2"
       }
       mc = MockController.new( network_blk )
-      mc.should_receive( :switch_ready ) do | datapath_id |
+      expect(mc).to receive( :switch_ready ) do | datapath_id |
         action = SendOutPort.new( port_number: OFPP_CONTROLLER )
-        action.should_receive( :pack_send_out_port )
+        expect(action).to receive( :pack_send_out_port )
         apply_ins = ApplyAction.new( actions: [ action ] )
         match_fields = Match.new( in_port: 1 )
         mc.send_flow_mod_add( datapath_id,

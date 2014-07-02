@@ -25,13 +25,17 @@ require "trema/ip"
 
 describe ActionSetNwSrc, ".new( VALID OPTIONS )" do
   subject { ActionSetNwSrc.new( :nw_src => IP.new( "192.168.1.1" ) ) }
-  its( :nw_src ) { should be_an_instance_of Trema::IP  }
-  it "should inspect its attributes" do
-    subject.inspect.should == "#<Trema::ActionSetNwSrc nw_src=192.168.1.1>"
+
+  describe '#nw_src' do
+    subject { super().nw_src }
+    it { is_expected.to be_an_instance_of Trema::IP  }
   end
-  it { should respond_to( :to_i ) }
+  it "should inspect its attributes" do
+    expect(subject.inspect).to eq("#<Trema::ActionSetNwSrc nw_src=192.168.1.1>")
+  end
+  it { is_expected.to respond_to( :to_i ) }
   it "should return an Integer" do
-    subject.nw_src.to_i.should == 3232235777
+    expect(subject.nw_src.to_i).to eq(3232235777)
   end
 end
 
@@ -69,7 +73,7 @@ describe ActionSetNwSrc, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         action = ActionSetNwSrc.new( :nw_src => IP.new( "192.168.1.1" ) )
-        action.should_receive( :append )
+        expect(action).to receive( :append )
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => action )
      }
     end
@@ -82,8 +86,8 @@ describe ActionSetNwSrc, ".new( VALID OPTION )" do
       }.run( FlowModAddController ) {
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc,
           :actions => ActionSetNwSrc.new( :nw_src => IP.new( "192.168.1.1" ) ) )
-        vswitch( "0xabc" ).should have( 1 ).flows
-        vswitch( "0xabc" ).flows[0].actions.should match( /mod_nw_src:192.168.1.1/ )
+        expect(vswitch( "0xabc" ).size).to eq(1)
+        expect(vswitch( "0xabc" ).flows[0].actions).to match( /mod_nw_src:192.168.1.1/ )
       }
     end
   end

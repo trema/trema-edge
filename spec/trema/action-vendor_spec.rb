@@ -30,9 +30,13 @@ end
 describe ActionVendor, ".new( VALID OPTION )" do
   subject  { ActionVendor.new( :vendor => vendor ) }
   let( :vendor ) { 1 }
-  its( :vendor ) { should == 1 }
+
+  describe '#vendor' do
+    subject { super().vendor }
+    it { is_expected.to eq(1) }
+  end
   it "should inspect its attributes" do
-    subject.inspect.should == "#<Trema::ActionVendor vendor=1>"
+    expect(subject.inspect).to eq("#<Trema::ActionVendor vendor=1>")
   end
   it_should_behave_like "any OpenFlow message with vendor option"
 end
@@ -61,7 +65,7 @@ describe ActionVendor, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         action = ActionVendor.new( :vendor => 1 )
-        action.should_receive( :append )
+        expect(action).to receive( :append )
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => action )
      }
     end
@@ -69,14 +73,14 @@ describe ActionVendor, ".new( VALID OPTION )" do
 
     it "should have a flow with action set to mod_vendor" do
       class FlowModAddController < Controller; end
-      pending "ActionVendor not yet implemented"
+      skip "ActionVendor not yet implemented"
       network {
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc,
           :actions => ActionVendor.new( 123 ) )
-        switch( "0xabc" ).should have( 1 ).flows
-        switch( "0xabc" ).flows[0].actions.should match( /mod_vendor/ )
+        expect(switch( "0xabc" ).size).to eq(1)
+        expect(switch( "0xabc" ).flows[0].actions).to match( /mod_vendor/ )
       }
     end
   end

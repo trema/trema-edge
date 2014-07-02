@@ -47,7 +47,7 @@ describe GetConfigRequest, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( GetConfigController ) {
         get_config_request = GetConfigRequest.new( :transaction_id => 1234 )
-        controller( "GetConfigController" ).should_receive( :get_config_reply )
+        expect(controller( "GetConfigController" )).to receive( :get_config_reply )
         sleep 1 # FIXME
         controller( "GetConfigController" ).send_message( 0xabc, get_config_request )
         sleep 2 # FIXME: wait to send_message
@@ -61,11 +61,11 @@ describe GetConfigRequest, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( GetConfigController ) {
         get_config_request = GetConfigRequest.new( :transaction_id => 1234 )
-        controller( "GetConfigController" ).should_receive( :get_config_reply ) do | message |
-          message.datapath_id.should == 0xabc
-          message.transaction_id.should == 1234
-          message.flags.should >= 0 and message.flags.should <= 3
-          message.miss_send_len.should == 65535
+        expect(controller( "GetConfigController" )).to receive( :get_config_reply ) do | message |
+          expect(message.datapath_id).to eq(0xabc)
+          expect(message.transaction_id).to eq(1234)
+          expect(message.flags).to be >= 0 and expect(message.flags).to be <= 3
+          expect(message.miss_send_len).to eq(65535)
         end
         controller( "GetConfigController" ).send_message( 0xabc, get_config_request )
         sleep 2 # FIXME: wait to send_message

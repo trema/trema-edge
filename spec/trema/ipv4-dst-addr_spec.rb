@@ -24,7 +24,11 @@ require "trema"
 describe Trema::Ipv4DstAddr, "new( VALID OPTIONS )" do
   subject { Ipv4DstAddr.new(  ip_addr: addr ) }
   let( :addr ) { IPAddr.new( "192.168.0.1" ) }
-  its ( :ip_addr ) { should == "192.168.0.1" }
+
+  describe ( :ip_addr ) do
+    subject { super().send(( :ip_addr )) }
+    it { is_expected.to eq("192.168.0.1") }
+  end
 end
 
 
@@ -55,7 +59,7 @@ describe Trema::Ipv4DstAddr, ".new( VALID OPTIONS )" do
         link "host2", "lsw:2"
       }
       mc = MockController.new( network_blk )
-      mc.should_receive( :switch_ready ) do | datapath_id |
+      expect(mc).to receive( :switch_ready ) do | datapath_id |
         action = SendOutPort.new( port_number: OFPP_CONTROLLER )
         apply_ins = ApplyAction.new( actions: [ action ] )
         match_fields = Match.new( in_port: 1, eth_type: 2048, ipv4_dst: IPAddr.new( "192.168.0.2" ) )
@@ -64,7 +68,7 @@ describe Trema::Ipv4DstAddr, ".new( VALID OPTIONS )" do
                               match: match_fields,
                               instructions: [ apply_ins ] )
       end
-      mc.should_receive( :packet_in ) do | datapath_id, message |
+      expect(mc).to receive( :packet_in ) do | datapath_id, message |
         action = Trema::Ipv4DstAddr.new( ip_addr: IPAddr.new( "192.168.0.2" ) )
         expect( action.ip_addr.to_s ).to  eq( message.packet_info.ipv4_dst.to_s )
       end

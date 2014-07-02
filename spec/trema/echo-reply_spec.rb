@@ -23,14 +23,22 @@ require "trema"
 module Trema
   describe EchoReply, ".new", :nosudo => true do
     it_should_behave_like "any Openflow message with default transaction ID"
-    its( :user_data ) { should be_nil }
+
+    describe '#user_data' do
+      subject { super().user_data }
+      it { is_expected.to be_nil }
+    end
   end
 
 
   describe EchoReply, ".new(nil)", :nosudo => true do
     subject { EchoReply.new( nil ) }
     it_should_behave_like "any Openflow message with default transaction ID"
-    its( :user_data ) { should be_nil }
+
+    describe '#user_data' do
+      subject { super().user_data }
+      it { is_expected.to be_nil }
+    end
   end
 
 
@@ -64,9 +72,21 @@ module Trema
     context 'transaction_id: 123, user_data: "USER DATA"' do
       let( :transaction_id ) { 123 }
       let( :user_data ) { "USER DATA" }
-      its( :transaction_id ) { should == 123 }
-      its( :xid ) { should == 123 }
-      its( :user_data ) { should == "USER DATA" }
+
+      describe '#transaction_id' do
+        subject { super().transaction_id }
+        it { is_expected.to eq(123) }
+      end
+
+      describe '#xid' do
+        subject { super().xid }
+        it { is_expected.to eq(123) }
+      end
+
+      describe '#user_data' do
+        subject { super().user_data }
+        it { is_expected.to eq("USER DATA") }
+      end
     end
   end
 

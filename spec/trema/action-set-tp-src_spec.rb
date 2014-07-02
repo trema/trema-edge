@@ -30,9 +30,13 @@ end
 describe ActionSetTpSrc, ".new( VALID OPTION )" do
   subject { ActionSetTpSrc.new( :tp_src => tp_src ) }
   let( :tp_src ) { 5555 }
-  its( :tp_src ) { should == 5555 }
+
+  describe '#tp_src' do
+    subject { super().tp_src }
+    it { is_expected.to eq(5555) }
+  end
   it "should inspect its attributes" do
-    subject.inspect.should == "#<Trema::ActionSetTpSrc tp_port=5555>"
+    expect(subject.inspect).to eq("#<Trema::ActionSetTpSrc tp_port=5555>")
   end
   it_should_behave_like "any OpenFlow message with tp_src option"
 end
@@ -61,7 +65,7 @@ describe ActionSetTpSrc, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         action = ActionSetTpSrc.new( :tp_src => 5555 )
-        action.should_receive( :append )
+        expect(action).to receive( :append )
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => action )
      }
     end
@@ -73,8 +77,8 @@ describe ActionSetTpSrc, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => ActionSetTpSrc.new( :tp_src => 5555 ) )
-        vswitch( "0xabc" ).should have( 1 ).flows
-        vswitch( "0xabc" ).flows[0].actions.should match( /mod_tp_src:5555/ )
+        expect(vswitch( "0xabc" ).size).to eq(1)
+        expect(vswitch( "0xabc" ).flows[0].actions).to match( /mod_tp_src:5555/ )
       }
     end
   end

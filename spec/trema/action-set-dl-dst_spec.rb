@@ -24,9 +24,13 @@ require "trema"
 
 describe ActionSetDlDst, ".new( VALID OPTION )" do
   subject { ActionSetDlDst.new( :dl_dst => Mac.new( "52:54:00:a8:ad:8c" ) ) }
-  its( :dl_dst ) { should be_an_instance_of( Mac ) }
+
+  describe '#dl_dst' do
+    subject { super().dl_dst }
+    it { is_expected.to be_an_instance_of( Mac ) }
+  end
   it "should inspect its attributes" do
-    subject.inspect.should == "#<Trema::ActionSetDlDst dl_dst=52:54:00:a8:ad:8c>"
+    expect(subject.inspect).to eq("#<Trema::ActionSetDlDst dl_dst=52:54:00:a8:ad:8c>")
   end
 end
 
@@ -64,7 +68,7 @@ describe ActionSetDlDst, ".new( VALID OPTION )" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         action = ActionSetDlDst.new( :dl_dst => Mac.new( "52:54:00:a8:ad:8c" ) )
-        action.should_receive( :append )
+        expect(action).to receive( :append )
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => action )
      }
     end
@@ -80,8 +84,8 @@ describe ActionSetDlDst, ".new( VALID OPTION )" do
           :actions =>  ActionSetDlDst.new( :dl_dst => Mac.new( "52:54:00:a8:ad:8c" ) )
         )
         sleep 2 # FIXME: wait to send_flow_mod
-        vswitch( "0xabc" ).should have( 1 ).flows
-        vswitch( "0xabc" ).flows[0].actions.should match( /mod_dl_dst:52:54:00:a8:ad:8c/ )
+        expect(vswitch( "0xabc" ).size).to eq(1)
+        expect(vswitch( "0xabc" ).flows[0].actions).to match( /mod_dl_dst:52:54:00:a8:ad:8c/ )
       }
     end
   end

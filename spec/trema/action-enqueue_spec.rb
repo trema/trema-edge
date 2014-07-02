@@ -31,10 +31,18 @@ describe ActionEnqueue, "new( VALID OPTIONS )" do
   subject { ActionEnqueue.new :port => port, :queue_id => queue_id  }
   let( :port ) { 1 }
   let( :queue_id ) { 123 }
-  its ( :port ) { should == 1 }
-  its ( :queue_id ) { should == 123 }
+
+  describe ( :port ) do
+    subject { super().send(( :port )) }
+    it { is_expected.to eq(1) }
+  end
+
+  describe ( :queue_id ) do
+    subject { super().send(( :queue_id )) }
+    it { is_expected.to eq(123) }
+  end
   it "should inspect its attributes" do
-    subject.inspect.should == "#<Trema::ActionEnqueue port=1,queue_id=123>"
+    expect(subject.inspect).to eq("#<Trema::ActionEnqueue port=1,queue_id=123>")
   end
   it_should_behave_like "any OpenFlow message with port option"
   it_should_behave_like "any OpenFlow message with queue id option"
@@ -72,7 +80,7 @@ describe ActionEnqueue, ".new( VALID OPTIONS )" do
         vswitch { datapath_id 0xabc }
       }.run( FlowModAddController ) {
         action = ActionEnqueue.new( :port => 1, :queue_id => 123 )
-        action.should_receive( :append )
+        expect(action).to receive( :append )
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => action )
       }
     end
@@ -85,8 +93,8 @@ describe ActionEnqueue, ".new( VALID OPTIONS )" do
       }.run( FlowModAddController ) {
         controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => ActionEnqueue.new( :port => 1, :queue_id => 123 ) )
         sleep 2 # FIXME: wait to send_flow_mod
-        vswitch( "0xabc" ).should have( 1 ).flows
-        vswitch( "0xabc" ).flows[0].actions.should match( /enqueue:1q123/ )
+        expect(vswitch( "0xabc" ).size).to eq(1)
+        expect(vswitch( "0xabc" ).flows[0].actions).to match( /enqueue:1q123/ )
       }
     end
   end

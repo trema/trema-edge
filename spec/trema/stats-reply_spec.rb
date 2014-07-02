@@ -33,11 +33,27 @@ describe StatsReply, ".new( VALID OPTIONS )" do
       )
     end
 
-    it { should respond_to( :to_s ) }
-    its ( :mfr_desc ) { should eq( "NEC Corporation" ) }
-    its ( :hw_desc ) { should eq( "no hardware description" ) }
-    its ( :sw_desc ) { should eq( "version xx.xx" ) }
-    its ( :serial_num ) { should eq( "1234" ) }
+    it { is_expected.to respond_to( :to_s ) }
+
+    describe ( :mfr_desc ) do
+      subject { super().send(( :mfr_desc )) }
+      it { is_expected.to eq( "NEC Corporation" ) }
+    end
+
+    describe ( :hw_desc ) do
+      subject { super().send(( :hw_desc )) }
+      it { is_expected.to eq( "no hardware description" ) }
+    end
+
+    describe ( :sw_desc ) do
+      subject { super().send(( :sw_desc )) }
+      it { is_expected.to eq( "version xx.xx" ) }
+    end
+
+    describe ( :serial_num ) do
+      subject { super().send(( :serial_num )) }
+      it { is_expected.to eq( "1234" ) }
+    end
   end
 
 
@@ -61,19 +77,67 @@ describe StatsReply, ".new( VALID OPTIONS )" do
       )
     end
     
-    it { should respond_to( :to_s ) }
-    its ( :length ) { should == 96 }
-    its ( :table_id ) { should == 0 }
-    its ( :match ) { should be_an_instance_of Match }
-    its ( :duration_sec ) { should == 3 }
-    its ( :duration_nsec ) { should == 106000000 }
-    its ( :priority ) { should == 65535 } 
-    its ( :idle_timeout ) { should == 0 }
-    its ( :hard_timeout ) { should == 0 }
-    its ( :cookie ) { should == 866942928268820481 }
-    its ( :packet_count ) { should == 2 }
-    its ( :byte_count ) { should == 128 }
-    its ( :actions ) { should_not be_empty }
+    it { is_expected.to respond_to( :to_s ) }
+
+    describe ( :length ) do
+      subject { super().send(( :length )) }
+      it { is_expected.to eq(96) }
+    end
+
+    describe ( :table_id ) do
+      subject { super().send(( :table_id )) }
+      it { is_expected.to eq(0) }
+    end
+
+    describe ( :match ) do
+      subject { super().send(( :match )) }
+      it { is_expected.to be_an_instance_of Match }
+    end
+
+    describe ( :duration_sec ) do
+      subject { super().send(( :duration_sec )) }
+      it { is_expected.to eq(3) }
+    end
+
+    describe ( :duration_nsec ) do
+      subject { super().send(( :duration_nsec )) }
+      it { is_expected.to eq(106000000) }
+    end
+
+    describe ( :priority ) do
+      subject { super().send(( :priority )) }
+      it { is_expected.to eq(65535) }
+    end 
+
+    describe ( :idle_timeout ) do
+      subject { super().send(( :idle_timeout )) }
+      it { is_expected.to eq(0) }
+    end
+
+    describe ( :hard_timeout ) do
+      subject { super().send(( :hard_timeout )) }
+      it { is_expected.to eq(0) }
+    end
+
+    describe ( :cookie ) do
+      subject { super().send(( :cookie )) }
+      it { is_expected.to eq(866942928268820481) }
+    end
+
+    describe ( :packet_count ) do
+      subject { super().send(( :packet_count )) }
+      it { is_expected.to eq(2) }
+    end
+
+    describe ( :byte_count ) do
+      subject { super().send(( :byte_count )) }
+      it { is_expected.to eq(128) }
+    end
+
+    describe ( :actions ) do
+      subject { super().send(( :actions )) }
+      it { is_expected.not_to be_empty }
+    end
   end
 
   
@@ -86,10 +150,22 @@ describe StatsReply, ".new( VALID OPTIONS )" do
       )
     end
     
-    it { should respond_to( :to_s ) }
-    its( :packet_count ) { should == 2 }
-    its( :byte_count ) { should == 128 }
-    its ( :flow_count ) { should == 10 }
+    it { is_expected.to respond_to( :to_s ) }
+
+    describe '#packet_count' do
+      subject { super().packet_count }
+      it { is_expected.to eq(2) }
+    end
+
+    describe '#byte_count' do
+      subject { super().byte_count }
+      it { is_expected.to eq(128) }
+    end
+
+    describe ( :flow_count ) do
+      subject { super().send(( :flow_count )) }
+      it { is_expected.to eq(10) }
+    end
   end
   
   
@@ -106,14 +182,42 @@ describe StatsReply, ".new( VALID OPTIONS )" do
       )
     end
     
-    it { should respond_to( :to_s ) }
-    its( :table_id ) { should == 1 }
-    its( :name ) { should eq( "classifier" ) }
-    its( :wildcards ) { should == 4194303 }
-    its( :max_entries ) { should == 1048576 }
-    its( :active_count ) { should == 4 }
-    its( :lookup_count ) { should == 4 }
-    its( :matched_count ) { should == 1 }
+    it { is_expected.to respond_to( :to_s ) }
+
+    describe '#table_id' do
+      subject { super().table_id }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#name' do
+      subject { super().name }
+      it { is_expected.to eq( "classifier" ) }
+    end
+
+    describe '#wildcards' do
+      subject { super().wildcards }
+      it { is_expected.to eq(4194303) }
+    end
+
+    describe '#max_entries' do
+      subject { super().max_entries }
+      it { is_expected.to eq(1048576) }
+    end
+
+    describe '#active_count' do
+      subject { super().active_count }
+      it { is_expected.to eq(4) }
+    end
+
+    describe '#lookup_count' do
+      subject { super().lookup_count }
+      it { is_expected.to eq(4) }
+    end
+
+    describe '#matched_count' do
+      subject { super().matched_count }
+      it { is_expected.to eq(1) }
+    end
   end
   
   
@@ -136,20 +240,72 @@ describe StatsReply, ".new( VALID OPTIONS )" do
       )
     end
     
-    it { should respond_to( :to_s ) }
-    its( :port_no ) { should == 1 }
-    its( :rx_packets ) { should == 7 }
-    its( :tx_packets ) { should == 10 }
-    its( :rx_bytes ) { should == 1454 }
-    its( :tx_bytes ) { should == 2314 }
-    its ( :rx_dropped ) { should == 1 }
-    its( :tx_dropped ) { should == 1 }
-    its( :rx_errors ) { should == 1 }
-    its( :tx_errors ) { should == 1 }
-    its( :rx_frame_err ) { should == 1 }
-    its( :rx_over_err ) { should == 1 }
-    its( :rx_crc_err ) { should == 1 }
-    its( :collisions ) { should == 1 }
+    it { is_expected.to respond_to( :to_s ) }
+
+    describe '#port_no' do
+      subject { super().port_no }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#rx_packets' do
+      subject { super().rx_packets }
+      it { is_expected.to eq(7) }
+    end
+
+    describe '#tx_packets' do
+      subject { super().tx_packets }
+      it { is_expected.to eq(10) }
+    end
+
+    describe '#rx_bytes' do
+      subject { super().rx_bytes }
+      it { is_expected.to eq(1454) }
+    end
+
+    describe '#tx_bytes' do
+      subject { super().tx_bytes }
+      it { is_expected.to eq(2314) }
+    end
+
+    describe ( :rx_dropped ) do
+      subject { super().send(( :rx_dropped )) }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#tx_dropped' do
+      subject { super().tx_dropped }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#rx_errors' do
+      subject { super().rx_errors }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#tx_errors' do
+      subject { super().tx_errors }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#rx_frame_err' do
+      subject { super().rx_frame_err }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#rx_over_err' do
+      subject { super().rx_over_err }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#rx_crc_err' do
+      subject { super().rx_crc_err }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#collisions' do
+      subject { super().collisions }
+      it { is_expected.to eq(1) }
+    end
   end
 
   
@@ -164,20 +320,44 @@ describe StatsReply, ".new( VALID OPTIONS )" do
       )
     end
     
-    it { should respond_to( :to_s ) }
-    its( :port_no ) { should == 1 }
-    its( :queue_id ) { should == 2 }
-    its( :tx_bytes ) { should == 1024 }
-    its( :tx_packets ) { should == 16 }
-    its( :tx_errors ) { should  == 5 }
+    it { is_expected.to respond_to( :to_s ) }
+
+    describe '#port_no' do
+      subject { super().port_no }
+      it { is_expected.to eq(1) }
+    end
+
+    describe '#queue_id' do
+      subject { super().queue_id }
+      it { is_expected.to eq(2) }
+    end
+
+    describe '#tx_bytes' do
+      subject { super().tx_bytes }
+      it { is_expected.to eq(1024) }
+    end
+
+    describe '#tx_packets' do
+      subject { super().tx_packets }
+      it { is_expected.to eq(16) }
+    end
+
+    describe '#tx_errors' do
+      subject { super().tx_errors }
+      it { is_expected.to  eq(5) }
+    end
   end
   
   
   context "when vendor-stats-reply is created" do
     subject { VendorStatsReply.new( :vendor_id => 123 ) }
 
-    it { should respond_to( :to_s ) }
-    its( :vendor_id ) { should == 123 }
+    it { is_expected.to respond_to( :to_s ) }
+
+    describe '#vendor_id' do
+      subject { super().vendor_id }
+      it { is_expected.to eq(123) }
+    end
   end
   
   
@@ -187,11 +367,11 @@ describe StatsReply, ".new( VALID OPTIONS )" do
       network {
         vswitch( "desc-stats" ) { datapath_id 0xabc }
       }.run( DescStatsController ) {
-        controller( "DescStatsController" ).should_receive( :stats_reply ) do | message |
-          message.type.should == 0
-          message.stats[ 0 ].mfr_desc.should eq( "Nicira Networks, Inc." )
-          message.stats[ 0 ].hw_desc.should eq( "Open vSwitch" )
-          message.stats[ 0 ].should respond_to :to_s
+        expect(controller( "DescStatsController" )).to receive( :stats_reply ) do | message |
+          expect(message.type).to eq(0)
+          expect(message.stats[ 0 ].mfr_desc).to eq( "Nicira Networks, Inc." )
+          expect(message.stats[ 0 ].hw_desc).to eq( "Open vSwitch" )
+          expect(message.stats[ 0 ]).to respond_to :to_s
         end
         
         controller( "DescStatsController" ).send_message( 0xabc,
@@ -224,10 +404,10 @@ describe StatsReply, ".new( VALID OPTIONS )" do
         send_packets "host1", "host2", :n_pkts => 2
         sleep 2 # FIXME: wait to send_packets
 
-        controller( "FlowStatsController" ).should_receive( :stats_reply ) do | message |
-          message.type.should == 1
-          message.stats[ 0 ].packet_count.should == 2
-          message.stats[ 0 ].should respond_to :to_s
+        expect(controller( "FlowStatsController" )).to receive( :stats_reply ) do | message |
+          expect(message.type).to eq(1)
+          expect(message.stats[ 0 ].packet_count).to eq(2)
+          expect(message.stats[ 0 ]).to respond_to :to_s
         end
         match = Match.new( :dl_type =>0x800, :nw_proto => 17 )
         controller( "FlowStatsController" ).send_message( 0xabc,
@@ -260,11 +440,11 @@ describe StatsReply, ".new( VALID OPTIONS )" do
         send_packets "host1", "host2", :n_pkts => 10
         sleep 2 # FIXME: wait to send_packets
 
-        controller( "AggregateStatsController" ).should_receive( :stats_reply ) do | message |
-          message.type.should == 2
-          message.stats[ 0 ].packet_count.should == 10
-          message.stats[ 0 ].flow_count.should == 1
-          message.stats[ 0 ].should respond_to :to_s
+        expect(controller( "AggregateStatsController" )).to receive( :stats_reply ) do | message |
+          expect(message.type).to eq(2)
+          expect(message.stats[ 0 ].packet_count).to eq(10)
+          expect(message.stats[ 0 ].flow_count).to eq(1)
+          expect(message.stats[ 0 ]).to respond_to :to_s
         end
         match = Match.new( :dl_type =>0x800, :nw_proto => 17 )
         controller( "AggregateStatsController" ).send_message( 0xabc,
@@ -293,10 +473,10 @@ describe StatsReply, ".new( VALID OPTIONS )" do
         send_packets "host1", "host2"
         sleep 2 # FIXME: wait to send_packets
         
-        controller( "PortStatsController" ).should_receive( :stats_reply ) do | message |
-          message.type.should == 4
-          message.stats[ 0 ].should be_an_instance_of(Trema::PortStatsReply)
-          message.stats[ 0 ].should respond_to :to_s
+        expect(controller( "PortStatsController" )).to receive( :stats_reply ) do | message |
+          expect(message.type).to eq(4)
+          expect(message.stats[ 0 ]).to be_an_instance_of(Trema::PortStatsReply)
+          expect(message.stats[ 0 ]).to respond_to :to_s
         end
         controller( "PortStatsController" ).send_message( 0xabc,
           PortStatsRequest.new( :port_no => 1 ) )
@@ -323,11 +503,11 @@ describe StatsReply, ".new( VALID OPTIONS )" do
         send_packets "host1", "host2"
         sleep 2 # FIXME: wait to send_packets
         
-        controller( "TableStatsController" ).should_receive( :stats_reply ) do | message |
-          message.type.should == 3
-          message.transaction_id.should == 123
-          message.stats[ 0 ].should be_an_instance_of(Trema::TableStatsReply)
-          message.stats[ 0 ].should respond_to :to_s
+        expect(controller( "TableStatsController" )).to receive( :stats_reply ) do | message |
+          expect(message.type).to eq(3)
+          expect(message.transaction_id).to eq(123)
+          expect(message.stats[ 0 ]).to be_an_instance_of(Trema::TableStatsReply)
+          expect(message.stats[ 0 ]).to respond_to :to_s
         end
         controller( "TableStatsController" ).send_message( 0xabc,
           TableStatsRequest.new( :transaction_id => 123 ) )

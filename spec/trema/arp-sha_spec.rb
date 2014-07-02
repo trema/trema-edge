@@ -24,7 +24,11 @@ require "trema"
 describe Trema::ArpSha, "new( VALID OPTIONS )" do
   subject { ArpSha.new(  mac_address: mac ) }
   let( :mac ) { Mac.new( "11:22:33:44:55:66" ) }
-  its ( :mac_address ) { should == Mac.new( "11:22:33:44:55:66" ) }
+
+  describe ( :mac_address ) do
+    subject { super().send(( :mac_address )) }
+    it { is_expected.to eq(Mac.new( "11:22:33:44:55:66" )) }
+  end
 end
 
 
@@ -55,7 +59,7 @@ describe Trema::ArpSha, ".new( VALID OPTIONS )" do
         link "host2", "lsw:2"
       }
       mc = MockController.new( network_blk )
-      mc.should_receive( :switch_ready ) do | datapath_id |
+      expect(mc).to receive( :switch_ready ) do | datapath_id |
         action = SendOutPort.new( port_number: OFPP_CONTROLLER )
         apply_ins = ApplyAction.new( actions: [ action ] )
         mac = `ifconfig trema1-0`[/([0-9|a-f]{2}:[0-9|a-f]{2}:[0-9|a-f]{2}:[0-9|a-f]{2}:[0-9|a-f]{2}:[0-9|a-f]{2})/]
@@ -65,7 +69,7 @@ describe Trema::ArpSha, ".new( VALID OPTIONS )" do
                               match: match_fields,
                               instructions: [ apply_ins ] )
       end
-      mc.should_receive( :packet_in ).at_least( :once ) do | datapath_id, message |
+      expect(mc).to receive( :packet_in ).at_least( :once ) do | datapath_id, message |
         mac = `ifconfig trema1-0`[/([0-9|a-f]{2}:[0-9|a-f]{2}:[0-9|a-f]{2}:[0-9|a-f]{2}:[0-9|a-f]{2}:[0-9|a-f]{2})/]
         action = Trema::ArpSha.new( mac_address: Mac.new( mac ) )
         expect( action.mac_address.to_s ).to  eq( message.packet_info.arp_sha.to_s )

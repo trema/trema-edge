@@ -38,7 +38,7 @@ describe BarrierRequest, ".new( VALID OPTION )" do
       network {
         vswitch { datapath_id 0xabc }
       }.run( BarrierController ) {
-        controller( "BarrierController" ).should_receive( :barrier_reply )
+        expect(controller( "BarrierController" )).to receive( :barrier_reply )
         controller( "BarrierController" ).send_message( 0xabc, BarrierRequest.new )
         sleep 2 # FIXME: wait to send_message
       }
@@ -54,9 +54,9 @@ describe BarrierRequest, ".new( OPTIONAL OPTION ) - transaction_id" do
       network {
         vswitch { datapath_id 0xabc }
       }.run( BarrierController ) {
-        controller( "BarrierController" ).should_receive( :barrier_reply ) do | message |
-          message.datapath_id.should == 0xabc
-          message.transaction_id.should == 1234
+        expect(controller( "BarrierController" )).to receive( :barrier_reply ) do | message |
+          expect(message.datapath_id).to eq(0xabc)
+          expect(message.transaction_id).to eq(1234)
         end
         barrier_request = BarrierRequest.new( :transaction_id => 1234 )
         controller( "BarrierController" ).send_message( 0xabc, barrier_request )
