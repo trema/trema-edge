@@ -12,7 +12,7 @@ group :development do
   gem "flay", "~> 2.5.0"
   gem "flog", "~> 4.2.1"
   gem "reek", "~> 1.3.7"
-  gem "rspec", "~> 2.99"
+  gem "rspec", "~> 3.0.0"
   gem "yard", "~> 0.8.7.4"
 end
 
