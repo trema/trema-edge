@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "ether_device.h"
+#include "mutex.h"
 
 
 static const size_t MAX_L2_HEADER_LENGTH = 32;

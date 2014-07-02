@@ -19,9 +19,8 @@
 #ifndef MUTEX_H
 #define MUTEX_H
 
-
-#include "ofdp_common.h"
-
+#include <pthread.h>
+#include "bool.h"
 
 bool init_mutex( pthread_mutex_t *mutex );
 bool finalize_mutex( pthread_mutex_t *mutex );
@@ -29,6 +28,7 @@ bool lock_mutex( pthread_mutex_t *mutex );
 bool unlock_mutex( pthread_mutex_t *mutex );
 bool try_lock( pthread_mutex_t *mutex );
 
+char *safe_strerror_r( int errnum, char *buf, size_t buflen );
 
 #endif // MUTEX_H
 

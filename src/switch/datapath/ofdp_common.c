@@ -51,28 +51,6 @@ print_bitmap( const uint64_t bitmap, const uint64_t bit, const char *name ) {
 }
 
 
-char *
-safe_strerror_r( int errnum, char *buf, size_t buflen ) {
-  assert( buf != NULL );
-  assert( buflen > 0 );
-
-  int original = errnum;
-
-  memset( buf, '\0', buflen );
-
-#if ( _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600 ) && ! _GNU_SOURCE
-  int ret = strerror_r( errnum, buf, buflen );
-  char *error_string = buf;
-#else
-  char *error_string = strerror_r( errnum, buf, buflen );
-#endif
-
-  errno = original;
-
-  return error_string;
-}
-
-
 void
 copy_buffer( buffer *dst, const buffer *src ) {
   assert( dst != NULL );
