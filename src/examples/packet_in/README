@@ -5,7 +5,7 @@ This directory includes an example of handling packet_in message.
 
 Run this:
 
-  % ./trema run ./objects/examples/packet_in/packet_in
+  % ./trema run ./objects/examples/packet_in/packet_in -c ./src/examples/packet_in/packet_in.conf
 
 then on another terminal, send a packet to generate packet_in.
 
