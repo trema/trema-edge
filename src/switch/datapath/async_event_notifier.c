@@ -18,6 +18,7 @@
 
 #include "async_event_notifier.h"
 #include "flow_table.h"
+#include "meter_executor.h"
 #include "mutex.h"
 #include "openflow_helper.h"
 
@@ -183,6 +184,9 @@ notify_packet_in( const uint8_t reason, const uint8_t table_id, const uint64_t c
   assert( packet != NULL );
 
   if ( callbacks.packet_in == NULL ) {
+    return;
+  }
+  if ( ERROR_DROP_PACKET == execute_meter( OFPM_CONTROLLER, packet ) ) {
     return;
   }
 
