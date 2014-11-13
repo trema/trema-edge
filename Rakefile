@@ -86,7 +86,6 @@ PaperHouse::RubyExtensionTask.new :libruby do | task |
   task.ldflags = [ "-Wl,-Bsymbolic", "-L#{ Trema.lib }" ]
   task.library_dependencies = [
     "trema",
-    "sqlite3",
     "pthread",
     "rt",
     "dl",
@@ -134,7 +133,6 @@ PaperHouse::ExecutableTask.new :switch_manager do | task |
   task.ldflags = "-L#{ Trema.lib }"
   task.library_dependencies = [
     "trema",
-    "sqlite3",
     "pthread",
     "rt",
     "dl",
@@ -163,7 +161,6 @@ PaperHouse::ExecutableTask.new :switch_daemon do | task |
   task.ldflags = "-L#{ Trema.lib }"
   task.library_dependencies = [
     "trema",
-    "sqlite3",
     "pthread",
     "rt",
     "dl",
@@ -186,7 +183,6 @@ PaperHouse::ExecutableTask.new :trema_switch do | task |
   task.library_dependencies = [
     "ofdp",
     "trema",
-    "sqlite3",
     "pthread",
     "rt",
     "dl",
@@ -205,7 +201,6 @@ PaperHouse::ExecutableTask.new :packetin_filter do | task |
   task.ldflags = "-L#{ Trema.lib }"
   task.library_dependencies = [
     "trema",
-    "sqlite3",
     "pthread",
     "rt",
     "dl",
@@ -257,7 +252,6 @@ Rake::Task[ :tremashark ].prerequisites.each do | utility |
       task.ldflags = "-L#{ Trema.lib }"
       task.library_dependencies = [
         "trema",
-        "sqlite3",
         "pthread",
         "rt",
         "dl",
@@ -321,7 +315,6 @@ Rake::Task[ :examples ].prerequisites.each do | example |
       task.ldflags = "-L#{ Trema.lib }"
       task.library_dependencies = [
         "trema",
-        "sqlite3",
         "pthread",
         "rt",
         "dl",
@@ -348,7 +341,6 @@ Rake::Task[ 'examples:openflow_message' ].prerequisites.each do | example |
       task.ldflags = "-L#{ Trema.lib }"
       task.library_dependencies = [
         "trema",
-        "sqlite3",
         "pthread",
         "rt",
         "dl",
@@ -442,7 +434,6 @@ switch_tests.keys.each do | each |
       'cmockery',
       'ofdp',
       'trema',
-      'sqlite3',
       'pthread',
       'rt',
       'dl'

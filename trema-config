@@ -49,7 +49,7 @@ FileUtils.cd Trema.home do
     output << "-I#{ Trema.home }/src/lib -DTREMA_EDGE"
   end
   if $libs
-    output << "-L#{ Trema.objects }/lib -ltrema -lrt -lpthread -lsqlite3 -ldl"
+    output << "-L#{ Trema.objects }/lib -ltrema -lrt -lpthread -ldl"
   end
   print output.join( " " )
 end
