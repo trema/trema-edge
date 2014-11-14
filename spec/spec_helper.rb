@@ -17,24 +17,20 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+$LOAD_PATH << File.join(File.dirname(__FILE__), '..', 'ruby')
+$LOAD_PATH.unshift File.expand_path(File.join File.dirname(__FILE__), '..', 'vendor', 'ruby-ifconfig-1.2', 'lib')
 
-$LOAD_PATH << File.join( File.dirname( __FILE__ ), "..", "ruby" )
-$LOAD_PATH.unshift File.expand_path( File.join File.dirname( __FILE__ ), "..", "vendor", "ruby-ifconfig-1.2", "lib" )
+require 'rubygems'
 
+require 'rspec'
+require 'trema'
+require 'trema/dsl/configuration'
+require 'trema/dsl/context'
+require 'trema/util'
+require 'trema/shell/send_packets'
 
-require "rubygems"
-
-require "rspec"
-require "trema"
-require "trema/dsl/configuration"
-require "trema/dsl/context"
-require "trema/util"
-require "trema/shell/send_packets"
-
-
-require "coveralls"
+require 'coveralls'
 Coveralls.wear!
-
 
 RSpec.configure do | config |
   config.expect_with :rspec do | c |
@@ -43,97 +39,84 @@ RSpec.configure do | config |
   end
 end
 
-
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.
-Dir[ "#{ File.dirname( __FILE__ ) }/support/**/*.rb" ].each do | each |
-  require File.expand_path( each )
+Dir["#{ File.dirname(__FILE__) }/support/**/*.rb"].each do | each |
+  require File.expand_path(each)
 end
-
 
 include Trema
 
-
-def controller name
-  Trema::App[ name ]
+def controller(name)
+  Trema::App[name]
 end
 
-
-def vswitch name
-  Trema::OpenflowSwitch[ name ]
+def vswitch(name)
+  Trema::OpenflowSwitch[name]
 end
 
-
-def vhost name
-  Trema::Host[ name ]
+def vhost(name)
+  Trema::Host[name]
 end
 
-
-def send_packets source, dest, options = {}
+def send_packets(source, dest, options = {})
   Trema::Shell.send_packets source, dest, options
 end
 
-
 include Trema::Util
 
-
 class MockController < Controller
-  def initialize network_blk
+  def initialize(network_blk)
     @network_blk = network_blk
-    @context = Trema::DSL::Parser.new.eval( &network_blk )
+    @context = Trema::DSL::Parser.new.eval(&network_blk)
   end
-
 
   def start_receiving
     if @network_blk.respond_to? :call
       trema_run
     else
-      raise ArgumentError, "Network configuration should a proc block"
+      fail ArgumentError, 'Network configuration should a proc block'
     end
   end
-
 
   def stop_receiving
     trema_kill
   end
 
-
-  def time_sleep interval
+  def time_sleep(interval)
     sleep interval
     yield
   end
 
-
   private
-
 
   def trema_run
     controller = self
-    if not controller.is_a?( Trema::Controller )
-      raise "#{ controller_class } is not a subclass of Trema::Controller"
+    unless controller.is_a?(Trema::Controller)
+      fail "#{ controller_class } is not a subclass of Trema::Controller"
     end
-    Trema::DSL::Context.new( @context ).dump
+    Trema::DSL::Context.new(@context).dump
 
     app_name = controller.name
-    rule = { :port_status => app_name, :packet_in => app_name, :state_notify => app_name }
-    sm = SwitchManager.new( rule, @context.port )
+    rule = { port_status: app_name, packet_in: app_name, state_notify: app_name }
+    sm = SwitchManager.new(rule, @context.port)
     sm.no_flow_cleanup = true
     sm.run!
 
-    @context.links.each do | name, each |
+    @context.links.each do | _name, each |
       each.add!
     end
-    @context.hosts.each do | name, each |
+    @context.hosts.each do | _name, each |
       each.run!
     end
-    @context.trema_switches.each do | name, each |
+    @context.trema_switches.each do | _name, each |
       each.run!
     end
-    @context.links.each do | name, each |
+    @context.links.each do | _name, each |
       each.up!
     end
-    @context.hosts.each do | name, each |
-      each.add_arp_entry @context.hosts.values - [ each ]
+    @context.hosts.each do | _name, each |
+      each.add_arp_entry @context.hosts.values - [each]
     end
 
     @th_controller = Thread.start do
@@ -142,14 +125,12 @@ class MockController < Controller
     sleep 2  # FIXME: wait until controller.up?
   end
 
-
   def trema_kill
     cleanup_current_session
     @th_controller.join if @th_controller
     sleep 2  # FIXME: wait until switch_manager.down?
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

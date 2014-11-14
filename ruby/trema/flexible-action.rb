@@ -15,32 +15,27 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "accessor"
-
+require_relative 'accessor'
 
 module Trema
   class FlexibleAction < Accessor
     include Actions
 
-
-    def self.ofp_type type
-      prefix = "OFPXMT_OFB" 
+    def self.ofp_type(type)
+      prefix = 'OFPXMT_OFB'
       store "#{ prefix }_#{ type }", self
     end
 
-
-    def pack_flexible_action oxm_match
+    def pack_flexible_action(oxm_match)
       params = {}
       instance_variables.each do | each |
-        params[ each.to_s.sub( '@', '' ).to_sym ] = instance_variable_get( each )
+        params[each.to_s.sub('@', '').to_sym] = instance_variable_get(each)
       end
       method = "pack_#{ self.class.name.demodulize.underscore }"
       __send__ method, oxm_match, params
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

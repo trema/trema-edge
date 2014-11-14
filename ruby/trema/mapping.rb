@@ -15,50 +15,40 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Mapping
-  def self.included mod
+  def self.included(mod)
     mod.extend ClassMethods
   end
 
-
   module ClassMethods
-    def map_ofp_type klass
+    def map_ofp_type(klass)
       name = klass.name.demodulize.underscore
       %w( OFPAT OFPIT OFPXMT_OFB ).each do | prefix |
         store_if_valid prefix, klass, name
       end
     end
 
-
-    def store key, value 
-      ClassMethods.associates[ key ] = value
+    def store(key, value)
+      ClassMethods.associates[key] = value
     end
 
-
-    def retrieve key
-      ClassMethods.associates[ key ]
+    def retrieve(key)
+      ClassMethods.associates[key]
     end
-
 
     private
 
-
-    def store_if_valid prefix, klass, name
-      begin
-        type = eval( "#{ prefix }_#{ name.upcase }" )
-        store "#{ prefix }_#{ type }", klass
-      rescue NameError
-      end     
+    def store_if_valid(prefix, klass, name)
+      type = eval("#{ prefix }_#{ name.upcase }")
+      store "#{ prefix }_#{ type }", klass
+    rescue NameError
    end
 
-
-   def self.associates
-      @_associates ||= Hash.new
-    end
+    def self.associates
+      @_associates ||= {}
+     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

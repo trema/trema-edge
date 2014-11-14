@@ -15,23 +15,19 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-
 module Trema
   module MessageHelper
-    def send_flow_mod_add datapath_id, options
-      options[ :command ] = OFPFC_ADD 
+    def send_flow_mod_add(datapath_id, options)
+      options[:command] = OFPFC_ADD
       send_flow_mod datapath_id, options
     end
 
-
-    def send_group_mod_add datapath_id, options
-      options[ :command ] = OFPGC_ADD
+    def send_group_mod_add(datapath_id, options)
+      options[:command] = OFPGC_ADD
       send_group_mod datapath_id, options
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

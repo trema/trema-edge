@@ -17,28 +17,26 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
-
-describe Match, ".new" do
-  subject {
+describe Match, '.new' do
+  subject do
     Match.new(
-      :in_port => 1,
-      :dl_src => "00:00:00:00:00:01",
-      :dl_dst => "00:00:00:00:00:02",
-      :dl_vlan => 65535,
-      :dl_vlan_pcp => 0,
-      :dl_type => 0x800,
-      :nw_tos => 0,
-      :nw_proto => 17,
-      :nw_src => "192.168.0.1",
-      :nw_dst => "192.168.0.0/24",
-      :tp_src => 10,
-      :tp_dst => 20
+      in_port: 1,
+      dl_src: '00:00:00:00:00:01',
+      dl_dst: '00:00:00:00:00:02',
+      dl_vlan: 65_535,
+      dl_vlan_pcp: 0,
+      dl_type: 0x800,
+      nw_tos: 0,
+      nw_proto: 17,
+      nw_src: '192.168.0.1',
+      nw_dst: '192.168.0.0/24',
+      tp_src: 10,
+      tp_dst: 20
     )
-  }
+  end
 
   describe '#in_port' do
     subject { super().in_port }
@@ -47,17 +45,17 @@ describe Match, ".new" do
 
   describe '#dl_src' do
     subject { super().dl_src }
-    it { subject.to_s.should == "00:00:00:00:00:01" }
+    it { subject.to_s.should == '00:00:00:00:00:01' }
   end
 
   describe '#dl_dst' do
     subject { super().dl_dst }
-    it { subject.to_s.should == "00:00:00:00:00:02" }
+    it { subject.to_s.should == '00:00:00:00:00:02' }
   end
 
   describe '#dl_vlan' do
     subject { super().dl_vlan }
-    it { is_expected.to eq(65535) }
+    it { is_expected.to eq(65_535) }
   end
 
   describe '#dl_vlan_pcp' do
@@ -82,7 +80,7 @@ describe Match, ".new" do
 
   describe '#nw_src' do
     subject { super().nw_src }
-    it { subject.to_s.should == "192.168.0.1" }
+    it { subject.to_s.should == '192.168.0.1' }
   end
 
   describe '#nw_src' do
@@ -92,7 +90,7 @@ describe Match, ".new" do
 
   describe '#nw_dst' do
     subject { super().nw_dst }
-    it { subject.to_s.should == "192.168.0.0" }
+    it { subject.to_s.should == '192.168.0.0' }
   end
 
   describe '#nw_dst' do
@@ -112,59 +110,57 @@ describe Match, ".new" do
 
   describe '#to_s' do
     subject { super().to_s }
-    it { is_expected.to eq("wildcards = 0x20000(nw_dst(8)), in_port = 1, dl_src = 00:00:00:00:00:01, dl_dst = 00:00:00:00:00:02, dl_vlan = 65535, dl_vlan_pcp = 0, dl_type = 0x800, nw_tos = 0, nw_proto = 17, nw_src = 192.168.0.1/32, nw_dst = 192.168.0.0/24, tp_src = 10, tp_dst = 20") }
+    it { is_expected.to eq('wildcards = 0x20000(nw_dst(8)), in_port = 1, dl_src = 00:00:00:00:00:01, dl_dst = 00:00:00:00:00:02, dl_vlan = 65535, dl_vlan_pcp = 0, dl_type = 0x800, nw_tos = 0, nw_proto = 17, nw_src = 192.168.0.1/32, nw_dst = 192.168.0.0/24, tp_src = 10, tp_dst = 20') }
   end
 end
 
-
-describe Match, ".compare" do
-  it "Should match" do
+describe Match, '.compare' do
+  it 'Should match' do
     tester = Match.new(
-      :in_port => 1,
-      :dl_src => "00:00:00:00:00:01",
-      :dl_dst => "00:00:00:00:00:02",
-      :dl_vlan => 65535,
-      :dl_vlan_pcp => 0,
-      :dl_type => 0x800,
-      :nw_tos => 0,
-      :nw_proto => 17,
-      :nw_src => "192.168.0.1",
-      :nw_dst => "192.168.0.2",
-      :tp_src => 10,
-      :tp_dst => 20
+      in_port: 1,
+      dl_src: '00:00:00:00:00:01',
+      dl_dst: '00:00:00:00:00:02',
+      dl_vlan: 65_535,
+      dl_vlan_pcp: 0,
+      dl_type: 0x800,
+      nw_tos: 0,
+      nw_proto: 17,
+      nw_src: '192.168.0.1',
+      nw_dst: '192.168.0.2',
+      tp_src: 10,
+      tp_dst: 20
     )
     pattern = Match.new(
-      :in_port => 1,
-      :nw_src => "192.168.0.0/24",
-      :nw_dst => "192.168.0.0/24"
+      in_port: 1,
+      nw_src: '192.168.0.0/24',
+      nw_dst: '192.168.0.0/24'
     )
-    expect(pattern.compare( tester )).to eq(true)
+    expect(pattern.compare(tester)).to eq(true)
   end
 
-  it "Should not match" do
+  it 'Should not match' do
     tester = Match.new(
-      :in_port => 1,
-      :dl_src => "00:00:00:00:00:01",
-      :dl_dst => "00:00:00:00:00:02",
-      :dl_vlan => 65535,
-      :dl_vlan_pcp => 0,
-      :dl_type => 0x800,
-      :nw_tos => 0,
-      :nw_proto => 17,
-      :nw_src => "192.168.0.1",
-      :nw_dst => "192.168.0.2",
-      :tp_src => 10,
-      :tp_dst => 20
+      in_port: 1,
+      dl_src: '00:00:00:00:00:01',
+      dl_dst: '00:00:00:00:00:02',
+      dl_vlan: 65_535,
+      dl_vlan_pcp: 0,
+      dl_type: 0x800,
+      nw_tos: 0,
+      nw_proto: 17,
+      nw_src: '192.168.0.1',
+      nw_dst: '192.168.0.2',
+      tp_src: 10,
+      tp_dst: 20
     )
     pattern = Match.new(
-      :in_port => 1,
-      :nw_src => "10.0.0.0/8",
-      :nw_dst => "10.0.0.0/8"
+      in_port: 1,
+      nw_src: '10.0.0.0/8',
+      nw_dst: '10.0.0.0/8'
     )
-    expect(pattern.compare( tester )).to eq(false)
+    expect(pattern.compare(tester)).to eq(false)
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

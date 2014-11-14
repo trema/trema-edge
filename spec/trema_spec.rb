@@ -17,25 +17,22 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "spec_helper" )
-require "trema"
-
+require File.join(File.dirname(__FILE__), 'spec_helper')
+require 'trema'
 
 describe Trema do
-  let!( :spec_dir ) { File.dirname( __FILE__ ) }
+  let!(:spec_dir) { File.dirname(__FILE__) }
 
   describe '#home' do
     subject { super().home }
-    it { is_expected.to eq File.realpath( File.join( spec_dir, ".." ) ) }
+    it { is_expected.to eq File.realpath(File.join(spec_dir, '..')) }
   end
 
   describe '#tmp' do
     subject { super().tmp }
-    it { is_expected.to eq File.expand_path( File.join( spec_dir, "..", "tmp" ) ) }
+    it { is_expected.to eq File.expand_path(File.join(spec_dir, '..', 'tmp')) }
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

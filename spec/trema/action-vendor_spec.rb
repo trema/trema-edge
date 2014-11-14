@@ -17,75 +17,67 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
-
-shared_examples_for "any OpenFlow message with vendor option" do
-  it_should_behave_like "any OpenFlow message", :option => :vendor, :name => "Vendor id", :size => 32
+shared_examples_for 'any OpenFlow message with vendor option' do
+  it_should_behave_like 'any OpenFlow message', option: :vendor, name: 'Vendor id', size: 32
 end
 
-
-describe ActionVendor, ".new( VALID OPTION )" do
-  subject  { ActionVendor.new( :vendor => vendor ) }
-  let( :vendor ) { 1 }
+describe ActionVendor, '.new( VALID OPTION )' do
+  subject  { ActionVendor.new(vendor: vendor) }
+  let(:vendor) { 1 }
 
   describe '#vendor' do
     subject { super().vendor }
     it { is_expected.to eq(1) }
   end
-  it "should inspect its attributes" do
-    expect(subject.inspect).to eq("#<Trema::ActionVendor vendor=1>")
+  it 'should inspect its attributes' do
+    expect(subject.inspect).to eq('#<Trema::ActionVendor vendor=1>')
   end
-  it_should_behave_like "any OpenFlow message with vendor option"
+  it_should_behave_like 'any OpenFlow message with vendor option'
 end
 
-
-describe ActionVendor, ".new( MANDATORY OPTION MISSING )" do
-  it "should raise ArgumentError" do
-    expect { subject }.to raise_error( ArgumentError )
-  end
-end
-
-
-describe ActionVendor, ".new( INVALID OPTION ) - argument type Array instead of Hash" do
-  subject { ActionVendor.new( [ 1 ] ) }
-  it "should raise TypeError" do
-    expect { subject }.to raise_error( TypeError )
+describe ActionVendor, '.new( MANDATORY OPTION MISSING )' do
+  it 'should raise ArgumentError' do
+    expect { subject }.to raise_error(ArgumentError)
   end
 end
 
+describe ActionVendor, '.new( INVALID OPTION ) - argument type Array instead of Hash' do
+  subject { ActionVendor.new([1]) }
+  it 'should raise TypeError' do
+    expect { subject }.to raise_error(TypeError)
+  end
+end
 
-describe ActionVendor, ".new( VALID OPTION )" do
-  context "when sending #flow_mod(add) with action set to mod_vendor" do
-    it "should respond to #append" do
+describe ActionVendor, '.new( VALID OPTION )' do
+  context 'when sending #flow_mod(add) with action set to mod_vendor' do
+    it 'should respond to #append' do
       class FlowModAddController < Controller; end
-      network {
+      network do
         vswitch { datapath_id 0xabc }
-      }.run( FlowModAddController ) {
-        action = ActionVendor.new( :vendor => 1 )
-        expect(action).to receive( :append )
-        controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => action )
-     }
+      end.run(FlowModAddController) do
+        action = ActionVendor.new(vendor: 1)
+        expect(action).to receive(:append)
+        controller('FlowModAddController').send_flow_mod_add(0xabc, actions: action)
+      end
     end
 
-
-    it "should have a flow with action set to mod_vendor" do
+    it 'should have a flow with action set to mod_vendor' do
       class FlowModAddController < Controller; end
-      skip "ActionVendor not yet implemented"
-      network {
+      skip 'ActionVendor not yet implemented'
+      network do
         vswitch { datapath_id 0xabc }
-      }.run( FlowModAddController ) {
-        controller( "FlowModAddController" ).send_flow_mod_add( 0xabc,
-          :actions => ActionVendor.new( 123 ) )
-        expect(switch( "0xabc" ).size).to eq(1)
-        expect(switch( "0xabc" ).flows[0].actions).to match( /mod_vendor/ )
-      }
+      end.run(FlowModAddController) do
+        controller('FlowModAddController').send_flow_mod_add(0xabc,
+                                                             actions: ActionVendor.new(123))
+        expect(switch('0xabc').size).to eq(1)
+        expect(switch('0xabc').flows[0].actions).to match(/mod_vendor/)
+      end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

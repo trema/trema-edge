@@ -17,29 +17,26 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
 module Trema
   describe Controller do
-    context "when using OpenFlow constants" do
+    context 'when using OpenFlow constants' do
       subject { Controller.constants }
 
-      it { is_expected.to include "OFPP_MAX" }
-      it { is_expected.to include "OFPP_IN_PORT" }
-      it { is_expected.to include "OFPP_TABLE" }
-      it { is_expected.to include "OFPP_NORMAL" }
-      it { is_expected.to include "OFPP_FLOOD" }
-      it { is_expected.to include "OFPP_ALL" }
-      it { is_expected.to include "OFPP_CONTROLLER" }
-      it { is_expected.to include "OFPP_LOCAL" }
-      it { is_expected.to include "OFPP_NONE" }
+      it { is_expected.to include 'OFPP_MAX' }
+      it { is_expected.to include 'OFPP_IN_PORT' }
+      it { is_expected.to include 'OFPP_TABLE' }
+      it { is_expected.to include 'OFPP_NORMAL' }
+      it { is_expected.to include 'OFPP_FLOOD' }
+      it { is_expected.to include 'OFPP_ALL' }
+      it { is_expected.to include 'OFPP_CONTROLLER' }
+      it { is_expected.to include 'OFPP_LOCAL' }
+      it { is_expected.to include 'OFPP_NONE' }
     end
 
-
-    context "when logging" do
+    context 'when logging' do
       subject { Controller.new }
 
       it { is_expected.to respond_to :critical }
@@ -50,22 +47,20 @@ module Trema
       it { is_expected.to respond_to :debug }
     end
 
-
-    context "when sending flow_mod messages" do
-      it "should send a flow_mod_add message" do
+    context 'when sending flow_mod messages' do
+      it 'should send a flow_mod_add message' do
         class FlowModAddController < Controller; end
 
-        network {
+        network do
           vswitch { datapath_id 0xabc }
-        }.run( FlowModAddController ) {
-          controller( "FlowModAddController" ).send_flow_mod_add( 0xabc )
-          expect(vswitch( "0xabc" ).size).to eq(1)
-        }
+        end.run(FlowModAddController) do
+          controller('FlowModAddController').send_flow_mod_add(0xabc)
+          expect(vswitch('0xabc').size).to eq(1)
+        end
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

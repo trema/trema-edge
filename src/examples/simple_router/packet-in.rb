@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Messages
     class PacketIn
@@ -24,24 +23,20 @@ module Trema
       ICMP_TYPE_ECHO_REQUEST = 8
       ICMP_TYPE_ECHO_REPLY = 0
 
-
       def arp_request?
-        arp? and arp_op == ARP_OP_REQUEST
+        arp? && arp_op == ARP_OP_REQUEST
       end
-
 
       def arp_reply?
-        arp? and arp_op == ARP_OP_REPLY
+        arp? && arp_op == ARP_OP_REPLY
       end
 
-
       def icmpv4_echo_request?
-        icmpv4? and icmpv4_type == ICMP_TYPE_ECHO_REQUEST
+        icmpv4? && icmpv4_type == ICMP_TYPE_ECHO_REQUEST
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

@@ -17,13 +17,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "dsl/configuration"
-require_relative "dsl/parser"
-require_relative "dsl/runner"
-require_relative "dsl/syntax"
-require_relative "path"
-
+require_relative 'dsl/configuration'
+require_relative 'dsl/parser'
+require_relative 'dsl/runner'
+require_relative 'dsl/syntax'
+require_relative 'path'
 
 ### Local variables:
 ### mode: Ruby

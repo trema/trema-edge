@@ -15,11 +15,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "monkey-patch/module"
-require_relative "monkey-patch/string"
-require_relative "path"
-
+require_relative 'monkey-patch/module'
+require_relative 'monkey-patch/string'
+require_relative 'path'
 
 #
 # Holds a list of executables found in Trema.objects directory.
@@ -36,28 +34,27 @@ class Trema::Executables
     #
     def compiled?
       @list.each do | each |
-        path = __send__( each )
-        if not FileTest.executable?( path )
+        path = __send__(each)
+        unless FileTest.executable?(path)
           $stderr.puts "ERROR: #{ path } does not exist." if $verbose
           return false
         end
       end
     end
 
-
     ############################################################################
+
     private
-    ############################################################################
 
+    ############################################################################
 
     #
     # Adds the name to a list.
     #
-    def add name
+    def add(name)
       @list ||= []
       @list << name
     end
-
 
     #
     # Defines a class method that returns the full path name of an executable
@@ -72,25 +69,23 @@ class Trema::Executables
     #
     # @return [Array] a list of a class method to access each executable program.
     #
-    def path path
-      name = File.basename( path ).underscore
-      define_class_method( name ) do
+    def path(path)
+      name = File.basename(path).underscore
+      define_class_method(name) do
         File.join Trema.objects, path
       end
       add name
     end
   end
 
-
-  path "packetin_filter/packetin_filter"
-  path "phost/cli"
-  path "phost/phost"
-  path "switch/switch/switch"
-  path "switch_manager/switch_daemon"
-  path "switch_manager/switch_manager"
-  path "tremashark/tremashark"
+  path 'packetin_filter/packetin_filter'
+  path 'phost/cli'
+  path 'phost/phost'
+  path 'switch/switch/switch'
+  path 'switch_manager/switch_daemon'
+  path 'switch_manager/switch_manager'
+  path 'tremashark/tremashark'
 end
-
 
 ### Local variables:
 ### mode: Ruby

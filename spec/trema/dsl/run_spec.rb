@@ -17,10 +17,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "..", "spec_helper" )
-require "trema/dsl/run"
-
+require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper')
+require 'trema/dsl/run'
 
 module Trema
   module DSL
@@ -29,47 +27,41 @@ module Trema
         @run = Run.new
       end
 
-
-      context %[when parsing "run { ... }"] do
-        it %[recognizes "path COMMAND_PATH" directive] do
+      context %(when parsing "run { ... }") do
+        it %(recognizes "path COMMAND_PATH" directive) do
           expect do
-            @run.path "/usr/bin/tremario"
+            @run.path '/usr/bin/tremario'
           end.not_to raise_error
         end
 
-
-        it %[recognizes "options OPTIONS..." directive] do
+        it %(recognizes "options OPTIONS..." directive) do
           expect do
-            @run.options "--verbose", "--color"
+            @run.options '--verbose', '--color'
           end.not_to raise_error
         end
       end
 
-
-      context "when getting the attributes of an run" do
-        it "returns its name" do
-          @run.path "/usr/bin/tremario"
-          expect(@run[ :name ]).to eq("tremario")
+      context 'when getting the attributes of an run' do
+        it 'returns its name' do
+          @run.path '/usr/bin/tremario'
+          expect(@run[:name]).to eq('tremario')
         end
 
-
-        it "returns its path" do
-          @run.path "/usr/bin/tremario"
-          expect(@run[ :path ]).to eq("/usr/bin/tremario")
+        it 'returns its path' do
+          @run.path '/usr/bin/tremario'
+          expect(@run[:path]).to eq('/usr/bin/tremario')
         end
 
-
-        it "returns its options" do
-          @run.options "--verbose", "--color"
-          expect(@run[ :options ].size).to eq(2)
-          expect(@run[ :options ]).to include( "--verbose" )
-          expect(@run[ :options ]).to include( "--color" )
+        it 'returns its options' do
+          @run.options '--verbose', '--color'
+          expect(@run[:options].size).to eq(2)
+          expect(@run[:options]).to include('--verbose')
+          expect(@run[:options]).to include('--color')
         end
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

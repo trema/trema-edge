@@ -15,40 +15,34 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+require 'trema/path'
 
-require "trema/path"
-
-
-def wait_until_all_pid_files_are_deleted timeout = 10
+def wait_until_all_pid_files_are_deleted(timeout = 10)
   elapsed = 0
   loop do
-    raise "Failed to clean up remaining processes." if elapsed > timeout
-    break if Dir.glob( File.join( Trema.pid, "*.pid" ) ).empty?
+    fail 'Failed to clean up remaining processes.' if elapsed > timeout
+    break if Dir.glob(File.join(Trema.pid, '*.pid')).empty?
     sleep 1
     elapsed += 1
   end
   sleep 1
 end
 
-
 Before do
   @aruba_timeout_seconds = 10
-  run "trema killall"
+  run 'trema killall'
   wait_until_all_pid_files_are_deleted
 end
 
-
-Before( "@slow_process" ) do
+Before('@slow_process') do
   @aruba_io_wait_seconds = 1
 end
 
-
 After do
-  run "trema killall"
+  run 'trema killall'
   wait_until_all_pid_files_are_deleted
   processes.clear
 end
-
 
 ### Local variables:
 ### mode: Ruby

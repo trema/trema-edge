@@ -15,12 +15,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/monkey-patch/kernel/enum"
-
+require 'trema/monkey-patch/kernel/enum'
 
 include MonkeyPatch::Kernel
-
 
 ### Local variables:
 ### mode: Ruby

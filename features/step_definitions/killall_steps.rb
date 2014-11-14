@@ -17,11 +17,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 Given /^I terminated all trema services$/ do
-  run "./trema killall"
+  run './trema killall'
 end
-
 
 ### Local variables:
 ### mode: Ruby

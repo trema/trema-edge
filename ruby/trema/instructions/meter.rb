@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Instructions
     class Meter < Instruction
@@ -23,10 +22,8 @@ module Trema
     end
   end
 
-
   Meter = Instructions::Meter
 end
-
 
 ### Local variables:
 ### mode: Ruby

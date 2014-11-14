@@ -17,19 +17,17 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "command/kill"
-require_relative "command/killall"
-require_relative "command/netns"
-require_relative "command/reset_stats"
-require_relative "command/ruby"
-require_relative "command/run"
-require_relative "command/send_packets"
-require_relative "command/shell"
-require_relative "command/show_stats"
-require_relative "command/up"
-require_relative "command/version"
-
+require_relative 'command/kill'
+require_relative 'command/killall'
+require_relative 'command/netns'
+require_relative 'command/reset_stats'
+require_relative 'command/ruby'
+require_relative 'command/run'
+require_relative 'command/send_packets'
+require_relative 'command/shell'
+require_relative 'command/show_stats'
+require_relative 'command/up'
+require_relative 'command/version'
 
 ### Local variables:
 ### mode: Ruby

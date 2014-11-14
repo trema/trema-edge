@@ -15,10 +15,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "daemon"
-require_relative "network-component"
-
+require_relative 'daemon'
+require_relative 'network-component'
 
 module Trema
   #
@@ -27,16 +25,13 @@ module Trema
   class App < NetworkComponent
     include Trema::Daemon
 
-
     #
     # @return [Trema::DSL::Stanza] a map of key-value pair settings
     #   for trema's dsl run{} syntax.
     #
     attr_reader :stanza
 
-
-    command { | app | [ app.command, app.stanza[ :options ] ].compact.join " " }
-
+    command { | app | [app.command, app.stanza[:options]].compact.join ' ' }
 
     #
     # Creates a new Trema application from {Trema::DSL::Run}
@@ -48,19 +43,18 @@ module Trema
     #
     # @api public
     #
-    def initialize stanza
+    def initialize(stanza)
       @stanza = stanza
-      if /\.rb\Z/=~ @stanza.fetch( :name )  # ruby?
-        require "trema"
-        path = @stanza.fetch( :path )
-        ARGV.replace [ path ]
-        $LOAD_PATH << File.dirname( path )
-        Trema.module_eval IO.read( path )
+      if /\.rb\Z/=~ @stanza.fetch(:name)  # ruby?
+        require 'trema'
+        path = @stanza.fetch(:path)
+        ARGV.replace [path]
+        $LOAD_PATH << File.dirname(path)
+        Trema.module_eval IO.read(path)
       else
         App.add self
       end
     end
-
 
     #
     # Returns the name of application
@@ -73,9 +67,8 @@ module Trema
     # @api public
     #
     def name
-      @stanza[ :name ]
+      @stanza[:name]
     end
-
 
     #
     # Runs as a daemon
@@ -88,10 +81,9 @@ module Trema
     # @api public
     #
     def daemonize!
-      sh [ command, "-d", @stanza[ :options ] ].compact.join( " " )
+      sh [command, '-d', @stanza[:options]].compact.join(' ')
       self
     end
-
 
     #
     # Returns application's command to execute
@@ -101,11 +93,10 @@ module Trema
     # @api private
     #
     def command
-      "#{ @stanza[ :path ] } --name #{ name }"
+      "#{ @stanza[:path] } --name #{ name }"
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

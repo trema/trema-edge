@@ -17,15 +17,13 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   class ExactMatch
-    def self.from message
+    def self.from(message)
       Match.from message
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

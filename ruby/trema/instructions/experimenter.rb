@@ -15,17 +15,15 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Instructions
     class Experimenter < Instruction
       unsigned_int32 :experimenter, presence: true
       array :user_data, validate_with: :check_user_data
 
-
-      def check_user_data user_data, name
-        if ( not user_data.nil? )  and ( not user_data.is_a?( Array ) )
-          raise ArgumentError, "#{ name } must be an Array"
+      def check_user_data(user_data, name)
+        if (!user_data.nil?)  && (!user_data.is_a?(Array))
+          fail ArgumentError, "#{ name } must be an Array"
         end
       end
     end
@@ -36,7 +34,6 @@ module Trema
   # or we could create a different class name like ExperimenterIns
   #
 end
-
 
 ### Local variables:
 ### mode: Ruby

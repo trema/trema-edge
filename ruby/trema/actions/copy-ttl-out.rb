@@ -15,25 +15,22 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Actions
     #
     # Copy TTL outwards.
     #
     class CopyTtlOut < BasicAction
-    #
-    # Creates an action that copies the TTL from next-to-outermost to outermost
-    # header with TTL. The copy applies to IP-to-IP, MPLS-to-MPLS and
-    # IP-to-MPLS packets.
-    #
+      #
+      # Creates an action that copies the TTL from next-to-outermost to outermost
+      # header with TTL. The copy applies to IP-to-IP, MPLS-to-MPLS and
+      # IP-to-MPLS packets.
+      #
     end
   end
 
-
   CopyTtlOut = Actions::CopyTtlOut
 end
-
 
 ### Local variables:
 ### mode: Ruby

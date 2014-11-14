@@ -17,40 +17,38 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
-
-describe GetConfigReply, ".new( VALID OPTIONS )" do
-  subject { GetConfigReply.new( :datapath_id => 123,
-    :transaction_id => 1234,
-    :flags => 1,
-    :miss_send_len => 1024
+describe GetConfigReply, '.new( VALID OPTIONS )' do
+  subject do
+    GetConfigReply.new(datapath_id: 123,
+                       transaction_id: 1234,
+                       flags: 1,
+                       miss_send_len: 1024
     )
-  }
+  end
 
-  describe ( :datapath_id ) do
-    subject { super().send(( :datapath_id )) }
+  describe ( :datapath_id) do
+    subject { super().send((:datapath_id)) }
     it { is_expected.to eq(123) }
   end
 
-  describe ( :transaction_id ) do
-    subject { super().send(( :transaction_id )) }
+  describe ( :transaction_id) do
+    subject { super().send((:transaction_id)) }
     it { is_expected.to eq(1234) }
   end
 
-  describe ( :flags ) do
-    subject { super().send(( :flags )) }
+  describe ( :flags) do
+    subject { super().send((:flags)) }
     it { is_expected.to eq(1) }
   end
 
-  describe ( :miss_send_len ) do
-    subject { super().send(( :miss_send_len )) }
+  describe ( :miss_send_len) do
+    subject { super().send((:miss_send_len)) }
     it { is_expected.to eq(1024) }
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

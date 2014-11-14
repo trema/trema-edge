@@ -17,96 +17,84 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "..", "spec_helper" )
-require "trema/dsl/syntax"
-require "trema/packetin-filter"
-
+require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper')
+require 'trema/dsl/syntax'
+require 'trema/packetin-filter'
 
 describe Trema::DSL::Syntax do
-  before( :each ) do
-    @context = double( "context", :port => 6653, :dump_to => nil )
-    @syntax = Trema::DSL::Syntax.new( @context )
+  before(:each) do
+    @context = double('context', port: 6653, dump_to: nil)
+    @syntax = Trema::DSL::Syntax.new(@context)
   end
 
-
   it "should recognize 'port' directive" do
-    expect(@context).to receive( :port= ).with( 1234 ).once
+    expect(@context).to receive(:port=).with(1234).once
 
     @syntax.instance_eval do
       port 1234
     end
   end
 
-
   it "should recognize 'link' directive" do
-    allow(@context).to receive( :links ).and_return( [ double( "link" ) ] )
-    expect(Trema::Link).to receive( :add ).with( an_instance_of( Trema::Link ) ).once
+    allow(@context).to receive(:links).and_return([double('link')])
+    expect(Trema::Link).to receive(:add).with(an_instance_of(Trema::Link)).once
 
     @syntax.instance_eval do
-      link "PEER0", "PEER1"
+      link 'PEER0', 'PEER1'
     end
   end
-
 
   it "should recognize 'switch' directive" do
-    expect(Trema::OpenflowSwitch).to receive( :add ).with( an_instance_of( HardwareSwitch ) ).once
+    expect(Trema::OpenflowSwitch).to receive(:add).with(an_instance_of(HardwareSwitch)).once
 
     @syntax.instance_eval do
-      switch { dpid "0xabc" }
+      switch { dpid '0xabc' }
     end
   end
-
 
   it "should recognize 'vswitch' directive" do
-    expect(Trema::OpenflowSwitch).to receive( :add ).with( an_instance_of( OpenVswitch ) ).once
+    expect(Trema::OpenflowSwitch).to receive(:add).with(an_instance_of(OpenVswitch)).once
 
     @syntax.instance_eval do
-      vswitch { dpid "0xabc" }
+      vswitch { dpid '0xabc' }
     end
   end
-
 
   it "should recognize 'vhost' directive" do
-    expect(Trema::Host).to receive( :add ).with( an_instance_of( Trema::Host ) ).once
+    expect(Trema::Host).to receive(:add).with(an_instance_of(Trema::Host)).once
 
     @syntax.instance_eval do
-      vhost { }
+      vhost {}
     end
   end
-
 
   it "should recognize 'filter' directive" do
-    expect(Trema::PacketinFilter).to receive( :add ).with( an_instance_of( Trema::PacketinFilter ) ).once
+    expect(Trema::PacketinFilter).to receive(:add).with(an_instance_of(Trema::PacketinFilter)).once
 
     @syntax.instance_eval do
-      filter :lldp => "LLDP RULE", :packet_in => "PACKET-IN RULE"
+      filter lldp: 'LLDP RULE', packet_in: 'PACKET-IN RULE'
     end
   end
-
 
   it "should recognize 'event' directive" do
-    expect(Trema::SwitchManager).to receive( :add ).with( an_instance_of( Trema::SwitchManager ) ).once
+    expect(Trema::SwitchManager).to receive(:add).with(an_instance_of(Trema::SwitchManager)).once
 
     @syntax.instance_eval do
-      event "RULE"
+      event 'RULE'
     end
   end
 
-
   it "should recognize 'run' directive" do
-    expect(Trema::App).to receive( :add ).with( an_instance_of( Trema::App ) ).once
+    expect(Trema::App).to receive(:add).with(an_instance_of(Trema::App)).once
 
     @syntax.instance_eval do
-      run( "My App" ) { }
+      run('My App') {}
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby
 ### coding: utf-8-unix
 ### indent-tabs-mode: nil
 ### End:
-

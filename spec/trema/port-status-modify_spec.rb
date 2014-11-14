@@ -15,54 +15,49 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
 describe Trema::PortStatusModify do
-  it_should_behave_like "port status message", :klass => Trema::PortStatusModify
+  it_should_behave_like 'port status message', klass: Trema::PortStatusModify
 end
-
 
 module Trema
   class PortStatusController < Controller
-    def features_reply dpid, message
-      message.ports.select( &:up? ).each do | each |
+    def features_reply(dpid, message)
+      message.ports.select(&:up?).each do | each |
         port_mod = PortMod.new(
-          :port_no => each.number,
-          :hw_addr => each.hw_addr,
-          :config => Port::OFPPC_PORT_DOWN,
-          :mask => Port::OFPPC_PORT_DOWN,
-          :advertise => 0
+          port_no: each.number,
+          hw_addr: each.hw_addr,
+          config: Port::OFPPC_PORT_DOWN,
+          mask: Port::OFPPC_PORT_DOWN,
+          advertise: 0
         )
         send_message dpid, port_mod
       end
     end
   end
 
-
   describe Controller do
-    context "when one port goes down" do
-      it "should receive port_status (modify)" do
-        network {
+    context 'when one port goes down' do
+      it 'should receive port_status (modify)' do
+        network do
           vswitch { datapath_id 0xabc }
-          vhost "host"
-          link "host", "0xabc"
-        }.run( PortStatusController ) {
-          expect(controller( "PortStatusController" )).to receive( :port_status ).with { | dpid, message |
+          vhost 'host'
+          link 'host', '0xabc'
+        end.run(PortStatusController) do
+          expect(controller('PortStatusController')).to receive(:port_status).with { | dpid, message |
             expect(dpid).to eq(0xabc)
-            expect(message).to be_an_instance_of( PortStatusModify )
+            expect(message).to be_an_instance_of(PortStatusModify)
           }
 
-          controller( "PortStatusController" ).send_message 0xabc, FeaturesRequest.new
+          controller('PortStatusController').send_message 0xabc, FeaturesRequest.new
           sleep 2  # FIXME: wait to receive port_status
-        }
+        end
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

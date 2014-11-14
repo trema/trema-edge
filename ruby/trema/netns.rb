@@ -15,9 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "network-component"
-
+require_relative 'network-component'
 
 module Trema
   #
@@ -36,7 +34,6 @@ module Trema
     #
     attr_accessor :interface
 
-
     #
     # Creates a new Trema netns from {DSL::Netns}
     #
@@ -47,11 +44,10 @@ module Trema
     #
     # @api public
     #
-    def initialize stanza
+    def initialize(stanza)
       @stanza = stanza
       Netns.add self
     end
-
 
     #
     # Define netns attribute accessors
@@ -63,10 +59,9 @@ module Trema
     #
     # @api public
     #
-    def method_missing message, *args
+    def method_missing(message, *_args)
       @stanza.__send__ :[], message
     end
-
 
     #
     # Returns netmask
@@ -79,9 +74,8 @@ module Trema
     # @api public
     #
     def netmask
-      @stanza[ :netmask ] || "255.255.255.255"
+      @stanza[:netmask] || '255.255.255.255'
     end
-
 
     #
     # Runs a netns process
@@ -97,11 +91,10 @@ module Trema
       sh "sudo ip netns add #{ name }"
       sh "sudo ip link set dev #{ interface } netns #{ name }"
       sh "sudo ip netns exec #{ name } ifconfig lo 127.0.0.1"
-      sh "sudo ip netns exec #{ name } ifconfig #{ interface } #{ @stanza[ :ip ] } netmask #{ netmask }" if @stanza[ :ip ]
-      sh "sudo ip netns exec #{ name } route add -net #{ @stanza[ :net ] } gw #{ @stanza[ :gw ] }" if @stanza[ :net ] and @stanza[ :gw ]
+      sh "sudo ip netns exec #{ name } ifconfig #{ interface } #{ @stanza[:ip] } netmask #{ netmask }" if @stanza[:ip]
+      sh "sudo ip netns exec #{ name } route add -net #{ @stanza[:net] } gw #{ @stanza[:gw] }" if @stanza[:net] && @stanza[:gw]
       self
     end
-
 
     #
     # Kills running netns
@@ -118,7 +111,6 @@ module Trema
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module MonkeyPatch
   module Integer
     module Ranges
@@ -23,29 +22,24 @@ module MonkeyPatch
         within_range? 8
       end
 
-
       def unsigned_16bit?
         within_range? 16
       end
-
 
       def unsigned_32bit?
         within_range? 32
       end
 
-
       def unsigned_64bit?
         within_range? 64
       end
 
-
-      def within_range? nbit
-        ( 0 <= self ) and ( self < 2 ** nbit )
+      def within_range?(nbit)
+        (0 <= self) && (self < 2**nbit)
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

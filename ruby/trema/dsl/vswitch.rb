@@ -17,26 +17,22 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/dsl/switch"
-
+require 'trema/dsl/switch'
 
 module Trema
   module DSL
     class Vswitch < Switch
-      def initialize name = nil
+      def initialize(name = nil)
         super name
-        @ip = "127.0.0.1"
+        @ip = '127.0.0.1'
       end
 
-
-      def ip str
+      def ip(str)
         @ip = str
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

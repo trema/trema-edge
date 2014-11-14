@@ -15,13 +15,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+require_relative 'network-component'
+require_relative 'path'
 
-require_relative "network-component"
-require_relative "path"
-
-$LOAD_PATH.unshift File.join( Trema.vendor_ruby_ifconfig, "lib" )
-require "ifconfig"
-
+$LOAD_PATH.unshift File.join(Trema.vendor_ruby_ifconfig, 'lib')
+require 'ifconfig'
 
 module Trema
   #
@@ -38,7 +36,6 @@ module Trema
     #
     attr_reader :name
 
-
     #
     # Returns the name of link peer interface
     #
@@ -48,7 +45,6 @@ module Trema
     # @return [String]
     #
     attr_reader :name_peer
-
 
     #
     # Returns the configuration names of link peers
@@ -60,7 +56,6 @@ module Trema
     #
     attr_reader :peers
 
-
     #
     # Creates a new Trema link from {DSL::Link}
     #
@@ -69,21 +64,20 @@ module Trema
     #
     # @return [Link]
     #
-    def initialize stanza
+    def initialize(stanza)
       @stanza = stanza
       if real_eth?
         @name = real_eth
         @name_peer = nil
-        @peers = @stanza.peers - [ real_eth ]
+        @peers = @stanza.peers - [real_eth]
       else
         @peers = @stanza.peers
-        @link_id = link_id( @peers )
+        @link_id = link_id(@peers)
         @name = "trema#{ @link_id }-0"
         @name_peer = "trema#{ @link_id }-1"
       end
       Link.add self
     end
-
 
     #
     # Adds a virtual link
@@ -100,7 +94,6 @@ module Trema
       sh "sudo /sbin/sysctl -w net.ipv6.conf.#{ @name_peer }.disable_ipv6=1 >/dev/null 2>&1"
     end
 
-
     #
     # Ups the peer interfaces of a virtual link
     #
@@ -115,7 +108,6 @@ module Trema
       sh "sudo /sbin/ifconfig #{ @name_peer } up"
     end
 
-
     #
     # Creates and enables a virtual link
     #
@@ -128,7 +120,6 @@ module Trema
       add!
       up!
     end
-
 
     #
     # Deletes a virtual link
@@ -144,37 +135,34 @@ module Trema
       sh "sudo ip link delete #{ @name } 2>/dev/null" rescue nil
     end
 
-
     ############################################################################
+
     private
-    ############################################################################
 
+    ############################################################################
 
     def real_eth
       interfaces = IfconfigWrapper.new.parse.interfaces
       @stanza.peers.each do | each |
-        return each if interfaces.include?( each )
+        return each if interfaces.include?(each)
       end
-      raise
+      fail
     end
-
 
     def real_eth?
       interfaces = IfconfigWrapper.new.parse.interfaces
       @stanza.peers.each do | each |
-        return true if interfaces.include?( each )
+        return true if interfaces.include?(each)
       end
       false
     end
 
-
-    def link_id peers
-      switch_port = peers.select{ | each | each.include?( ':' ) }[ 0 ]
-      @link_id = switch_port.nil? ? Link.instances.size : switch_port.split( ':' )[ 1 ]
+    def link_id(peers)
+      switch_port = peers.select { | each | each.include?(':') }[0]
+      @link_id = switch_port.nil? ? Link.instances.size : switch_port.split(':')[1]
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

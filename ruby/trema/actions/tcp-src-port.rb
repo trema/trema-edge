@@ -15,9 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/actions/transport-port"
-
+require 'trema/actions/transport-port'
 
 module Trema
   module Actions
@@ -30,10 +28,8 @@ module Trema
     end
   end
 
-
   TcpSrcPort = Actions::TcpSrcPort
 end
-
 
 ### Local variables:
 ### mode: Ruby

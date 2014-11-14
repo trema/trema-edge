@@ -17,42 +17,39 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
 describe Trema::Port do
-  it "should have its port number" do
-    port = Trema::Port.new( :number => 123 )
+  it 'should have its port number' do
+    port = Trema::Port.new(number: 123)
     expect(port.number).to eq(123)
   end
 
-  it "should check the port up" do
-    port = Trema::Port.new( :config => 0, :state => 0 )
+  it 'should check the port up' do
+    port = Trema::Port.new(config: 0, state: 0)
     expect(port.up?).to eq(true)
     expect(port.down?).to eq(false)
   end
 
-  it "should check the port down(config=0,state=1)" do
-    port = Trema::Port.new( :config => 0, :state => 1 )
+  it 'should check the port down(config=0,state=1)' do
+    port = Trema::Port.new(config: 0, state: 1)
     expect(port.up?).to eq(false)
     expect(port.down?).to eq(true)
   end
 
-  it "should check the port down(config=1,state=0)" do
-    port = Trema::Port.new( :config => 1, :state => 0 )
+  it 'should check the port down(config=1,state=0)' do
+    port = Trema::Port.new(config: 1, state: 0)
     expect(port.up?).to eq(false)
     expect(port.down?).to eq(true)
   end
 
-  it "should check the port down(config=1,state=1)" do
-    port = Trema::Port.new( :config => 1, :state => 1 )
+  it 'should check the port down(config=1,state=1)' do
+    port = Trema::Port.new(config: 1, state: 1)
     expect(port.up?).to eq(false)
     expect(port.down?).to eq(true)
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

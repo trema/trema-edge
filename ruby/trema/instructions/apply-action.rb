@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Instructions
     class ApplyAction < InstructionAction
@@ -23,10 +22,8 @@ module Trema
     end
   end
 
-
   ApplyAction = Instructions::ApplyAction
 end
-
 
 ### Local variables:
 ### mode: Ruby

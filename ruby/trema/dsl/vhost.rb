@@ -15,10 +15,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/dsl/stanza"
-require "trema/dsl/syntax-error"
-
+require 'trema/dsl/stanza'
+require 'trema/dsl/syntax-error'
 
 module Trema
   module DSL
@@ -36,17 +34,16 @@ module Trema
       #
       # @api public
       #
-      def promisc on_off
+      def promisc(on_off)
         case on_off.to_s.downcase
-        when "on", "yes"
+        when 'on', 'yes'
           @promisc = true
-        when "off", "no"
+        when 'off', 'no'
           @promisc = false
         else
-          raise SyntaxError, "Unknown option: promisc #{ on_off }"
+          fail SyntaxError, "Unknown option: promisc #{ on_off }"
         end
       end
-
 
       #
       # Set IP address
@@ -58,13 +55,12 @@ module Trema
       #
       # @api public
       #
-      def ip str
+      def ip(str)
         @ip = str
         if @name.nil?
           @name = @ip
         end
       end
-
 
       #
       # Set netmask
@@ -76,10 +72,9 @@ module Trema
       #
       # @api public
       #
-      def netmask str
+      def netmask(str)
         @netmask = str
       end
-
 
       #
       # Set MAC address
@@ -91,13 +86,12 @@ module Trema
       #
       # @api public
       #
-      def mac str
+      def mac(str)
         @mac = str
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

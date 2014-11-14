@@ -15,35 +15,30 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "accessor"
-
+require_relative 'accessor'
 
 module Trema
   class Instruction < Accessor
     include Instructions
 
-
-    def self.ofp_type type
-      prefix = "OFPIT_"
+    def self.ofp_type(type)
+      prefix = 'OFPIT_'
       store "#{ prefix }#{ type }", self
     end
-
 
     #
     # packs its instruction into a list of instructions
     #
-    def pack_instruction instructions
+    def pack_instruction(instructions)
       params = {}
       instance_variables.each do | each |
-        params[ each.to_s.sub( '@', '' ).to_sym ] = instance_variable_get( each )
+        params[each.to_s.sub('@', '').to_sym] = instance_variable_get(each)
       end
       method = "pack_#{ self.class.name.demodulize.underscore }_instruction"
       __send__ method, instructions, params
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

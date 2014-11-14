@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Actions
     #
@@ -24,20 +23,17 @@ module Trema
     class MplsBos < FlexibleAction
       unsigned_int8 :mpls_bos, presence: true, within: :check_mpls_bos_range
 
-
-      def check_mpls_bos_range mpls_bos, name
+      def check_mpls_bos_range(mpls_bos, name)
         range = 0..1
         unless range.include? mpls_bos
-          raise ArgumentError, "#{ name } value must be >= #{ range.first } and <= #{ range.last }." 
+          fail ArgumentError, "#{ name } value must be >= #{ range.first } and <= #{ range.last }."
         end
       end
     end
   end
 
-
   MplsBos = Actions::MplsBos
 end
-
 
 ### Local variables:
 ### mode: Ruby

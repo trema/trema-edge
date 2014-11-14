@@ -15,91 +15,82 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
 module Trema
-  describe Vendor, ".new" do
-    it_should_behave_like "any Openflow message with default transaction ID"
+  describe Vendor, '.new' do
+    it_should_behave_like 'any Openflow message with default transaction ID'
 
-    describe ( :vendor ) do
-      subject { super().send(( :vendor )) }
+    describe ( :vendor) do
+      subject { super().send((:vendor)) }
       it { is_expected.to eq(0) }
     end
 
-    describe ( :data ) do
-      subject { super().send(( :data )) }
+    describe ( :data) do
+      subject { super().send((:data)) }
       it { is_expected.to be_nil }
     end
   end
 
+  describe Vendor, '.new(nil)' do
+    it_should_behave_like 'any Openflow message with default transaction ID'
 
-  describe Vendor, ".new(nil)" do
-    it_should_behave_like "any Openflow message with default transaction ID"
-
-    describe ( :vendor ) do
-      subject { super().send(( :vendor )) }
+    describe ( :vendor) do
+      subject { super().send((:vendor)) }
       it { is_expected.to eq(0) }
     end
 
-    describe ( :data ) do
-      subject { super().send(( :data )) }
+    describe ( :data) do
+      subject { super().send((:data)) }
       it { is_expected.to be_nil }
     end
   end
 
-
-  describe Vendor, ".new(:transaction_id => value)" do
-    subject { Vendor.new( :transaction_id => transaction_id ) }
-    it_should_behave_like "any Openflow message with transaction ID"
+  describe Vendor, '.new(:transaction_id => value)' do
+    subject { Vendor.new(transaction_id: transaction_id) }
+    it_should_behave_like 'any Openflow message with transaction ID'
   end
 
-
-  describe Vendor, ".new(:xid => value)" do
-    subject { Vendor.new( :xid => xid ) }
-    it_should_behave_like "any Openflow message with xid"
+  describe Vendor, '.new(:xid => value)' do
+    subject { Vendor.new(xid: xid) }
+    it_should_behave_like 'any Openflow message with xid'
   end
 
-
-  describe Vendor, ".new(:vendor_id => value)", :nosudo => true do
-    subject { Vendor.new( :vendor => vendor ) }
-    let( :vendor ) { 0xdeadbeef }
+  describe Vendor, '.new(:vendor_id => value)', nosudo: true do
+    subject { Vendor.new(vendor: vendor) }
+    let(:vendor) { 0xdeadbeef }
 
     describe '#vendor' do
       subject { super().vendor }
       it { is_expected.to eq(0xdeadbeef) }
     end
 
-    describe ( :data ) do
-      subject { super().send(( :data )) }
+    describe ( :data) do
+      subject { super().send((:data)) }
       it { is_expected.to be_nil }
     end
   end
 
-
-  describe Vendor, ".new(:data => value)", :nosudo => true do
-    subject { Vendor.new( :data => data ) }
-    let( :data ) { "VENDOR DATA".unpack( "C*" ) }
+  describe Vendor, '.new(:data => value)', nosudo: true do
+    subject { Vendor.new(data: data) }
+    let(:data) { 'VENDOR DATA'.unpack('C*') }
 
     describe '#data' do
       subject { super().data }
       it { is_expected.to eq([86, 69, 78, 68, 79, 82, 32, 68, 65, 84, 65]) }
     end
 
-    describe ( :vendor ) do
-      subject { super().send(( :vendor )) }
+    describe ( :vendor) do
+      subject { super().send((:vendor)) }
       it { is_expected.to eq(0) }
     end
   end
 
-
-  describe Vendor, '.new("INVALID OPTION")', :nosudo => true do
-    it { expect { Vendor.new "INVALID OPTION" }.to raise_error( TypeError ) }
+  describe Vendor, '.new("INVALID OPTION")', nosudo: true do
+    it { expect { Vendor.new 'INVALID OPTION' }.to raise_error(TypeError) }
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

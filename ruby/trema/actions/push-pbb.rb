@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Actions
     #
@@ -31,16 +30,13 @@ module Trema
       # The PPB ethertype is 0x88e7.
       #
       DEFAULT_ETHER_TYPE = 0x88e7
-  
-  
+
       unsigned_int16 :ether_type, presence: true, default: DEFAULT_ETHER_TYPE
     end
   end
 
-
   PushPbb = Actions::PushPbb
 end
-
 
 ### Local variables:
 ### mode: Ruby

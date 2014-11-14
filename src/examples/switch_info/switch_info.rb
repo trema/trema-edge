@@ -19,24 +19,21 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 class SwitchInfoController < Controller
-  def switch_ready datapath_id
+  def switch_ready(datapath_id)
     send_message datapath_id, FeaturesRequest.new
   end
 
-
-  def features_reply datapath_id, message
-    info "datapath_id: %#x" % datapath_id
-    info "transaction_id: %#x" % message.transaction_id
-    info "n_buffers: %u" % message.n_buffers
-    info "n_tables: %u" % message.n_tables
-    info "auxiliary_id: %u" % message.auxiliary_id
-    info "capabilities: %u" % message.capabilities
+  def features_reply(datapath_id, message)
+    info 'datapath_id: %#x' % datapath_id
+    info 'transaction_id: %#x' % message.transaction_id
+    info 'n_buffers: %u' % message.n_buffers
+    info 'n_tables: %u' % message.n_tables
+    info 'auxiliary_id: %u' % message.auxiliary_id
+    info 'capabilities: %u' % message.capabilities
     shutdown!
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

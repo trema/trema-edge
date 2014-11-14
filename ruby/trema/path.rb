@@ -15,69 +15,63 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "monkey-patch/module"
-
+require_relative 'monkey-patch/module'
 
 module Trema
-  HOME = File.expand_path( File.join( File.dirname( __FILE__ ), "..", ".." ) )
-
+  HOME = File.expand_path(File.join(File.dirname(__FILE__), '..', '..'))
 
   class << self
     def home
       HOME
     end
 
-
     def tmp
-      if ENV.key?( "TREMA_TMP" )
-        File.expand_path ENV[ "TREMA_TMP" ]
+      if ENV.key?('TREMA_TMP')
+        File.expand_path ENV['TREMA_TMP']
       else
-        File.join home, "tmp"
+        File.join home, 'tmp'
       end
     end
 
-
     ############################################################################
+
     private
+
     ############################################################################
 
-
-    def file base, path, name = nil
-      define_class_method( name || File.basename( path ).gsub( ".", "_" ) ) do
-        File.join __send__( base ), path
+    def file(base, path, name = nil)
+      define_class_method(name || File.basename(path).gsub('.', '_')) do
+        File.join __send__(base), path
       end
     end
-    alias :dir :file
+    alias_method :dir, :file
   end
 
-
-  dir :home, "objects"
-  dir :home, "ruby"
-  dir :home, "src/lib", :include
-  dir :home, "src/switch/datapath", :src_datapath
-  dir :home, "src/switch/switch", :src_trema_switch
-  dir :home, "unittests", :src_unittests
-  dir :home, "vendor"
-  dir :objects, "cmockery"
-  dir :objects, "lib"
-  dir :objects, "oflops"
-  dir :objects, "openflow"
-  dir :objects, "switch/datapath", :obj_datapath
-  dir :objects, "unittests", :obj_unittests
-  dir :tmp, "log"
-  dir :tmp, "pid"
-  dir :tmp, "sock"
-  dir :vendor, "cmockery-20110428", :vendor_cmockery
-  dir :vendor, "oflops-0.03", :vendor_oflops
-  dir :vendor, "openflow.git", :vendor_openflow_git
-  dir :vendor, "phost", :vendor_phost
-  dir :vendor, "ruby-ifconfig-1.2", :vendor_ruby_ifconfig
-  file :cmockery, "include/google/cmockery.h"
-  file :cmockery, "lib/libcmockery.a"
-  file :openflow, "openflow.h"
+  dir :home, 'objects'
+  dir :home, 'ruby'
+  dir :home, 'src/lib', :include
+  dir :home, 'src/switch/datapath', :src_datapath
+  dir :home, 'src/switch/switch', :src_trema_switch
+  dir :home, 'unittests', :src_unittests
+  dir :home, 'vendor'
+  dir :objects, 'cmockery'
+  dir :objects, 'lib'
+  dir :objects, 'oflops'
+  dir :objects, 'openflow'
+  dir :objects, 'switch/datapath', :obj_datapath
+  dir :objects, 'unittests', :obj_unittests
+  dir :tmp, 'log'
+  dir :tmp, 'pid'
+  dir :tmp, 'sock'
+  dir :vendor, 'cmockery-20110428', :vendor_cmockery
+  dir :vendor, 'oflops-0.03', :vendor_oflops
+  dir :vendor, 'openflow.git', :vendor_openflow_git
+  dir :vendor, 'phost', :vendor_phost
+  dir :vendor, 'ruby-ifconfig-1.2', :vendor_ruby_ifconfig
+  file :cmockery, 'include/google/cmockery.h'
+  file :cmockery, 'lib/libcmockery.a'
+  file :openflow, 'openflow.h'
 end
-
 
 ### Local variables:
 ### mode: Ruby

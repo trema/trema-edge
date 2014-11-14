@@ -15,29 +15,25 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Messages
     class Hello < Message
       unsigned_int32 :transaction_id, default: lambda { next_transaction_id }, alias: :xid
-      array :version, validate_with: :check_version, default: [ OFP_VERSION ]
+      array :version, validate_with: :check_version, default: [OFP_VERSION]
 
-
-      def check_version version, name
-        if version[ 0 ] != OFP_VERSION
-          raise ArgumentError, "Invalid #{ name } specified"
+      def check_version(version, name)
+        if version[0] != OFP_VERSION
+          fail ArgumentError, "Invalid #{ name } specified"
         end
         if version.length > 1
-          raise ArgumentError, "Multiple versions not supported"
+          fail ArgumentError, 'Multiple versions not supported'
         end
       end
     end
   end
 
-
   Hello = Messages::Hello
 end
-
 
 ### Local variables:
 ### mode: Ruby

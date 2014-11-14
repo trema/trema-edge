@@ -17,24 +17,20 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 Then /^the stats of "([^"]*)" should be:$/ do | host, string |
   step %{I try to run "./trema show_stats #{ host }" (log = "show_stats.log")}
-  step %{the content of "show_stats.log" should be:}, string
+  step %(the content of "show_stats.log" should be:), string
 end
-
 
 Then /^the tx stats of "([^"]*)" should be:$/ do | host, string |
   step %{I try to run "./trema show_stats #{ host } --tx" (log = "show_stats.log")}
-  step %{the content of "show_stats.log" should be:}, string
+  step %(the content of "show_stats.log" should be:), string
 end
-
 
 Then /^the rx stats of "([^"]*)" should be:$/ do | host, string |
   step %{I try to run "./trema show_stats #{ host } --rx" (log = "show_stats.log")}
-  step %{the content of "show_stats.log" should be:}, string
+  step %(the content of "show_stats.log" should be:), string
 end
-
 
 ### Local variables:
 ### mode: Ruby

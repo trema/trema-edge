@@ -15,9 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/actions/eth-addr"
-
+require 'trema/actions/eth-addr'
 
 module Trema
   module Actions
@@ -29,10 +27,8 @@ module Trema
     end
   end
 
-
   EthDst = Actions::EthDst
 end
-
 
 ### Local variables:
 ### mode: Ruby

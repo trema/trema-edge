@@ -17,52 +17,46 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema/process"
-
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema/process'
 
 describe Trema::Process do
   before :each do
-    @pid_file = double( "PID file" )
+    @pid_file = double('PID file')
   end
 
+  it 'should be instantiated from a PID file' do
+    expect(IO).to receive(:read).with(@pid_file).and_return("1234\n")
+    stat = double('stat', uid: 0)
+    allow(File).to receive(:stat).with(@pid_file).and_return(stat)
 
-  it "should be instantiated from a PID file" do
-    expect(IO).to receive( :read ).with( @pid_file ).and_return( "1234\n" )
-    stat = double( "stat", :uid => 0 )
-    allow(File).to receive( :stat ).with( @pid_file ).and_return( stat )
-
-    Trema::Process.read( @pid_file )
+    Trema::Process.read(@pid_file)
   end
 
+  it 'should be killed' do
+    allow(IO).to receive(:read).with(@pid_file).and_return("1234\n")
+    stat = double('stat', uid: 1000)
+    allow(File).to receive(:stat).with(@pid_file).and_return(stat)
 
-  it "should be killed" do
-    allow(IO).to receive( :read ).with( @pid_file ).and_return( "1234\n" )
-    stat = double( "stat", :uid => 1000 )
-    allow(File).to receive( :stat ).with( @pid_file ).and_return( stat )
-
-    process = Trema::Process.read( @pid_file )
-    allow(process).to receive( :` ).and_return( "ALIVE", "" )
-    expect(process).to receive( :sh ).with( "kill 1234 2>/dev/null" )
+    process = Trema::Process.read(@pid_file)
+    allow(process).to receive(:`).and_return('ALIVE', '')
+    expect(process).to receive(:sh).with('kill 1234 2>/dev/null')
 
     process.kill!
   end
 
+  it 'should be killed with sudo' do
+    allow(IO).to receive(:read).with(@pid_file).and_return("1234\n")
+    stat = double('stat', uid: 0)
+    allow(File).to receive(:stat).with(@pid_file).and_return(stat)
 
-  it "should be killed with sudo" do
-    allow(IO).to receive( :read ).with( @pid_file ).and_return( "1234\n" )
-    stat = double( "stat", :uid => 0 )
-    allow(File).to receive( :stat ).with( @pid_file ).and_return( stat )
-
-    process = Trema::Process.read( @pid_file )
-    allow(process).to receive( :` ).and_return( "ALIVE", "" )
-    expect(process).to receive( :sh ).with( "sudo kill 1234 2>/dev/null" )
+    process = Trema::Process.read(@pid_file)
+    allow(process).to receive(:`).and_return('ALIVE', '')
+    expect(process).to receive(:sh).with('sudo kill 1234 2>/dev/null')
 
     process.kill!
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

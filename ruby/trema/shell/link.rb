@@ -17,31 +17,29 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/dsl"
-
+require 'trema/dsl'
 
 module Trema
   module Shell
-    def link peer0, peer1
-      stanza = DSL::Link.new( peer0, peer1 )
-      link = Link.new( stanza )
+    def link(peer0, peer1)
+      stanza = DSL::Link.new(peer0, peer1)
+      link = Link.new(stanza)
       link.enable!
 
-      if OpenflowSwitch[ peer0 ]
-        OpenflowSwitch[ peer0 ] << link.name
+      if OpenflowSwitch[peer0]
+        OpenflowSwitch[peer0] << link.name
       end
-      if OpenflowSwitch[ peer1 ]
-        OpenflowSwitch[ peer1 ] << link.name_peer
+      if OpenflowSwitch[peer1]
+        OpenflowSwitch[peer1] << link.name_peer
       end
 
-      if Host[ peer0 ]
-        Host[ peer0 ].interface = link.name
-        Host[ peer0 ].run!
+      if Host[peer0]
+        Host[peer0].interface = link.name
+        Host[peer0].run!
       end
-      if Host[ peer1 ]
-        Host[ peer1 ].interface = link.name_peer
-        Host[ peer1 ].run!
+      if Host[peer1]
+        Host[peer1].interface = link.name_peer
+        Host[peer1].run!
       end
 
       $context.dump
@@ -50,7 +48,6 @@ module Trema
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

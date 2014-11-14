@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Actions
     #
@@ -25,20 +24,17 @@ module Trema
     class MplsTc < FlexibleAction
       unsigned_int8 :mpls_tc, presence: true, within: :check_mpls_tc_range
 
-
-      def check_mpls_tc_range mpls_tc, name
+      def check_mpls_tc_range(mpls_tc, name)
         range = 0..7
         unless range.include? mpls_tc
-          raise ArgumentError, "#{ name } value must be >= #{ range.first } and <= #{ range.last }." 
+          fail ArgumentError, "#{ name } value must be >= #{ range.first } and <= #{ range.last }."
         end
       end
     end
   end
 
-
   MplsTc = Actions::MplsTc
 end
-
 
 ### Local variables:
 ### mode: Ruby

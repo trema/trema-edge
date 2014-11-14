@@ -19,37 +19,34 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 class RepeaterHub < Controller
-  def switch_ready datapath_id
-    action = SendOutPort.new( port_number: OFPP_CONTROLLER, max_len: OFPCML_NO_BUFFER )
-    ins = ApplyAction.new( actions:  [ action ] )
-    send_flow_mod_add( datapath_id,
-                       priority: OFP_LOW_PRIORITY,
-                       buffer_id: OFP_NO_BUFFER,
-                       flags: OFPFF_SEND_FLOW_REM,
-                       instructions: [ ins ]
+  def switch_ready(datapath_id)
+    action = SendOutPort.new(port_number: OFPP_CONTROLLER, max_len: OFPCML_NO_BUFFER)
+    ins = ApplyAction.new(actions:  [action])
+    send_flow_mod_add(datapath_id,
+                      priority: OFP_LOW_PRIORITY,
+                      buffer_id: OFP_NO_BUFFER,
+                      flags: OFPFF_SEND_FLOW_REM,
+                      instructions: [ins]
     )
   end
 
-
-  def packet_in datapath_id, message
-    action = SendOutPort.new( OFPP_ALL )
-    ins = ApplyAction.new( actions: [ action ] ) 
-    match = ExactMatch.from( message )
+  def packet_in(datapath_id, message)
+    action = SendOutPort.new(OFPP_ALL)
+    ins = ApplyAction.new(actions: [action])
+    match = ExactMatch.from(message)
     send_flow_mod_add(
       datapath_id,
-      match: ExactMatch.from( message ),
-      instructions: [ ins ]
+      match: ExactMatch.from(message),
+      instructions: [ins]
     )
     send_packet_out(
       datapath_id,
       packet_in: message,
-      actions: [ action ]
+      actions: [action]
     )
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

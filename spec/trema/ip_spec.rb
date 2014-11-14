@@ -15,43 +15,41 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema/ip"
-
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema/ip'
 
 module Trema
   describe IP do
-    context "when creating" do
-      subject { IP.new( ip_address, prefixlen ) }
+    context 'when creating' do
+      subject { IP.new(ip_address, prefixlen) }
 
-      context %{when "192.168.1.1/32"} do
-        let( :ip_address ) { "192.168.1.1" }
-        let( :prefixlen ) { 32 }
+      context %(when "192.168.1.1/32") do
+        let(:ip_address) { '192.168.1.1' }
+        let(:prefixlen) { 32 }
 
         describe '#to_s' do
           subject { super().to_s }
-          it { is_expected.to eq("192.168.1.1") }
+          it { is_expected.to eq('192.168.1.1') }
         end
 
         describe '#to_i' do
           subject { super().to_i }
-          it { is_expected.to eq(3232235777) }
+          it { is_expected.to eq(3_232_235_777) }
         end
 
         describe '#to_array' do
           subject { super().to_array }
-          it { is_expected.to eq([ 0xc0, 0xa8, 0x01, 0x01 ]) }
+          it { is_expected.to eq([0xc0, 0xa8, 0x01, 0x01]) }
         end
       end
 
-      context %{when "10.1.1.1/8"} do
-        let( :ip_address ) { "10.1.1.1" }
-        let( :prefixlen ) { 8 }
+      context %(when "10.1.1.1/8") do
+        let(:ip_address) { '10.1.1.1' }
+        let(:prefixlen) { 8 }
 
         describe '#to_s' do
           subject { super().to_s }
-          it { is_expected.to eq("10.0.0.0") }
+          it { is_expected.to eq('10.0.0.0') }
         end
 
         describe '#to_i' do
@@ -61,13 +59,12 @@ module Trema
 
         describe '#to_array' do
           subject { super().to_array }
-          it { is_expected.to eq([ 0x0a, 0x00, 0x00, 0x00 ]) }
+          it { is_expected.to eq([0x0a, 0x00, 0x00, 0x00]) }
         end
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

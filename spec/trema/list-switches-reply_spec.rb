@@ -17,29 +17,26 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
 describe Controller do
-  context "when #list_switches_request is sent" do
-    it "should receive #list_switches_reply" do
+  context 'when #list_switches_request is sent' do
+    it 'should receive #list_switches_reply' do
       class ListSwitchesController < Controller; end
-      network {
+      network do
         vswitch { datapath_id 0x1 }
         vswitch { datapath_id 0x2 }
         vswitch { datapath_id 0x3 }
-      }.run( ListSwitchesController ) {
-        expect(controller( "ListSwitchesController" )).to receive( :list_switches_reply ) do | dpids |
-          expect(dpids).to eq([ 0x1, 0x2, 0x3 ])
+      end.run(ListSwitchesController) do
+        expect(controller('ListSwitchesController')).to receive(:list_switches_reply) do | dpids |
+          expect(dpids).to eq([0x1, 0x2, 0x3])
         end
-        controller( "ListSwitchesController" ).send_list_switches_request
-      }
+        controller('ListSwitchesController').send_list_switches_request
+      end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

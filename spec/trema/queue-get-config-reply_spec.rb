@@ -17,21 +17,19 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
-
-describe QueueGetConfigReply, ".new( VALID OPTIONS )" do
-  subject do 
+describe QueueGetConfigReply, '.new( VALID OPTIONS )' do
+  subject do
     for i in 1..2 do
-      pq = PacketQueue.new( :queue_id => i, :len => i * 64 )
-      mr = MinRateQueue.new( i, i * 64, 1024 * i, pq)
+      pq = PacketQueue.new(queue_id: i, len: i * 64)
+      mr = MinRateQueue.new(i, i * 64, 1024 * i, pq)
     end
-    QueueGetConfigReply.new( :datapath_id => 0xabc,
-      :transaction_id => 123,
-      :port => 1,
-      :queues => Queue.queues
+    QueueGetConfigReply.new(datapath_id: 0xabc,
+                            transaction_id: 123,
+                            port: 1,
+                            queues: Queue.queues
     )
   end
 
@@ -56,9 +54,8 @@ describe QueueGetConfigReply, ".new( VALID OPTIONS )" do
   end
 end
 
-
-describe PacketQueue, ".new( VALID OPTIONS )" do
-  subject { PacketQueue.new( :queue_id => 123, :len => 64 ) }
+describe PacketQueue, '.new( VALID OPTIONS )' do
+  subject { PacketQueue.new(queue_id: 123, len: 64) }
 
   describe '#queue_id' do
     subject { super().queue_id }
@@ -71,11 +68,10 @@ describe PacketQueue, ".new( VALID OPTIONS )" do
   end
 end
 
-
-describe MinRateQueue, ".new( VALID OPTIONS )" do
+describe MinRateQueue, '.new( VALID OPTIONS )' do
   subject do
-    pq = PacketQueue.new( :queue_id => 123, :len => 64 )
-    MinRateQueue.new( 1, 64, 1024, pq )
+    pq = PacketQueue.new(queue_id: 123, len: 64)
+    MinRateQueue.new(1, 64, 1024, pq)
   end
 
   describe '#property' do
@@ -93,7 +89,6 @@ describe MinRateQueue, ".new( VALID OPTIONS )" do
     it { is_expected.to eq(1024) }
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

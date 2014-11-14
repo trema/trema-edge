@@ -15,9 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/messages/port"
-
+require 'trema/messages/port'
 
 module Trema
   module Messages
@@ -28,10 +26,8 @@ module Trema
     end
   end
 
-
   PortStatus = Messages::PortStatus
 end
-
 
 ### Local variables:
 ### mode: Ruby

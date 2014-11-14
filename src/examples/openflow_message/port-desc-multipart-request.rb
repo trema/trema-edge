@@ -18,28 +18,24 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module MessageConst
   enum_range %w( OFPMPF_REPLY_MORE )
 end
 
-
 module Messages
   class MultipartReply
     def more?
-      ( @flags & OFPMPF_REPLY_MORE ) == OFPMPF_REPLY_MORE
+      (@flags & OFPMPF_REPLY_MORE) == OFPMPF_REPLY_MORE
     end
   end
 end
 
-
 class PortDescMultipartRequestController < Controller
-  def switch_ready datapath_id
+  def switch_ready(datapath_id)
     send_port_desc_multipart_request datapath_id
   end
 
-
-  def port_desc_multipart_reply datapath_id, messages
+  def port_desc_multipart_reply(datapath_id, messages)
     info "datapath_id: #{ datapath_id.to_hex }"
     info "transaction_id: #{ messages.transaction_id.to_hex }"
     info "type: #{ messages.type }"
@@ -59,7 +55,6 @@ class PortDescMultipartRequestController < Controller
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

@@ -18,24 +18,21 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+$LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__) + '/../ruby'))
 
-$LOAD_PATH.unshift( File.expand_path( File.dirname( __FILE__ ) + "/../ruby" ) )
-
-
-require "fileutils"
-require "optparse"
-require "trema/path"
-
+require 'fileutils'
+require 'optparse'
+require 'trema/path'
 
 $opts = OptionParser.new
 
 FileUtils.cd Trema.home do
-  $opts.banner = "Usage: #{ File.basename $0 } [OPTIONS ...]"
+  $opts.banner = "Usage: #{ File.basename $PROGRAM_NAME } [OPTIONS ...]"
 
-  $opts.on( "-c", "--cflags" ) do
+  $opts.on('-c', '--cflags') do
     $cflags = true
   end
-  $opts.on( "-l", "--libs" ) do
+  $opts.on('-l', '--libs') do
     $libs = true
   end
 
@@ -48,9 +45,8 @@ FileUtils.cd Trema.home do
   if $libs
     output << "-L#{ Trema.objects }/lib -ltrema -lrt -lpthread -ldl -lssl"
   end
-  print output.join( " " )
+  print output.join(' ')
 end
-
 
 ### Local variables:
 ### mode: Ruby

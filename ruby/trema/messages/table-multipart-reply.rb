@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Messages
     class TableMultipartReply < Message
@@ -25,10 +24,8 @@ module Trema
     end
   end
 
-
   TableMultipartReply = Messages::TableMultipartReply
 end
-
 
 ### Local variables:
 ### mode: Ruby

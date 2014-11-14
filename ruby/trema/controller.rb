@@ -15,15 +15,13 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "app"
-require_relative "logger"
-require_relative "monkey-patch/integer"
-require_relative "monkey-patch/string"
-require_relative "timers"
-require_relative "message-helper"
-require_relative "message-handler"
-
+require_relative 'app'
+require_relative 'logger'
+require_relative 'monkey-patch/integer'
+require_relative 'monkey-patch/string'
+require_relative 'timers'
+require_relative 'message-helper'
+require_relative 'message-handler'
 
 module Trema
   #
@@ -35,14 +33,12 @@ module Trema
     include MessageHelper
     include MessageHandler
 
-
     #
     # @private Just a placeholder for YARD.
     #
-    def self.handler name
+    def self.handler(_name)
       # Do nothing.
     end
-
 
     #
     # @!method switch_ready( datapath_id )
@@ -54,7 +50,6 @@ module Trema
     #
     handler :switch_ready
 
-
     #
     # @!method switch_disconnected( datapath_id )
     #
@@ -65,8 +60,6 @@ module Trema
     #
     handler :switch_disconnected
 
-
-
     #
     # @!method list_switches_reply( datapath_ids )
     #
@@ -76,7 +69,6 @@ module Trema
     #   the datapath IDs of connected OpenFlow switches.
     #
     handler :list_switches_reply
-
 
     #
     # @!method packet_in( datapath_id, message )
@@ -90,7 +82,6 @@ module Trema
     #
     handler :packet_in
 
-
     #
     # @!method flow_removed( datapath_id, message )
     #
@@ -102,7 +93,6 @@ module Trema
     #   the Flow Removed message.
     #
     handler :flow_removed
-
 
     #
     # @!method port_status( datapath_id, message )
@@ -116,7 +106,6 @@ module Trema
     #
     handler :port_status
 
-
     #
     # @!method openflow_error( datapath_id, message )
     #
@@ -128,7 +117,6 @@ module Trema
     #   the OpenFlow Error message.
     #
     handler :openflow_error
-
 
     #
     # @!method features_reply( datapath_id, message )
@@ -142,7 +130,6 @@ module Trema
     #
     handler :features_reply
 
-
     #
     # @!method stats_reply( datapath_id, message )
     #
@@ -154,7 +141,6 @@ module Trema
     #   the Stats Reply message.
     #
     handler :stats_reply
-
 
     #
     # @!method barrier_reply( datapath_id, message )
@@ -168,7 +154,6 @@ module Trema
     #
     handler :barrier_reply
 
-
     #
     # @!method get_config_reply( datapath_id, message )
     #
@@ -180,7 +165,6 @@ module Trema
     #   the Get Config Reply message.
     #
     handler :get_config_reply
-
 
     #
     # @!method queue_get_config_reply( datapath_id, message )
@@ -194,7 +178,6 @@ module Trema
     #
     handler :queue_get_config_reply
 
-
     #
     # @!method vendor( datapath_id, message )
     #
@@ -207,14 +190,12 @@ module Trema
     #
     handler :vendor
 
-
     #
     # @private
     #
-    def self.inherited subclass
+    def self.inherited(subclass)
       subclass.new
     end
-
 
     #
     # @private
@@ -222,7 +203,6 @@ module Trema
     def initialize
       App.add self
     end
-
 
     #
     # Run as a daemon.
@@ -232,13 +212,12 @@ module Trema
         ::Process.setsid
         fork do
           STDIN.close
-          STDOUT.reopen "/dev/null", "a"
-          STDERR.reopen "/dev/null", "a"
+          STDOUT.reopen '/dev/null', 'a'
+          STDERR.reopen '/dev/null', 'a'
           self.run!
         end
       end
     end
-
 
     #
     # Name of the controller.
@@ -246,11 +225,10 @@ module Trema
     # @return [String]
     #
     def name
-      self.class.to_s.split( "::" ).last
+      self.class.to_s.split('::').last
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

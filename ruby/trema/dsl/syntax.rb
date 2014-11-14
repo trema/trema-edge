@@ -17,110 +17,96 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/app"
-require "trema/dsl/link"
-require "trema/dsl/netns"
-require "trema/dsl/rswitch"
-require "trema/dsl/run"
-require "trema/dsl/switch"
-require "trema/dsl/vhost"
-require "trema/dsl/vswitch"
-require "trema/dsl/custom-switch"
-require "trema/dsl/trema-switch"
-require "trema/hardware-switch"
-require "trema/host"
-require "trema/link"
-require "trema/monkey-patch/module"
-require "trema/netns"
-require "trema/packetin-filter"
-require "trema/ruby-switch"
-require "trema/switch-manager"
-require "trema/custom-switch"
-require "trema/trema-switch"
-
+require 'trema/app'
+require 'trema/dsl/link'
+require 'trema/dsl/netns'
+require 'trema/dsl/rswitch'
+require 'trema/dsl/run'
+require 'trema/dsl/switch'
+require 'trema/dsl/vhost'
+require 'trema/dsl/vswitch'
+require 'trema/dsl/custom-switch'
+require 'trema/dsl/trema-switch'
+require 'trema/hardware-switch'
+require 'trema/host'
+require 'trema/link'
+require 'trema/monkey-patch/module'
+require 'trema/netns'
+require 'trema/packetin-filter'
+require 'trema/ruby-switch'
+require 'trema/switch-manager'
+require 'trema/custom-switch'
+require 'trema/trema-switch'
 
 module Trema
   module DSL
     class Syntax
-      def initialize config
+      def initialize(config)
         @config = config
       end
 
-
-      def port number
+      def port(number)
         @config.port = number
       end
 
-
-      def link peer0, peer1
-        stanza = Trema::DSL::Link.new( peer0, peer1 )
-        Trema::Link.new( stanza )
+      def link(peer0, peer1)
+        stanza = Trema::DSL::Link.new(peer0, peer1)
+        Trema::Link.new(stanza)
       end
 
-
-      def switch name = nil, &block
-        stanza = Trema::DSL::Switch.new( name )
-        stanza.instance_eval( &block )
-        Trema::HardwareSwitch.new( stanza )
+      def switch(name = nil, &block)
+        stanza = Trema::DSL::Switch.new(name)
+        stanza.instance_eval(&block)
+        Trema::HardwareSwitch.new(stanza)
       end
 
-
-      def rswitch name = nil, &block
-        stanza = Trema::DSL::Rswitch.new( name )
-        stanza.instance_eval( &block )
-        Trema::RubySwitch.new( stanza )
+      def rswitch(name = nil, &block)
+        stanza = Trema::DSL::Rswitch.new(name)
+        stanza.instance_eval(&block)
+        Trema::RubySwitch.new(stanza)
       end
 
-
-      def custom_switch name = nil, &block
-        stanza = Trema::DSL::CustomSwitch.new( name )
-        stanza.instance_eval( &block )
+      def custom_switch(name = nil, &block)
+        stanza = Trema::DSL::CustomSwitch.new(name)
+        stanza.instance_eval(&block)
         Trema::CustomSwitch.new stanza
       end
 
-
-      def trema_switch name = nil, &block
-        stanza = Trema::DSL::TremaSwitch.new( name )
-        stanza.instance_eval( &block )
+      def trema_switch(name = nil, &block)
+        stanza = Trema::DSL::TremaSwitch.new(name)
+        stanza.instance_eval(&block)
         Trema::TremaSwitch.new stanza
       end
 
-
-      def vhost name = nil, &block
-        stanza = Trema::DSL::Vhost.new( name )
-        stanza.instance_eval( &block ) if block
-        Trema::Host.new( stanza )
+      def vhost(name = nil, &block)
+        stanza = Trema::DSL::Vhost.new(name)
+        stanza.instance_eval(&block) if block
+        Trema::Host.new(stanza)
       end
 
-
-      def netns name, &block
-        stanza = Trema::DSL::Netns.new( name )
-        stanza.instance_eval( &block ) if block
-        Trema::Netns.new( stanza )
+      def netns(name, &block)
+        stanza = Trema::DSL::Netns.new(name)
+        stanza.instance_eval(&block) if block
+        Trema::Netns.new(stanza)
       end
 
-
-      def filter rule
-        Trema::PacketinFilter.new( rule )
+      def filter(rule)
+        Trema::PacketinFilter.new(rule)
       end
 
-
-      def event rule
-        Trema::SwitchManager.new( rule, @config.port )
+      def event(rule)
+        Trema::SwitchManager.new(rule, @config.port)
       end
 
-
-      def run name = nil, &block
-        stanza = Trema::DSL::Run.new( name )
-        stanza.instance_eval( &block )
-        Trema::App.new( stanza )
+      def run(name = nil, &block)
+        stanza = Trema::DSL::Run.new(name)
+        stanza.instance_eval(&block)
+        Trema::App.new(stanza)
       end
-      deprecate :app => :run
+      deprecate app: :run
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

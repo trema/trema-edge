@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Actions
     #
@@ -27,16 +26,13 @@ module Trema
       array :action_set, validate_with: :check_action_set
     end
 
-
-    def check_action_set action_set, name
+    def check_action_set(_action_set, _name)
       # TODO validate argument
     end
   end
 
-
   SetField = Actions::SetField
 end
-
 
 ### Local variables:
 ### mode: Ruby

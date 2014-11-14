@@ -17,28 +17,25 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 When /^I try to run "([^"]*)"$/ do | command |
   @log ||= new_tmp_log
   run "#{ command } >> #{ @log }"
 end
 
-
 When /^I try to run "([^"]*)" \(log = "([^"]*)"\)$/ do | command, log_name |
   run "#{ command } > #{ cucumber_log log_name } 2>&1"
 end
 
-
 When /^I try trema run "([^"]*)" with following configuration \((.*)\):$/ do | args, options, config |
   verbose = if /verbose/=~ options
-              "--verbose"
+              '--verbose'
             else
-              ""
+              ''
             end
   @log ||= new_tmp_log
 
-  trema_run = Proc.new do
-    Tempfile.open( "trema.conf" ) do | f |
+  trema_run = proc do
+    Tempfile.open('trema.conf') do | f |
       f.puts config
       f.flush
       run "trema run \"#{ args }\" -c #{ f.path } #{ verbose } >> #{ @log } 2>&1"
@@ -55,34 +52,30 @@ When /^I try trema run "([^"]*)" with following configuration \((.*)\):$/ do | a
   end
 end
 
-
 Given /^I try trema run "([^"]*)" example with following configuration \(backgrounded\):$/ do | example, config |
   controller = nil
   name = nil
   if /\.rb\Z/=~ example
-    controller = "./src/examples/#{ File.basename( example, ".rb" ).tr( "-", "_" ) }/#{ example }"
-    name = File.basename( example, ".rb" ).camelize
+    controller = "./src/examples/#{ File.basename(example, '.rb').tr('-', '_') }/#{ example }"
+    name = File.basename(example, '.rb').camelize
   else
     controller = "./objects/examples/#{ example }/#{ example }"
     name = example
   end
   step %{I try trema run "#{ controller }" with following configuration (backgrounded):}, config
-  step %{wait until "#{ name }" is up}
+  step %(wait until "#{ name }" is up)
 end
-
 
 When /^I try trema run "([^"]*)" with following configuration:$/ do | args, config |
   step "I try trema run \"#{ args }\" with following configuration (no options):", config
 end
 
-
 Then /^"([^"]*)" exits abnormally with an error message:$/ do | command, message |
-  log = "error.log"
+  log = 'error.log'
   step %{I try to run "#{ command }" (log = "#{ log }")} rescue error_occured = true
   error_occured.should be_true
-  step %{the content of "#{ log }" should be:}, message
+  step %(the content of "#{ log }" should be:), message
 end
-
 
 ### Local variables:
 ### mode: Ruby

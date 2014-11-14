@@ -17,16 +17,14 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
+describe BarrierReply, '.new( VALID OPTIONS )' do
+  subject { BarrierReply.new(0xabc, 1234) }
 
-
-describe BarrierReply, ".new( VALID OPTIONS )" do
-  subject { BarrierReply.new( 0xabc, 1234 ) }
-
-  describe ( :datapath_id ) do
-    subject { super().send(( :datapath_id )) }
+  describe ( :datapath_id) do
+    subject { super().send((:datapath_id)) }
     it { is_expected.to eq(0xabc) }
   end
 
@@ -36,15 +34,13 @@ describe BarrierReply, ".new( VALID OPTIONS )" do
   end
 end
 
-
-describe BarrierReply, ".new( MANDATORY OPTIONS MISSING )" do
-  it "should raise ArgumentError" do
-    expect {
+describe BarrierReply, '.new( MANDATORY OPTIONS MISSING )' do
+  it 'should raise ArgumentError' do
+    expect do
       BarrierReply.new
-    }.to raise_error( ArgumentError )
+    end.to raise_error(ArgumentError)
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

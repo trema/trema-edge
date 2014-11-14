@@ -17,10 +17,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "..", "spec_helper" )
-require "trema/dsl/switch"
-
+require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper')
+require 'trema/dsl/switch'
 
 module Trema
   module DSL
@@ -29,46 +27,40 @@ module Trema
         @switch = Switch.new
       end
 
-
-      context %[when parsing "switch { ... }"] do
-        it %[recognizes "dpid DATAPATH_ID" directive] do
+      context %(when parsing "switch { ... }") do
+        it %(recognizes "dpid DATAPATH_ID" directive) do
           expect do
-            @switch.dpid "0xabc"
+            @switch.dpid '0xabc'
           end.not_to raise_error
         end
 
-
-        it %[recognizes "datapath_id DATAPATH_ID" directive] do
+        it %(recognizes "datapath_id DATAPATH_ID" directive) do
           expect do
-            @switch.datapath_id "0xabc"
+            @switch.datapath_id '0xabc'
           end.not_to raise_error
         end
 
-
-        it %[recognizes "ports PORT_NUMBERS" directive] do
+        it %(recognizes "ports PORT_NUMBERS" directive) do
           expect do
-            @switch.ports "0-4"
+            @switch.ports '0-4'
           end.not_to raise_error
         end
       end
 
-
-      context "when getting the attributes of a switch" do
-        it "returns its dpid in long format" do
-          @switch.dpid "0xabc"
-          expect(@switch[ :dpid_long ]).to eq("0000000000000abc")
+      context 'when getting the attributes of a switch' do
+        it 'returns its dpid in long format' do
+          @switch.dpid '0xabc'
+          expect(@switch[:dpid_long]).to eq('0000000000000abc')
         end
 
-
-        it "returns its dpid in short format" do
-          @switch.dpid "0xabc"
-          expect(@switch[ :dpid_short ]).to eq("0xabc")
+        it 'returns its dpid in short format' do
+          @switch.dpid '0xabc'
+          expect(@switch[:dpid_short]).to eq('0xabc')
         end
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

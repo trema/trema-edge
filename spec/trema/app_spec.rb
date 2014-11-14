@@ -17,71 +17,64 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema/app"
-
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema/app'
 
 module Trema
   describe App do
-    context "when running an app" do
-      it "should run without options" do
-        stanza = { :path => "/usr/bin/tetris", :name => "NAME" }
-        app = App.new( stanza )
+    context 'when running an app' do
+      it 'should run without options' do
+        stanza = { path: '/usr/bin/tetris', name: 'NAME' }
+        app = App.new(stanza)
 
-        expect(app).to receive( :sh ).with( "/usr/bin/tetris --name NAME" )
+        expect(app).to receive(:sh).with('/usr/bin/tetris --name NAME')
 
         app.run!
       end
 
+      it 'should run with options' do
+        stanza = { path: '/usr/bin/tetris', name: 'NAME', options: %w(OPTION0 OPTION1) }
+        app = App.new(stanza)
 
-      it "should run with options" do
-        stanza = { :path => "/usr/bin/tetris", :name => "NAME", :options => [ "OPTION0", "OPTION1" ] }
-        app = App.new( stanza )
-
-        expect(app).to receive( :sh ).with( "/usr/bin/tetris --name NAME OPTION0 OPTION1" )
+        expect(app).to receive(:sh).with('/usr/bin/tetris --name NAME OPTION0 OPTION1')
 
         app.run!
       end
     end
 
+    context 'when daemonizing an app' do
+      it 'should daemonize without options' do
+        stanza = { path: '/usr/bin/tetris', name: 'NAME' }
+        app = App.new(stanza)
 
-    context "when daemonizing an app" do
-      it "should daemonize without options" do
-        stanza = { :path => "/usr/bin/tetris", :name => "NAME" }
-        app = App.new( stanza )
-
-        expect(app).to receive( :sh ).with( "/usr/bin/tetris --name NAME -d" )
+        expect(app).to receive(:sh).with('/usr/bin/tetris --name NAME -d')
 
         app.daemonize!
       end
 
+      it 'should daemonize with options' do
+        stanza = { path: '/usr/bin/tetris', name: 'NAME', options: %w(OPTION0 OPTION1) }
+        app = App.new(stanza)
 
-      it "should daemonize with options" do
-        stanza = { :path => "/usr/bin/tetris", :name => "NAME", :options => [ "OPTION0", "OPTION1" ] }
-        app = App.new( stanza )
-
-        expect(app).to receive( :sh ).with( "/usr/bin/tetris --name NAME -d OPTION0 OPTION1" )
+        expect(app).to receive(:sh).with('/usr/bin/tetris --name NAME -d OPTION0 OPTION1')
 
         app.daemonize!
       end
     end
 
+    context 'when shutting an app down' do
+      it 'should send a signal to kill' do
+        process = double('process')
+        allow(Trema::Process).to receive(:read).and_return(process)
 
-    context "when shutting an app down" do
-      it "should send a signal to kill" do
-        process = double( "process" )
-        allow(Trema::Process).to receive( :read ).and_return( process )
+        expect(process).to receive(:kill!)
 
-        expect(process).to receive( :kill! )
-
-        stanza = { :path => "/usr/bin/tetris", :name => "NAME" }
-        App.new( stanza ).shutdown!
+        stanza = { path: '/usr/bin/tetris', name: 'NAME' }
+        App.new(stanza).shutdown!
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

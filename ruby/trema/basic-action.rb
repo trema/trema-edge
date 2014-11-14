@@ -15,28 +15,24 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "accessor"
-
+require_relative 'accessor'
 
 module Trema
   class BasicAction < Accessor
-   include Actions
+    include Actions
 
-
-    def self.ofp_type type
-      prefix = "OFPAT_"
+    def self.ofp_type(type)
+      prefix = 'OFPAT_'
       store "#{ prefix }#{ type }", self
     end
-
 
     #
     # appends its action into a list of actions
     #
-    def pack_basic_action action
+    def pack_basic_action(action)
       params = {}
       instance_variables.each do | each |
-        params[ each.to_s.sub( '@', '' ).to_sym ] = instance_variable_get( each )
+        params[each.to_s.sub('@', '').to_sym] = instance_variable_get(each)
       end
       if instance_of? Actions::SetField
         return pack_field action, params
@@ -45,16 +41,14 @@ module Trema
       __send__ method, action, params
     end
 
-
     private
 
-
-    def pack_field set_field, params
+    def pack_field(set_field, params)
       options = {}
-      params.each do | k, v |
+      params.each do | _k, v |
         v.each do | action |
           action.instance_variables.each do | attr |
-            options[ attr.to_s.sub( '@', '' ).to_sym ] = action.instance_variable_get( attr )
+            options[attr.to_s.sub('@', '').to_sym] = action.instance_variable_get(attr)
           end
           method = "pack_#{ action.class.name.demodulize.underscore }"
           action.__send__ method, set_field, options
@@ -63,7 +57,6 @@ module Trema
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

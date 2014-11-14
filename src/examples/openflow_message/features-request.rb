@@ -20,14 +20,12 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 class FeaturesRequestController < Controller
-  def switch_ready datapath_id
+  def switch_ready(datapath_id)
     send_message datapath_id, FeaturesRequest.new
   end
 
-
-  def features_reply datapath_id, message
+  def features_reply(datapath_id, message)
     info "datapath_id: #{ datapath_id.to_hex }"
     info "transaction_id: #{ message.transaction_id.to_hex }"
     info "n_buffers: #{ message.n_buffers }"
@@ -36,22 +34,21 @@ class FeaturesRequestController < Controller
     print_capabilities message.capabilities
   end
 
-
   ##############################################################################
+
   private
+
   ##############################################################################
 
-
-  def print_capabilities capabilities
-    info "capabilities:"
-    info "  OFPC_FLOW_STATS" if capabilities & OFPC_FLOW_STATS != 0
-    info "  OFPC_TABLE_STATS" if capabilities & OFPC_TABLE_STATS != 0
-    info "  OFPC_PORT_STATS" if capabilities & OFPC_PORT_STATS != 0
-    info "  OFPC_IP_REASM" if capabilities & OFPC_IP_REASM != 0
-    info "  OFPC_QUEUE_STATS" if capabilities & OFPC_QUEUE_STATS != 0
+  def print_capabilities(capabilities)
+    info 'capabilities:'
+    info '  OFPC_FLOW_STATS' if capabilities & OFPC_FLOW_STATS != 0
+    info '  OFPC_TABLE_STATS' if capabilities & OFPC_TABLE_STATS != 0
+    info '  OFPC_PORT_STATS' if capabilities & OFPC_PORT_STATS != 0
+    info '  OFPC_IP_REASM' if capabilities & OFPC_IP_REASM != 0
+    info '  OFPC_QUEUE_STATS' if capabilities & OFPC_QUEUE_STATS != 0
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

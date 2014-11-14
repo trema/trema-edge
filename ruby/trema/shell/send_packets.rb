@@ -17,21 +17,18 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/dsl"
-
+require 'trema/dsl'
 
 module Trema
   module Shell
-    def send_packets source, dest, options = {}
+    def send_packets(source, dest, options = {})
       assert_trema_is_built
-      Cli.new( Host[ source ] ).send_packets( Host[ dest ], options )
+      Cli.new(Host[source]).send_packets(Host[dest], options)
       true
     end
     module_function :send_packets
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

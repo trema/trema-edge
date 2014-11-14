@@ -15,19 +15,16 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Instructions
     class InstructionAction < Instruction
       array :actions, presence: true, validate_with: :check_actions
     end
 
-
-    def check_actions actions, name
+    def check_actions(_actions, _name)
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

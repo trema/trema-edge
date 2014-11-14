@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Actions
     #
@@ -38,7 +37,7 @@ module Trema
       # @raise [ArgumentError] if experimeter is not an unsigned 32-bit Integer.
       # @raise [TypeError] if body is not an Array.
       #
-  
+
       #
       # @return [Array<Fixnum>] the value of attribute {#body} that represents
       #   binary data as an array of bytes.
@@ -46,17 +45,15 @@ module Trema
       # @return [Integer] the value of attribute {#experimenter}
       unsigned_int32 :experimenter, presence: true
       array :body, validate_with: :check_body
-  
-  
-      def check_body body, name
-        if ( not body.nil? )  and ( not body.is_a?( Array ) )
-          raise ArgumentError, "#{ name } must be an Array"
+
+      def check_body(body, name)
+        if (!body.nil?)  && (!body.is_a?(Array))
+          fail ArgumentError, "#{ name } must be an Array"
         end
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

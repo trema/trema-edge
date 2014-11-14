@@ -15,28 +15,24 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/mac"
-
+require 'trema/mac'
 
 module Trema
   module Actions
     #
-    # A base class for matching source and destination MAC addresses. 
+    # A base class for matching source and destination MAC addresses.
     #
     class EthAddr < FlexibleAction
       mac :mac_address, presence: true, validate_with: :check_mac_address
 
-
-      def check_mac_address mac_address, name
+      def check_mac_address(mac_address, _name)
         unless mac_address.is_a? Trema::Mac
-          raise ArgumentError, "A MAC address must be a Trema::Mac object instance"
+          fail ArgumentError, 'A MAC address must be a Trema::Mac object instance'
         end
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

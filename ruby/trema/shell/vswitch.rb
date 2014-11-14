@@ -17,19 +17,17 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/dsl"
-
+require 'trema/dsl'
 
 module Trema
   module Shell
-    def vswitch name = nil, &block
-      raise "Not in Trema shell" if $config.nil?
-      raise "No dpid given" if name.nil? and block.nil?
+    def vswitch(name = nil, &block)
+      fail 'Not in Trema shell' if $config.nil?
+      fail 'No dpid given' if name.nil? && block.nil?
 
-      stanza = DSL::Vswitch.new( name )
+      stanza = DSL::Vswitch.new(name)
       stanza.instance_eval &block if block
-      OpenVswitch.new( stanza, $config.port ).restart!
+      OpenVswitch.new(stanza, $config.port).restart!
 
       $context.dump
 
@@ -38,7 +36,6 @@ module Trema
     module_function :vswitch
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

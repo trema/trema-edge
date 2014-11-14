@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Messages
     class FeaturesRequest < Message
@@ -23,12 +22,8 @@ module Trema
     end
   end
 
-
   FeaturesRequest = Messages::FeaturesRequest
 end
-
-
-
 
 ### Local variables:
 ### mode: Ruby

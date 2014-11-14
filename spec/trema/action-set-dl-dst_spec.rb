@@ -17,80 +17,72 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
-
-describe ActionSetDlDst, ".new( VALID OPTION )" do
-  subject { ActionSetDlDst.new( :dl_dst => Mac.new( "52:54:00:a8:ad:8c" ) ) }
+describe ActionSetDlDst, '.new( VALID OPTION )' do
+  subject { ActionSetDlDst.new(dl_dst: Mac.new('52:54:00:a8:ad:8c')) }
 
   describe '#dl_dst' do
     subject { super().dl_dst }
-    it { is_expected.to be_an_instance_of( Mac ) }
+    it { is_expected.to be_an_instance_of(Mac) }
   end
-  it "should inspect its attributes" do
-    expect(subject.inspect).to eq("#<Trema::ActionSetDlDst dl_dst=52:54:00:a8:ad:8c>")
-  end
-end
-
-
-describe ActionSetDlDst, ".new( MANDATORY OPTION MISSING )" do
-  it "should raise ArgumentError" do
-    expect { subject }.to raise_error( ArgumentError )
+  it 'should inspect its attributes' do
+    expect(subject.inspect).to eq('#<Trema::ActionSetDlDst dl_dst=52:54:00:a8:ad:8c>')
   end
 end
 
+describe ActionSetDlDst, '.new( MANDATORY OPTION MISSING )' do
+  it 'should raise ArgumentError' do
+    expect { subject }.to raise_error(ArgumentError)
+  end
+end
 
-describe ActionSetDlDst, ".new( INVALID OPTION )" do
-  context "when argument type Array instead of Hash" do
-    subject { ActionSetDlDst.new( [ Mac.new( '52:54:00:a8:ad:8c' ) ] ) }
-    it "should raise TypeError" do
-      expect { subject }.to raise_error( TypeError )
+describe ActionSetDlDst, '.new( INVALID OPTION )' do
+  context 'when argument type Array instead of Hash' do
+    subject { ActionSetDlDst.new([Mac.new('52:54:00:a8:ad:8c')]) }
+    it 'should raise TypeError' do
+      expect { subject }.to raise_error(TypeError)
     end
   end
 
-
-  context "when dl_dst not a Trema::Mac object" do
-    subject { ActionSetDlDst.new :dl_dst => 1234 }
-    it "should raise TypeError" do
-      expect { subject }.to raise_error( TypeError, /dl dst address should be a Mac object/ )
+  context 'when dl_dst not a Trema::Mac object' do
+    subject { ActionSetDlDst.new dl_dst: 1234 }
+    it 'should raise TypeError' do
+      expect { subject }.to raise_error(TypeError, /dl dst address should be a Mac object/)
     end
   end
 end
 
-
-describe ActionSetDlDst, ".new( VALID OPTION )" do
-  context "when sending #flow_mod(add) with action set to mod_dl_dst" do
-    it "should respond to #append" do
+describe ActionSetDlDst, '.new( VALID OPTION )' do
+  context 'when sending #flow_mod(add) with action set to mod_dl_dst' do
+    it 'should respond to #append' do
       class FlowModAddController < Controller; end
-      network {
+      network do
         vswitch { datapath_id 0xabc }
-      }.run( FlowModAddController ) {
-        action = ActionSetDlDst.new( :dl_dst => Mac.new( "52:54:00:a8:ad:8c" ) )
-        expect(action).to receive( :append )
-        controller( "FlowModAddController" ).send_flow_mod_add( 0xabc, :actions => action )
-     }
+      end.run(FlowModAddController) do
+        action = ActionSetDlDst.new(dl_dst: Mac.new('52:54:00:a8:ad:8c'))
+        expect(action).to receive(:append)
+        controller('FlowModAddController').send_flow_mod_add(0xabc, actions: action)
+      end
     end
 
-
-    it "should have a flow with action set to mod_dl_dst" do
+    it 'should have a flow with action set to mod_dl_dst' do
       class FlowModAddController < Controller; end
-      network {
+      network do
         vswitch { datapath_id 0xabc }
-      }.run( FlowModAddController ) {
-        controller( "FlowModAddController" ).send_flow_mod_add(
+      end.run(FlowModAddController) do
+        controller('FlowModAddController').send_flow_mod_add(
           0xabc,
-          :actions =>  ActionSetDlDst.new( :dl_dst => Mac.new( "52:54:00:a8:ad:8c" ) )
+          actions: ActionSetDlDst.new(dl_dst: Mac.new('52:54:00:a8:ad:8c'))
         )
         sleep 2 # FIXME: wait to send_flow_mod
-        expect(vswitch( "0xabc" ).size).to eq(1)
-        expect(vswitch( "0xabc" ).flows[0].actions).to match( /mod_dl_dst:52:54:00:a8:ad:8c/ )
-      }
+        expect(vswitch('0xabc').size).to eq(1)
+        expect(vswitch('0xabc').flows[0].actions).to match(/mod_dl_dst:52:54:00:a8:ad:8c/)
+      end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

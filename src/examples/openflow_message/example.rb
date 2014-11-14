@@ -19,42 +19,36 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Example
   class << self
     attr_accessor :exec_name, :count, :datapath_id
 
-
-    def options_parse args
+    def options_parse(args)
       @exec_name = args.shift
       case args.length
       when 2
-        @datapath_id = args[ 0 ] =~ /^0x/ ? args[ 0 ].hex : args[ 0 ].to_i
-        @count = args[ 1 ].to_i
+        @datapath_id = args[0] =~ /^0x/ ? args[0].hex : args[0].to_i
+        @count = args[1].to_i
       else
         return false
       end
     end
-
 
     def cmd_usage
       "Usage: #{ @exec_name } datapath_id, count"
     end
   end
 
-
-  def may_raise_error msg_datapath_id
-    raise ArgumentError, "Given datapath_id does not match configured datapath_id" if msg_datapath_id != Example::datapath_id
+  def may_raise_error(msg_datapath_id)
+    fail ArgumentError, 'Given datapath_id does not match configured datapath_id' if msg_datapath_id != Example.datapath_id
   end
 
-
-  def send_nr_msgs kclass
-    Example::count.times do
-      self.send_message Example::datapath_id, kclass.new
+  def send_nr_msgs(kclass)
+    Example.count.times do
+      send_message Example.datapath_id, kclass.new
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

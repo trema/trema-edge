@@ -17,22 +17,19 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/dsl"
-
+require 'trema/dsl'
 
 module Trema
   module Shell
-    def up name
-      if OpenflowSwitch[ name ].running?
-        OpenflowSwitch[ name ].restart!
+    def up(name)
+      if OpenflowSwitch[name].running?
+        OpenflowSwitch[name].restart!
       else
-        OpenflowSwitch[ name ].run!
+        OpenflowSwitch[name].run!
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

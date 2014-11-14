@@ -15,20 +15,17 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   #
   # A wrapper class to IPAddr
   #
   class IP
-    require "ipaddr"
-
+    require 'ipaddr'
 
     #
     # @return [IPAddr] value object instance of proxied IPAddr.
     #
     attr_reader :value
-
 
     #
     # Creates a {IP} instance object as a proxy to IPAddr class.
@@ -47,17 +44,16 @@ module Trema
     # @return [IP] self
     #   a proxy to IPAddr.
     #
-    def initialize addr, prefixlen = 32
-      if !addr.kind_of? String
-        @value = IPAddr.new( addr, Socket::AF_INET )
+    def initialize(addr, prefixlen = 32)
+      if !addr.is_a? String
+        @value = IPAddr.new(addr, Socket::AF_INET)
       else
-        @value = IPAddr.new( addr )
+        @value = IPAddr.new(addr)
       end
       if prefixlen < 32
-        @value = @value.mask( prefixlen )
+        @value = @value.mask(prefixlen)
       end
     end
-
 
     #
     # @return [ Number ] prefixlen of IPv4 address.
@@ -66,13 +62,12 @@ module Trema
       range = @value.to_range
       mask = range.first.to_i ^ range.last.to_i
       masklen = 0
-      while mask != 0 do
+      while mask != 0
         mask = mask >> 1
         masklen += 1
       end
-      return 32 - masklen
+      32 - masklen
     end
-
 
     #
     # @return [String] the IPv4 address in its text representation.
@@ -81,7 +76,6 @@ module Trema
       @value.to_s
     end
 
-
     #
     # @return [Number] the IPv4 address in its numeric representation.
     #
@@ -89,20 +83,16 @@ module Trema
       @value.to_i
     end
 
-
     #
     # @return [Array]
     #    an array of decimal numbers converted from IP address.
     #
     def to_a
-      to_s.split( "." ).collect do | each |
-        each.to_i
-      end
+      to_s.split('.').collect(&:to_i)
     end
-    alias :to_array :to_a
+    alias_method :to_array, :to_a
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

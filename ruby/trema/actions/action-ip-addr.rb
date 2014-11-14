@@ -15,9 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "ipaddr"
-
+require 'ipaddr'
 
 module Trema
   module Actions
@@ -27,16 +25,14 @@ module Trema
     class ActionIpAddr < FlexibleAction
       ip_addr :ip_addr, presence: true, validate_with: :check_ip_addr
 
-
-      def check_ip_addr ip_addr, name
+      def check_ip_addr(ip_addr, _name)
         unless ip_addr.is_a? IPAddr
-          raise ArgumentError, "An IP(v4/v6) address must be specified as an IPAddr object instance"
+          fail ArgumentError, 'An IP(v4/v6) address must be specified as an IPAddr object instance'
         end
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

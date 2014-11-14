@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Messages
     class Bucket < Message
@@ -26,10 +25,8 @@ module Trema
     end
   end
 
-
   Bucket = Messages::Bucket
 end
-
 
 ### Local variables:
 ### mode: Ruby

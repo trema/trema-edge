@@ -15,9 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "forwardable"
-
+require 'forwardable'
 
 module Trema
   #
@@ -26,7 +24,6 @@ module Trema
   class Mac
     extend Forwardable
     def_delegator :@value, :hash
-
 
     #
     # Returns an Ethernet address in its numeric presentation.
@@ -37,7 +34,6 @@ module Trema
     # @return [Number] the Ethernet address in numeric format
     #
     attr_reader :value
-
 
     #
     # Creates a {Mac} instance that encapsulates Ethernet addresses.
@@ -56,21 +52,20 @@ module Trema
     # @raise [ArgumentError] if invalid format is detected.
     # @raise [TypeError] if supplied argument is not a String or Integer.
     #
-    def initialize value
+    def initialize(value)
       case value
         when String
-          @value = create_from( value )
+          @value = create_from(value)
         when Integer
           @value = value
           validate_value_range
         when Mac
-          @value = create_from( value.to_s )
+          @value = create_from(value.to_s)
         else
-          raise TypeError, "Invalid MAC address: #{ value.inspect }"
+          fail TypeError, "Invalid MAC address: #{ value.inspect }"
       end
       @string = string_format
     end
-
 
     #
     # Returns the Ethernet address as 6 pairs of hexadecimal digits
@@ -85,7 +80,6 @@ module Trema
       @string
     end
 
-
     #
     # Returns an array of decimal numbers converted from Ethernet's
     # address string format.
@@ -96,20 +90,16 @@ module Trema
     # @return [Array] the Ethernet address in Array format
     #
     def to_a
-      @string.split( ":" ).collect do | each |
-        each.hex
-      end
+      @string.split(':').collect(&:hex)
     end
-
 
     #
     # @private
     #
-    def == other
+    def ==(other)
       @value == other.value
     end
-    alias :eql? :==
-
+    alias_method :eql?, :==
 
     #
     # Returns true if Ethernet address is a multicast address.
@@ -121,9 +111,8 @@ module Trema
     # @return [Boolean] whether the Ethernet address is multicast
     #
     def multicast?
-      to_a[ 0 ] & 1 == 1
+      to_a[0] & 1 == 1
     end
-
 
     #
     # Returns true if Ethernet address is a broadcast address.
@@ -137,35 +126,32 @@ module Trema
       to_a.all? { | each | each == 0xff }
     end
 
-
     ################################################################################
+
     private
+
     ################################################################################
 
-
-    def create_from string
-      octet_regex = "[0-9a-fA-F][0-9a-fA-F]"
-      if /^(#{ octet_regex }:){5}(#{ octet_regex })$/=~ string
-        string.gsub( ":", "" ).hex
+    def create_from(string)
+      octet_regex = '[0-9a-fA-F][0-9a-fA-F]'
+      if /^(#{ octet_regex }:){5}(#{ octet_regex })$/ =~ string
+        string.gsub(':', '').hex
       else
-        raise ArgumentError, %{Invalid MAC address: "#{ string }"}
+        fail ArgumentError, %(Invalid MAC address: "#{ string }")
       end
     end
-
 
     def validate_value_range
-      unless ( @value >= 0 and @value <= 0xffffffffffff )
-        raise ArgumentError, "Invalid MAC address: #{ @value }"
+      unless  @value >= 0 && @value <= 0xffffffffffff
+        fail ArgumentError, "Invalid MAC address: #{ @value }"
       end
     end
 
-
     def string_format
-      sprintf( "%012x", @value ).unpack( "a2" * 6 ).join( ":" )
+      sprintf('%012x', @value).unpack('a2' * 6).join(':')
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

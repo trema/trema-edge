@@ -15,27 +15,23 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/util"
-
+require 'trema/util'
 
 module Trema
   module Command
     include Trema::Util
 
-
-    def trema_up name
-      switch = find_switch_by_name( name )
+    def trema_up(name)
+      switch = find_switch_by_name(name)
       if switch
         switch.run
       else
         # TODO: support vlink
-        raise "Unknown name: #{ name }"
+        fail "Unknown name: #{ name }"
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

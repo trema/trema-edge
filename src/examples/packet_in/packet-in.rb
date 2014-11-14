@@ -19,20 +19,18 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 class PacketinDumper < Controller
-  def switch_ready datapath_id
-    action = SendOutPort.new( port_number: OFPP_CONTROLLER, max_len: OFPCML_NO_BUFFER ) 
-    apply_ins = ApplyAction.new( actions: [ action ] ) 
-    send_flow_mod_add( datapath_id,
-                       priority: OFP_LOW_PRIORITY,
-                       buffer_id: OFP_NO_BUFFER,
-                       instructions: [ apply_ins ] )
+  def switch_ready(datapath_id)
+    action = SendOutPort.new(port_number: OFPP_CONTROLLER, max_len: OFPCML_NO_BUFFER)
+    apply_ins = ApplyAction.new(actions: [action])
+    send_flow_mod_add(datapath_id,
+                      priority: OFP_LOW_PRIORITY,
+                      buffer_id: OFP_NO_BUFFER,
+                      instructions: [apply_ins])
   end
 
-
-  def packet_in datapath_id, event
-    puts "received a packet_in"
+  def packet_in(datapath_id, event)
+    puts 'received a packet_in'
     info "datapath_id: #{ datapath_id.to_hex }"
     info "transaction_id: #{ event.transaction_id.to_hex }"
     info "buffer_id: #{ event.buffer_id.to_hex }"
@@ -41,8 +39,8 @@ class PacketinDumper < Controller
     info "table_id: #{ event.table_id }"
     info "cookie: #{ event.cookie.to_hex }"
     info "in_port: #{ event.match.in_port }"
-    info "data: #{ event.data.map!{ | byte | "0x%02x" % byte } }"
-    info "packet_info:"
+    info "data: #{ event.data.map! { | byte | '0x%02x' % byte } }"
+    info 'packet_info:'
     info "  eth_src: #{ event.eth_src }"
     info "  eth_dst: #{ event.eth_src }"
     info "  eth_type: #{ event.eth_type.to_hex }"
@@ -110,7 +108,6 @@ class PacketinDumper < Controller
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

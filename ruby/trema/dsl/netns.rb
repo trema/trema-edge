@@ -15,10 +15,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/dsl/stanza"
-require "trema/dsl/syntax-error"
-
+require 'trema/dsl/stanza'
+require 'trema/dsl/syntax-error'
 
 module Trema
   module DSL
@@ -36,13 +34,12 @@ module Trema
       #
       # @api public
       #
-      def ip str
+      def ip(str)
         @ip = str
         if @name.nil?
           @name = @ip
         end
       end
-
 
       #
       # Set netmask
@@ -54,22 +51,20 @@ module Trema
       #
       # @api public
       #
-      def netmask str
+      def netmask(str)
         @netmask = str
       end
 
-
-      def route options
-        if options[ :net ].nil? or options[ :gw ].nil?
-          raise ":net and :gw option is a mandatory"
+      def route(options)
+        if options[:net].nil? || options[:gw].nil?
+          fail ':net and :gw option is a mandatory'
         end
-        @net = options[ :net ]
-        @gw = options[ :gw ]
+        @net = options[:net]
+        @gw = options[:gw]
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

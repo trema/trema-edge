@@ -17,11 +17,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 When /^I try trema kill "([^"]*)"$/ do | component |
   run "./trema kill #{ component }"
 end
-
 
 ### Local variables:
 ### mode: Ruby

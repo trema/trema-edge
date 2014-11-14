@@ -15,17 +15,15 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module MonkeyPatch
   module Integer
     module BaseConversions
       def to_hex
-        "%#x" % self
+        '%#x' % self
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Messages
     class PortMultipartReply < Message
@@ -29,10 +28,8 @@ module Trema
     end
   end
 
-
   PortMultipartReply = Messages::PortMultipartReply
 end
-
 
 ### Local variables:
 ### mode: Ruby

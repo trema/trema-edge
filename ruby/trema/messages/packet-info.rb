@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Messages
     class PacketInfo < Message
@@ -27,12 +26,12 @@ module Trema
       unsigned_int8 :ip_ecn # IP ECN ( 2 bits in ToS field )
       unsigned_int8 :ip_proto # ip protocol
 
-      bool  :vtag
-      alias_method   :vtag?, :vtag
+      bool :vtag
+      alias_method :vtag?, :vtag
 
       unsigned_int16 :vlan_vid
       unsigned_int16 :vlan_tci
-      unsigned_int8  :vlan_prio
+      unsigned_int8 :vlan_prio
       unsigned_int16 :vlan_tpid
 
       bool :ipv4
@@ -51,12 +50,12 @@ module Trema
       alias_method :arp_reply?, :arp_reply
 
       unsigned_int16 :arp_op
-      mac            :arp_sha
-      mac            :arp_tha
-      ip_addr        :arp_spa
-      ip_addr        :arp_tpa
+      mac :arp_sha
+      mac :arp_tha
+      ip_addr :arp_spa
+      ip_addr :arp_tpa
 
-      bool           :icmpv4
+      bool :icmpv4
       alias_method :icmpv4?, :icmpv4
 
       unsigned_int8 :icmpv4_type
@@ -67,12 +66,12 @@ module Trema
 
       unsigned_int8 :icmpv6_type
       unsigned_int8 :icmpv6_code
-      ip_addr       :ipv6_nd_target
-      mac           :ipv6_nd_sll
-      mac           :ipv6_nd_tll
+      ip_addr :ipv6_nd_target
+      mac :ipv6_nd_sll
+      mac :ipv6_nd_tll
 
-      ip_addr       :ipv4_src 
-      ip_addr       :ipv4_dst
+      ip_addr :ipv4_src
+      ip_addr :ipv4_dst
       unsigned_int8 :ipv4_tos
       unsigned_int16 :ipv4_tot_len
       unsigned_int16 :ipv4_id
@@ -98,10 +97,10 @@ module Trema
       unsigned_int16 :ipv6_exthdr
 
       unsigned_int32 :mpls_label
-      unsigned_int8  :mpls_tc
-      unsigned_int8  :mpls_bos
-      bool  :mpls
-      alias_method   :mpls?, :mpls
+      unsigned_int8 :mpls_tc
+      unsigned_int8 :mpls_bos
+      bool :mpls
+      alias_method :mpls?, :mpls
 
       unsigned_int32 :pbb_isid
       bool :pbb
@@ -109,10 +108,8 @@ module Trema
     end
   end
 
-
   PacketInfo = Messages::PacketInfo
 end
-
 
 ### Local variables:
 ### mode: Ruby

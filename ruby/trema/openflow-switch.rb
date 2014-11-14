@@ -15,9 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "network-component"
-
+require_relative 'network-component'
 
 module Trema
   #
@@ -26,7 +24,6 @@ module Trema
   class OpenflowSwitch < NetworkComponent
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Actions
     #
@@ -25,20 +24,17 @@ module Trema
     class IpDscp < FlexibleAction
       unsigned_int8 :ip_dscp, presence: true, within: :check_ip_dscp_range
 
-
-      def check_ip_dscp_range ip_dscp, name
+      def check_ip_dscp_range(ip_dscp, name)
         range = 0..63
         unless range.include? ip_dscp
-          raise ArgumentError, "#{ name } value must be >= #{ range.first } and <= #{ range.last }." 
+          fail ArgumentError, "#{ name } value must be >= #{ range.first } and <= #{ range.last }."
         end
       end
     end
   end
 
-
   IpDscp = Actions::IpDscp
 end
-
 
 ### Local variables:
 ### mode: Ruby

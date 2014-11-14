@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Actions
     #
@@ -27,10 +26,8 @@ module Trema
     end
   end
 
-
   Ipv6SrcAddr = Actions::Ipv6SrcAddr
 end
-
 
 ### Local variables:
 ### mode: Ruby

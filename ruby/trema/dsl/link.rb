@@ -17,20 +17,17 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module DSL
     class Link
       attr_reader :peers
 
-
-      def initialize peer0, peer1
-        @peers = [ peer0, peer1 ]
+      def initialize(peer0, peer1)
+        @peers = [peer0, peer1]
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

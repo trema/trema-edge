@@ -15,23 +15,19 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "network-component"
-
+require_relative 'network-component'
 
 module Trema
   class TremaSwitch < NetworkComponent
     include Trema::Daemon
 
     attr_accessor :datapath_id
-    alias :dpid :datapath_id
+    alias_method :dpid, :datapath_id
 
-
-    def initialize stanza
+    def initialize(stanza)
       @stanza = stanza
       TremaSwitch.add self
     end
-
 
     #
     # Define host attribute accessors
@@ -43,34 +39,30 @@ module Trema
     #
     # @api public
     #
-    def method_missing message, *args
+    def method_missing(message, *_args)
       @stanza.__send__ :[], message
     end
 
-
     def command
-      ports = @stanza[ :ports ]
-      if @stanza[ :ports ].nil?
+      ports = @stanza[:ports]
+      if @stanza[:ports].nil?
         ports = []
         Trema::Link.instances.values.each_with_index do | each, i |
-           ports << "#{ each.name }/#{ i + 1 }" if each.peers.any? { | peer | peer.match( /\b#{ @stanza[ :name ] }\b/ ) }
+          ports << "#{ each.name }/#{ i + 1 }" if each.peers.any? { | peer | peer.match(/\b#{ @stanza[:name] }\b/) }
         end
-        ports = ports.join( ',' )
+        ports = ports.join(',')
       end
-      "sudo -E #{ Executables.switch } -i #{ dpid_short } #{ option_ports( ports ) } --daemonize"
+      "sudo -E #{ Executables.switch } -i #{ dpid_short } #{ option_ports(ports) } --daemonize"
     end
-
 
     private
 
-
-    def option_ports ports 
-      option = ""
+    def option_ports(ports)
+      option = ''
       option << "-e #{ ports }" if ports.length > 0
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

@@ -15,9 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "forwardable"
-
+require 'forwardable'
 
 module Trema
   module Messages
@@ -34,10 +32,9 @@ module Trema
       array :data
       packet_info :packet_info
 
-
       # delegation methods to match
       def_delegator :@match, :in_port
-      
+
       # packet info information
       def_delegators :@packet_info, :eth_type, :eth_src, :eth_dst
 
@@ -67,10 +64,8 @@ module Trema
     end
   end
 
-
   PacketIn = Messages::PacketIn
 end
-
 
 ### Local variables:
 ### mode: Ruby

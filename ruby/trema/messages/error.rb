@@ -15,21 +15,18 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Messages
     class Error < Message
-      unsigned_int64 :datapath_id, presence: true 
+      unsigned_int64 :datapath_id, presence: true
       unsigned_int32 :transaction_id, presence: true
       unsigned_int16 :type, :code, presence: true
       array :data
     end
   end
 
-
   Error = Messages::Error
 end
-
 
 ### Local variables:
 ### mode: Ruby

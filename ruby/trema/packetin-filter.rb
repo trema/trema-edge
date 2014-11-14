@@ -15,10 +15,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "executables"
-require_relative "network-component"
-
+require_relative 'executables'
+require_relative 'network-component'
 
 module Trema
   #
@@ -35,12 +33,11 @@ module Trema
     #
     # @api public
     #
-    def initialize queues
+    def initialize(queues)
       check_mandatory_options queues
       @queues = queues
       PacketinFilter.add self
     end
-
 
     #
     # Returns the name of packetin filter
@@ -53,9 +50,8 @@ module Trema
     # @api public
     #
     def name
-      "packet-in filter"
+      'packet-in filter'
     end
-
 
     #
     # Starts a packetin filter process
@@ -71,11 +67,11 @@ module Trema
       sh "#{ Executables.packetin_filter } --daemonize --name=filter #{ lldp_queue } #{ packetin_queue }"
     end
 
-
     ################################################################################
+
     private
-    ################################################################################
 
+    ################################################################################
 
     #
     # Checks mandatory options for packetin_filter command
@@ -84,12 +80,11 @@ module Trema
     #
     # @api private
     #
-    def check_mandatory_options queues
-      [ :lldp, :packet_in ].each do | each |
-        raise ":#{ each } is a mandatory option" if queues[ each ].nil?
+    def check_mandatory_options(queues)
+      [:lldp, :packet_in].each do | each |
+        fail ":#{ each } is a mandatory option" if queues[each].nil?
       end
     end
-
 
     #
     # The lldp option of packetin_filter command
@@ -99,9 +94,8 @@ module Trema
     # @api private
     #
     def lldp_queue
-      "lldp::#{ @queues[ :lldp ] }"
+      "lldp::#{ @queues[:lldp] }"
     end
-
 
     #
     # The packetin option of packetin_filter command
@@ -111,11 +105,10 @@ module Trema
     # @api private
     #
     def packetin_queue
-      "packet_in::#{ @queues[ :packet_in ] }"
+      "packet_in::#{ @queues[:packet_in] }"
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

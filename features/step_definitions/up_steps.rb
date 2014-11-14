@@ -17,11 +17,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 When /^I try trema up "([^"]*)"$/ do | component |
   run "./trema up #{ component }"
 end
-
 
 ### Local variables:
 ### mode: Ruby

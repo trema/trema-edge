@@ -15,11 +15,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "cli"
-require_relative "phost"
-require_relative "network-component"
-
+require_relative 'cli'
+require_relative 'phost'
+require_relative 'network-component'
 
 module Trema
   #
@@ -38,7 +36,6 @@ module Trema
     #
     attr_accessor :interface
 
-
     #
     # Creates a new Trema host from {DSL::Vhost}
     #
@@ -49,14 +46,13 @@ module Trema
     #
     # @api public
     #
-    def initialize stanza
+    def initialize(stanza)
       @stanza = stanza
-      @phost = Phost.new( self )
-      @cli = Cli.new( self )
+      @phost = Phost.new(self)
+      @cli = Cli.new(self)
       @index = Host.instances.size
       Host.add self
     end
-
 
     #
     # Define host attribute accessors
@@ -68,10 +64,9 @@ module Trema
     #
     # @api public
     #
-    def method_missing message, *args
+    def method_missing(message, *_args)
       @stanza.__send__ :[], message
     end
-
 
     #
     # Returns IP address
@@ -84,7 +79,7 @@ module Trema
     # @api public
     #
     def ip
-      stanza_ip = @stanza[ :ip ]
+      stanza_ip = @stanza[:ip]
       if stanza_ip.nil?
         # FIXME: Find unused addresses
         "192.168.0.#{ @index + 1 }"
@@ -92,7 +87,6 @@ module Trema
         stanza_ip
       end
     end
-
 
     #
     # Returns MAC address
@@ -105,14 +99,13 @@ module Trema
     # @api public
     #
     def mac
-      stanza_mac = @stanza[ :mac ]
+      stanza_mac = @stanza[:mac]
       if stanza_mac.nil?
-        "00:00:00:00:00:#{ format "%02x", @index + 1 }"
+        "00:00:00:00:00:#{ format '%02x', @index + 1 }"
       else
         stanza_mac
       end
     end
-
 
     #
     # Returns netmask
@@ -125,14 +118,13 @@ module Trema
     # @api public
     #
     def netmask
-      stanza_netmask = @stanza[ :netmask ]
+      stanza_netmask = @stanza[:netmask]
       if stanza_netmask.nil?
-        "255.255.255.255"
+        '255.255.255.255'
       else
         stanza_netmask
       end
     end
-
 
     #
     # Runs a host process
@@ -147,10 +139,9 @@ module Trema
     def run!
       @phost.run!
       @cli.set_ip_and_mac_address
-      @cli.enable_promisc if @stanza[ :promisc ]
+      @cli.enable_promisc if @stanza[:promisc]
       self
     end
-
 
     #
     # Kills running host
@@ -166,7 +157,6 @@ module Trema
       @phost.shutdown!
     end
 
-
     #
     # Add arp entries of <code>hosts</code>
     #
@@ -177,12 +167,11 @@ module Trema
     #
     # @api public
     #
-    def add_arp_entry hosts
+    def add_arp_entry(hosts)
       hosts.each do | each |
         @cli.add_arp_entry each
       end
     end
-
 
     #
     # Send packets to <code>dest</code>
@@ -194,15 +183,14 @@ module Trema
     #
     # @api public
     #
-    def send_packet dest, options = {}
-      dest_host = if dest.is_a?( String )
-                    vhost( dest )
+    def send_packet(dest, options = {})
+      dest_host = if dest.is_a?(String)
+                    vhost(dest)
                   else
                     dest
                   end
       @cli.send_packets dest_host, options
     end
-
 
     #
     # Check stats type and delegate processing.
@@ -212,17 +200,16 @@ module Trema
     # @return [Stat]
     #   the object that represents the results of a particular stats type.
     #
-    def stats type
+    def stats(type)
       case type
       when :tx
         @cli.tx_stats
       when :rx
         @cli.rx_stats
       else
-        raise
+        fail
       end
     end
-
 
     #
     # Returns tx stats
@@ -237,7 +224,6 @@ module Trema
     def tx_stats
       @cli.tx_stats
     end
-
 
     #
     # Returns rx stats
@@ -254,7 +240,6 @@ module Trema
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

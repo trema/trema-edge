@@ -15,10 +15,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   #
-  # @abstract 
+  # @abstract
   #
 
   class Tasks
@@ -36,29 +35,27 @@ module Trema
       @waker.close
     end
 
-    def pass_task &block
+    def pass_task(&block)
       return if block.nil?
 
-      @lock.synchronize {
+      @lock.synchronize do
         @tasks << block
         @waker.write('\0') if @tasks.size < 2
-      }
+      end
     end
 
     private
-    
+
     def consume_tasks
       current_tasks = nil
 
-      @lock.synchronize {
+      @lock.synchronize do
         current_tasks = @tasks
         @tasks = []
         @wakeup.read(1)
-      }
+      end
 
-      current_tasks.each { |task| task.call }
+      current_tasks.each(&:call)
     end
-
   end
-
 end

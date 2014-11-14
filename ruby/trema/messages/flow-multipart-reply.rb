@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Messages
     class FlowMultipartReply < Message
@@ -32,10 +31,8 @@ module Trema
     end
   end
 
-
   FlowMultipartReply = Messages::FlowMultipartReply
 end
-
 
 ### Local variables:
 ### mode: Ruby

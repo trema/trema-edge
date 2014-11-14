@@ -15,9 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "monkey-patch/kernel"
-
+require_relative 'monkey-patch/kernel'
 
 module Trema
   module MessageConst
@@ -29,9 +27,8 @@ module Trema
     }
     enum_hash config_flags_hash
     CONFIG_FLAGS = config_flags_hash.values.freeze
-    
 
-    enum_hash( ofp_version: ofp_version )
+    enum_hash(ofp_version: ofp_version)
 
     enum_step %w( ofpfc_add
                   ofpfc_modify
@@ -41,8 +38,8 @@ module Trema
 
     flow_mod_flags = %w( ofpff_send_flow_rem
                          ofpff_check_overlap
-                         ofpff_reset_counts  
-                         ofpff_no_pkt_counts 
+                         ofpff_reset_counts
+                         ofpff_no_pkt_counts
                          ofpff_no_byt_counts )
     enum_range flow_mod_flags
 
@@ -55,15 +52,15 @@ module Trema
                       ofppc_no_packet_in )
     enum_range port_config
 
-    enum_hash( ofpp_max: max_port,
-               ofpp_in_port: in_port,
-               ofpp_table: table_port,
-               ofpp_normal: normal_port,
-               ofpp_flood: flood_port,
-               ofpp_all: all_ports,
-               ofpp_controller: controller_port,
-               ofpp_local: local_port,
-               ofpp_any: any_port )
+    enum_hash(ofpp_max: max_port,
+              ofpp_in_port: in_port,
+              ofpp_table: table_port,
+              ofpp_normal: normal_port,
+              ofpp_flood: flood_port,
+              ofpp_all: all_ports,
+              ofpp_controller: controller_port,
+              ofpp_local: local_port,
+              ofpp_any: any_port)
 
     port_features = %w( ofppf_10mb_hd
                         ofppf_10mb_fd
@@ -83,18 +80,18 @@ module Trema
                         ofppf_pause_asym )
     enum_range port_features
 
-    enum_hash( ofpg_any: any_group )
+    enum_hash(ofpg_any: any_group)
 
-    enum_hash( ofptt_all: all_tables )
+    enum_hash(ofptt_all: all_tables)
 
-    enum_hash( ofpcml_max: controller_max_len_max,
-               ofpcml_no_buffer: controller_max_len_no_buffer )
+    enum_hash(ofpcml_max: controller_max_len_max,
+              ofpcml_no_buffer: controller_max_len_no_buffer)
 
-    enum_hash( ofp_no_buffer: no_buffer )
+    enum_hash(ofp_no_buffer: no_buffer)
 
-    enum_hash( ofp_default_priority: default_priority,
-               ofp_high_priority: high_priority,
-               ofp_low_priority: low_priority )
+    enum_hash(ofp_default_priority: default_priority,
+              ofp_high_priority: high_priority,
+              ofp_low_priority: low_priority)
 
     port_state = %w( ofpps_link_down
                      ofpps_blocked
@@ -115,7 +112,7 @@ module Trema
                      ofpgt_indirect
                      ofpgt_ff )
     enum_step group_type
-    
+
     enum_step %w( ofpgc_add ofpgc_modify ofpgc_delete )
 
     error_type = %w( ofppet_hello_failed
@@ -148,26 +145,26 @@ module Trema
                          ofpmp_meter_features
                          ofpmp_table_features
                          ofpmp_port_desc )
-     enum_step multipart_type
-     enum_hash ofpmp_experimenter: experimenter_mp
-     
-     enum_hash( ofpat_output: at_output,
-                ofpat_copy_ttl_out: at_copy_ttl_out, 
-                ofpat_copy_ttl_in: at_copy_ttl_in,
-                ofpat_set_mpls_ttl: at_set_mpls_ttl,
-                ofpat_dec_mpls_ttl: at_dec_mpls_ttl,
-                ofpat_push_vlan: at_push_vlan,
-                ofpat_pop_vlan: at_pop_vlan,
-                ofpat_push_mpls: at_push_mpls,
-                ofpat_pop_mpls: at_pop_mpls,
-                ofpat_set_queue: at_set_queue,
-                ofpat_group: at_group,
-                ofpat_set_nw_ttl: at_set_nw_ttl,
-                ofpat_dec_nw_ttl: at_dec_nw_ttl,
-                ofpat_set_field: at_set_field,
-                ofpat_push_pbb: at_push_pbb,
-                ofpat_pop_pbb: at_pop_pbb,
-                ofpat_experimenter: at_experimenter )
+    enum_step multipart_type
+    enum_hash ofpmp_experimenter: experimenter_mp
+
+    enum_hash(ofpat_output: at_output,
+              ofpat_copy_ttl_out: at_copy_ttl_out,
+              ofpat_copy_ttl_in: at_copy_ttl_in,
+              ofpat_set_mpls_ttl: at_set_mpls_ttl,
+              ofpat_dec_mpls_ttl: at_dec_mpls_ttl,
+              ofpat_push_vlan: at_push_vlan,
+              ofpat_pop_vlan: at_pop_vlan,
+              ofpat_push_mpls: at_push_mpls,
+              ofpat_pop_mpls: at_pop_mpls,
+              ofpat_set_queue: at_set_queue,
+              ofpat_group: at_group,
+              ofpat_set_nw_ttl: at_set_nw_ttl,
+              ofpat_dec_nw_ttl: at_dec_nw_ttl,
+              ofpat_set_field: at_set_field,
+              ofpat_push_pbb: at_push_pbb,
+              ofpat_pop_pbb: at_pop_pbb,
+              ofpat_experimenter: at_experimenter)
 
     instruction_type = %w( ofpit_goto_table
                            ofpit_write_metadata
@@ -175,7 +172,7 @@ module Trema
                            ofpit_apply_actions
                            ofpit_clear_actions
                            ofpit_meter )
-                           
+
     enum_step 1, instruction_type
     enum_hash ofpit_experimenter: it_experimenter
 
@@ -219,11 +216,10 @@ module Trema
                            ofpxmt_ofb_pbb_isid
                            ofpxmt_ofb_tunnel_id
                            ofpxmt_ofb_ipv6_exthdr )
-                           
+
     enum_step oxm_match_fields
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

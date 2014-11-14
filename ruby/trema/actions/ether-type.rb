@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Actions
     #
@@ -24,14 +23,12 @@ module Trema
     class EtherType < FlexibleAction
       ofp_type OFPXMT_OFB_ETH_TYPE
       unsigned_int16 :ether_type, presence: true, alias: :eth_type
-      alias :eth_type :ether_type
+      alias_method :eth_type, :ether_type
     end
   end
 
-
   EtherType = Actions::EtherType
 end
-
 
 ### Local variables:
 ### mode: Ruby

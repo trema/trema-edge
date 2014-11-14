@@ -17,64 +17,57 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
-
-describe BarrierRequest, ".new( OPTIONAL OPTION MISSING )" do
-  it_should_behave_like "any Openflow message with default transaction ID"
+describe BarrierRequest, '.new( OPTIONAL OPTION MISSING )' do
+  it_should_behave_like 'any Openflow message with default transaction ID'
 end
 
+describe BarrierRequest, '.new( VALID OPTION )' do
+  subject { BarrierRequest.new transaction_id: transaction_id }
+  it_should_behave_like 'any OpenFlow message with transaction_id option'
 
-describe BarrierRequest, ".new( VALID OPTION )" do
-  subject { BarrierRequest.new :transaction_id => transaction_id }
-  it_should_behave_like "any OpenFlow message with transaction_id option"
-
-
-  context "when #barrier_request" do
-    it "should #barrier_reply" do
+  context 'when #barrier_request' do
+    it 'should #barrier_reply' do
       class BarrierController < Controller; end
-      network {
+      network do
         vswitch { datapath_id 0xabc }
-      }.run( BarrierController ) {
-        expect(controller( "BarrierController" )).to receive( :barrier_reply )
-        controller( "BarrierController" ).send_message( 0xabc, BarrierRequest.new )
+      end.run(BarrierController) do
+        expect(controller('BarrierController')).to receive(:barrier_reply)
+        controller('BarrierController').send_message(0xabc, BarrierRequest.new)
         sleep 2 # FIXME: wait to send_message
-      }
+      end
     end
   end
 end
 
-
-describe BarrierRequest, ".new( OPTIONAL OPTION ) - transaction_id" do
-  context "when #barrier_request" do
-    it "should #barrier_reply with transaction_id == value" do
+describe BarrierRequest, '.new( OPTIONAL OPTION ) - transaction_id' do
+  context 'when #barrier_request' do
+    it 'should #barrier_reply with transaction_id == value' do
       class BarrierController < Controller; end
-      network {
+      network do
         vswitch { datapath_id 0xabc }
-      }.run( BarrierController ) {
-        expect(controller( "BarrierController" )).to receive( :barrier_reply ) do | message |
+      end.run(BarrierController) do
+        expect(controller('BarrierController')).to receive(:barrier_reply) do | message |
           expect(message.datapath_id).to eq(0xabc)
           expect(message.transaction_id).to eq(1234)
         end
-        barrier_request = BarrierRequest.new( :transaction_id => 1234 )
-        controller( "BarrierController" ).send_message( 0xabc, barrier_request )
+        barrier_request = BarrierRequest.new(transaction_id: 1234)
+        controller('BarrierController').send_message(0xabc, barrier_request)
         sleep 2 # FIXME: wait to send_message
-      }
+      end
     end
   end
 end
 
-
-describe BarrierRequest, ".new( INVALID_OPTION )" do
-  it "should raise TypeError" do
-    expect {
-      BarrierRequest.new "INVALID_OPTION"
-    }.to raise_error( TypeError )
+describe BarrierRequest, '.new( INVALID_OPTION )' do
+  it 'should raise TypeError' do
+    expect do
+      BarrierRequest.new 'INVALID_OPTION'
+    end.to raise_error(TypeError)
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

@@ -15,12 +15,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module MonkeyPatch
   module Module
     module ClassMethod
-      def define_class_method name, &block
-        self.extend ::Module.new {
+      def define_class_method(name, &block)
+        extend ::Module.new {
           define_method name.to_s do
             block.call
           end
@@ -29,7 +28,6 @@ module MonkeyPatch
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

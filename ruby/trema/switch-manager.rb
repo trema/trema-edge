@@ -15,12 +15,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "daemon"
-require_relative "executables"
-require_relative "network-component"
-require_relative "switch-daemon"
-
+require_relative 'daemon'
+require_relative 'executables'
+require_relative 'network-component'
+require_relative 'switch-daemon'
 
 module Trema
   #
@@ -29,10 +27,8 @@ module Trema
   class SwitchManager < NetworkComponent
     include Trema::Daemon
 
-
     singleton_daemon
     command { | sm | sm.__send__ :command }
-
 
     #
     # Event forwarding rule
@@ -44,7 +40,6 @@ module Trema
     #
     attr_accessor :rule
 
-
     #
     # Do not cleanup the flow table of switches on startup
     #
@@ -55,7 +50,6 @@ module Trema
     #
     attr_accessor :no_flow_cleanup
 
-
     #
     # Creates a switch manager controller
     #
@@ -65,13 +59,12 @@ module Trema
     #
     # @return [SwitchManager]
     #
-    def initialize rule, port = nil
+    def initialize(rule, port = nil)
       @rule = rule
       @port = port
       @no_flow_cleanup = false
       SwitchManager.add self
     end
-
 
     #
     # Returns the name of switch manager
@@ -82,35 +75,32 @@ module Trema
     # @return [String]
     #
     def name
-      "switch manager"
+      'switch manager'
     end
 
-
     ############################################################################
+
     private
-    ############################################################################
 
+    ############################################################################
 
     def command
-      "#{ Executables.switch_manager } #{ options.join " " } -- #{ switch_options.join " " }"
+      "#{ Executables.switch_manager } #{ options.join ' ' } -- #{ switch_options.join ' ' }"
     end
 
-
     def options
-      opts = [ "--daemonize" ]
+      opts = ['--daemonize']
       opts << "--port=#{ @port }" if @port
       opts
     end
 
-
     def switch_options
-      opts = SwitchDaemon.new( @rule ).options
-      opts << "--no-flow-cleanup" if @no_flow_cleanup
+      opts = SwitchDaemon.new(@rule).options
+      opts << '--no-flow-cleanup' if @no_flow_cleanup
       opts
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

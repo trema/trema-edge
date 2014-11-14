@@ -19,41 +19,36 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 class Dumper < Controller
-  def switch_ready datapath_id
-    info "[switch_ready]"
+  def switch_ready(datapath_id)
+    info '[switch_ready]'
     info "  datapath_id: #{ datapath_id.to_hex }"
   end
 
-
-  def switch_disconnected datapath_id
-    info "[switch_disconnected]"
+  def switch_disconnected(datapath_id)
+    info '[switch_disconnected]'
     info "  datapath_id: #{ datapath_id.to_hex }"
   end
 
-
-  def openflow_error message
-    info "[error]"
+  def openflow_error(message)
+    info '[error]'
     info "datapath_id: #{ message.datapath_id.to_hex }"
     info "transaction_id: #{ message.transaction_id.to_hex }"
     info "type: #{ message.type.to_hex }"
     info "code: #{ message.code.to_hex }"
-    info "data: #{ message.data.unpack "H*" }"
+    info "data: #{ message.data.unpack 'H*' }"
   end
 
-
-  def vendor message
-    info "[vendor]"
+  def vendor(message)
+    info '[vendor]'
     info "datapath_id: #{ message.datapath_id.to_hex }"
     info "transaction_id: #{ message.transaction_id.to_hex }"
-    info "data:"
-    info "#{ message.buffer.unpack "H*" }"
+    info 'data:'
+    info "#{ message.buffer.unpack 'H*' }"
   end
 
-
-  def features_reply datapath_id, message
-    info "[features_reply]"
+  def features_reply(datapath_id, message)
+    info '[features_reply]'
     info "datapath_id: #{ datapath_id.to_hex }"
     info "transaction_id: #{ message.transaction_id.to_hex }"
     info "n_buffers: #{ message.n_buffers }"
@@ -65,34 +60,31 @@ class Dumper < Controller
     end
   end
 
-
-  def get_config_reply message
-    info "[get_config_reply]"
+  def get_config_reply(message)
+    info '[get_config_reply]'
     info "datapath_id: #{ message.datapath_id.to_hex }"
     info "transaction_id: #{ message.transaction_id.to_hex }"
     info "flags: #{ message.flags.to_hex }"
     info "miss_send_len: #{ message.miss_send_len }"
   end
 
-
-  def packet_in datapath_id, message
-    info "[packet_in]"
+  def packet_in(datapath_id, message)
+    info '[packet_in]'
     info "  datapath_id: #{ datapath_id.to_hex }"
     info "  transaction_id: #{ message.transaction_id.to_hex }"
     info "  buffer_id: #{ message.buffer_id.to_hex }"
     info "  total_len: #{ message.total_len }"
     info "  in_port: #{ message.in_port }"
     info "  reason: #{ message.reason.to_hex }"
-    info "  data: #{ message.data.unpack "H*" }"
+    info "  data: #{ message.data.unpack 'H*' }"
   end
 
-
-  def flow_removed datapath_id, message
-    info "[flow_removed]"
+  def flow_removed(datapath_id, message)
+    info '[flow_removed]'
     info "datapath_id: #{ datapath_id.to_hex }"
     info "transaction_id: #{ message.transaction_id.to_hex }"
 
-    info "match:"
+    info 'match:'
     info "  wildcards: #{ message.match.wildcards.to_hex }"
     info "  in_port: #{ message.match.in_port }"
     info "  dl_src: #{ message.match.dl_src }"
@@ -117,18 +109,16 @@ class Dumper < Controller
     info "byte_count: #{ message.byte_count.to_hex }"
   end
 
-
-  def port_status datapath_id, message
-    info "[port_status]"
+  def port_status(datapath_id, message)
+    info '[port_status]'
     info "datapath_id: #{ datapath_id.to_hex }"
     info "transaction_id: #{ message.transaction_id.to_hex }"
     info "reason: #{ message.reason.to_hex }"
     dump_phy_port message.phy_port
   end
 
-
-  def stats_reply message
-    info "[stats_reply]"
+  def stats_reply(message)
+    info '[stats_reply]'
     info "datapath_id: #{ message.datapath_id.to_hex }"
     info "transaction_id: #{ message.transaction_id.to_hex }"
     info "type: #{ message.type.to_hex }"
@@ -136,32 +126,30 @@ class Dumper < Controller
     message.stats.each { | each | info each.to_s }
   end
 
-
-  def barrier_reply message
-    info "[barrier_reply]"
+  def barrier_reply(message)
+    info '[barrier_reply]'
     info "datapath_id: #{ message.datapath_id.to_hex }"
     info "transaction_id: #{ message.transaction_id.to_hex }"
   end
 
-
-  def queue_get_config_reply message
-    info "[queue_get_config_reply]"
+  def queue_get_config_reply(message)
+    info '[queue_get_config_reply]'
     info "datapath_id: #{ message.datapath_id.to_hex }"
     info "transaction_id: #{ message.transaction_id.to_hex }"
     info "port: #{ message.port }"
-    info( "queues:" );
+    info('queues:')
     dump_packet_queue message.queues
   end
 
-
   ##############################################################################
+
   private
+
   ##############################################################################
 
-
-  def dump_phy_port port
+  def dump_phy_port(port)
     # for testing port-status record the mac address if port.number == 2.
-    @hw_addr = port.hw_addr if port.number == 2 
+    @hw_addr = port.hw_addr if port.number == 2
     info "port_no: #{ port.number }"
     info "  hw_addr: #{ port.hw_addr }"
     info "  name: #{ port.name }"
@@ -173,21 +161,19 @@ class Dumper < Controller
     info "  peer: #{ port.peer.to_hex }"
   end
 
-
-  def dump_packet_queue queues
+  def dump_packet_queue(queues)
     queues.each do | packet_queue |
       info "queue_id: #{ packet_queue.queue_id.to_hex }"
       info "  len: #{ packet_queue.len }"
-      info "  properties:"
+      info '  properties:'
       packet_queue.properties.each do | prop |
         info "    property: #{ prop.property.to_hex }"
         info "    len: #{ prop.len.to_hex }"
-        info "      rate: %u" % prop.rate if prop.property == PacketQueue::OFPQT_MIN_RATE
+        info '      rate: %u' % prop.rate if prop.property == PacketQueue::OFPQT_MIN_RATE
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

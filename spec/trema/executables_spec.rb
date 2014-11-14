@@ -17,88 +17,85 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema/executables"
-
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema/executables'
 
 describe Trema::Executables do
   subject { Trema::Executables }
 
-  describe ( :cli ) do
-    subject { super().send(( :cli )) }
-    it { is_expected.to be_a( String ) }
+  describe ( :cli) do
+    subject { super().send((:cli)) }
+    it { is_expected.to be_a(String) }
   end
 
-  describe ( :ovs_ofctl ) do
-    subject { super().send(( :ovs_ofctl )) }
-    it { is_expected.to be_a( String ) }
+  describe ( :ovs_ofctl) do
+    subject { super().send((:ovs_ofctl)) }
+    it { is_expected.to be_a(String) }
   end
 
-  describe ( :ovs_openflowd ) do
-    subject { super().send(( :ovs_openflowd )) }
-    it { is_expected.to be_a( String ) }
+  describe ( :ovs_openflowd) do
+    subject { super().send((:ovs_openflowd)) }
+    it { is_expected.to be_a(String) }
   end
 
-  describe ( :packet_capture ) do
-    subject { super().send(( :packet_capture )) }
-    it { is_expected.to be_a( String ) }
+  describe ( :packet_capture) do
+    subject { super().send((:packet_capture)) }
+    it { is_expected.to be_a(String) }
   end
 
-  describe ( :packetin_filter ) do
-    subject { super().send(( :packetin_filter )) }
-    it { is_expected.to be_a( String ) }
+  describe ( :packetin_filter) do
+    subject { super().send((:packetin_filter)) }
+    it { is_expected.to be_a(String) }
   end
 
-  describe ( :phost ) do
-    subject { super().send(( :phost )) }
-    it { is_expected.to be_a( String ) }
+  describe ( :phost) do
+    subject { super().send((:phost)) }
+    it { is_expected.to be_a(String) }
   end
 
-  describe ( :stdin_relay ) do
-    subject { super().send(( :stdin_relay )) }
-    it { is_expected.to be_a( String ) }
+  describe ( :stdin_relay) do
+    subject { super().send((:stdin_relay)) }
+    it { is_expected.to be_a(String) }
   end
 
-  describe ( :switch ) do
-    subject { super().send(( :switch )) }
-    it { is_expected.to be_a( String ) }
+  describe ( :switch) do
+    subject { super().send((:switch)) }
+    it { is_expected.to be_a(String) }
   end
 
-  describe ( :switch_manager ) do
-    subject { super().send(( :switch_manager )) }
-    it { is_expected.to be_a( String ) }
+  describe ( :switch_manager) do
+    subject { super().send((:switch_manager)) }
+    it { is_expected.to be_a(String) }
   end
 
-  describe ( :syslog_relay ) do
-    subject { super().send(( :syslog_relay )) }
-    it { is_expected.to be_a( String ) }
+  describe ( :syslog_relay) do
+    subject { super().send((:syslog_relay)) }
+    it { is_expected.to be_a(String) }
   end
 
-  describe ( :tremashark ) do
-    subject { super().send(( :tremashark )) }
-    it { is_expected.to be_a( String ) }
+  describe ( :tremashark) do
+    subject { super().send((:tremashark)) }
+    it { is_expected.to be_a(String) }
   end
 
-  context "when Trema is compiled" do
-    before { allow(FileTest).to receive( :executable? ).and_return( true ) }
+  context 'when Trema is compiled' do
+    before { allow(FileTest).to receive(:executable?).and_return(true) }
 
-    describe ( :compiled? ) do
-      subject { super().send(( :compiled? )) }
+    describe ( :compiled?) do
+      subject { super().send((:compiled?)) }
       it { is_expected.to be_truthy }
     end
   end
 
-  context "when Trema is not compiled" do
-    before { allow(FileTest).to receive( :executable? ).and_return( false ) }
+  context 'when Trema is not compiled' do
+    before { allow(FileTest).to receive(:executable?).and_return(false) }
 
-    describe ( :compiled? ) do
-      subject { super().send(( :compiled? )) }
+    describe ( :compiled?) do
+      subject { super().send((:compiled?)) }
       it { is_expected.to be_falsey }
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

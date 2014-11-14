@@ -17,10 +17,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "daemon"
-require_relative "executables"
-
+require_relative 'daemon'
+require_relative 'executables'
 
 module Trema
   #
@@ -29,19 +27,16 @@ module Trema
   class Phost
     include Trema::Daemon
 
-
     command { | phost | "sudo #{ Executables.phost } -i #{ phost.interface } -p #{ Trema.pid } -l #{ Trema.log } -n #{ phost.name } -D" }
     wait_until_up
     daemon_id :name
 
-
     #
     # Creates a new instance of Phost for each virtual host.
     #
-    def initialize host
+    def initialize(host)
       @host = host
     end
-
 
     #
     # @raise [RuntimeError] if no interface defined for virtual host.
@@ -49,25 +44,22 @@ module Trema
     # @return [String] the virtual host's interface name.
     #
     def interface
-      raise "The link(s) for vhost '#{ name }' is not defined." if @host.interface.nil?
+      fail "The link(s) for vhost '#{ name }' is not defined." if @host.interface.nil?
       @host.interface
     end
-
 
     #
     # @return [Boolean] whether phost is running or not.
     #
     def running?
-      not @host.interface.nil? and super
+      !@host.interface.nil? && super
     end
-
 
     def name
       @host.name
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

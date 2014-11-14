@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Actions
     #
@@ -24,14 +23,12 @@ module Trema
     class VlanPriority < FlexibleAction
       ofp_type OFPXMT_OFB_VLAN_PCP
       unsigned_int8 :vlan_priority, presence: true, alias: :vlan_pcp
-      alias :vlan_pcp :vlan_priority
+      alias_method :vlan_pcp, :vlan_priority
     end
   end
 
-
   VlanPriority = Actions::VlanPriority
 end
-
 
 ### Local variables:
 ### mode: Ruby

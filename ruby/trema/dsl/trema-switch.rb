@@ -17,25 +17,21 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/dsl/switch"
-
+require 'trema/dsl/switch'
 
 module Trema
   module DSL
     class TremaSwitch < Switch
-      def initialize name = nil
+      def initialize(name = nil)
         super name
       end
 
-
-      def ports ports
-         @ports = ports.split( ',' ).map.with_index{ | v, i | "#{ v }/#{ i + 1 }" }.join( ',' )
+      def ports(ports)
+        @ports = ports.split(',').map.with_index { | v, i | "#{ v }/#{ i + 1 }" }.join(',')
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

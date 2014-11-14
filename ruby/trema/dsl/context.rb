@@ -15,33 +15,27 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "fileutils"
-require "trema/dsl/configuration"
-require "trema/dsl/syntax"
-require "trema/path"
-
+require 'fileutils'
+require 'trema/dsl/configuration'
+require 'trema/dsl/syntax'
+require 'trema/path'
 
 module Trema
   module DSL
     class Context
-      PATH = File.join( Trema.tmp, ".context" )
-
+      PATH = File.join(Trema.tmp, '.context')
 
       def self.load_current
-        if FileTest.exists?( PATH )
-          Marshal.load( IO.read PATH )
+        if FileTest.exists?(PATH)
+          Marshal.load(IO.read PATH)
         else
           Configuration.new
         end
       end
 
-
-
-      def initialize config
+      def initialize(config)
         @config = config
       end
-
 
       #
       # Dumps a {Configuration} object to <code>PATH</code>
@@ -52,15 +46,14 @@ module Trema
       # @return [Configuration]
       #
       def dump
-        File.open( PATH, "w" ) do | f |
-          f.print Marshal.dump( @config )
+        File.open(PATH, 'w') do | f |
+          f.print Marshal.dump(@config)
         end
         @config
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

@@ -17,25 +17,21 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/dsl/switch"
-
+require 'trema/dsl/switch'
 
 module Trema
   module DSL
     class CustomSwitch < Switch
-      def initialize name = nil
+      def initialize(name = nil)
         super name
       end
 
-
-      def path filepath
+      def path(filepath)
         @path = filepath
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

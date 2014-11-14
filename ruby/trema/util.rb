@@ -17,22 +17,19 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "dsl"
-require_relative "executables"
-require_relative "path"
-require_relative "process"
-
+require_relative 'dsl'
+require_relative 'executables'
+require_relative 'path'
+require_relative 'process'
 
 module Trema::Util
-  def sh cmd
-    ENV[ "TREMA_HOME" ] = Trema.home
+  def sh(cmd)
+    ENV['TREMA_HOME'] = Trema.home
     puts cmd if $verbose
-    unless system( cmd )
-      raise "Command '#{ cmd }' failed!"
+    unless system(cmd)
+      fail "Command '#{ cmd }' failed!"
     end
   end
-
 
   def assert_trema_is_built
     unless Trema::Executables.compiled?
@@ -46,70 +43,61 @@ EOF
     end
   end
 
-
-  def cleanup session
+  def cleanup(session)
     # [FIXME] Use session.switch_manager
-    sm_pid = File.join( Trema.pid, "switch_manager.pid" )
-    if FileTest.exist?( sm_pid )
-      Trema::Process.read( sm_pid ).kill!
+    sm_pid = File.join(Trema.pid, 'switch_manager.pid')
+    if FileTest.exist?(sm_pid)
+      Trema::Process.read(sm_pid).kill!
     end
-    session.apps.each do | name, app |
+    session.apps.each do | _name, app |
       app.shutdown!
     end
-    session.switches.each do | name, switch |
+    session.switches.each do | _name, switch |
       switch.shutdown!
     end
-    session.hosts.each do | name, host |
+    session.hosts.each do | _name, host |
       host.shutdown!
     end
-    session.links.each do | name, link |
+    session.links.each do | _name, link |
       link.delete!
     end
-    session.netnss.each do | name, netns |
+    session.netnss.each do | _name, netns |
       netns.shutdown!
     end
 
-    Dir.glob( File.join Trema.pid, "*.pid" ).each do | each |
-      Trema::Process.read( each ).kill!
+    Dir.glob(File.join Trema.pid, '*.pid').each do | each |
+      Trema::Process.read(each).kill!
     end
   end
-
 
   def running?
     FileTest.exists? Trema::DSL::Context::PATH
   end
 
-
   def cleanup_current_session
-    begin
-      cleanup Trema::DSL::Context.load_current
-    ensure
-      FileUtils.rm_f Trema::DSL::Context::PATH
-    end
+    cleanup Trema::DSL::Context.load_current
+  ensure
+    FileUtils.rm_f Trema::DSL::Context::PATH
   end
 
-
-  def find_app_by_name name
+  def find_app_by_name(name)
     # [FIXME] Trema apps does not appear in context.apps. why?
-    pid_file = File.join( Trema.pid, "#{ name }.pid" )
-    if FileTest.exist?( pid_file )
-      Trema::Process.read( pid_file )
+    pid_file = File.join(Trema.pid, "#{ name }.pid")
+    if FileTest.exist?(pid_file)
+      Trema::Process.read(pid_file)
     else
       nil
     end
   end
 
-
-  def find_switch_by_name name
-    Trema::DSL::Context.load_current.switches[ name ]
+  def find_switch_by_name(name)
+    Trema::DSL::Context.load_current.switches[name]
   end
 
-
-  def find_host_by_name name
-    Trema::DSL::Context.load_current.hosts[ name ]
+  def find_host_by_name(name)
+    Trema::DSL::Context.load_current.hosts[name]
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

@@ -17,97 +17,97 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
 describe Trema::PacketIn do
   def send_and_wait
-    send_packets "host1", "host2"
+    send_packets 'host1', 'host2'
     sleep 2
   end
-
 
   class PacketInController < Controller; end
 
   class PacketInSendController < Controller
-    def packet_in datapath_id, message
+    def packet_in(datapath_id, message)
       send_flow_mod_add(
                         datapath_id,
-                        :match => Match.from( message ),
-                        :actions => Trema::ActionOutput.new( :port => 2 )
+                        match: Match.from(message),
+                        actions: Trema::ActionOutput.new(port: 2)
                         )
       send_packet_out(
                       datapath_id,
-                      :packet_in => message,
-                      :actions => Trema::ActionOutput.new( :port => 2 )
+                      packet_in: message,
+                      actions: Trema::ActionOutput.new(port: 2)
                       )
     end
   end
 
-  context "when instance is created" do
-    it "should have valid datapath_id and in_port" do
-      network {
-        vswitch( "test" ) { datapath_id 0xabc }
-        vhost "host1"
-        vhost "host2"
-        link "test", "host1"
-        link "test", "host2"
-      }.run( PacketInController ) {
-        expect(controller( "PacketInController" )).to receive( :packet_in ) do | datapath_id, message |
+  context 'when instance is created' do
+    it 'should have valid datapath_id and in_port' do
+      network do
+        vswitch('test') { datapath_id 0xabc }
+        vhost 'host1'
+        vhost 'host2'
+        link 'test', 'host1'
+        link 'test', 'host2'
+      end.run(PacketInController) do
+        expect(controller('PacketInController')).to receive(:packet_in) do | datapath_id, message |
           expect(datapath_id).to eq(0xabc)
           expect(message.datapath_id).to eq(0xabc)
           expect(message.in_port).to be > 0
         end
         send_and_wait
-      }
+      end
     end
 
-
-    it "should have vaild user data" do
-      network {
-        vswitch( "test" ) { datapath_id 0xabc }
-        vhost( "host1" ) { mac "00:00:00:00:00:01"
-                           ip "192.168.1.1" }
-        vhost( "host2" ) { mac "00:00:00:00:00:02"
-                           ip "192.168.1.2" }
-        link "test", "host1"
-        link "test", "host2"
-      }.run( PacketInController ) {
-        expect(controller( "PacketInController" )).to receive( :packet_in ) do | datapath_id, message |
-           # packet_in expected to have data portion.
+    it 'should have vaild user data' do
+      network do
+        vswitch('test') { datapath_id 0xabc }
+        vhost('host1') do
+          mac '00:00:00:00:00:01'
+          ip '192.168.1.1'
+        end
+        vhost('host2') do
+          mac '00:00:00:00:00:02'
+          ip '192.168.1.2'
+        end
+        link 'test', 'host1'
+        link 'test', 'host2'
+      end.run(PacketInController) do
+        expect(controller('PacketInController')).to receive(:packet_in) do | _datapath_id, message |
+          # packet_in expected to have data portion.
           expect(message.total_len).to be > 20
-          expect(message.data).to be_instance_of( String )
+          expect(message.data).to be_instance_of(String)
           expect(message.buffered?).to be_falsey
 
-          expect(message.macsa).to be_instance_of( Trema::Mac )
-          expect(message.macsa.to_s).to eq("00:00:00:00:00:01")
-          expect(message.macda).to be_instance_of( Trema::Mac )
-          expect(message.macda.to_s).to eq("00:00:00:00:00:02")
+          expect(message.macsa).to be_instance_of(Trema::Mac)
+          expect(message.macsa.to_s).to eq('00:00:00:00:00:01')
+          expect(message.macda).to be_instance_of(Trema::Mac)
+          expect(message.macda.to_s).to eq('00:00:00:00:00:02')
 
           expect(message.eth_type).to eq(0x0800)
           expect(message.ipv4?).to eq(true)
           expect(message.ipv4_version).to eq(4)
-          expect(message.ipv4_saddr).to be_instance_of( Trema::IP )
-          expect(message.ipv4_saddr.to_s).to eq("192.168.1.1")
-          expect(message.ipv4_daddr).to be_instance_of( Trema::IP )
-          expect(message.ipv4_daddr.to_s).to eq("192.168.1.2")
+          expect(message.ipv4_saddr).to be_instance_of(Trema::IP)
+          expect(message.ipv4_saddr.to_s).to eq('192.168.1.1')
+          expect(message.ipv4_daddr).to be_instance_of(Trema::IP)
+          expect(message.ipv4_daddr.to_s).to eq('192.168.1.2')
         end
         send_and_wait
-      }
+      end
     end
   end
 
-  context "when reading packet content" do
-    it "should have correct ARP packet fields" do
-      network {
-        vswitch( "packet-in" ) { datapath_id 0xabc }
-        vhost "host1"
-        vhost ( "host2" ) { mac "00:00:00:00:00:02" }
-        link "host1", "packet-in"
-        link "host2", "packet-in"
-      }.run( PacketInSendController ) {
+  context 'when reading packet content' do
+    it 'should have correct ARP packet fields' do
+      network do
+        vswitch('packet-in') { datapath_id 0xabc }
+        vhost 'host1'
+        vhost ( 'host2') { mac '00:00:00:00:00:02' }
+        link 'host1', 'packet-in'
+        link 'host2', 'packet-in'
+      end.run(PacketInSendController) do
         data = [
           0x00, 0x00, 0x00, 0x00, 0x00, 0x02, # dst
           0x00, 0x00, 0x00, 0x00, 0x00, 0x01, # src
@@ -128,8 +128,8 @@ describe Trema::PacketIn do
           0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
           0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
           0x00, 0x00
-        ].pack( "C*" )
-        expect(controller( "PacketInSendController" )).to receive( :packet_in ) do | datapath_id, message |
+        ].pack('C*')
+        expect(controller('PacketInSendController')).to receive(:packet_in) do | _datapath_id, message |
           expect(message.in_port).to be > 0
           expect(message.vtag?).to be_falsey
           expect(message.arp?).to be_truthy
@@ -140,10 +140,10 @@ describe Trema::PacketIn do
           expect(message.igmp?).to be_falsey
 
           expect(message.arp_oper).to eq(2)
-          expect(message.arp_sha.to_s).to eq("00:00:00:00:00:01")
-          expect(message.arp_spa.to_s).to eq("192.168.0.1")
-          expect(message.arp_tha.to_s).to eq("00:00:00:00:00:02")
-          expect(message.arp_tpa.to_s).to eq("192.168.0.2")
+          expect(message.arp_sha.to_s).to eq('00:00:00:00:00:01')
+          expect(message.arp_spa.to_s).to eq('192.168.0.1')
+          expect(message.arp_tha.to_s).to eq('00:00:00:00:00:02')
+          expect(message.arp_tpa.to_s).to eq('192.168.0.2')
           expect(message.arp_request?).to be_falsey
           expect(message.arp_reply?).to be_truthy
 
@@ -192,27 +192,27 @@ describe Trema::PacketIn do
           expect(message.udp_len).to be_nil
         end
 
-        controller( "PacketInSendController" ).send_packet_out(
+        controller('PacketInSendController').send_packet_out(
           0xabc,
-          :data => data,
-          :actions => Trema::ActionOutput.new( :port => Controller::OFPP_CONTROLLER )
+          data: data,
+          actions: Trema::ActionOutput.new(port: Controller::OFPP_CONTROLLER)
         )
         sleep 2
-      }
+      end
     end
 
-    it "should have correct TCP packet fields" do
-      network {
-        vswitch( "packet-in" ) { datapath_id 0xabc }
-        vhost "host1"
-        vhost ( "host2" ) {
-          ip "192.168.0.2"
-          netmask "255.255.0.0"
-          mac "00:00:00:00:00:02"
-        }
-        link "host1", "packet-in"
-        link "host2", "packet-in"
-      }.run( PacketInSendController ) {
+    it 'should have correct TCP packet fields' do
+      network do
+        vswitch('packet-in') { datapath_id 0xabc }
+        vhost 'host1'
+        vhost ( 'host2') do
+          ip '192.168.0.2'
+          netmask '255.255.0.0'
+          mac '00:00:00:00:00:02'
+        end
+        link 'host1', 'packet-in'
+        link 'host2', 'packet-in'
+      end.run(PacketInSendController) do
         data = [
           0x00, 0x00, 0x00, 0x00, 0x00, 0x02, # dst
           0x00, 0x00, 0x00, 0x00, 0x00, 0x01, # src
@@ -238,8 +238,8 @@ describe Trema::PacketIn do
           0x2e, 0x86, # checksum
           0x00, 0x00, # urgent pointer
           0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-        ].pack( "C*" )
-        expect(controller( "PacketInSendController" )).to receive( :packet_in ) do | datapath_id, message |
+        ].pack('C*')
+        expect(controller('PacketInSendController')).to receive(:packet_in) do | _datapath_id, message |
           expect(message.in_port).to be > 0
           expect(message.vtag?).to be_falsey
           expect(message.arp?).to be_falsey
@@ -258,8 +258,8 @@ describe Trema::PacketIn do
           expect(message.ipv4_ttl).to eq(0)
           expect(message.ipv4_protocol).to eq(6)
           expect(message.ipv4_checksum).to eq(0x397d)
-          expect(message.ipv4_saddr.to_s).to eq("192.168.0.1")
-          expect(message.ipv4_daddr.to_s).to eq("192.168.0.2")
+          expect(message.ipv4_saddr.to_s).to eq('192.168.0.1')
+          expect(message.ipv4_daddr.to_s).to eq('192.168.0.2')
 
           expect(message.tcp_src_port).to eq(1)
           expect(message.tcp_dst_port).to eq(2)
@@ -268,7 +268,7 @@ describe Trema::PacketIn do
           expect(message.tcp_offset).to eq(5)
           expect(message.tcp_flags).to eq(0)
           expect(message.tcp_window).to eq(0)
-          expect(message.tcp_checksum).to eq(11910) # 0x2e86
+          expect(message.tcp_checksum).to eq(11_910) # 0x2e86
           expect(message.tcp_urgent).to eq(0)
 
           expect(message.arp_oper).to be_nil
@@ -278,27 +278,27 @@ describe Trema::PacketIn do
           expect(message.arp_tpa).to be_nil
         end
 
-        controller( "PacketInSendController" ).send_packet_out(
+        controller('PacketInSendController').send_packet_out(
           0xabc,
-          :data => data,
-          :actions => Trema::ActionOutput.new( :port => Controller::OFPP_CONTROLLER )
+          data: data,
+          actions: Trema::ActionOutput.new(port: Controller::OFPP_CONTROLLER)
         )
         sleep 2
-      }
+      end
     end
 
-    it "should have correct UDP packet fields" do
-      network {
-        vswitch( "packet-in" ) { datapath_id 0xabc }
-        vhost "host1"
-        vhost ( "host2" ) {
-          ip "192.168.0.2"
-          netmask "255.255.0.0"
-          mac "00:00:00:00:00:02"
-        }
-        link "host1", "packet-in"
-        link "host2", "packet-in"
-      }.run( PacketInSendController ) {
+    it 'should have correct UDP packet fields' do
+      network do
+        vswitch('packet-in') { datapath_id 0xabc }
+        vhost 'host1'
+        vhost ( 'host2') do
+          ip '192.168.0.2'
+          netmask '255.255.0.0'
+          mac '00:00:00:00:00:02'
+        end
+        link 'host1', 'packet-in'
+        link 'host2', 'packet-in'
+      end.run(PacketInSendController) do
         data = [
           0x00, 0x00, 0x00, 0x00, 0x00, 0x02, # dst
           0x00, 0x00, 0x00, 0x00, 0x00, 0x01, # src
@@ -321,8 +321,8 @@ describe Trema::PacketIn do
           0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
           0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
           0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-        ].pack( "C*" )
-        expect(controller( "PacketInSendController" )).to receive( :packet_in ) do | datapath_id, message |
+        ].pack('C*')
+        expect(controller('PacketInSendController')).to receive(:packet_in) do | _datapath_id, message |
           expect(message.in_port).to be > 0
           expect(message.vtag?).to be_falsey
           expect(message.arp?).to be_falsey
@@ -341,8 +341,8 @@ describe Trema::PacketIn do
           expect(message.ipv4_ttl).to eq(0x40)
           expect(message.ipv4_protocol).to eq(17)
           expect(message.ipv4_checksum).to eq(0xf968)
-          expect(message.ipv4_saddr.to_s).to eq("192.168.0.1")
-          expect(message.ipv4_daddr.to_s).to eq("192.168.0.2")
+          expect(message.ipv4_saddr.to_s).to eq('192.168.0.1')
+          expect(message.ipv4_daddr.to_s).to eq('192.168.0.2')
 
           expect(message.udp_src_port).to eq(1)
           expect(message.udp_dst_port).to eq(2)
@@ -350,27 +350,27 @@ describe Trema::PacketIn do
           expect(message.udp_len).to eq(0x1e)
         end
 
-        controller( "PacketInSendController" ).send_packet_out(
+        controller('PacketInSendController').send_packet_out(
           0xabc,
-          :data => data,
-          :actions => Trema::ActionOutput.new( :port => Controller::OFPP_CONTROLLER )
+          data: data,
+          actions: Trema::ActionOutput.new(port: Controller::OFPP_CONTROLLER)
         )
         sleep 2
-      }
+      end
     end
 
-    it "should have correct VLAN and ICMPv4 packet fields" do
-      network {
-        vswitch( "packet-in" ) { datapath_id 0xabc }
-        vhost "host1"
-        vhost ( "host2" ) {
-          ip "192.168.32.1"
-          netmask "255.255.255.0"
-          mac "00:00:00:00:00:02"
-        }
-        link "host1", "packet-in"
-        link "host2", "packet-in"
-      }.run( PacketInSendController ) {
+    it 'should have correct VLAN and ICMPv4 packet fields' do
+      network do
+        vswitch('packet-in') { datapath_id 0xabc }
+        vhost 'host1'
+        vhost ( 'host2') do
+          ip '192.168.32.1'
+          netmask '255.255.255.0'
+          mac '00:00:00:00:00:02'
+        end
+        link 'host1', 'packet-in'
+        link 'host2', 'packet-in'
+      end.run(PacketInSendController) do
         data = [
           0x00, 0x00, 0x00, 0x00, 0x00, 0x02, # dst
           0x00, 0x00, 0x00, 0x00, 0x00, 0x01, # src
@@ -398,8 +398,8 @@ describe Trema::PacketIn do
           0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70,
           0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x61,
           0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69
-        ].pack( "C*" )
-        expect(controller( "PacketInSendController" )).to receive( :packet_in ) do | datapath_id, message |
+        ].pack('C*')
+        expect(controller('PacketInSendController')).to receive(:packet_in) do | _datapath_id, message |
           expect(message.in_port).to be > 0
           expect(message.vtag?).to be_truthy
           expect(message.arp?).to be_falsey
@@ -425,8 +425,8 @@ describe Trema::PacketIn do
           expect(message.ipv4_ttl).to eq(0x80)
           expect(message.ipv4_protocol).to eq(1)
           expect(message.ipv4_checksum).to eq(0xed09)
-          expect(message.ipv4_saddr.to_s).to eq("192.168.32.74")
-          expect(message.ipv4_daddr.to_s).to eq("192.168.32.1")
+          expect(message.ipv4_saddr.to_s).to eq('192.168.32.74')
+          expect(message.ipv4_daddr.to_s).to eq('192.168.32.1')
 
           expect(message.icmpv4_type).to eq(8)
           expect(message.icmpv4_code).to eq(0)
@@ -440,23 +440,23 @@ describe Trema::PacketIn do
           expect(message.icmpv4_echo_request?).to be_truthy
         end
 
-        controller( "PacketInSendController" ).send_packet_out(
+        controller('PacketInSendController').send_packet_out(
           0xabc,
-          :data => data,
-          :actions => Trema::ActionOutput.new( :port => Controller::OFPP_CONTROLLER )
+          data: data,
+          actions: Trema::ActionOutput.new(port: Controller::OFPP_CONTROLLER)
         )
         sleep 2
-      }
+      end
     end
 
-    it "should have correct IGMP packet fields" do
-      network {
-        vswitch( "packet-in" ) { datapath_id 0xabc }
-        vhost "host1"
-        vhost "host2"
-        link "host1", "packet-in"
-        link "host2", "packet-in"
-      }.run( PacketInSendController ) {
+    it 'should have correct IGMP packet fields' do
+      network do
+        vswitch('packet-in') { datapath_id 0xabc }
+        vhost 'host1'
+        vhost 'host2'
+        link 'host1', 'packet-in'
+        link 'host2', 'packet-in'
+      end.run(PacketInSendController) do
         data = [
           0x01, 0x00, 0x5e, 0x00, 0x00, 0x01, # dst
           0x00, 0x00, 0x00, 0x00, 0x00, 0x01, # src
@@ -481,8 +481,8 @@ describe Trema::PacketIn do
           0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70,
           0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x61,
           0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69
-        ].pack( "C*" )
-        expect(controller( "PacketInSendController" )).to receive( :packet_in ) do | datapath_id, message |
+        ].pack('C*')
+        expect(controller('PacketInSendController')).to receive(:packet_in) do | _datapath_id, message |
           expect(message.in_port).to be > 0
           expect(message.vtag?).to be_falsey
           expect(message.arp?).to be_falsey
@@ -507,26 +507,25 @@ describe Trema::PacketIn do
           expect(message.ipv4_ttl).to eq(1)
           expect(message.ipv4_protocol).to eq(2)
           expect(message.ipv4_checksum).to eq(0xe458)
-          expect(message.ipv4_saddr.to_s).to eq("192.168.100.43")
-          expect(message.ipv4_daddr.to_s).to eq("224.0.0.1")
+          expect(message.ipv4_saddr.to_s).to eq('192.168.100.43')
+          expect(message.ipv4_daddr.to_s).to eq('224.0.0.1')
 
           expect(message.igmp_type).to eq(0x11)
           expect(message.igmp_checksum).to eq(0xee9b)
         end
 
-        controller( "PacketInSendController" ).send_packet_out(
+        controller('PacketInSendController').send_packet_out(
           0xabc,
-          :data => data,
-          :actions => Trema::ActionOutput.new( :port => Controller::OFPP_CONTROLLER )
+          data: data,
+          actions: Trema::ActionOutput.new(port: Controller::OFPP_CONTROLLER)
         )
         sleep 2
-      }
+      end
     end
 
   end
 
 end
-
 
 ### Local variables:
 ### mode: Ruby

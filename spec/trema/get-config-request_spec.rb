@@ -17,63 +17,56 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+require File.join(File.dirname(__FILE__), '..', 'spec_helper')
+require 'trema'
 
-require File.join( File.dirname( __FILE__ ), "..", "spec_helper" )
-require "trema"
-
-
-describe GetConfigRequest, ".new( OPTIONAL OPTION MISSING )" do
-  it_should_behave_like "any Openflow message with default transaction ID"
+describe GetConfigRequest, '.new( OPTIONAL OPTION MISSING )' do
+  it_should_behave_like 'any Openflow message with default transaction ID'
 end
 
-
-describe GetConfigRequest, ".new( INVALID OPTION )" do
-  subject { GetConfigRequest.new "INVALID OPTION" }
-  it "should raise TypeError" do
-    expect { subject }.to raise_error( TypeError )
+describe GetConfigRequest, '.new( INVALID OPTION )' do
+  subject { GetConfigRequest.new 'INVALID OPTION' }
+  it 'should raise TypeError' do
+    expect { subject }.to raise_error(TypeError)
   end
 end
 
+describe GetConfigRequest, '.new( VALID OPTION )' do
+  subject { GetConfigRequest.new transaction_id: transaction_id }
+  it_should_behave_like 'any OpenFlow message with transaction_id option'
 
-describe GetConfigRequest, ".new( VALID OPTION )" do
-  subject { GetConfigRequest.new :transaction_id => transaction_id }
-  it_should_behave_like "any OpenFlow message with transaction_id option"
-
-
-  context "when #get_config_request is sent" do
-    it "should #get_config_reply" do
+  context 'when #get_config_request is sent' do
+    it 'should #get_config_reply' do
       class GetConfigController < Controller; end
-      network {
+      network do
         vswitch { datapath_id 0xabc }
-      }.run( GetConfigController ) {
-        get_config_request = GetConfigRequest.new( :transaction_id => 1234 )
-        expect(controller( "GetConfigController" )).to receive( :get_config_reply )
+      end.run(GetConfigController) do
+        get_config_request = GetConfigRequest.new(transaction_id: 1234)
+        expect(controller('GetConfigController')).to receive(:get_config_reply)
         sleep 1 # FIXME
-        controller( "GetConfigController" ).send_message( 0xabc, get_config_request )
+        controller('GetConfigController').send_message(0xabc, get_config_request)
         sleep 2 # FIXME: wait to send_message
-      }
+      end
     end
-    
-    
-    it "should #get_config_reply with valid attributes" do
+
+    it 'should #get_config_reply with valid attributes' do
       class GetConfigController < Controller; end
-      network {
+      network do
         vswitch { datapath_id 0xabc }
-      }.run( GetConfigController ) {
-        get_config_request = GetConfigRequest.new( :transaction_id => 1234 )
-        expect(controller( "GetConfigController" )).to receive( :get_config_reply ) do | message |
+      end.run(GetConfigController) do
+        get_config_request = GetConfigRequest.new(transaction_id: 1234)
+        expect(controller('GetConfigController')).to receive(:get_config_reply) do | message |
           expect(message.datapath_id).to eq(0xabc)
           expect(message.transaction_id).to eq(1234)
-          expect(message.flags).to be >= 0 and expect(message.flags).to be <= 3
-          expect(message.miss_send_len).to eq(65535)
+          expect(message.flags).to(be >= 0) && expect(message.flags).to(be <= 3)
+          expect(message.miss_send_len).to eq(65_535)
         end
-        controller( "GetConfigController" ).send_message( 0xabc, get_config_request )
+        controller('GetConfigController').send_message(0xabc, get_config_request)
         sleep 2 # FIXME: wait to send_message
-      }
+      end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

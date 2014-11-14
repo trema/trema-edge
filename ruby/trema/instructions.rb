@@ -15,17 +15,15 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require_relative "instruction"
-require_relative "instructions/instruction-action"
-require_relative "instructions/goto-table"
-require_relative "instructions/write-metadata"
-require_relative "instructions/write-action"
-require_relative "instructions/apply-action"
-require_relative "instructions/clear-action"
-require_relative "instructions/meter"
-require_relative "instructions/experimenter"
-
+require_relative 'instruction'
+require_relative 'instructions/instruction-action'
+require_relative 'instructions/goto-table'
+require_relative 'instructions/write-metadata'
+require_relative 'instructions/write-action'
+require_relative 'instructions/apply-action'
+require_relative 'instructions/clear-action'
+require_relative 'instructions/meter'
+require_relative 'instructions/experimenter'
 
 ### Local variables:
 ### mode: Ruby

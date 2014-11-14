@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Messages
     class GroupMultipartRequest < Message
@@ -24,10 +23,8 @@ module Trema
     end
   end
 
-
   GroupMultipartRequest = Messages::GroupMultipartRequest
 end
-
 
 ### Local variables:
 ### mode: Ruby

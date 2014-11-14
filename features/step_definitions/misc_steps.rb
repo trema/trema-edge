@@ -17,53 +17,44 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "aruba/cucumber"
-
+require 'aruba/cucumber'
 
 Given /^I compile "(.*?)" into "(.*?)"$/ do | c_source, executable |
   run_simple "gcc #{ c_source } #{`trema-config -c -l`} -o #{ executable }", true
 end
 
-
 When /^\*\*\* sleep (\d+) \*\*\*$/ do | sec |
   sleep sec.to_i
 end
 
-
 When /^wait until "([^"]*)" is up$/ do | process |
   nloop = 0
-  pid_file = File.join( Trema.pid, "#{ process }.pid" )
+  pid_file = File.join(Trema.pid, "#{ process }.pid")
   loop do
     nloop += 1
-    raise "Timeout" if nloop > 60 # FIXME
-    break if FileTest.exists?( pid_file ) and not ps_entry_of( process ).nil?
+    fail 'Timeout' if nloop > 60 # FIXME
+    break if FileTest.exists?(pid_file) && !ps_entry_of(process).nil?
     sleep 0.1
   end
   sleep 1  # FIXME
 end
 
-
 Then /^([^\s]*) is terminated$/ do | name |
-  ps_entry_of( name ).should be_empty
+  ps_entry_of(name).should be_empty
 end
-
 
 Then /^vswitch ([^\s]*) is terminated$/ do | dpid |
-  pid_file = File.join( Trema.tmp, "openflowd.#{ dpid }.pid" )
-  File.exists?( pid_file ).should be_false
+  pid_file = File.join(Trema.tmp, "openflowd.#{ dpid }.pid")
+  File.exist?(pid_file).should be_false
 end
-
 
 Then /^([^\s]*) is started$/ do | name |
-  ps_entry_of( name ).should_not be_empty
+  ps_entry_of(name).should_not be_empty
 end
-
 
 Then /^switch_manager should be killed$/ do
-  IO.read( @log ).should match( /^Shutting down switch_manager/ )
+  IO.read(@log).should match(/^Shutting down switch_manager/)
 end
-
 
 ### Local variables:
 ### mode: Ruby

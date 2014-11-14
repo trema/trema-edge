@@ -17,18 +17,15 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/dsl"
-
+require 'trema/dsl'
 
 module Trema
   module Shell
-    def down name
-      OpenflowSwitch[ name ].shutdown!
+    def down(name)
+      OpenflowSwitch[name].shutdown!
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

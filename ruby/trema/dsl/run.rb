@@ -17,28 +17,24 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "trema/dsl/stanza"
-
+require 'trema/dsl/stanza'
 
 module Trema
   module DSL
     class Run < Stanza
-      def path _path
+      def path(_path)
         @path = _path
         if @name.nil?
-          @name = File.basename( @path )
+          @name = File.basename(@path)
         end
       end
 
-
-      def options *_options
+      def options(*_options)
         @options = _options
       end
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

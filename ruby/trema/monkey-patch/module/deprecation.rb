@@ -15,11 +15,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module MonkeyPatch
   module Module
     module Deprecation
-      def deprecate method_pairs
+      def deprecate(method_pairs)
         method_pairs.each do | old_method, new_method |
           define_method old_method do | *args, &block |
             $stderr.puts "Warning: #{ old_method }() is deprecated. Use #{ new_method }()."
@@ -30,7 +29,6 @@ module MonkeyPatch
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

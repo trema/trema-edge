@@ -17,12 +17,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+require 'rubygems'
+require 'rspec'
 
-require "rubygems"
-require "rspec"
-
-
-shared_examples_for "any Openflow message with default transaction ID" do
+shared_examples_for 'any Openflow message with default transaction ID' do
   describe '#transaction_id' do
     subject { super().transaction_id }
     it { is_expected.to be_unsigned_32bit }
@@ -34,15 +32,14 @@ shared_examples_for "any Openflow message with default transaction ID" do
   end
 end
 
-
-shared_examples_for "any Openflow message with transaction ID" do
-  context "transaction_id: -123", :nosudo => true do
-    let( :transaction_id ) { -123 }
-    it { expect { subject }.to raise_error( ArgumentError, "transaction_id must be an unsigned 32-bit integer." ) }
+shared_examples_for 'any Openflow message with transaction ID' do
+  context 'transaction_id: -123', nosudo: true do
+    let(:transaction_id) { -123 }
+    it { expect { subject }.to raise_error(ArgumentError, 'transaction_id must be an unsigned 32-bit integer.') }
   end
 
-  context "transaction_id: 0", :nosudo => true do
-    let( :transaction_id ) { 0 }
+  context 'transaction_id: 0', nosudo: true do
+    let(:transaction_id) { 0 }
 
     describe '#transaction_id' do
       subject { super().transaction_id }
@@ -55,8 +52,8 @@ shared_examples_for "any Openflow message with transaction ID" do
     end
   end
 
-  context "transaction_id: 123", :nosudo => true do
-    let( :transaction_id ) { 123 }
+  context 'transaction_id: 123', nosudo: true do
+    let(:transaction_id) { 123 }
 
     describe '#transaction_id' do
       subject { super().transaction_id }
@@ -69,35 +66,34 @@ shared_examples_for "any Openflow message with transaction ID" do
     end
   end
 
-  context "transaction_id: UINT32_MAX", :nosudo => true do
-    let( :transaction_id ) { 2 ** 32 - 1 }
+  context 'transaction_id: UINT32_MAX', nosudo: true do
+    let(:transaction_id) { 2**32 - 1 }
 
     describe '#transaction_id' do
       subject { super().transaction_id }
-      it { is_expected.to eq(2 ** 32 - 1) }
+      it { is_expected.to eq(2**32 - 1) }
     end
 
     describe '#xid' do
       subject { super().xid }
-      it { is_expected.to eq(2 ** 32 - 1) }
+      it { is_expected.to eq(2**32 - 1) }
     end
   end
 
-  context "transaction_id: UINT32_MAX + 1", :nosudo => true do
-    let( :transaction_id ) { 2 ** 32 }
-    it { expect { subject }.to raise_error( ArgumentError, "transaction_id must be an unsigned 32-bit integer." ) }
+  context 'transaction_id: UINT32_MAX + 1', nosudo: true do
+    let(:transaction_id) { 2**32 }
+    it { expect { subject }.to raise_error(ArgumentError, 'transaction_id must be an unsigned 32-bit integer.') }
   end
 end
 
-
-shared_examples_for "any Openflow message with xid" do
-  context "xid: -123", :nosudo => true do
-    let( :xid ) { -123 }
-    it { expect { subject }.to raise_error( ArgumentError, "transaction_id must be an unsigned 32-bit integer." ) }
+shared_examples_for 'any Openflow message with xid' do
+  context 'xid: -123', nosudo: true do
+    let(:xid) { -123 }
+    it { expect { subject }.to raise_error(ArgumentError, 'transaction_id must be an unsigned 32-bit integer.') }
   end
 
-  context "xid: 0", :nosudo => true do
-    let( :xid ) { 0 }
+  context 'xid: 0', nosudo: true do
+    let(:xid) { 0 }
 
     describe '#xid' do
       subject { super().xid }
@@ -110,8 +106,8 @@ shared_examples_for "any Openflow message with xid" do
     end
   end
 
-  context "xid: 123", :nosudo => true do
-    let( :xid ) { 123 }
+  context 'xid: 123', nosudo: true do
+    let(:xid) { 123 }
 
     describe '#xid' do
       subject { super().xid }
@@ -124,81 +120,75 @@ shared_examples_for "any Openflow message with xid" do
     end
   end
 
-  context "xid: UINT32_MAX", :nosudo => true do
-    let( :xid ) { 2 ** 32 - 1 }
+  context 'xid: UINT32_MAX', nosudo: true do
+    let(:xid) { 2**32 - 1 }
 
     describe '#xid' do
       subject { super().xid }
-      it { is_expected.to eq(2 ** 32 - 1) }
+      it { is_expected.to eq(2**32 - 1) }
     end
 
     describe '#transaction_id' do
       subject { super().transaction_id }
-      it { is_expected.to eq(2 ** 32 - 1) }
+      it { is_expected.to eq(2**32 - 1) }
     end
   end
 
-  context "xid: UINT32_MAX + 1", :nosudo => true do
-    let( :xid ) { 2 ** 32 }
-    it { expect { subject }.to raise_error( ArgumentError, "transaction_id must be an unsigned 32-bit integer." ) }
+  context 'xid: UINT32_MAX + 1', nosudo: true do
+    let(:xid) { 2**32 }
+    it { expect { subject }.to raise_error(ArgumentError, 'transaction_id must be an unsigned 32-bit integer.') }
   end
 end
 
-
-shared_examples_for "any Openflow message with user_data" do
-  context "user_data: nil", :nosudo => true do
-    let( :user_data ) { nil }
+shared_examples_for 'any Openflow message with user_data' do
+  context 'user_data: nil', nosudo: true do
+    let(:user_data) { nil }
 
     describe '#user_data' do
       subject { super().user_data }
       it { is_expected.to be_nil }
     end
-    it_should_behave_like "any Openflow message with default transaction ID"
+    it_should_behave_like 'any Openflow message with default transaction ID'
   end
 
-
-  context 'user_data: "USER DATA"', :nosudo => true do
-    let( :user_data ) { "USER DATA" }
+  context 'user_data: "USER DATA"', nosudo: true do
+    let(:user_data) { 'USER DATA' }
 
     describe '#user_data' do
       subject { super().user_data }
-      it { is_expected.to eq("USER DATA") }
+      it { is_expected.to eq('USER DATA') }
     end
-    it_should_behave_like "any Openflow message with default transaction ID"
+    it_should_behave_like 'any Openflow message with default transaction ID'
   end
 
-
-  context "user_data: :INVALID_DATA", :nosudo => true do
-    let( :user_data ) { :INVALID_DATA }
-    it { expect { subject }.to raise_error( TypeError ) }
+  context 'user_data: :INVALID_DATA', nosudo: true do
+    let(:user_data) { :INVALID_DATA }
+    it { expect { subject }.to raise_error(TypeError) }
   end
 end
 
-
-shared_examples_for "any OpenFlow message" do | options |
-  option = options[ :option ]
-  name = options[ :name ]
-  size = options[ :size ]
+shared_examples_for 'any OpenFlow message' do | options |
+  option = options[:option]
+  name = options[:name]
+  size = options[:size]
   case size
   when 8
-    let( :uint_max ) { 2 ** 8 - 1 }
+    let(:uint_max) { 2**8 - 1 }
   when 16
-    let( :uint_max ) { 2 ** 16 - 1 }
+    let(:uint_max) { 2**16 - 1 }
   when 32
-    let( :uint_max ) { 2 ** 32 - 1 }
+    let(:uint_max) { 2**32 - 1 }
   end
 
-
   context "when its #{ name } is a negative value" do
-    let( option ) { -1234 }
-    it "should raise ArgumentError" do
-      expect { subject }.to raise_error( ArgumentError, "#{ name } must be an unsigned #{ size }-bit integer." )
+    let(option) { -1234 }
+    it 'should raise ArgumentError' do
+      expect { subject }.to raise_error(ArgumentError, "#{ name } must be an unsigned #{ size }-bit integer.")
     end
   end
 
-
   context "when its #{ name } is zero" do
-    let( option ) { 0 }
+    let(option) { 0 }
 
     describe option do
       subject { super().send(option) }
@@ -206,9 +196,8 @@ shared_examples_for "any OpenFlow message" do | options |
     end
   end
 
-
   context "when its #{ name } is 123" do
-    let( option ) { 123 }
+    let(option) { 123 }
 
     describe option do
       subject { super().send(option) }
@@ -216,9 +205,8 @@ shared_examples_for "any OpenFlow message" do | options |
     end
   end
 
-
   context "when its #{ name } is UINT#{ size }MAX" do
-    let( option ) { uint_max }
+    let(option) { uint_max }
 
     describe option do
       subject { super().send(option) }
@@ -226,25 +214,21 @@ shared_examples_for "any OpenFlow message" do | options |
     end
   end
 
-
   context "when its #{ name } is UINT#{ size }_MAX + 1" do
-    let( option ) { uint_max + 1 }
-    it "should raise ArgumentError" do
-      expect { subject }.to raise_error( "#{ name } must be an unsigned #{ size }-bit integer." )
+    let(option) { uint_max + 1 }
+    it 'should raise ArgumentError' do
+      expect { subject }.to raise_error("#{ name } must be an unsigned #{ size }-bit integer.")
     end
   end
 end
 
-
-shared_examples_for "any OpenFlow message with port option" do
-  it_should_behave_like "any OpenFlow message", :option => :port, :name => "port_number", :size => 32
+shared_examples_for 'any OpenFlow message with port option' do
+  it_should_behave_like 'any OpenFlow message', option: :port, name: 'port_number', size: 32
 end
 
-
-shared_examples_for "any OpenFlow message with transaction_id option" do
-  it_should_behave_like "any OpenFlow message", :option => :transaction_id, :name => "Transaction ID", :size => 32
+shared_examples_for 'any OpenFlow message with transaction_id option' do
+  it_should_behave_like 'any OpenFlow message', option: :transaction_id, name: 'Transaction ID', size: 32
 end
-
 
 ### Local variables:
 ### mode: Ruby

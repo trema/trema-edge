@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Actions
     #
@@ -43,14 +42,12 @@ module Trema
     # @raise [ArgumentError] if max_len is not an unsigned 16-bit integer.
     #
     class SendOutPort < BasicAction
-      DEFAULT_MAX_LEN = 2 ** 16 - 1
-  
-  
+      DEFAULT_MAX_LEN = 2**16 - 1
+
       ofp_type OFPAT_OUTPUT
       unsigned_int32 :port_number, presence: true, alias: :port
       unsigned_int16 :max_len, default: DEFAULT_MAX_LEN
-      alias :port :port_number
-
+      alias_method :port, :port_number
 
       def to_s
         "SendOutPort: port=#{ @port_number }, max_len=#{ @max_len }"
@@ -58,10 +55,8 @@ module Trema
     end
   end
 
-
   SendOutPort = Actions::SendOutPort
 end
-
 
 ### Local variables:
 ### mode: Ruby

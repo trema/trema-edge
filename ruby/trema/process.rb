@@ -17,7 +17,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   #
   # A class responsible for terminating processes.
@@ -38,23 +37,21 @@ module Trema
     #
     # @return [Process] the object that encapsulates the process details.
     #
-    def self.read pid_file, name = nil
-      name = File.basename( pid_file, ".pid" ) if name.nil?
-      return new( pid_file, name )
+    def self.read(pid_file, name = nil)
+      name = File.basename(pid_file, '.pid') if name.nil?
+      new(pid_file, name)
     end
 
-
-    def initialize pid_file, name
+    def initialize(pid_file, name)
       @name = name
       @pid_file = pid_file
       begin
-        @pid = IO.read( @pid_file ).chomp.to_i
-        @uid = File.stat( @pid_file ).uid
+        @pid = IO.read(@pid_file).chomp.to_i
+        @uid = File.stat(@pid_file).uid
       rescue
         @pid_file = nil
       end
     end
-
 
     #
     # kills an active process.
@@ -77,14 +74,14 @@ module Trema
         return
         # return if dead?
       end
-      raise "Failed to shut down #{ @name }"
+      fail "Failed to shut down #{ @name }"
     end
 
-
     ################################################################################
+
     private
-    ################################################################################
 
+    ################################################################################
 
     #
     # @return [Boolean] whether a process is not alive or not.
@@ -94,7 +91,6 @@ module Trema
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

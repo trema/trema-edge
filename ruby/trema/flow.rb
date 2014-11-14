@@ -15,11 +15,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   class Flow
-
-
     #
     # Parses a text line of OpenFlow switch's dump-flows command into a Flow
     # object's dynamic created attributes. A line consists of multiple
@@ -31,15 +28,15 @@ module Trema
     # @return [self] the object that holds the parsed key=value fields
     #   as attributes.
     #
-    def self.parse line
-      flow = self.new
+    def self.parse(line)
+      flow = new
       # to simplify parsing
-      line.sub!(/actions=.*,.*$/) { | match | match.gsub(/,/,'/') }
-      line.strip.split( /[,\s]\s*/ ).each do | each |
+      line.sub!(/actions=.*,.*$/) { | match | match.gsub(/,/, '/') }
+      line.strip.split(/[,\s]\s*/).each do | each |
         next unless /(.+)=(.+)/=~ each
-        name, value = $1, $2
+        name, value = Regexp.last_match[1], Regexp.last_match[2]
         attr_reader name.to_sym
-        if ( /\A\d+\Z/=~ value ) or ( /\A0x.+\Z/=~ value )
+        if (/\A\d+\Z/=~ value) || (/\A0x.+\Z/=~ value)
           flow.instance_eval "@#{ name }=#{ value }"
         else
           flow.instance_eval "@#{ name }='#{ value }'"
@@ -48,15 +45,13 @@ module Trema
       flow
     end
 
-
     # @return [Boolean] whether a flow is a user registered flow or not.
     def users_flow?
-      not ( ( @actions == "drop" and @priority == 0 ) or
-            @actions == "CONTROLLER:65535" )
+      !((@actions == 'drop' && @priority == 0) ||
+            @actions == 'CONTROLLER:65535')
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Actions
     class SetMplsTtl < BasicAction
@@ -37,10 +36,8 @@ module Trema
     end
   end
 
-
   SetMplsTtl = Actions::SetMplsTtl
 end
-
 
 ### Local variables:
 ### mode: Ruby

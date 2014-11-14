@@ -15,45 +15,39 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
-require "rbconfig"
-require_relative "hardware-switch"
-
+require 'rbconfig'
+require_relative 'hardware-switch'
 
 module Trema
   class RubySwitch < HardwareSwitch
     include Trema::Daemon
 
-
-    def initialize stanza
+    def initialize(stanza)
       super stanza
     end
-
 
     def command
       "#{ ruby } -I#{ libruby } -rtrema -e \"Trema.module_eval IO.read( '#{ @stanza.path }' )\" #{ dpid_short }"
     end
 
-
     ############################################################################
+
     private
-    ############################################################################
 
+    ############################################################################
 
     def libruby
-      File.join Trema.home, "ruby"
+      File.join Trema.home, 'ruby'
     end
-
 
     def ruby
       File.join(
-        RbConfig::CONFIG[ "bindir" ],
-        RbConfig::CONFIG[ "ruby_install_name" ] + RbConfig::CONFIG[ "EXEEXT" ]
+        RbConfig::CONFIG['bindir'],
+        RbConfig::CONFIG['ruby_install_name'] + RbConfig::CONFIG['EXEEXT']
       )
     end
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Messages
     class FlowMod < Message
@@ -30,10 +29,8 @@ module Trema
     end
   end
 
-
   FlowMod = Messages::FlowMod
 end
-
 
 ### Local variables:
 ### mode: Ruby

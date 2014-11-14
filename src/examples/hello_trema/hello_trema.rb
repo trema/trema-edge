@@ -19,14 +19,12 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 class HelloController < Controller
-  def switch_ready datapath_id
-    info "Hello %#x from #{ ARGV[ 0 ] }!" % datapath_id
+  def switch_ready(datapath_id)
+    info "Hello %#x from #{ ARGV[0] }!" % datapath_id
     shutdown!
   end
 end
-
 
 ### Local variables:
 ### mode: Ruby

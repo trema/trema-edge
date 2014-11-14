@@ -15,7 +15,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
 module Trema
   module Messages
     class BarrierReply < Message
@@ -23,10 +22,8 @@ module Trema
     end
   end
 
-
   BarrierReply = Messages::BarrierReply
 end
-
 
 ### Local variables:
 ### mode: Ruby
