@@ -48,7 +48,6 @@
 #include "oxm_byteorder.h"
 #include "packet_info.h"
 #include "packetin_filter_interface.h"
-#include "persistent_storage.h"
 #include "safe_event_handler.h"
 #include "safe_timer.h"
 #include "stat.h"

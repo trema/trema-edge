@@ -24,7 +24,6 @@
 #define TREMA_WRAPPER_H
 
 
-#include <sqlite3.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -49,14 +48,6 @@ extern pid_t ( *trema_getpid )( void );
 extern void ( *trema_openlog ) ( const char *ident, int option, int facility );
 extern void ( *trema_closelog ) ( void );
 extern void ( *trema_vsyslog ) ( int priority, const char *format, va_list ap );
-
-extern int ( *trema_sqlite3_open) ( const char *filename, sqlite3 **ppDb );
-extern int ( *trema_sqlite3_close ) ( sqlite3 * );
-extern int ( *trema_sqlite3_exec ) ( sqlite3 *, const char *sql, int ( *callback ) ( void *, int, char **, char ** ), void *, char **errmsg );
-extern int ( *trema_sqlite3_changes ) ( sqlite3 * );
-extern void ( *trema_sqlite3_free ) ( void * );
-extern const char * ( *trema_sqlite3_errmsg ) ( sqlite3 * );
-
 
 #endif // TREMA_WRAPPER_H
 
