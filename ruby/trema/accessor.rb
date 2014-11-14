@@ -82,8 +82,8 @@ module Trema
 
 
       def define_accessor_meth meth
-        self.class.class_eval do
-          define_method :"#{ meth }" do | *args |
+        self.class_eval do
+          define_singleton_method :"#{ meth }" do | *args |
             attrs = args
             opts = extract_options!( args )
             check_args args

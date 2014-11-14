@@ -19,7 +19,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-
+require "pio"
 require "trema/exact-match"
 require_relative "fdb"
 
