@@ -17,7 +17,7 @@
 
 
 module Trema
-  module Logger
+  module TremaLogger
   end
 end
 

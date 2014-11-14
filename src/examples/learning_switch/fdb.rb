@@ -21,7 +21,7 @@
 
 
 class ForwardingEntry
-  include Trema::Logger
+  include Trema::TremaLogger
 
 
   attr_reader :mac

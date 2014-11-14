@@ -30,7 +30,7 @@ module Trema
   # @abstract The base class of Trema controller. Subclass and override handlers to implement a custom OpenFlow controller.
   #
   class Controller < App
-    include Logger
+    include TremaLogger
     include Timers
     include MessageHelper
     include MessageHandler
