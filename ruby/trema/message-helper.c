@@ -97,13 +97,13 @@ send_packet_out( int argc, VALUE *argv, VALUE self ) {
   openflow_actions *actions = NULL;
   uint32_t in_port = OFPP_ANY;
   if ( !NIL_P( options ) ) {
-
     VALUE r_opt_action = HASH_REF( options, actions );
     if ( !NIL_P( r_opt_action ) ) {
       actions = pack_basic_action( r_opt_action );
     }
 
     VALUE r_opt_message = HASH_REF( options, packet_in );
+    VALUE r_opt_data = HASH_REF( options, data );
     if ( !NIL_P( r_opt_message ) ) {
 
       if ( datapath_id == rb_iv_get( r_opt_message, "@datapath_id" ) ) {
@@ -115,10 +115,13 @@ send_packet_out( int argc, VALUE *argv, VALUE self ) {
       VALUE r_data = rb_iv_get( r_opt_message, "@data" );
       data = r_array_to_buffer( r_data );
     }
-
+    else if ( !NIL_P( r_opt_data ) ) {
+      data = r_array_to_buffer( r_opt_data );
+    }
 
     buffer *packet_out;
-    if ( buffer_id == OFP_NO_BUFFER && !NIL_P( r_opt_message ) ) {
+    if ( buffer_id == OFP_NO_BUFFER &&
+         ( !NIL_P( r_opt_message ) || !NIL_P( r_opt_data ) )) {
       buffer *frame = duplicate_buffer( data );
       fill_ether_padding( frame );
 
