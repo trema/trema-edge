@@ -186,6 +186,13 @@ notify_packet_in( const uint8_t reason, const uint8_t table_id, const uint64_t c
   if ( callbacks.packet_in == NULL ) {
     return;
   }
+
+  if ( packet->length < 60 ) { // fill up to ethernet(without FCS) minimum length
+    size_t length = packet->length;
+    append_back_buffer( packet, 60 - length );
+    memset( packet->data + length, 0, 60 - length );
+  }
+
   if ( ERROR_DROP_PACKET == execute_meter( OFPM_CONTROLLER, packet ) ) {
     return;
   }
