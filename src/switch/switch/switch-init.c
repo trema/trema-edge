@@ -87,6 +87,8 @@ ignore_sigpipe( void ) {
 struct switch_arguments *
 init_parse_args( int argc, char **argv ) {
   struct switch_arguments *args = xmalloc( sizeof( struct switch_arguments ) );
+  args->queue_mutex = xmalloc( sizeof( pthread_mutex_t ) );
+  init_mutex(args->queue_mutex);
 
   parse_options( args, argc, argv );
 

@@ -30,7 +30,9 @@ create_packet_buffers( const unsigned int max_length, const size_t mtu ) {
   buffers->max_length = max_length;
   buffers->mtu = mtu;
   buffers->buffers = create_message_queue();
+  init_mutex( &buffers->buffers_mutex );
   buffers->free_buffers = create_message_queue();
+  init_mutex( &buffers->free_buffers_mutex );
   for ( unsigned int i = 0; i < max_length; i++ ) {
     enqueue_message( buffers->free_buffers, alloc_buffer_with_length( buffers->mtu ) );
   }
@@ -46,7 +48,9 @@ delete_packet_buffers( packet_buffers *buffers ) {
   assert( buffers->free_buffers != NULL );
 
   delete_message_queue( buffers->buffers );
+  finalize_mutex( &buffers->buffers_mutex );
   delete_message_queue( buffers->free_buffers );
+  finalize_mutex( &buffers->free_buffers_mutex );
   xfree( buffers );
 }
 
@@ -56,7 +60,12 @@ get_buffer_from_free_buffers( packet_buffers *buffers ) {
   assert( buffers != NULL );
   assert( buffers->free_buffers != NULL );
 
-  return dequeue_message( buffers->free_buffers );
+  buffer *ret = NULL;
+  if ( lock_mutex( &buffers->free_buffers_mutex ) ) {
+    ret = dequeue_message( buffers->free_buffers );
+    unlock_mutex( &buffers->free_buffers_mutex);
+  }
+  return ret;
 }
 
 
@@ -77,8 +86,11 @@ add_buffer_to_free_buffers( packet_buffers *buffers, buffer *buf ) {
   }
 
   reset_buffer( buf );
-
-  enqueue_message( buffers->free_buffers, buf );
+  
+  if ( lock_mutex( &buffers->free_buffers_mutex ) ) {
+    enqueue_message( buffers->free_buffers, buf );
+    unlock_mutex( &buffers->free_buffers_mutex );
+  }
 }
 
 
@@ -96,7 +108,12 @@ dequeue_packet_buffer( packet_buffers *buffers ) {
   assert( buffers != NULL );
   assert( buffers->buffers != NULL );
 
-  return dequeue_message( buffers->buffers );
+  buffer *ret = NULL;
+  if ( lock_mutex( &buffers->buffers_mutex ) ) {
+    ret = dequeue_message( buffers->buffers );
+    unlock_mutex( &buffers->buffers_mutex );
+  }
+  return ret;
 }
 
 
@@ -105,7 +122,10 @@ enqueue_packet_buffer( packet_buffers *buffers, buffer *buf ) {
   assert( buffers != NULL );
   assert( buffers->buffers != NULL );
 
-  enqueue_message( buffers->buffers, buf );
+  if ( lock_mutex( &buffers->buffers_mutex ) ) {
+    enqueue_message( buffers->buffers, buf );
+    unlock_mutex( &buffers->buffers_mutex );
+  }
 }
 
 

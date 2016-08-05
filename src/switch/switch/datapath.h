@@ -21,6 +21,7 @@
 
 
 #include "trema.h"
+#include "mutex.h"
 
 
 #ifdef __cplusplus
@@ -36,8 +37,9 @@ extern "C" {
 
 struct datapath {
   struct async thread;
-  const struct switch_arguments *args; 
   message_queue *peer_queue;
+  pthread_mutex_t *peer_mutex;
+  const struct switch_arguments *args;
   uint64_t send_count;
   void *data;
   int own_efd;

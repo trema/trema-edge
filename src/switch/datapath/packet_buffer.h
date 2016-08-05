@@ -21,13 +21,16 @@
 
 
 #include "ofdp_common.h"
+#include "mutex.h"
 
 
 typedef struct {
   unsigned int max_length;
   size_t mtu;
   message_queue *buffers;
+  pthread_mutex_t buffers_mutex;
   message_queue *free_buffers;
+  pthread_mutex_t free_buffers_mutex;
 } packet_buffers;
 
 
